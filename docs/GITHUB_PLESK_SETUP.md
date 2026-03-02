@@ -107,3 +107,12 @@ Server:
 - Niemals `.env` ins Repo committen
 - Niemals GitHub Token teilen
 - Für Produktivbetrieb `APP_DEBUG=false` lassen
+
+## 9) Wichtiger PHP-Hinweis (Plesk)
+
+- Das Projekt-Lockfile benoetigt PHP-CLI `>= 8.4`.
+- Wenn der Server default `php` noch 8.3 ist, nutze in der Deploy Action:
+
+```bash
+PHP_BIN=/opt/plesk/php/8.4/bin/php /bin/bash scripts/plesk_post_deploy.sh
+```
