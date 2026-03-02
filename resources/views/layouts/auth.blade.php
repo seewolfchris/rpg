@@ -25,6 +25,12 @@
 
                 <nav class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end sm:gap-3">
                     @include('partials.pwa-install-button')
+                    <a
+                        href="{{ route('help.index') }}"
+                        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    >
+                        Hilfe
+                    </a>
                     @auth
                         @php($unreadNotificationsCount = auth()->user()->unreadNotifications()->count())
                         @php($pendingCampaignInvitationsCount = auth()->user()->campaignInvitations()->where('status', \App\Models\CampaignInvitation::STATUS_PENDING)->count())

@@ -20,6 +20,9 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::view('/hilfe', 'help.index')
+    ->name('help.index');
+
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])
         ->name('register');

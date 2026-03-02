@@ -31,6 +31,12 @@
                 </div>
                 <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
                     @include('partials.pwa-install-button')
+                    <a
+                        href="{{ route('help.index') }}"
+                        class="rounded-full border border-stone-600/70 bg-black/35 px-4 py-2 text-xs uppercase tracking-[0.14em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    >
+                        Hilfe
+                    </a>
                     <div class="rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.14em] text-amber-200/80">
                         PbP RPG Beta
                     </div>
