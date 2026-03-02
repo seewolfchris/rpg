@@ -22,7 +22,7 @@ const bootApplication = async () => {
     setupServiceWorkerMessageHandling();
 
     swRegistration = await registerServiceWorker();
-    warmOfflineReadingCache();
+    await warmOfflineReadingCache();
 
     if (navigator.onLine) {
         await triggerQueuedPostSync();
@@ -46,6 +46,11 @@ async function registerServiceWorker() {
 
     try {
         const registration = await navigator.serviceWorker.register('/sw.js');
+        const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
+
+        if (readyRegistration) {
+            return readyRegistration;
+        }
 
         return registration;
     } catch (error) {
@@ -184,7 +189,7 @@ function setupServiceWorkerMessageHandling() {
     });
 }
 
-function warmOfflineReadingCache() {
+async function warmOfflineReadingCache() {
     if (!('serviceWorker' in navigator)) {
         return;
     }
@@ -203,21 +208,19 @@ function warmOfflineReadingCache() {
         return;
     }
 
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'CACHE_URLS',
-            urls: filteredUrls,
-        });
+    const activeWorker =
+        navigator.serviceWorker.controller ||
+        (await getActiveServiceWorkerRegistration())?.active ||
+        null;
 
+    if (!activeWorker) {
         return;
     }
 
-    if (swRegistration?.active) {
-        swRegistration.active.postMessage({
-            type: 'CACHE_URLS',
-            urls: filteredUrls,
-        });
-    }
+    activeWorker.postMessage({
+        type: 'CACHE_URLS',
+        urls: filteredUrls,
+    });
 }
 
 function isOfflineReadableUrl(url) {
@@ -242,9 +245,9 @@ async function triggerQueuedPostSync() {
         return false;
     }
 
-    const registration = swRegistration || (await navigator.serviceWorker.ready.catch(() => null));
+    const registration = await getActiveServiceWorkerRegistration();
 
-    if (!registration) {
+    if (!registration?.active) {
         return false;
     }
 
@@ -254,21 +257,38 @@ async function triggerQueuedPostSync() {
 
             return true;
         } catch (error) {
+            if (
+                error instanceof DOMException &&
+                (error.name === 'InvalidStateError' || error.name === 'NotAllowedError' || error.name === 'SecurityError')
+            ) {
+                return false;
+            }
+
             console.error('Background sync registration failed:', error);
         }
     }
 
-    if (registration.active) {
-        registration.active.postMessage({ type: 'SYNC_POSTS_NOW' });
-        return true;
+    registration.active.postMessage({ type: 'SYNC_POSTS_NOW' });
+    return true;
+}
+
+async function getActiveServiceWorkerRegistration() {
+    if (!('serviceWorker' in navigator)) {
+        return null;
     }
 
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'SYNC_POSTS_NOW' });
-        return true;
+    if (swRegistration?.active) {
+        return swRegistration;
     }
 
-    return false;
+    const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
+
+    if (readyRegistration?.active) {
+        swRegistration = readyRegistration;
+        return readyRegistration;
+    }
+
+    return null;
 }
 
 async function queuePostSubmission(form) {

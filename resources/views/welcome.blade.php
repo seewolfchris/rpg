@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="Chroniken der Asche ist ein asynchrones Dark-Fantasy Play-by-Post RPG mit epischer Welt, Intrigen und düsterer Magie.">
         <meta name="theme-color" content="#0f0f14">
+        <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -17,38 +18,38 @@
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
     </head>
-    <body class="min-h-full bg-neutral-950 text-stone-200 antialiased">
+    <body class="min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
         @php($registerUrl = Route::has('register') ? route('register') : url('/register'))
 
-        <div class="relative isolate overflow-x-hidden">
+        <div class="relative isolate overflow-x-clip">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.35),_transparent_44%),radial-gradient(circle_at_80%_30%,_rgba(87,53,120,0.15),_transparent_40%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
             <div class="pointer-events-none absolute -left-16 top-32 -z-10 h-56 w-56 rounded-full bg-amber-900/20 blur-3xl"></div>
             <div class="pointer-events-none absolute -right-16 bottom-24 -z-10 h-64 w-64 rounded-full bg-slate-500/10 blur-3xl"></div>
 
             <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                <div class="font-heading text-xl tracking-[0.20em] text-amber-300 sm:text-2xl">
+                <div class="font-heading break-words text-xl tracking-[0.12em] text-amber-300 sm:text-2xl sm:tracking-[0.20em]">
                     CHRONIKEN DER ASCHE
                 </div>
-                <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+                <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
                     @include('partials.pwa-install-button')
                     <a
                         href="{{ route('help.index') }}"
-                        class="rounded-full border border-stone-600/70 bg-black/35 px-4 py-2 text-xs uppercase tracking-[0.14em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="inline-flex items-center justify-center rounded-full border border-stone-600/70 bg-black/35 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100 sm:tracking-[0.14em]"
                     >
                         Hilfe
                     </a>
-                    <div class="rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.14em] text-amber-200/80">
+                    <div class="inline-flex items-center justify-center rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-200/80 sm:tracking-[0.14em]">
                         PbP RPG Beta
                     </div>
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-10 px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-14 lg:pb-24">
+            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-14 lg:pb-24">
                 <section>
-                    <p class="mb-4 text-xs uppercase tracking-[0.18em] text-amber-400/80 sm:text-sm">
+                    <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
                         Dark Fantasy • Asynchron • Community-Driven
                     </p>
-                    <h1 class="mb-6 font-heading text-4xl leading-tight text-stone-100 sm:text-5xl lg:text-6xl">
+                    <h1 class="mb-6 font-heading text-3xl leading-tight text-stone-100 sm:text-5xl lg:text-6xl">
                         Betritt die zersplitterten Reiche von Vhal'Tor
                     </h1>
                     <p class="font-body max-w-xl text-lg leading-relaxed text-stone-300 sm:text-xl">
@@ -71,7 +72,7 @@
                         </a>
                     </div>
 
-                    <div class="mt-10 grid grid-cols-2 gap-4 sm:max-w-md">
+                    <div class="mt-10 grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">
                         <article class="rounded-lg border border-stone-700/70 bg-black/35 p-4 backdrop-blur-sm">
                             <h2 class="text-xs uppercase tracking-[0.14em] text-stone-400">Kampagnenstil</h2>
                             <p class="mt-2 text-sm text-stone-200">Asynchrone Story-Threads mit IC/OOC-Tiefe.</p>

@@ -6,7 +6,7 @@
     <section class="mx-auto w-full max-w-4xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Sichere Zuflucht</p>
-            <h1 class="font-heading text-3xl text-stone-100">Willkommen, {{ auth()->user()->name }}</h1>
+            <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">Willkommen, {{ auth()->user()->name }}</h1>
             <p class="font-body mt-3 text-lg text-stone-300">
                 Dein Konto ist aktiv. Verwalte Charaktere, baue Kampagnen und sammle Ruhmpunkte fuer freigegebene Posts.
             </p>

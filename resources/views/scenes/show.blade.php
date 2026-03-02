@@ -5,14 +5,14 @@
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <a href="{{ route('campaigns.show', $campaign) }}" class="text-xs uppercase tracking-[0.1em] text-amber-300 hover:text-amber-200">
+            <a href="{{ route('campaigns.show', $campaign) }}" class="break-words text-xs uppercase tracking-[0.1em] text-amber-300 hover:text-amber-200">
                 Zur Kampagne: {{ $campaign->title }}
             </a>
 
             <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Szene</p>
-                    <h1 class="font-heading text-3xl text-stone-100">{{ $scene->title }}</h1>
+                    <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $scene->title }}</h1>
                     @if ($scene->summary)
                         <p class="mt-3 text-stone-300">{{ $scene->summary }}</p>
                     @endif
@@ -173,7 +173,7 @@
                     </form>
                 @endif
 
-                <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', [$campaign, $scene]) }}" class="flex items-center gap-2">
+                <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', [$campaign, $scene]) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                     @csrf
                     <input type="hidden" name="post_id" value="{{ $latestPostId > 0 ? $latestPostId : '' }}">
                     <input
@@ -182,7 +182,7 @@
                         maxlength="80"
                         value="{{ old('label', $userBookmark?->label) }}"
                         placeholder="Bookmark-Label (optional)"
-                        class="w-48 rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 sm:w-48"
                     >
                     <button
                         type="submit"
@@ -348,7 +348,7 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+                            <div class="mt-4 break-words leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
                                 {!! $post->renderedContent() !!}
                             </div>
 
@@ -369,7 +369,7 @@
                                                         • bearbeitet von {{ $revision->editor->name }}
                                                     @endif
                                                 </p>
-                                                <div class="mt-2 text-sm leading-relaxed text-stone-300 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+                                                <div class="mt-2 break-words text-sm leading-relaxed text-stone-300 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
                                                     {!! $revision->renderedContent() !!}
                                                 </div>
                                             </li>
@@ -425,7 +425,7 @@
                             @endif
 
                             @can('moderate', $post)
-                                <form method="POST" action="{{ route('posts.moderate', $post) }}" class="mt-4 flex flex-wrap items-center gap-2">
+                                <form method="POST" action="{{ route('posts.moderate', $post) }}" class="mt-4 flex flex-wrap items-start gap-2 sm:items-center">
                                     @csrf
                                     @method('PATCH')
                                     <label for="moderation_status_{{ $post->id }}" class="text-xs uppercase tracking-[0.08em] text-stone-400">Moderation</label>
@@ -443,7 +443,7 @@
                                         name="moderation_note"
                                         maxlength="500"
                                         placeholder="Optionaler Hinweis ..."
-                                        class="min-w-56 flex-1 rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                                        class="min-w-0 w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 sm:flex-1"
                                     >
                                     <button
                                         type="submit"

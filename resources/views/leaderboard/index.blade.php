@@ -31,17 +31,17 @@
                         <tbody>
                             @foreach ($leaders as $index => $leader)
                                 <tr class="rounded-xl border border-stone-800 bg-neutral-900/60">
-                                    <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-stone-100">#{{ $index + 1 }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-sm text-stone-200">
+                                    <td class="px-3 py-3 text-sm font-semibold text-stone-100">#{{ $index + 1 }}</td>
+                                    <td class="px-3 py-3 text-sm text-stone-200">
                                         {{ $leader->name }}
                                         @if ($leader->id === auth()->id())
                                             <span class="ml-2 rounded border border-amber-600/70 bg-amber-900/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.08em] text-amber-200">Du</span>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">{{ $leader->role->value }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-amber-200">{{ $leader->points }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-sm text-stone-300">{{ $leader->approved_posts_count }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-sm text-stone-300">{{ $leader->characters_count }}</td>
+                                    <td class="px-3 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">{{ $leader->role->value }}</td>
+                                    <td class="px-3 py-3 text-sm font-semibold text-amber-200">{{ $leader->points }}</td>
+                                    <td class="px-3 py-3 text-sm text-stone-300">{{ $leader->approved_posts_count }}</td>
+                                    <td class="px-3 py-3 text-sm text-stone-300">{{ $leader->characters_count }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

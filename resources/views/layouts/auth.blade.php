@@ -4,6 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0f0f14">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
         <title>@yield('title', config('app.name', 'Chroniken der Asche'))</title>
 
@@ -14,16 +17,16 @@
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
     </head>
-    <body class="min-h-full bg-neutral-950 text-stone-200 antialiased">
-        <div class="relative isolate min-h-screen overflow-x-hidden">
+    <body class="min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
+        <div class="relative isolate min-h-screen overflow-x-clip">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.34),_transparent_44%),radial-gradient(circle_at_82%_28%,_rgba(90,66,129,0.18),_transparent_36%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
 
             <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                <a href="{{ route('home') }}" class="font-heading text-lg tracking-[0.18em] text-amber-300 sm:text-xl">
+                <a href="{{ route('home') }}" class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]">
                     CHRONIKEN DER ASCHE
                 </a>
 
-                <nav class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end sm:gap-3">
+                <nav class="app-nav" aria-label="Hauptnavigation">
                     @include('partials.pwa-install-button')
                     <a
                         href="{{ route('help.index') }}"
@@ -135,7 +138,7 @@
                 </nav>
             </header>
 
-            <main class="mx-auto w-full max-w-6xl px-5 pb-16 pt-2 sm:px-8">
+            <main class="mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8">
                 @if (session('status'))
                     <div class="mb-6 rounded-lg border border-emerald-600/40 bg-emerald-900/20 px-4 py-3 text-sm text-emerald-200">
                         {{ session('status') }}

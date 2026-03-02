@@ -8,7 +8,7 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Kampagne</p>
-                    <h1 class="font-heading text-3xl text-stone-100">{{ $campaign->title }}</h1>
+                    <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $campaign->title }}</h1>
                     @if ($campaign->summary)
                         <p class="mt-3 max-w-3xl text-stone-300">{{ $campaign->summary }}</p>
                     @endif
@@ -118,7 +118,7 @@
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
-                                    <h3 class="font-heading text-lg text-stone-100">{{ $scene->title }}</h3>
+                                    <h3 class="font-heading break-words text-lg text-stone-100">{{ $scene->title }}</h3>
                                     @if ($scene->summary)
                                         <p class="mt-1 text-sm text-stone-300">{{ $scene->summary }}</p>
                                     @endif

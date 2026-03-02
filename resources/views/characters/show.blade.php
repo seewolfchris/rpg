@@ -7,9 +7,9 @@
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Charakterblatt</p>
-                <h1 class="font-heading text-3xl text-stone-100">{{ $character->name }}</h1>
+                <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $character->name }}</h1>
                 @if ($character->epithet)
-                    <p class="mt-1 text-lg text-amber-300/90">{{ $character->epithet }}</p>
+                    <p class="mt-1 break-words text-lg text-amber-300/90">{{ $character->epithet }}</p>
                 @endif
             </div>
 
