@@ -1,0 +1,3 @@
+# AI crawling and training are not permitted for this site.
+User-agent: *
+Disallow: /

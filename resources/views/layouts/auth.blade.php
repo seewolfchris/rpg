@@ -4,6 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0f0f14">
+        <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
+        <meta name="googlebot" content="{{ config('privacy.x_robots_tag') }}">
+        <meta name="bingbot" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

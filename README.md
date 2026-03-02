@@ -106,6 +106,19 @@ npm run build
 - Install-Button erscheint nur, wenn Browser-Install-Prompt verfügbar ist.
 - Offline-Post-Queue nutzt IndexedDB und Sync/Fallback-Trigger.
 
+## Crawler / KI-Bot Schutz
+
+- `public/robots.txt` sperrt Crawling fuer alle Bots (`Disallow: /`).
+- `X-Robots-Tag` wird serverseitig gesetzt (Middleware + `.htaccess` Fallback).
+- Meta-Tags `robots`, `googlebot`, `bingbot` stehen auf `noindex`.
+- Bekannte Search-/KI-Bot User-Agents werden mit `403` geblockt.
+- Schalter per ENV:
+  - `PRIVACY_NOINDEX_HEADERS=true`
+  - `PRIVACY_BLOCK_KNOWN_BOTS=true`
+  - optional `PRIVACY_X_ROBOTS_TAG=...`
+
+Hinweis: Das ist Best-Effort. Vollstaendiger Schutz gegen Scraping erfordert zusaetzliche Webserver-/WAF-Regeln.
+
 ## Wichtige Routen
 
 - Landing: `/`
