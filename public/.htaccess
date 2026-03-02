@@ -9,6 +9,11 @@
 
     RewriteEngine On
 
+    # Block known search and AI crawler user agents before PHP/Laravel.
+    # Best effort only: user agents can be spoofed.
+    RewriteCond %{HTTP_USER_AGENT} "(gptbot|oai-searchbot|chatgpt-user|claudebot|claude-searchbot|perplexitybot|perplexity-user|googlebot|googleother|google-extended|bingbot|duckduckbot|yandexbot|baiduspider|bytespider|applebot|applebot-extended|ccbot|ahrefsbot|semrushbot|mj12bot|dotbot|petalbot|slurp|sogou|seznambot)" [NC]
+    RewriteRule ^ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
