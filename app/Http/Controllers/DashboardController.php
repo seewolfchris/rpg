@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Character;
+use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
@@ -13,6 +15,8 @@ class DashboardController extends Controller
 {
     public function __invoke(): View
     {
+        $user = auth()->user();
+
         $topPlayers = User::query()
             ->select(['id', 'name', 'points'])
             ->where('points', '>', 0)
@@ -21,7 +25,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $pendingModerationCount = auth()->user()->isGmOrAdmin()
+        $pendingModerationCount = $user->isGmOrAdmin()
             ? Post::query()->where('moderation_status', 'pending')->count()
             : 0;
 
@@ -44,7 +48,66 @@ class DashboardController extends Controller
 
         $bookmarkCount = (int) SceneBookmark::query()
             ->where('user_id', auth()->id())
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo(auth()->user()))
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->count();
+
+        $hasCharacter = Character::query()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        $hasSceneSubscription = SceneSubscription::query()
+            ->where('user_id', $user->id)
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->exists();
+
+        $hasPost = Post::query()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        $hasDiceRoll = DiceRoll::query()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        $tutorialSteps = [
+            [
+                'title' => 'Charakter anlegen',
+                'description' => 'Erstelle deine Figur mit Stats, Bio und Bild.',
+                'done' => $hasCharacter,
+                'url' => route('characters.create'),
+                'cta' => $hasCharacter ? 'Bearbeiten' : 'Jetzt erstellen',
+            ],
+            [
+                'title' => 'Szene abonnieren',
+                'description' => 'Abonniere eine Szene, um Updates und ungelesene Posts zu sehen.',
+                'done' => $hasSceneSubscription,
+                'url' => route('scene-subscriptions.index'),
+                'cta' => $hasSceneSubscription ? 'Abos ansehen' : 'Abo setzen',
+            ],
+            [
+                'title' => 'Ersten IC/OOC-Post schreiben',
+                'description' => 'IC bitte in Ich-Perspektive verfassen, als spricht dein Held selbst.',
+                'done' => $hasPost,
+                'url' => route('campaigns.index'),
+                'cta' => $hasPost ? 'Weiter schreiben' : 'Jetzt posten',
+            ],
+            [
+                'title' => 'Ersten d20-Wurf machen',
+                'description' => 'Nutze den eingebauten Dice-Roller statt manuellem Wurf-Text.',
+                'done' => $hasDiceRoll,
+                'url' => route('campaigns.index'),
+                'cta' => $hasDiceRoll ? 'Wurfverlauf ansehen' : 'Jetzt wuerfeln',
+            ],
+            [
+                'title' => 'Erstes Bookmark setzen',
+                'description' => 'Markiere wichtige Szenenstellen fuer schnellen Wiedereinstieg.',
+                'done' => $bookmarkCount > 0,
+                'url' => route('bookmarks.index'),
+                'cta' => $bookmarkCount > 0 ? 'Bookmarks ansehen' : 'Bookmark setzen',
+            ],
+        ];
+
+        $tutorialCompletedCount = collect($tutorialSteps)
+            ->filter(fn (array $step): bool => (bool) $step['done'])
             ->count();
 
         return view('dashboard', [
@@ -52,6 +115,8 @@ class DashboardController extends Controller
             'pendingModerationCount' => $pendingModerationCount,
             'unreadSceneCount' => $unreadSceneCount,
             'bookmarkCount' => $bookmarkCount,
+            'tutorialSteps' => $tutorialSteps,
+            'tutorialCompletedCount' => $tutorialCompletedCount,
         ]);
     }
 }

@@ -23,7 +23,7 @@
                 </div>
                 <div class="rounded-lg border border-stone-800 bg-neutral-900/70 p-4">
                     <dt class="font-heading text-sm tracking-[0.08em] text-amber-300">IC (In Character)</dt>
-                    <dd class="mt-2 text-sm text-stone-300">Alles, was deine Figur in der Welt sagt, denkt oder tut.</dd>
+                    <dd class="mt-2 text-sm text-stone-300">Alles, was deine Figur in der Welt sagt, denkt oder tut. Standard: Ich-Perspektive (1. Person).</dd>
                 </div>
                 <div class="rounded-lg border border-stone-800 bg-neutral-900/70 p-4">
                     <dt class="font-heading text-sm tracking-[0.08em] text-amber-300">OOC (Out Of Character)</dt>
@@ -58,7 +58,7 @@
                 <div class="mt-5 space-y-4 text-sm leading-relaxed text-stone-300">
                     <div class="rounded-lg border border-stone-700 bg-neutral-900/70 p-4">
                         <p class="text-xs uppercase tracking-[0.12em] text-amber-300">IC</p>
-                        <p class="mt-2">"Arvid tritt durch den Nebel und hebt die Klinge. "Wenn du luegst, endet es hier.""</p>
+                        <p class="mt-2">"Ich trete durch den Nebel und hebe die Klinge. Wenn du luegst, endet es hier."</p>
                     </div>
                     <div class="rounded-lg border border-stone-700 bg-neutral-900/70 p-4">
                         <p class="text-xs uppercase tracking-[0.12em] text-amber-300">OOC</p>
@@ -70,12 +70,12 @@
             <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 sm:p-8">
                 <h2 class="font-heading text-2xl text-stone-100">Posting-Regeln (empfohlen)</h2>
                 <ul class="mt-5 space-y-3 text-sm leading-relaxed text-stone-300">
-                    <li>1. Trenne IC und OOC klar in jedem Beitrag.</li>
-                    <li>2. Respektiere bestehende Szenen-Reihenfolge und Story-Kontinuitaet.</li>
-                    <li>3. Nutze Spoiler fuer Meta-Infos oder sensible Inhalte.</li>
-                    <li>4. Nutze den Dice-Roller statt manueller Wuerfelangaben.</li>
-                    <li>5. Editiere Posts transparent, wenn sich der Sinn aendert.</li>
-                    <li>6. Bei Konflikten zuerst OOC kurz klaeren, dann IC weiterspielen.</li>
+                    <li>1. Schreibe IC immer in Ich-Perspektive (1. Person), als spreche dein Held selbst.</li>
+                    <li>2. Trenne IC und OOC klar in jedem Beitrag.</li>
+                    <li>3. Respektiere bestehende Szenen-Reihenfolge und Story-Kontinuitaet.</li>
+                    <li>4. Nutze Spoiler fuer Meta-Infos oder sensible Inhalte.</li>
+                    <li>5. Nutze den Dice-Roller statt manueller Wuerfelangaben.</li>
+                    <li>6. Editiere Posts transparent, wenn sich der Sinn aendert.</li>
                 </ul>
             </article>
         </section>

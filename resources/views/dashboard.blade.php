@@ -20,6 +20,54 @@
             @endif
         </div>
 
+        @php($tutorialTotal = max(count($tutorialSteps), 1))
+        @php($tutorialProgress = (int) round(($tutorialCompletedCount / $tutorialTotal) * 100))
+        <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">In-App Tutorial</p>
+                    <h2 class="mt-1 font-heading text-2xl text-stone-100">Erste Schritte</h2>
+                    <p class="mt-2 text-sm text-stone-300">
+                        Fortschritt: {{ $tutorialCompletedCount }} / {{ $tutorialTotal }} abgeschlossen
+                    </p>
+                </div>
+                <a
+                    href="{{ route('help.index') }}"
+                    class="inline-flex rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                >
+                    Hilfe oeffnen
+                </a>
+            </div>
+            <div class="mt-4 h-2 w-full rounded-full bg-stone-800">
+                <div
+                    class="h-2 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300"
+                    style="width: {{ max(0, min($tutorialProgress, 100)) }}%;"
+                ></div>
+            </div>
+
+            <ol class="mt-5 space-y-3">
+                @foreach ($tutorialSteps as $step)
+                    <li class="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-stone-800 bg-neutral-900/60 px-4 py-3">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="{{ $step['done'] ? 'border-emerald-500/80 bg-emerald-500/20 text-emerald-200' : 'border-stone-600/80 bg-stone-800/70 text-stone-300' }} inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase">
+                                {{ $step['done'] ? 'ok' : $loop->iteration }}
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-stone-100">{{ $step['title'] }}</p>
+                                <p class="mt-1 text-xs leading-relaxed text-stone-400">{{ $step['description'] }}</p>
+                            </div>
+                        </div>
+                        <a
+                            href="{{ $step['url'] }}"
+                            class="inline-flex shrink-0 rounded-md border border-amber-500/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
+                        >
+                            {{ $step['cta'] }}
+                        </a>
+                    </li>
+                @endforeach
+            </ol>
+        </section>
+
         <div class="grid gap-4 md:grid-cols-5">
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Charaktere</h2>

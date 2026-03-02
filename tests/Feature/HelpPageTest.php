@@ -15,5 +15,6 @@ class HelpPageTest extends TestCase
         $response->assertSeeText('Begriffe');
         $response->assertSeeText('IC (In Character)');
         $response->assertSeeText('OOC (Out Of Character)');
+        $response->assertSeeText('Ich-Perspektive');
     }
 }
