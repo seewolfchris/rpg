@@ -17,6 +17,9 @@ echo "[2/7] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
 
 echo "[3/7] APP_KEY prüfen..."
+if ! grep -Eq '^APP_KEY=' .env; then
+  echo "APP_KEY=" >> .env
+fi
 if ! grep -Eq '^APP_KEY=base64:' .env; then
   php artisan key:generate --force --no-interaction
 fi
