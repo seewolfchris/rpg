@@ -1,0 +1,49 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-BqDGJId8.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/fonts/DMMono-Italic.woff2": {
+    "file": "assets/DMMono-Italic-DluhUqjW.woff2",
+    "src": "resources/fonts/DMMono-Italic.woff2"
+  },
+  "resources/fonts/DMMono-Light.woff2": {
+    "file": "assets/DMMono-Light-DGXSrwDE.woff2",
+    "src": "resources/fonts/DMMono-Light.woff2"
+  },
+  "resources/fonts/DMMono-LightItalic.woff2": {
+    "file": "assets/DMMono-LightItalic-DOXm21_5.woff2",
+    "src": "resources/fonts/DMMono-LightItalic.woff2"
+  },
+  "resources/fonts/DMMono-Regular.woff2": {
+    "file": "assets/DMMono-Regular-DYTswczC.woff2",
+    "src": "resources/fonts/DMMono-Regular.woff2"
+  },
+  "resources/fonts/DMSerifText-Italic.woff2": {
+    "file": "assets/DMSerifText-Italic-CQAL_ehf.woff2",
+    "src": "resources/fonts/DMSerifText-Italic.woff2"
+  },
+  "resources/fonts/DMSerifText-Regular.woff2": {
+    "file": "assets/DMSerifText-Regular-Dz0QfibA.woff2",
+    "src": "resources/fonts/DMSerifText-Regular.woff2"
+  },
+  "resources/fonts/Goldman-Bold.woff2": {
+    "file": "assets/Goldman-Bold-CrvD9wl1.woff2",
+    "src": "resources/fonts/Goldman-Bold.woff2"
+  },
+  "resources/fonts/Goldman-Regular.woff2": {
+    "file": "assets/Goldman-Regular-DcC1kKLb.woff2",
+    "src": "resources/fonts/Goldman-Regular.woff2"
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-DrAbWFio.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
