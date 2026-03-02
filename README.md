@@ -128,3 +128,9 @@ npm run build
 - `php artisan migrate --force`
 - `npm run build`
 - Webroot auf `public/` zeigen lassen
+
+## Deployment via GitHub + Plesk
+
+- Anfänger-Guide: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
+- GitHub->Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
+- Post-Deploy Script (für Plesk Git Actions): `scripts/plesk_post_deploy.sh`
