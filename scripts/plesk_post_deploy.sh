@@ -28,7 +28,16 @@ if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);';
   exit 1
 fi
 
-COMPOSER_PATH="${COMPOSER_PATH:-$(command -v composer || true)}"
+COMPOSER_PHAR_DEFAULT="/opt/psa/var/modules/composer/composer.phar"
+COMPOSER_PATH="${COMPOSER_PATH:-}"
+if [[ -z "$COMPOSER_PATH" ]]; then
+  if [[ -f "$COMPOSER_PHAR_DEFAULT" ]]; then
+    COMPOSER_PATH="$COMPOSER_PHAR_DEFAULT"
+  else
+    COMPOSER_PATH="$(command -v composer || true)"
+  fi
+fi
+
 if [[ -z "$COMPOSER_PATH" ]]; then
   echo "ERROR: composer nicht gefunden."
   exit 1
@@ -38,7 +47,11 @@ echo "Using PHP binary: $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 echo "Using Composer: $COMPOSER_PATH"
 
 echo "[1/7] Composer dependencies installieren (production)..."
-"$PHP_BIN" "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+if [[ "$COMPOSER_PATH" == *.phar ]] || [[ "$COMPOSER_PATH" == "$COMPOSER_PHAR_DEFAULT" ]]; then
+  "$PHP_BIN" "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+else
+  "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+fi
 
 echo "[2/7] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
