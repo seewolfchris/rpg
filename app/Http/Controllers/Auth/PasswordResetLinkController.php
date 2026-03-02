@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
+use Throwable;
 
 class PasswordResetLinkController extends Controller
 {
@@ -17,7 +18,13 @@ class PasswordResetLinkController extends Controller
 
     public function store(ForgotPasswordRequest $request): RedirectResponse
     {
-        $status = Password::sendResetLink($request->only('email'));
+        try {
+            $status = Password::sendResetLink($request->only('email'));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('status', 'Wenn ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link versendet.');
+        }
 
         if ($status === Password::RESET_LINK_SENT) {
             return back()->with('status', __($status));
