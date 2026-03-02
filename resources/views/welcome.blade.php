@@ -20,16 +20,16 @@
     <body class="min-h-full bg-neutral-950 text-stone-200 antialiased">
         @php($registerUrl = Route::has('register') ? route('register') : url('/register'))
 
-        <div class="relative isolate overflow-hidden">
+        <div class="relative isolate overflow-x-hidden">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.35),_transparent_44%),radial-gradient(circle_at_80%_30%,_rgba(87,53,120,0.15),_transparent_40%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
             <div class="pointer-events-none absolute -left-16 top-32 -z-10 h-56 w-56 rounded-full bg-amber-900/20 blur-3xl"></div>
             <div class="pointer-events-none absolute -right-16 bottom-24 -z-10 h-64 w-64 rounded-full bg-slate-500/10 blur-3xl"></div>
 
-            <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
+            <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <div class="font-heading text-xl tracking-[0.20em] text-amber-300 sm:text-2xl">
                     CHRONIKEN DER ASCHE
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
                     @include('partials.pwa-install-button')
                     <div class="rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-xs uppercase tracking-[0.14em] text-amber-200/80">
                         PbP RPG Beta
@@ -83,7 +83,7 @@
                         <img
                             src="{{ asset('images/hero-placeholder.svg') }}"
                             alt="Ruinen einer Festung unter rotem Mond"
-                            class="h-[22rem] w-full object-cover sm:h-[28rem]"
+                            class="h-[22rem] w-full object-cover sm:h-[28rem] lg:max-h-[70vh]"
                             loading="lazy"
                         >
                     </div>
