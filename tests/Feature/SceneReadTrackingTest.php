@@ -1,0 +1,182 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Campaign;
+use App\Models\Post;
+use App\Models\Scene;
+use App\Models\SceneSubscription;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class SceneReadTrackingTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_scene_view_marks_existing_subscription_as_read(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        $firstPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => $firstPost->id,
+            'last_read_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->assertOk();
+
+        $subscription = SceneSubscription::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $this->assertSame($latestPost->id, $subscription->last_read_post_id);
+        $this->assertNotNull($subscription->last_read_at);
+    }
+
+    public function test_campaign_overview_shows_unread_flag_until_scene_is_opened(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('Neu seit deinem letzten Besuch');
+
+        $this->actingAs($user)
+            ->get(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('campaigns.show', $campaign))
+            ->assertOk()
+            ->assertDontSee('Neu seit deinem letzten Besuch');
+    }
+
+    public function test_user_can_mark_scene_read_and_unread_from_subscription_actions(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('campaigns.scenes.subscription.read', [$campaign, $scene]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => $latestPost->id,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('campaigns.scenes.subscription.unread', [$campaign, $scene]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+    }
+
+    public function test_scene_view_exposes_jump_link_to_last_read_page_anchor(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        $posts = Post::factory()
+            ->count(25)
+            ->sequence(fn () => [
+                'scene_id' => $scene->id,
+                'user_id' => $gm->id,
+            ])
+            ->create();
+
+        $readCheckpointPost = $posts->get(4);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => $readCheckpointPost->id,
+            'last_read_at' => now()->subHour(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('campaigns.scenes.show', [$campaign, $scene]));
+
+        $response->assertOk();
+        $response->assertSee('Zum letzten Read');
+        $response->assertSee('page=2#post-'.$readCheckpointPost->id, false);
+    }
+
+    /**
+     * @return array{0: Campaign, 1: Scene, 2: User}
+     */
+    private function seedCampaignAndScene(): array
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        return [$campaign, $scene, $gm];
+    }
+}

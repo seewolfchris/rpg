@@ -1,0 +1,13 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="400" y1="0" x2="400" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1A23"/>
+      <stop offset="1" stop-color="#0A0A0F"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#bg)"/>
+  <circle cx="400" cy="330" r="160" fill="#232733"/>
+  <path d="M180 860C180 684.16 280.32 592 400 592C519.68 592 620 684.16 620 860V920H180V860Z" fill="#202532"/>
+  <path d="M98 940H702" stroke="#B68953" stroke-width="12" stroke-linecap="round"/>
+  <text x="400" y="84" text-anchor="middle" fill="#D1A36E" font-family="serif" font-size="42" letter-spacing="2">Character Portrait</text>
+</svg>

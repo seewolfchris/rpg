@@ -1,0 +1,26 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="800" y1="0" x2="800" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2B1513"/>
+      <stop offset="0.4" stop-color="#120F1A"/>
+      <stop offset="1" stop-color="#050507"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1140 180) rotate(90) scale(150)">
+      <stop stop-color="#F9A963"/>
+      <stop offset="1" stop-color="#F9A963" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <rect width="1600" height="900" fill="url(#moon)"/>
+  <circle cx="1140" cy="180" r="85" fill="#F7B87B" fill-opacity="0.85"/>
+  <path d="M0 650L130 620L260 650L390 600L520 640L650 615L780 645L910 610L1040 650L1170 605L1300 640L1430 595L1600 640V900H0V650Z" fill="#0D0E13"/>
+  <path d="M640 380L760 280L880 380V620H640V380Z" fill="#111319"/>
+  <rect x="700" y="430" width="20" height="190" fill="#1C2029"/>
+  <rect x="760" y="430" width="20" height="190" fill="#1C2029"/>
+  <rect x="820" y="430" width="20" height="190" fill="#1C2029"/>
+  <path d="M580 620H940L1010 700H510L580 620Z" fill="#08090C"/>
+  <path d="M720 505C720 472 747 445 780 445C813 445 840 472 840 505V620H720V505Z" fill="#0A0B10"/>
+  <path d="M0 740L180 700L360 760L540 720L720 770L900 735L1080 780L1260 730L1440 770L1600 735V900H0V740Z" fill="#07080B" fill-opacity="0.9"/>
+  <text x="70" y="825" fill="#C9A071" font-family="serif" font-size="46" letter-spacing="2">Chroniken der Asche</text>
+  <text x="70" y="865" fill="#A88A68" font-family="serif" font-size="22" letter-spacing="2">Hero Placeholder</text>
+</svg>

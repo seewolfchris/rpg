@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class DiceRoll extends Model
+{
+    use HasFactory;
+
+    public const MODE_NORMAL = 'normal';
+
+    public const MODE_ADVANTAGE = 'advantage';
+
+    public const MODE_DISADVANTAGE = 'disadvantage';
+
+    public const ALLOWED_MODES = [
+        self::MODE_NORMAL,
+        self::MODE_ADVANTAGE,
+        self::MODE_DISADVANTAGE,
+    ];
+
+    public $timestamps = false;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'scene_id',
+        'user_id',
+        'character_id',
+        'roll_mode',
+        'modifier',
+        'label',
+        'rolls',
+        'kept_roll',
+        'total',
+        'is_critical_success',
+        'is_critical_failure',
+        'created_at',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'rolls' => 'array',
+            'modifier' => 'integer',
+            'kept_roll' => 'integer',
+            'total' => 'integer',
+            'is_critical_success' => 'boolean',
+            'is_critical_failure' => 'boolean',
+            'created_at' => 'datetime',
+        ];
+    }
+
+    public function scene(): BelongsTo
+    {
+        return $this->belongsTo(Scene::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function character(): BelongsTo
+    {
+        return $this->belongsTo(Character::class);
+    }
+}

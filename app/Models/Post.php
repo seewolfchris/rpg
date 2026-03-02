@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Models;
+
+use App\Support\PostContentRenderer;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\HtmlString;
+
+class Post extends Model
+{
+    use HasFactory;
+
+    /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'scene_id',
+        'user_id',
+        'character_id',
+        'post_type',
+        'content_format',
+        'content',
+        'meta',
+        'moderation_status',
+        'approved_at',
+        'approved_by',
+        'is_edited',
+        'edited_at',
+        'is_pinned',
+        'pinned_at',
+        'pinned_by',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'meta' => 'array',
+            'approved_at' => 'datetime',
+            'edited_at' => 'datetime',
+            'is_edited' => 'boolean',
+            'is_pinned' => 'boolean',
+            'pinned_at' => 'datetime',
+        ];
+    }
+
+    public function scene(): BelongsTo
+    {
+        return $this->belongsTo(Scene::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function character(): BelongsTo
+    {
+        return $this->belongsTo(Character::class);
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function pinnedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pinned_by');
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(PostRevision::class)->orderByDesc('version');
+    }
+
+    public function moderationLogs(): HasMany
+    {
+        return $this->hasMany(PostModerationLog::class)->orderByDesc('created_at');
+    }
+
+    public function latestModerationLog(): HasOne
+    {
+        return $this->hasOne(PostModerationLog::class)->latestOfMany('created_at');
+    }
+
+    public function renderedContent(): HtmlString
+    {
+        return app(PostContentRenderer::class)->render($this->content, $this->content_format);
+    }
+}

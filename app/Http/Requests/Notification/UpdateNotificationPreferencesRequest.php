@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Http\Requests\Notification;
+
+use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateNotificationPreferencesRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return auth()->check();
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'post_moderation_database' => ['required', 'boolean'],
+            'post_moderation_mail' => ['required', 'boolean'],
+            'scene_new_post_database' => ['required', 'boolean'],
+            'scene_new_post_mail' => ['required', 'boolean'],
+            'campaign_invitation_database' => ['required', 'boolean'],
+            'campaign_invitation_mail' => ['required', 'boolean'],
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'post_moderation_database' => $this->boolean('post_moderation_database'),
+            'post_moderation_mail' => $this->boolean('post_moderation_mail'),
+            'scene_new_post_database' => $this->boolean('scene_new_post_database'),
+            'scene_new_post_mail' => $this->boolean('scene_new_post_mail'),
+            'campaign_invitation_database' => $this->boolean('campaign_invitation_database'),
+            'campaign_invitation_mail' => $this->boolean('campaign_invitation_mail'),
+        ]);
+    }
+
+    /**
+     * @return array<string, array<string, bool>>
+     */
+    public function preferences(): array
+    {
+        $defaults = User::NOTIFICATION_PREFERENCE_DEFAULTS;
+
+        return [
+            'post_moderation' => [
+                'database' => (bool) $this->validated('post_moderation_database', data_get($defaults, 'post_moderation.database', true)),
+                'mail' => (bool) $this->validated('post_moderation_mail', data_get($defaults, 'post_moderation.mail', false)),
+            ],
+            'scene_new_post' => [
+                'database' => (bool) $this->validated('scene_new_post_database', data_get($defaults, 'scene_new_post.database', true)),
+                'mail' => (bool) $this->validated('scene_new_post_mail', data_get($defaults, 'scene_new_post.mail', false)),
+            ],
+            'campaign_invitation' => [
+                'database' => (bool) $this->validated('campaign_invitation_database', data_get($defaults, 'campaign_invitation.database', true)),
+                'mail' => (bool) $this->validated('campaign_invitation_mail', data_get($defaults, 'campaign_invitation.mail', false)),
+            ],
+        ];
+    }
+}

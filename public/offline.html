@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#0f0f14">
+        <title>Offline | Chroniken der Asche</title>
+        <style>
+            @font-face {
+                font-family: 'Goldman';
+                src: url('/fonts/Goldman-Bold.woff2') format('woff2');
+                font-weight: 700;
+                font-style: normal;
+                font-display: swap;
+            }
+
+            @font-face {
+                font-family: 'DM Serif Text';
+                src: url('/fonts/DMSerifText-Regular.woff2') format('woff2');
+                font-weight: 400;
+                font-style: normal;
+                font-display: swap;
+            }
+
+            @font-face {
+                font-family: 'DM Mono';
+                src: url('/fonts/DMMono-Regular.woff2') format('woff2');
+                font-weight: 400;
+                font-style: normal;
+                font-display: swap;
+            }
+
+            :root {
+                color-scheme: dark;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                padding: 2rem;
+                background: radial-gradient(circle at top, #342211 0%, #0b0b0f 45%, #040405 100%);
+                color: #e7e5e4;
+                font-family: 'DM Serif Text', serif;
+                text-align: center;
+            }
+
+            main {
+                max-width: 34rem;
+                border: 1px solid rgba(120, 113, 108, 0.55);
+                background: rgba(0, 0, 0, 0.45);
+                border-radius: 1rem;
+                padding: 2rem;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+            }
+
+            h1 {
+                margin-top: 0;
+                font-size: 1.8rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                font-family: 'Goldman', sans-serif;
+            }
+
+            p {
+                line-height: 1.6;
+                color: #d6d3d1;
+            }
+
+            .meta {
+                margin-top: 1.2rem;
+                font-family: 'DM Mono', monospace;
+                font-size: 0.75rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #a8a29e;
+            }
+
+            a {
+                color: #fbbf24;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Die Chronik ist offline</h1>
+            <p>
+                Du kannst weiterhin bereits gecachte Szenen und Charakterblaetter lesen. Neue Beitraege aus Szenen werden offline vorgemerkt und beim naechsten Online-Moment automatisch gesendet.
+            </p>
+            <p>
+                <a href="/">Zur Startseite</a>
+            </p>
+            <p class="meta">Chroniken der Asche · Offline-Modus aktiv</p>
+        </main>
+    </body>
+</html>
