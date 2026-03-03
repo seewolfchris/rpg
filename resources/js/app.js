@@ -1,6 +1,6 @@
 import './bootstrap';
 import { initDiceRoller } from './dice-roller';
-import { registerCharacterSheetComponent } from './character-sheet';
+import { characterSheetForm, registerCharacterSheetComponent } from './character-sheet';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
 const QUEUE_STORE_NAME = 'postQueue';
@@ -12,6 +12,8 @@ const PWA_INSTALL_BUTTON_SELECTOR = '[data-pwa-install-button]';
 let swRegistration = null;
 let deferredInstallPrompt = null;
 
+window.characterSheetForm = characterSheetForm;
+
 window.addEventListener('alpine:init', () => {
     if (!window.Alpine) {
         return;
@@ -19,6 +21,16 @@ window.addEventListener('alpine:init', () => {
 
     registerCharacterSheetComponent(window.Alpine);
 });
+
+const startDeferredAlpine = () => {
+    if (typeof window.__startAlpine === 'function') {
+        window.__startAlpine();
+        delete window.__startAlpine;
+    }
+};
+
+startDeferredAlpine();
+window.addEventListener('load', startDeferredAlpine);
 
 const bootDiceRoller = () => {
     initDiceRoller();

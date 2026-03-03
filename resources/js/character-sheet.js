@@ -26,8 +26,8 @@ const withMinimumEmptyRows = (values, minimum) => {
     return list;
 };
 
-export function registerCharacterSheetComponent(Alpine) {
-    Alpine.data('characterSheetForm', (payload = {}) => ({
+export function characterSheetForm(payload = {}) {
+    return {
         config: payload.config ?? {},
         isEdit: Boolean(payload.isEdit),
         attributeKeys: Array.isArray(payload.attributeKeys) ? payload.attributeKeys : [],
@@ -312,5 +312,13 @@ export function registerCharacterSheetComponent(Alpine) {
 
             return parts.length ? parts.join(' | ') : 'Keine Modifikatoren';
         },
-    }));
+    };
+}
+
+export function registerCharacterSheetComponent(Alpine) {
+    Alpine.data('characterSheetForm', characterSheetForm);
+}
+
+if (typeof window !== 'undefined') {
+    window.characterSheetForm = characterSheetForm;
 }

@@ -18,6 +18,10 @@
     $defaultSpecies = array_key_exists('mensch', $speciesOptions) ? 'mensch' : (array_key_first($speciesOptions) ?? '');
     $defaultCalling = array_key_exists('abenteurer', $callingOptions) ? 'abenteurer' : (array_key_first($callingOptions) ?? '');
 
+    $selectedOrigin = (string) old('origin', $defaultOrigin);
+    $selectedSpecies = (string) old('species', $defaultSpecies);
+    $selectedCalling = (string) old('calling', $defaultCalling);
+
     $character = $character ?? null;
     $isEdit = $mode === 'edit';
 
@@ -88,7 +92,7 @@
 @endphp
 
 <section class="mx-auto w-full max-w-7xl rounded-3xl border border-stone-800 bg-black/40 p-5 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8"
-    x-data="characterSheetForm(@js($componentPayload))"
+    x-data="window.characterSheetForm(@js($componentPayload))"
 >
     <header class="rounded-2xl border border-stone-800 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950/35 p-6">
         <p class="text-xs uppercase tracking-[0.2em] text-red-300/80">Chroniken der Asche</p>
@@ -169,7 +173,7 @@
                                 <label class="rounded-lg border border-stone-700/80 bg-black/35 px-3 py-2 text-sm text-stone-200 transition hover:border-stone-500"
                                     :class="origin === '{{ $originKey }}' ? 'border-red-500/70 bg-red-500/10 text-red-100' : ''"
                                 >
-                                    <input type="radio" class="sr-only" name="origin" value="{{ $originKey }}" x-model="origin">
+                                    <input type="radio" class="sr-only" name="origin" value="{{ $originKey }}" x-model="origin" @checked($selectedOrigin === $originKey)>
                                     {{ $originLabel }}
                                 </label>
                             @endforeach
@@ -189,7 +193,6 @@
                             name="concept"
                             rows="2"
                             maxlength="180"
-                            required
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Wer bist du in einem einzigen, klaren Satz?"
                         >{{ old('concept', '') }}</textarea>
@@ -202,7 +205,6 @@
                             name="world_connection"
                             rows="3"
                             maxlength="2000"
-                            required
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Fraktion, Ort, Blutlinie, Schuld oder Schwur"
                         >{{ old('world_connection', '') }}</textarea>
@@ -215,7 +217,6 @@
                             name="gm_secret"
                             rows="3"
                             maxlength="3000"
-                            required
                             class="w-full rounded-md border border-red-800/70 bg-red-950/25 px-4 py-3 text-red-100 outline-none transition placeholder:text-red-300/70 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Was darf die Gruppe vorerst nicht wissen?"
                         >{{ old('gm_secret', '') }}</textarea>
@@ -233,7 +234,7 @@
                     <label class="rounded-xl border border-stone-700/80 bg-black/40 p-4 transition"
                         :class="species === '{{ $speciesKey }}' ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
                     >
-                        <input class="sr-only" type="radio" name="species" value="{{ $speciesKey }}" x-model="species">
+                        <input class="sr-only" type="radio" name="species" value="{{ $speciesKey }}" x-model="species" @checked($selectedSpecies === $speciesKey)>
                         <h3 class="font-heading text-lg text-stone-100">{{ $species['label'] }}</h3>
                         <p class="mt-2 text-sm leading-relaxed text-stone-300">{{ $species['description'] ?? 'Keine Beschreibung in der Konfiguration.' }}</p>
                         <p class="mt-3 text-xs uppercase tracking-[0.1em] text-red-200/90" x-text="formatSpeciesModifiers('{{ $speciesKey }}')"></p>
@@ -294,7 +295,6 @@
                             id="attr-note-{{ $key }}"
                             name="{{ $key }}_note"
                             rows="2"
-                            required
                             maxlength="800"
                             x-model="attributeNotes.{{ $key }}"
                             class="mt-1 w-full rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-200 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
@@ -315,7 +315,7 @@
                         <label class="rounded-xl border border-stone-700/80 bg-black/40 p-4 transition"
                             :class="calling === '{{ $callingKey }}' ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
                         >
-                            <input class="sr-only" type="radio" name="calling" value="{{ $callingKey }}" x-model="calling">
+                            <input class="sr-only" type="radio" name="calling" value="{{ $callingKey }}" x-model="calling" @checked($selectedCalling === $callingKey)>
                             <h3 class="font-heading text-lg text-stone-100">{{ $calling['label'] }}</h3>
                             <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-300">{{ $calling['description'] }}</p>
                         </label>

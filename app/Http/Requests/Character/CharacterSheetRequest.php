@@ -43,9 +43,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'calling_custom_name' => ['nullable', 'string', 'max:120'],
             'calling_custom_description' => ['nullable', 'string', 'max:2000'],
 
-            'concept' => ['required', 'string', 'min:8', 'max:180'],
-            'gm_secret' => ['required', 'string', 'min:10', 'max:3000'],
-            'world_connection' => ['required', 'string', 'min:10', 'max:2000'],
+            'concept' => ['nullable', 'string', 'min:8', 'max:180'],
+            'gm_secret' => ['nullable', 'string', 'min:10', 'max:3000'],
+            'world_connection' => ['nullable', 'string', 'min:10', 'max:2000'],
             'gm_note' => ['nullable', 'string', 'max:2000'],
 
             'advantages' => ['required', 'array', 'min:'.$traitMin, 'max:'.$traitMax],
@@ -64,7 +64,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
         foreach ($this->attributeKeys() as $key) {
             $rules[$key] = ['required', 'integer', 'between:30,60'];
-            $rules[$key.'_note'] = ['required', 'string', 'min:8', 'max:800'];
+            $rules[$key.'_note'] = ['nullable', 'string', 'max:800'];
         }
 
         return $rules;
@@ -106,9 +106,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages' => $this->normalizeTraitInput($this->input('disadvantages')),
             'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
             'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
-            'concept' => trim((string) $this->input('concept', '')),
-            'gm_secret' => trim((string) $this->input('gm_secret', '')),
-            'world_connection' => trim((string) $this->input('world_connection', '')),
+            'concept' => $this->nullIfEmpty((string) $this->input('concept', '')),
+            'gm_secret' => $this->nullIfEmpty((string) $this->input('gm_secret', '')),
+            'world_connection' => $this->nullIfEmpty((string) $this->input('world_connection', '')),
             'gm_note' => trim((string) $this->input('gm_note', '')),
         ];
 
@@ -202,6 +202,13 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         return [];
+    }
+
+    protected function nullIfEmpty(string $value): ?string
+    {
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     protected function convertLegacyValueToPercent(int $legacyValue): int
@@ -380,5 +387,27 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         return $attributes;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            '*.required' => 'Dieses Feld ist erforderlich.',
+            '*.string' => 'Bitte einen gueltigen Text eingeben.',
+            '*.integer' => 'Bitte eine ganze Zahl eingeben.',
+            '*.array' => 'Dieses Feld hat ein ungueltiges Listenformat.',
+            '*.in' => 'Bitte eine gueltige Option auswaehlen.',
+            '*.distinct' => 'Doppelte Eintraege sind nicht erlaubt.',
+            '*.min.string' => 'Bitte mindestens :min Zeichen eingeben.',
+            '*.max.string' => 'Bitte maximal :max Zeichen eingeben.',
+            '*.min.array' => 'Bitte mindestens :min Eintrag auswaehlen.',
+            '*.max.array' => 'Bitte hoechstens :max Eintraege auswaehlen.',
+            '*.between.integer' => 'Der Wert muss zwischen :min und :max liegen.',
+            '*.mimes' => 'Bitte eine Datei vom Typ :values hochladen.',
+            '*.image' => 'Bitte eine gueltige Bilddatei hochladen.',
+        ];
     }
 }
