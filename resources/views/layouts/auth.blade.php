@@ -10,6 +10,7 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <script defer src="{{ asset('js/character-sheet.global.js') }}"></script>
         <script>
             window.deferLoadingAlpine = function (startAlpine) {
                 window.__startAlpine = startAlpine;
