@@ -22,7 +22,19 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('/hilfe', 'help.index')
+Route::view('/wissen', 'knowledge.index')
+    ->name('knowledge.index');
+
+Route::view('/wissen/wie-spielt-man', 'knowledge.how-to-play')
+    ->name('knowledge.how-to-play');
+
+Route::view('/wissen/regelwerk', 'knowledge.rules')
+    ->name('knowledge.rules');
+
+Route::view('/wissen/enzyklopaedie', 'knowledge.encyclopedia')
+    ->name('knowledge.encyclopedia');
+
+Route::redirect('/hilfe', '/wissen', 301)
     ->name('help.index');
 
 Route::middleware('guest')->group(function () {

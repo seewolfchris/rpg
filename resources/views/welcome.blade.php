@@ -36,10 +36,10 @@
                 <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
                     @include('partials.pwa-install-button')
                     <a
-                        href="{{ route('help.index') }}"
+                        href="{{ route('knowledge.index') }}"
                         class="inline-flex items-center justify-center rounded-full border border-stone-600/70 bg-black/35 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100 sm:tracking-[0.14em]"
                     >
-                        Hilfe
+                        Wissen
                     </a>
                     <div class="inline-flex items-center justify-center rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-200/80 sm:tracking-[0.14em]">
                         PbP RPG Beta
