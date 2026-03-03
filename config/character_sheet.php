@@ -22,12 +22,14 @@ return [
     'species' => [
         'mensch' => [
             'label' => 'Mensch',
+            'description' => 'Vielseitig, anpassungsfaehig und ohne angeborene Extreme. Menschen tragen keine festen uralten Lasten, aber auch keine geschenkten Wege.',
             'modifiers' => [],
             'le_bonus' => 0,
             'ae_bonus' => 0,
         ],
         'elf' => [
             'label' => 'Elf',
+            'description' => 'Feinsinnig und nah an den verborgenen Stroemungen der Welt. Elfen wirken oft entrueckt, doch ihre Koerper tragen weniger rohe Gewalt.',
             'modifiers' => [
                 'in' => 10,
                 'ch' => 10,
@@ -38,6 +40,7 @@ return [
         ],
         'zwerg' => [
             'label' => 'Zwerg',
+            'description' => 'Zaeh, standhaft und gehaertet durch Stein, Feuer und Schwur. Zwerge tragen Lasten, die andere brechen, zahlen dafuer aber mit Beweglichkeit und Diplomatie.',
             'modifiers' => [
                 'kk' => 10,
                 'ko' => 10,
