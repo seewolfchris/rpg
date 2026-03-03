@@ -11,6 +11,46 @@ class CharacterManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function characterPayload(array $overrides = []): array
+    {
+        $payload = [
+            'name' => 'Aldric',
+            'epithet' => 'der Graupriester',
+            'bio' => str_repeat('Dunkle Geschichte. ', 4),
+            'origin' => 'native_vhaltor',
+            'species' => 'mensch',
+            'calling' => 'abenteurer',
+            'concept' => 'Ich jage Wahrheiten durch Asche und Nebel.',
+            'gm_secret' => 'Ich schulde der Schattenbank von Nerez einen Eid.',
+            'world_connection' => 'Meine Schwester dient den Glutrichtern als Schreiberin.',
+            'advantages' => ['Blutpforten-Sinn'],
+            'disadvantages' => ['Aschesucht'],
+            'gm_note' => 'Vorteil/Nachteil fuer Kampagne freigegeben.',
+            'mu' => 40,
+            'kl' => 45,
+            'in' => 40,
+            'ch' => 35,
+            'ff' => 40,
+            'ge' => 40,
+            'ko' => 45,
+            'kk' => 40,
+            'mu_note' => 'Haelt auch in Finsternis den Blick gerade.',
+            'kl_note' => 'Liest Archive schneller als andere Gesichter.',
+            'in_note' => 'Vertraut dem Druecken der Stille.',
+            'ch_note' => 'Wirkt warm, bleibt aber unnahbar.',
+            'ff_note' => 'Feine Hand bei Siegeln und Schlossnadeln.',
+            'ge_note' => 'Leichtfussig trotz schwerem Mantel.',
+            'ko_note' => 'Zaeh wie alter Lederpanzer.',
+            'kk_note' => 'Schultert Lasten ohne Klage.',
+        ];
+
+        return array_merge($payload, $overrides);
+    }
+
     public function test_guest_cannot_access_character_index(): void
     {
         $response = $this->get('/characters');
@@ -22,22 +62,12 @@ class CharacterManagementTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/characters', [
-            'name' => 'Aldric',
-            'epithet' => 'der Graupriester',
-            'bio' => str_repeat('Dunkle Geschichte. ', 4),
-            'strength' => 12,
-            'dexterity' => 11,
-            'constitution' => 14,
-            'intelligence' => 13,
-            'wisdom' => 15,
-            'charisma' => 9,
-        ]);
+        $response = $this->actingAs($user)->post('/characters', $this->characterPayload());
 
         $this->assertDatabaseHas('characters', [
             'user_id' => $user->id,
             'name' => 'Aldric',
-            'strength' => 12,
+            'strength' => 40,
         ]);
 
         $response->assertRedirect();
@@ -67,21 +97,26 @@ class CharacterManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->put(route('characters.update', $character), [
-            'name' => 'Nachher',
-            'epithet' => 'der Namegewandelte',
-            'bio' => str_repeat('Neue Legende. ', 4),
-            'strength' => 16,
-            'dexterity' => 10,
-            'constitution' => 13,
-            'intelligence' => 11,
-            'wisdom' => 12,
-            'charisma' => 14,
+            ...$this->characterPayload([
+                'name' => 'Nachher',
+                'epithet' => 'der Namegewandelte',
+                'bio' => str_repeat('Neue Legende. ', 4),
+                'calling' => 'ritter',
+                'mu' => 45,
+                'kl' => 42,
+                'in' => 40,
+                'ch' => 36,
+                'ff' => 38,
+                'ge' => 37,
+                'ko' => 44,
+                'kk' => 46,
+            ]),
         ]);
 
         $this->assertDatabaseHas('characters', [
             'id' => $character->id,
             'name' => 'Nachher',
-            'strength' => 16,
+            'strength' => 46,
         ]);
 
         $response->assertRedirect(route('characters.show', $character));
