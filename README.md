@@ -2,6 +2,13 @@
 
 Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchronen Kampagnen/Szenen, Post-Moderation, Dice-Roller, Benachrichtigungen, Gamification und PWA-Basis.
 
+## Dokumentations-Uebersicht
+
+- Projekt-Quickstart und Betrieb: `README.md`
+- Master-Handbuch (fachliche Gesamtuebersicht): `docs/PROJEKT-ÜBERSICHT.md`
+- Plesk Deployment fuer Einsteiger: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
+- GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
+
 ## Beta-Status
 
 Stand: **Beta 1** (funktional, getestet, build-fähig)
@@ -19,14 +26,32 @@ Enthalten:
 - Dice-Roller: d20 (normal/advantage/disadvantage) mit Log in DB
 - Benachrichtigungen: In-App + Mail-Kanäle (präferenzgesteuert)
 - Gamification: Punkte für freigegebene Posts
+- Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie
+- Enzyklopaedie-Admin: Kategorien/Eintraege CRUD fuer GM/Admin
 - PWA-Basis: Manifest, Service Worker, Offline-Lesen (Szenen/Charaktere), Offline-Post-Queue
 - Security-Basis: Validation, Policies, CSRF, Auth-Middleware, Rate Limiting
+
+## Produkt-Leitlinien
+
+- Primaerziel: immersives, asynchrones Geschichtenerzaehlen (PbP)
+- Regelkomplexitaet: leichtes d20-System als Unterstuetzung, nicht als Selbstzweck
+- UX-Ziel: Roman-Gefuehl statt Regelbogen-Overload
+
+## Produkt-Entscheidungen (Maerz 2026)
+
+- Regelwerk, Weltwissen und Spielanleitung bleiben getrennte Wissensbereiche
+- Wissenszentrum ist zentrale Einstiegsseite (`/wissen`)
+- Enzyklopaedie wird redaktionell durch GM/Admin gepflegt
+- Charakter-Erstellung mit zwei Modi:
+  - `Real-World Anfaenger` (geplant)
+  - `Native aus Vhal'Tor` (geplant)
 
 ## Tech Stack
 
 - PHP 8.5+
 - Laravel 12/13 kompatibel (Skeleton-basiert)
-- SQLite (lokal, default)
+- MySQL / MariaDB (Produktion und empfohlen lokal)
+- SQLite nur optional fuer einzelne lokale Test-Setups
 - Tailwind CSS (Vite)
 - Blade Templates
 - Keine zusätzlichen Frontend-Frameworks
@@ -48,13 +73,26 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 3) Datenbank migrieren
+### 3) Datenbank konfigurieren (.env)
+
+Empfohlen (wie Produktion):
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=chroniken_der_asche
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 4) Datenbank migrieren
 
 ```bash
 php artisan migrate
 ```
 
-### 4) App starten
+### 5) App starten
 
 Terminal 1:
 ```bash
@@ -122,6 +160,9 @@ Hinweis: Das ist Best-Effort. Vollstaendiger Schutz gegen Scraping erfordert zus
 ## Wichtige Routen
 
 - Landing: `/`
+- Wissenszentrum: `/wissen`
+- Enzyklopaedie: `/wissen/enzyklopaedie`
+- Enzyklopaedie Admin (nur GM/Admin): `/wissen/enzyklopaedie/admin/kategorien`
 - Dashboard: `/dashboard`
 - Kampagnen: `/campaigns`
 - Szenen-Abos: `/scene-subscriptions`
