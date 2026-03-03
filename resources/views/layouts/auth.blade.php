@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
     <head>
+        @php($appVersion = (string) config('app.version', 'v0.01-beta'))
+        @php($appBuild = (string) config('app.build', ''))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#0f0f14">
+        <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
         <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="googlebot" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="bingbot" content="{{ config('privacy.x_robots_tag') }}">
@@ -157,6 +160,18 @@
 
                 @yield('content')
             </main>
+
+            <footer class="mx-auto w-full max-w-6xl px-5 pb-8 sm:px-8">
+                <div class="rounded-lg border border-stone-800/80 bg-black/35 px-4 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">
+                    <span class="text-stone-500">Build:</span>
+                    <span class="font-semibold text-amber-300">{{ $appVersion }}</span>
+                    @if ($appBuild !== '')
+                        <span class="text-stone-500">|</span>
+                        <span class="font-mono text-stone-300">{{ $appBuild }}</span>
+                    @endif
+                    <span class="text-stone-500">| Beta</span>
+                </div>
+            </footer>
         </div>
     </body>
 </html>

@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | Sichtbare Versionskennung fuer Beta-Rollouts. Optional kann ein Build-
+    | Kennzeichen (z. B. Commit-Hash) ueber APP_BUILD gesetzt werden.
+    |
+    */
+
+    'version' => env('APP_VERSION', 'v0.01-beta'),
+
+    'build' => env('APP_BUILD'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
