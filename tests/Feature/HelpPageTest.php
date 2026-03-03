@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class HelpPageTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_help_route_redirects_to_knowledge_center(): void
     {
         $response = $this->get(route('help.index'));
@@ -33,6 +36,6 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()
             ->assertSeeText('Enzyklopaedie von Vhal')
-            ->assertSeeText('Zeitalter');
+            ->assertSeeText('Zeitalter der Sonnenkronen');
     }
 }

@@ -9,7 +9,10 @@ use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiceRollController;
+use App\Http\Controllers\EncyclopediaCategoryController;
+use App\Http\Controllers\EncyclopediaEntryController;
 use App\Http\Controllers\GmModerationController;
+use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
@@ -22,16 +25,16 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('/wissen', 'knowledge.index')
+Route::get('/wissen', [KnowledgeController::class, 'index'])
     ->name('knowledge.index');
 
-Route::view('/wissen/wie-spielt-man', 'knowledge.how-to-play')
+Route::get('/wissen/wie-spielt-man', [KnowledgeController::class, 'howToPlay'])
     ->name('knowledge.how-to-play');
 
-Route::view('/wissen/regelwerk', 'knowledge.rules')
+Route::get('/wissen/regelwerk', [KnowledgeController::class, 'rules'])
     ->name('knowledge.rules');
 
-Route::view('/wissen/enzyklopaedie', 'knowledge.encyclopedia')
+Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia'])
     ->name('knowledge.encyclopedia');
 
 Route::redirect('/hilfe', '/wissen', 301)
@@ -149,6 +152,22 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::view('/gm', 'gm.index')
         ->middleware('role:gm,admin')
         ->name('gm.index');
+
+    Route::prefix('/wissen/enzyklopaedie/admin')
+        ->as('knowledge.admin.')
+        ->middleware('role:gm,admin')
+        ->group(function (): void {
+            Route::resource('kategorien', EncyclopediaCategoryController::class)
+                ->parameters(['kategorien' => 'encyclopediaCategory'])
+                ->except(['show']);
+
+            Route::resource('kategorien.eintraege', EncyclopediaEntryController::class)
+                ->parameters([
+                    'kategorien' => 'encyclopediaCategory',
+                    'eintraege' => 'encyclopediaEntry',
+                ])
+                ->except(['show', 'index']);
+        });
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
