@@ -138,17 +138,13 @@ class Character extends Model
     {
         $keys = $this->attributeKeys();
         $species = Str::lower((string) ($attributes['species'] ?? $this->species ?? ''));
-        $calling = Str::lower((string) ($attributes['calling'] ?? $this->calling ?? ''));
         $speciesModifiers = (array) data_get($this->characterSheet(), 'species.'.$species.'.modifiers', []);
-        $callingBonuses = (array) data_get($this->characterSheet(), 'callings.'.$calling.'.bonuses.attributes', []);
 
         $effective = [];
 
         foreach ($keys as $key) {
             $baseValue = $this->resolveBaseAttributeValue($key, $attributes);
-            $effective[$key] = $baseValue
-                + (int) ($speciesModifiers[$key] ?? 0)
-                + (int) ($callingBonuses[$key] ?? 0);
+            $effective[$key] = $baseValue + (int) ($speciesModifiers[$key] ?? 0);
         }
 
         return $effective;
@@ -167,9 +163,7 @@ class Character extends Model
 
         $keys = $this->attributeKeys();
         $species = Str::lower((string) ($attributes['species'] ?? $this->species ?? ''));
-        $calling = Str::lower((string) ($attributes['calling'] ?? $this->calling ?? ''));
         $speciesModifiers = (array) data_get($this->characterSheet(), 'species.'.$species.'.modifiers', []);
-        $callingBonuses = (array) data_get($this->characterSheet(), 'callings.'.$calling.'.bonuses.attributes', []);
         $legacyMap = $this->legacyColumnMap();
 
         $normalized = [];
@@ -177,8 +171,7 @@ class Character extends Model
         foreach ($keys as $key) {
             $effectiveValue = (int) Arr::get($value, $key, $this->resolveBaseAttributeValue($key, $attributes));
             $speciesBonus = (int) ($speciesModifiers[$key] ?? 0);
-            $callingBonus = (int) ($callingBonuses[$key] ?? 0);
-            $baseValue = max(0, min(100, $effectiveValue - $speciesBonus - $callingBonus));
+            $baseValue = max(0, min(100, $effectiveValue - $speciesBonus));
 
             $normalized[$key] = $baseValue;
 

@@ -225,6 +225,38 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect(route('characters.show', $character));
     }
 
+    public function test_effective_attributes_match_form_logic_species_modifiers_only(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'species' => 'elf',
+            'calling' => 'magier',
+            'mu' => 40,
+            'kl' => 40,
+            'in' => 40,
+            'ch' => 40,
+            'ff' => 40,
+            'ge' => 40,
+            'ko' => 40,
+            'kk' => 40,
+            'strength' => 40,
+            'dexterity' => 40,
+            'constitution' => 40,
+            'intelligence' => 40,
+            'wisdom' => 40,
+            'charisma' => 40,
+        ]);
+
+        $effective = (array) $character->effective_attributes;
+
+        $this->assertSame(40, (int) ($effective['kl'] ?? 0)); // Berufungsbonus KL+5 darf hier nicht eingerechnet werden.
+        $this->assertSame(50, (int) ($effective['in'] ?? 0)); // Speziesbonus Elf +10 wird eingerechnet.
+        $this->assertSame(50, (int) ($effective['ch'] ?? 0)); // Speziesbonus Elf +10 wird eingerechnet.
+        $this->assertSame(35, (int) ($effective['kk'] ?? 0)); // Speziesmalus Elf -5 wird eingerechnet.
+    }
+
     public function test_user_can_delete_own_character(): void
     {
         $user = User::factory()->create();
