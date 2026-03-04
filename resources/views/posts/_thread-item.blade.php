@@ -17,16 +17,24 @@
                     {{ strtoupper($post->post_type) }}
                 </span>
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
-                    {{ $post->moderation_status }}
+                    {{ match ($post->moderation_status) {
+                        'approved' => 'Freigegeben',
+                        'rejected' => 'Abgelehnt',
+                        default => 'Ausstehend',
+                    } }}
                 </span>
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
-                    {{ $post->content_format }}
+                    {{ match ($post->content_format) {
+                        'markdown' => 'Markdown',
+                        'bbcode' => 'BBCode',
+                        default => 'Klartext',
+                    } }}
                 </span>
                 @if ($post->is_edited)
-                    <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">Edited</span>
+                    <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">Bearbeitet</span>
                 @endif
                 @if ($post->is_pinned)
-                    <span class="rounded border border-amber-600/70 bg-amber-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-amber-300">Pinned</span>
+                    <span class="rounded border border-amber-600/70 bg-amber-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-amber-300">Angepinnt</span>
                 @endif
             </div>
         </div>
@@ -129,6 +137,31 @@
             @elseif ($post->diceRoll->is_critical_failure)
                 <p class="mt-2 text-xs uppercase tracking-[0.08em] text-red-300">Kritischer Fehlschlag</p>
             @endif
+
+            @if (
+                (int) $post->diceRoll->applied_le_delta !== 0
+                || (int) $post->diceRoll->applied_ae_delta !== 0
+                || $post->diceRoll->resulting_le_current !== null
+                || $post->diceRoll->resulting_ae_current !== null
+            )
+                <div class="mt-3 rounded-md border border-stone-700/80 bg-black/30 p-3 text-xs uppercase tracking-[0.08em] text-stone-300">
+                    <p class="text-stone-400">Direkte Auswirkungen auf den Charakterbogen</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <span class="rounded border border-stone-600/80 bg-black/35 px-2 py-1">
+                            LE: {{ $post->diceRoll->applied_le_delta >= 0 ? '+' : '' }}{{ $post->diceRoll->applied_le_delta }}
+                            @if ($post->diceRoll->resulting_le_current !== null)
+                                => {{ $post->diceRoll->resulting_le_current }}
+                            @endif
+                        </span>
+                        <span class="rounded border border-stone-600/80 bg-black/35 px-2 py-1">
+                            AE: {{ $post->diceRoll->applied_ae_delta >= 0 ? '+' : '' }}{{ $post->diceRoll->applied_ae_delta }}
+                            @if ($post->diceRoll->resulting_ae_current !== null)
+                                => {{ $post->diceRoll->resulting_ae_current }}
+                            @endif
+                        </span>
+                    </div>
+                </div>
+            @endif
         </section>
     @endif
 
@@ -214,9 +247,9 @@
                 name="moderation_status"
                 class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-2 py-1.5 text-xs text-stone-100"
             >
-                <option value="pending" @selected($post->moderation_status === 'pending')>Pending</option>
-                <option value="approved" @selected($post->moderation_status === 'approved')>Approved</option>
-                <option value="rejected" @selected($post->moderation_status === 'rejected')>Rejected</option>
+                <option value="pending" @selected($post->moderation_status === 'pending')>Ausstehend</option>
+                <option value="approved" @selected($post->moderation_status === 'approved')>Freigegeben</option>
+                <option value="rejected" @selected($post->moderation_status === 'rejected')>Abgelehnt</option>
             </select>
             <input
                 type="text"

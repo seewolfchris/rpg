@@ -19,6 +19,11 @@ return [
         'native_vhaltor' => "Native aus Vhal'Tor",
     ],
 
+    // Falls eine Herkunft hier hinterlegt ist, sind nur diese Spezies erlaubt.
+    'origin_species_constraints' => [
+        'real_world_beginner' => ['mensch'],
+    ],
+
     'species' => [
         'mensch' => [
             'label' => 'Mensch',

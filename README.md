@@ -18,9 +18,9 @@ Enthalten:
 - Charaktersystem: CRUD, Stats, Bio, Avatar-Upload, Ownership-Checks
 - Kampagnen/Szenen: Erstellung, Sichtbarkeit, Filter, Rollen (Owner/Co-GM/Player)
 - Posts: IC/OOC, Markdown/BBCode/Plain, Spoiler, Edit-History (Revisionen)
-- Moderation: Pending/Approved/Rejected, Audit-Log, GM-Queue, Bulk-Aktionen
+- Moderation: Ausstehend/Freigegeben/Abgelehnt, Audit-Log, GM-Queue, Bulk-Aktionen
 - Pinning: Wichtige Posts in Szenen anpinnen/entpinnen
-- Einladungen: Pending/Accept/Decline inkl. Rollen (Player/Co-GM)
+- Einladungen: Ausstehend/Annehmen/Ablehnen inkl. Rollen (Player/Co-GM)
 - Read-Tracking: Ungelesen-Status, Read/Unread-Aktionen, Jump-Links
 - Bookmarks: Szenen-Bookmark je User inkl. Jump auf Post/Page
 - Proben-Roller: d100-basiert (normal/vorteil/nachteil) mit Log in DB

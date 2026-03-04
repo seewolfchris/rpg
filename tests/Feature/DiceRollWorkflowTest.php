@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Scene;
 use App\Models\User;
@@ -114,6 +115,28 @@ class DiceRollWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_gm_cannot_roll_for_character_outside_campaign_participants(): void
+    {
+        [$gm, $player, $campaign, $scene] = $this->seedSceneContext('open');
+        $outsider = User::factory()->create();
+        $outsiderCharacter = Character::factory()->create([
+            'user_id' => $outsider->id,
+        ]);
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
+                'dice_character_id' => $outsiderCharacter->id,
+                'dice_roll_mode' => 'normal',
+                'dice_modifier' => 0,
+                'dice_label' => 'Unzulaessiges Ziel',
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertSessionHasErrors('dice_character_id');
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
     /**
      * @return array{0: User, 1: User, 2: Campaign, 3: Scene, 4: Character}
      */
@@ -137,6 +160,16 @@ class DiceRollWorkflowTest extends TestCase
 
         $character = Character::factory()->create([
             'user_id' => $player->id,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
         ]);
 
         return [$gm, $player, $campaign, $scene, $character];

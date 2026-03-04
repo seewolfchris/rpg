@@ -84,6 +84,8 @@ class CharacterManagementTest extends TestCase
             'ge' => 40,
             'ko' => 45,
             'kk' => 40,
+            'mu_note' => 'Haelt auch in Finsternis den Blick gerade.',
+            'kk_note' => 'Schultert Lasten ohne Klage.',
             'le_max' => 42,
             'le_current' => 42,
             'ae_max' => 40,
@@ -94,6 +96,22 @@ class CharacterManagementTest extends TestCase
         $this->assertSame(['Aschesucht'], $character->disadvantages);
 
         $response->assertRedirect();
+    }
+
+    public function test_real_world_beginner_must_use_mensch_species(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.create'))
+            ->post(route('characters.store'), $this->characterPayload([
+                'origin' => 'real_world_beginner',
+                'species' => 'elf',
+            ]));
+
+        $response->assertRedirect(route('characters.create'));
+        $response->assertSessionHasErrors('species');
+        $this->assertDatabaseCount('characters', 0);
     }
 
     public function test_user_cannot_view_other_users_character(): void

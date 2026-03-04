@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Dice;
 
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
@@ -52,9 +53,34 @@ class StoreDiceRollRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $character = Character::query()->find((int) $this->input('dice_character_id'));
+            /** @var Scene|null $scene */
+            $scene = $this->route('scene');
+            if (! $scene) {
+                $validator->errors()->add('scene', 'Szene konnte nicht gefunden werden.');
+
+                return;
+            }
+
+            $character = Character::query()
+                ->select(['id', 'user_id'])
+                ->find((int) $this->input('dice_character_id'));
             if (! $character) {
                 $validator->errors()->add('dice_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
+
+                return;
+            }
+
+            $campaignParticipantUserIds = $scene->campaign->invitations()
+                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+                ->pluck('user_id')
+                ->push((int) $scene->campaign->owner_id)
+                ->unique();
+
+            if (! $campaignParticipantUserIds->contains((int) $character->user_id)) {
+                $validator->errors()->add(
+                    'dice_character_id',
+                    'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                );
             }
         });
     }

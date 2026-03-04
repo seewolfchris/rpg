@@ -15,7 +15,7 @@
             </p>
             @if (auth()->user()->isGmOrAdmin())
                 <p class="mt-3 inline-flex rounded-md border border-red-700/60 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200">
-                    Pending Moderation: {{ $pendingModerationCount }}
+                    Ausstehende Moderation: {{ $pendingModerationCount }}
                 </p>
             @endif
         </div>

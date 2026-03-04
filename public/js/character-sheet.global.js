@@ -64,6 +64,8 @@
                     this.origin = Object.keys(this.originOptions)[0] ?? '';
                 }
 
+                this.enforceOriginSpeciesConstraint();
+
                 this.attributeKeys.forEach((key) => {
                     const min = this.attributeBounds(key).min;
                     const max = this.attributeBounds(key).max;
@@ -71,6 +73,12 @@
 
                     this.attributes[key] = clamp(current, min, max);
                 });
+
+                if (typeof this.$watch === 'function') {
+                    this.$watch('origin', () => {
+                        this.enforceOriginSpeciesConstraint();
+                    });
+                }
             },
 
             get originOptions() {
@@ -81,8 +89,52 @@
                 return this.config.species ?? {};
             },
 
+            get originSpeciesConstraints() {
+                return this.config.origin_species_constraints ?? {};
+            },
+
             get callingOptions() {
                 return this.config.callings ?? {};
+            },
+
+            allowedSpeciesForOrigin(originKey = this.origin) {
+                const raw = this.originSpeciesConstraints?.[originKey];
+
+                if (!Array.isArray(raw) || raw.length === 0) {
+                    return null;
+                }
+
+                const normalized = raw
+                    .map((value) => String(value ?? '').trim().toLowerCase())
+                    .filter((value) => value.length > 0);
+
+                return normalized.length > 0 ? normalized : null;
+            },
+
+            isSpeciesAllowed(speciesKey) {
+                const allowed = this.allowedSpeciesForOrigin();
+
+                if (!allowed) {
+                    return true;
+                }
+
+                return allowed.includes(String(speciesKey));
+            },
+
+            enforceOriginSpeciesConstraint() {
+                const allowed = this.allowedSpeciesForOrigin();
+
+                if (!allowed || allowed.length === 0) {
+                    return;
+                }
+
+                if (!allowed.includes(String(this.species))) {
+                    this.species = allowed[0];
+                }
+            },
+
+            get visibleSpeciesEntries() {
+                return Object.entries(this.speciesOptions).filter(([speciesKey]) => this.isSpeciesAllowed(speciesKey));
             },
 
             get selectedSpecies() {

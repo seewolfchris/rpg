@@ -24,7 +24,7 @@
                                 <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Spieler</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Rolle</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Punkte</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Approved Posts</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Freigegebene Posts</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Charaktere</th>
                             </tr>
                         </thead>

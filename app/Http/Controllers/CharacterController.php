@@ -144,6 +144,14 @@ class CharacterController extends Controller
             'gm_secret',
             'world_connection',
             'gm_note',
+            'mu_note',
+            'kl_note',
+            'in_note',
+            'ch_note',
+            'ff_note',
+            'ge_note',
+            'ko_note',
+            'kk_note',
         ] as $key) {
             if (! array_key_exists($key, $data) && $character) {
                 $data[$key] = $character->{$key};

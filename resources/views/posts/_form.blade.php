@@ -10,6 +10,8 @@
     $currentProbeCharacter = old('probe_character_id');
     $currentProbeMode = old('probe_roll_mode', 'normal');
     $currentProbeModifier = old('probe_modifier', 0);
+    $currentProbeLeDelta = old('probe_le_delta', 0);
+    $currentProbeAeDelta = old('probe_ae_delta', 0);
     $currentProbeExplanation = old('probe_explanation');
 @endphp
 
@@ -63,7 +65,7 @@
             >
                 <option value="markdown" @selected($currentFormat === 'markdown')>Markdown</option>
                 <option value="bbcode" @selected($currentFormat === 'bbcode')>BBCode</option>
-                <option value="plain" @selected($currentFormat === 'plain')>Plain Text</option>
+                <option value="plain" @selected($currentFormat === 'plain')>Klartext</option>
             </select>
             @error('content_format')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -167,21 +169,59 @@
                 </div>
             </div>
 
-            <div class="mt-4 max-w-xs">
-                <label for="probe_modifier" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Modifikator (+/-)</label>
-                <input
-                    id="probe_modifier"
-                    type="number"
-                    name="probe_modifier"
-                    value="{{ $currentProbeModifier }}"
-                    min="-40"
-                    max="40"
-                    step="1"
-                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >
-                @error('probe_modifier')
-                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
-                @enderror
+            <div class="mt-4 grid gap-4 lg:grid-cols-3">
+                <div>
+                    <label for="probe_modifier" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Modifikator (+/-)</label>
+                    <input
+                        id="probe_modifier"
+                        type="number"
+                        name="probe_modifier"
+                        value="{{ $currentProbeModifier }}"
+                        min="-40"
+                        max="40"
+                        step="1"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                    @error('probe_modifier')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_le_delta" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">LE-Auswirkung (+/-)</label>
+                    <input
+                        id="probe_le_delta"
+                        type="number"
+                        name="probe_le_delta"
+                        value="{{ $currentProbeLeDelta }}"
+                        min="-200"
+                        max="200"
+                        step="1"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                    <p class="mt-1 text-xs text-stone-500">Beispiel: <span class="font-semibold text-stone-300">-10</span> für Schaden.</p>
+                    @error('probe_le_delta')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_ae_delta" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">AE-Auswirkung (+/-)</label>
+                    <input
+                        id="probe_ae_delta"
+                        type="number"
+                        name="probe_ae_delta"
+                        value="{{ $currentProbeAeDelta }}"
+                        min="-200"
+                        max="200"
+                        step="1"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                    <p class="mt-1 text-xs text-stone-500">Beispiel: <span class="font-semibold text-stone-300">+5</span> für Regeneration.</p>
+                    @error('probe_ae_delta')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </section>
     @endif
@@ -194,9 +234,9 @@
                 name="moderation_status"
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
-                <option value="pending" @selected($currentModeration === 'pending')>Pending</option>
-                <option value="approved" @selected($currentModeration === 'approved')>Approved</option>
-                <option value="rejected" @selected($currentModeration === 'rejected')>Rejected</option>
+                <option value="pending" @selected($currentModeration === 'pending')>Ausstehend</option>
+                <option value="approved" @selected($currentModeration === 'approved')>Freigegeben</option>
+                <option value="rejected" @selected($currentModeration === 'rejected')>Abgelehnt</option>
             </select>
             @error('moderation_status')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

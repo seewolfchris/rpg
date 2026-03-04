@@ -239,10 +239,15 @@
         <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
             <h2 class="font-heading text-2xl text-stone-100">Spezies</h2>
             <p class="mt-2 text-sm text-stone-300">Spezies-Boni werden sofort auf effektive Mindestwerte und LE/AE angewendet.</p>
+            <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500" x-show="origin === 'real_world_beginner'" x-cloak>
+                Herkunft "Real-World Anfaenger": Nur Mensch ist verfuegbar.
+            </p>
 
             <div class="mt-4 grid gap-3 lg:grid-cols-3">
                 @foreach ($speciesOptions as $speciesKey => $species)
                     <label class="rounded-xl border border-stone-700/80 bg-black/40 p-4 transition"
+                        x-show="isSpeciesAllowed('{{ $speciesKey }}')"
+                        x-cloak
                         :class="species === '{{ $speciesKey }}' ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
                     >
                         <input class="sr-only" type="radio" name="species" value="{{ $speciesKey }}" x-model="species" @checked($selectedSpecies === $speciesKey)>

@@ -6,6 +6,8 @@ use App\Http\Requests\Post\ModeratePostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
+use App\Models\Character;
 use App\Models\Post;
 use App\Models\PostModerationLog;
 use App\Models\Scene;
@@ -17,6 +19,7 @@ use App\Support\Gamification\PointService;
 use App\Support\ProbeRoller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
@@ -382,22 +385,95 @@ class PostController extends Controller
         $modifier = (int) ($data['probe_modifier'] ?? 0);
         $rollMode = (string) ($data['probe_roll_mode'] ?? 'normal');
         $rolled = $this->probeRoller->roll($rollMode, $modifier);
+        $targetCharacterId = (int) ($data['probe_character_id'] ?? 0);
+        $targetCharacter = Character::query()->find($targetCharacterId);
 
-        $post->diceRoll()->create([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-            'character_id' => (int) $data['probe_character_id'],
-            'roll_mode' => $rolled['mode'],
-            'modifier' => $rolled['modifier'],
-            'label' => $explanation,
-            'rolls' => $rolled['rolls'],
-            'kept_roll' => $rolled['kept_roll'],
-            'total' => $rolled['total'],
-            'is_critical_success' => $rolled['critical_success'],
-            'is_critical_failure' => $rolled['critical_failure'],
-            'created_at' => now(),
-        ]);
+        if (! $targetCharacter) {
+            return false;
+        }
 
-        return true;
+        $participantUserIds = $scene->campaign->invitations()
+            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+            ->pluck('user_id')
+            ->push((int) $scene->campaign->owner_id)
+            ->unique();
+
+        if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
+            return false;
+        }
+
+        $requestedLeDelta = (int) ($data['probe_le_delta'] ?? 0);
+        $requestedAeDelta = (int) ($data['probe_ae_delta'] ?? 0);
+
+        return DB::transaction(function () use (
+            $post,
+            $scene,
+            $user,
+            $targetCharacter,
+            $rolled,
+            $explanation,
+            $requestedLeDelta,
+            $requestedAeDelta,
+        ): bool {
+            [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $requestedLeDelta);
+            [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
+
+            if ($targetCharacter->isDirty(['le_current', 'ae_current'])) {
+                $targetCharacter->save();
+            }
+
+            $post->diceRoll()->create([
+                'scene_id' => $scene->id,
+                'user_id' => $user->id,
+                'character_id' => $targetCharacter->id,
+                'roll_mode' => $rolled['mode'],
+                'modifier' => $rolled['modifier'],
+                'label' => $explanation,
+                'rolls' => $rolled['rolls'],
+                'kept_roll' => $rolled['kept_roll'],
+                'total' => $rolled['total'],
+                'applied_le_delta' => $appliedLeDelta,
+                'applied_ae_delta' => $appliedAeDelta,
+                'resulting_le_current' => $resultingLeCurrent,
+                'resulting_ae_current' => $resultingAeCurrent,
+                'is_critical_success' => $rolled['critical_success'],
+                'is_critical_failure' => $rolled['critical_failure'],
+                'created_at' => now(),
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * @return array{0: int, 1: int|null}
+     */
+    private function applyPoolDelta(Character $character, string $poolPrefix, int $requestedDelta): array
+    {
+        $maxColumn = $poolPrefix.'_max';
+        $currentColumn = $poolPrefix.'_current';
+
+        $rawMax = $character->{$maxColumn};
+        $rawCurrent = $character->{$currentColumn};
+
+        if ($rawMax === null && $rawCurrent === null) {
+            return [0, null];
+        }
+
+        $maxValue = max((int) ($rawMax ?? $rawCurrent ?? 0), 0);
+        $currentValue = $this->clampInt((int) ($rawCurrent ?? $maxValue), 0, $maxValue);
+        $resultingValue = $this->clampInt($currentValue + $requestedDelta, 0, $maxValue);
+        $appliedDelta = $resultingValue - $currentValue;
+
+        if ($rawCurrent !== $resultingValue) {
+            $character->{$currentColumn} = $resultingValue;
+        }
+
+        return [$appliedDelta, $resultingValue];
+    }
+
+    private function clampInt(int $value, int $min, int $max): int
+    {
+        return max($min, min($value, $max));
     }
 }

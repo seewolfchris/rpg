@@ -37,4 +37,23 @@
     @elseif ($roll->is_critical_failure)
         <p class="mt-2 text-xs uppercase tracking-[0.08em] text-red-300">Kritischer Fehlschlag</p>
     @endif
+
+    @if (
+        (int) $roll->applied_le_delta !== 0
+        || (int) $roll->applied_ae_delta !== 0
+        || $roll->resulting_le_current !== null
+        || $roll->resulting_ae_current !== null
+    )
+        <div class="mt-3 rounded-md border border-stone-700/80 bg-black/30 p-2 text-xs uppercase tracking-[0.08em] text-stone-300">
+            LE {{ $roll->applied_le_delta >= 0 ? '+' : '' }}{{ $roll->applied_le_delta }}
+            @if ($roll->resulting_le_current !== null)
+                => {{ $roll->resulting_le_current }}
+            @endif
+            |
+            AE {{ $roll->applied_ae_delta >= 0 ? '+' : '' }}{{ $roll->applied_ae_delta }}
+            @if ($roll->resulting_ae_current !== null)
+                => {{ $roll->resulting_ae_current }}
+            @endif
+        </div>
+    @endif
 </li>

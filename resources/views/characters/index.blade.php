@@ -3,12 +3,41 @@
 @section('title', 'Charaktere | Chroniken der Asche')
 
 @section('content')
+    @php
+        $sheet = (array) config('character_sheet', []);
+        $attributeMeta = (array) data_get($sheet, 'attributes', []);
+        $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
+        $indexAttributeKeys = ['mu', 'kl', 'in', 'ch'];
+        $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
+            $value = $characterModel->{$attributeKey};
+            if ($value !== null) {
+                return (int) $value;
+            }
+
+            $legacyColumn = array_search($attributeKey, $legacyMap, true);
+            if (! is_string($legacyColumn)) {
+                return 40;
+            }
+
+            $legacyValue = $characterModel->{$legacyColumn};
+            if ($legacyValue === null) {
+                return 40;
+            }
+
+            $percent = (int) $legacyValue <= 20
+                ? (int) round(((int) $legacyValue) * 5)
+                : (int) $legacyValue;
+
+            return max(30, min(60, $percent));
+        };
+    @endphp
+
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Deine Chroniken</p>
                 <h1 class="font-heading text-3xl text-stone-100">Charaktere</h1>
-                <p class="mt-2 text-stone-300">Verwalte deine Figuren, Werte und Biografien.</p>
+                <p class="mt-2 text-stone-300">Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren.</p>
             </div>
 
             <a
@@ -26,6 +55,11 @@
         @else
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($characters as $character)
+                    @php
+                        $originLabel = (string) data_get($sheet, 'origins.'.$character->origin, $character->origin ?: '-');
+                        $speciesLabel = (string) data_get($sheet, 'species.'.$character->species.'.label', $character->species ?: '-');
+                        $callingLabel = (string) data_get($sheet, 'callings.'.$character->calling.'.label', $character->calling ?: '-');
+                    @endphp
                     <article class="overflow-hidden rounded-xl border border-stone-800 bg-neutral-900/65 shadow-lg shadow-black/30">
                         <img
                             src="{{ $character->avatarUrl() }}"
@@ -42,13 +76,24 @@
                                 @endif
                             </div>
 
-                            <div class="grid grid-cols-3 gap-2 text-xs text-stone-300">
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">STR {{ $character->strength }}</div>
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">DEX {{ $character->dexterity }}</div>
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">CON {{ $character->constitution }}</div>
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">INT {{ $character->intelligence }}</div>
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">WIS {{ $character->wisdom }}</div>
-                                <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">CHA {{ $character->charisma }}</div>
+                            <div class="space-y-1 text-xs uppercase tracking-[0.08em] text-stone-400">
+                                <p>Herkunft: <span class="text-stone-200">{{ $originLabel }}</span></p>
+                                <p>Spezies: <span class="text-stone-200">{{ $speciesLabel }}</span></p>
+                                <p>Berufung: <span class="text-stone-200">{{ $callingLabel }}</span></p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs text-stone-300">
+                                @foreach ($indexAttributeKeys as $attributeKey)
+                                    @php($label = (string) data_get($attributeMeta, $attributeKey.'.label', strtoupper($attributeKey)))
+                                    <div class="rounded border border-stone-700/80 bg-black/40 px-2 py-1">
+                                        {{ $label }} {{ $resolveBaseAttribute($character, $attributeKey) }}%
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs text-stone-300">
+                                <div class="rounded border border-red-700/70 bg-red-950/25 px-2 py-1">LE {{ $character->le_current ?? 0 }}/{{ $character->le_max ?? 0 }}</div>
+                                <div class="rounded border border-sky-700/70 bg-sky-950/25 px-2 py-1">AE {{ $character->ae_current ?? 0 }}/{{ $character->ae_max ?? 0 }}</div>
                             </div>
 
                             <a

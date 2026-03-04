@@ -133,7 +133,7 @@ class SceneController extends Controller
 
         $canModerateScene = auth()->user()->isGmOrAdmin() || $scene->campaign->isCoGm(auth()->user());
         $probeCharacters = $canModerateScene
-            ? $this->resolveProbeCharacters($campaign, $scene)
+            ? $this->resolveProbeCharacters($campaign)
             : collect();
 
         $userBookmark = SceneBookmark::query()
@@ -263,28 +263,23 @@ class SceneController extends Controller
     /**
      * @return Collection<int, Character>
      */
-    private function resolveProbeCharacters(Campaign $campaign, Scene $scene): Collection
+    private function resolveProbeCharacters(Campaign $campaign): Collection
     {
-        $acceptedUserIds = $campaign->invitations()
+        $participantUserIds = $campaign->invitations()
             ->where('status', CampaignInvitation::STATUS_ACCEPTED)
             ->pluck('user_id');
 
-        $scenePosterIds = Post::query()
-            ->where('scene_id', $scene->id)
-            ->pluck('user_id');
-
-        $userIds = $acceptedUserIds
+        $participantUserIds = $participantUserIds
             ->merge([(int) $campaign->owner_id])
-            ->merge($scenePosterIds)
             ->unique()
             ->values();
 
-        if ($userIds->isEmpty()) {
+        if ($participantUserIds->isEmpty()) {
             return collect();
         }
 
         return Character::query()
-            ->whereIn('user_id', $userIds)
+            ->whereIn('user_id', $participantUserIds)
             ->with('user:id,name')
             ->orderBy('name')
             ->get(['id', 'user_id', 'name']);

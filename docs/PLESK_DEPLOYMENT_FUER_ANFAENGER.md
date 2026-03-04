@@ -130,12 +130,12 @@ Typische Ursachen:
 - `APP_KEY` fehlt
 - `public` nicht als Document Root
 - fehlende Rechte auf `storage` / `bootstrap/cache`
-- PHP-CLI zu alt (Projekt braucht `>= 8.4`)
+- PHP-CLI zu alt (Projekt braucht `>= 8.5`)
 
 Wenn PHP-CLI zu alt ist, Deploy-Script so starten:
 
 ```bash
-PHP_BIN=/opt/plesk/php/8.4/bin/php /bin/bash scripts/plesk_post_deploy.sh
+PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 ```
 
 ## 10) Lokal testen (ohne Upload)

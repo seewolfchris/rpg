@@ -106,6 +106,7 @@ abstract class CharacterSheetRequest extends FormRequest
             $this->validateCallingRequirements($validator);
             $this->validateTraitPairing($validator);
             $this->validateCustomCalling($validator);
+            $this->validateOriginSpeciesCompatibility($validator);
         });
     }
 
@@ -406,6 +407,49 @@ abstract class CharacterSheetRequest extends FormRequest
                 'Bei Berufung "Eigene" ist eine kurze Beschreibung erforderlich.'
             );
         }
+    }
+
+    protected function validateOriginSpeciesCompatibility(Validator $validator): void
+    {
+        $origin = (string) $this->input('origin', '');
+        $species = (string) $this->input('species', '');
+        $allowedSpecies = $this->allowedSpeciesForOrigin($origin);
+
+        if ($allowedSpecies === null || in_array($species, $allowedSpecies, true)) {
+            return;
+        }
+
+        $originLabel = (string) data_get($this->sheet(), 'origins.'.$origin, $origin);
+        $allowedLabels = implode(', ', array_map(
+            fn (string $speciesKey): string => (string) data_get($this->sheet(), 'species.'.$speciesKey.'.label', $speciesKey),
+            $allowedSpecies,
+        ));
+
+        $validator->errors()->add(
+            'species',
+            'Fuer Herkunft "'.$originLabel.'" sind nur folgende Spezies erlaubt: '.$allowedLabels.'.'
+        );
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    protected function allowedSpeciesForOrigin(string $origin): ?array
+    {
+        $constraints = (array) data_get($this->sheet(), 'origin_species_constraints', []);
+        $allowed = $constraints[$origin] ?? null;
+
+        if (! is_array($allowed) || $allowed === []) {
+            return null;
+        }
+
+        /** @var list<string> $normalized */
+        $normalized = array_values(array_filter(array_map(
+            static fn ($value): string => Str::lower(trim((string) $value)),
+            $allowed
+        ), static fn (string $value): bool => $value !== ''));
+
+        return $normalized === [] ? null : $normalized;
     }
 
     /**

@@ -10,7 +10,7 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-# Use a Plesk PHP binary >= 8.4 so composer/artisan match the project lockfile.
+# Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
 PHP_BIN="${PHP_BIN:-}"
 if [[ -z "$PHP_BIN" ]]; then
   for candidate in /opt/plesk/php/8.5/bin/php /opt/plesk/php/8.4/bin/php /opt/plesk/php/8.3/bin/php; do
@@ -22,9 +22,9 @@ if [[ -z "$PHP_BIN" ]]; then
 fi
 PHP_BIN="${PHP_BIN:-php}"
 
-if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);'; then
-  echo "ERROR: Falsche PHP-CLI Version ($("$PHP_BIN" -r 'echo PHP_VERSION;')). Benoetigt >= 8.4."
-  echo "Setze in Plesk/CLI PHP 8.4+ oder exportiere PHP_BIN=/opt/plesk/php/8.4/bin/php."
+if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'; then
+  echo "ERROR: Falsche PHP-CLI Version ($("$PHP_BIN" -r 'echo PHP_VERSION;')). Benoetigt >= 8.5."
+  echo "Setze in Plesk/CLI PHP 8.5+ oder exportiere PHP_BIN=/opt/plesk/php/8.5/bin/php."
   exit 1
 fi
 

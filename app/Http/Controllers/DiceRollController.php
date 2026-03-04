@@ -40,6 +40,10 @@ class DiceRollController extends Controller
             'rolls' => $rolled['rolls'],
             'kept_roll' => $rolled['kept_roll'],
             'total' => $rolled['total'],
+            'applied_le_delta' => 0,
+            'applied_ae_delta' => 0,
+            'resulting_le_current' => null,
+            'resulting_ae_current' => null,
             'is_critical_success' => $rolled['critical_success'],
             'is_critical_failure' => $rolled['critical_failure'],
         ]);

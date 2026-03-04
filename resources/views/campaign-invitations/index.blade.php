@@ -31,9 +31,9 @@
                     name="status"
                     class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                 >
-                    <option value="pending" @selected($status === 'pending')>Pending</option>
-                    <option value="accepted" @selected($status === 'accepted')>Accepted</option>
-                    <option value="declined" @selected($status === 'declined')>Declined</option>
+                    <option value="pending" @selected($status === 'pending')>Ausstehend</option>
+                    <option value="accepted" @selected($status === 'accepted')>Angenommen</option>
+                    <option value="declined" @selected($status === 'declined')>Abgelehnt</option>
                     <option value="all" @selected($status === 'all')>Alle</option>
                 </select>
 
@@ -73,7 +73,11 @@
                                             ? 'border-red-700/60 bg-red-900/20 text-red-300'
                                             : 'border-amber-700/60 bg-amber-900/20 text-amber-300')
                                 }}">
-                                    {{ $invitation->status }}
+                                    {{ match ($invitation->status) {
+                                        'accepted' => 'angenommen',
+                                        'declined' => 'abgelehnt',
+                                        default => 'ausstehend',
+                                    } }}
                                 </span>
                             </div>
 

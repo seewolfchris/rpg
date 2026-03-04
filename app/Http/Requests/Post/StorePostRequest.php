@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
@@ -31,6 +32,8 @@ class StorePostRequest extends FormRequest
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
             'probe_modifier' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-40,40'],
             'probe_explanation' => ['nullable', 'required_if:probe_enabled,1', 'string', 'min:3', 'max:180'],
+            'probe_le_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
+            'probe_ae_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
         ];
     }
 
@@ -44,6 +47,14 @@ class StorePostRequest extends FormRequest
 
         if ($probeEnabled && ! $this->filled('probe_modifier')) {
             $normalized['probe_modifier'] = 0;
+        }
+
+        if ($probeEnabled && ! $this->filled('probe_le_delta')) {
+            $normalized['probe_le_delta'] = 0;
+        }
+
+        if ($probeEnabled && ! $this->filled('probe_ae_delta')) {
+            $normalized['probe_ae_delta'] = 0;
         }
 
         $this->merge($normalized);
@@ -107,6 +118,28 @@ class StorePostRequest extends FormRequest
                 return;
             }
 
+            $probeCharacter = Character::query()
+                ->select(['id', 'user_id'])
+                ->find($probeCharacterId);
+
+            if (! $probeCharacter) {
+                $validator->errors()->add('probe_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
+
+                return;
+            }
+
+            $campaignParticipantUserIds = $scene->campaign->invitations()
+                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+                ->pluck('user_id')
+                ->push((int) $scene->campaign->owner_id)
+                ->unique();
+
+            if (! $campaignParticipantUserIds->contains((int) $probeCharacter->user_id)) {
+                $validator->errors()->add(
+                    'probe_character_id',
+                    'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                );
+            }
         });
     }
 }

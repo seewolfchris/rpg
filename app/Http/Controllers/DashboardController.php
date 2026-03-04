@@ -75,7 +75,7 @@ class DashboardController extends Controller
         $tutorialSteps = [
             [
                 'title' => 'Charakter anlegen',
-                'description' => 'Erstelle deine Figur mit Stats, Bio und Bild.',
+                'description' => 'Erstelle deine Figur mit Eigenschaften, Biografie und Bild.',
                 'done' => $hasCharacter,
                 'url' => route('characters.create'),
                 'cta' => $hasCharacter ? 'Bearbeiten' : 'Jetzt erstellen',

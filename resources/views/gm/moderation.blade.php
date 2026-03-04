@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Moderation | Chroniken der Asche')
+@section('title', 'GM Moderationszentrale | Chroniken der Asche')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -26,15 +26,15 @@
                     <p class="mt-2 text-2xl font-semibold text-stone-100">{{ $totalCount }}</p>
                 </article>
                 <article class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
-                    <p class="text-xs uppercase tracking-[0.08em] text-amber-300">Pending</p>
+                    <p class="text-xs uppercase tracking-[0.08em] text-amber-300">Ausstehend</p>
                     <p class="mt-2 text-2xl font-semibold text-amber-200">{{ $pendingCount }}</p>
                 </article>
                 <article class="rounded-lg border border-emerald-700/40 bg-emerald-900/10 p-4">
-                    <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">Approved</p>
+                    <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">Freigegeben</p>
                     <p class="mt-2 text-2xl font-semibold text-emerald-200">{{ $approvedCount }}</p>
                 </article>
                 <article class="rounded-lg border border-red-700/40 bg-red-900/10 p-4">
-                    <p class="text-xs uppercase tracking-[0.08em] text-red-300">Rejected</p>
+                    <p class="text-xs uppercase tracking-[0.08em] text-red-300">Abgelehnt</p>
                     <p class="mt-2 text-2xl font-semibold text-red-200">{{ $rejectedCount }}</p>
                 </article>
             </div>
@@ -54,9 +54,9 @@
                     name="status"
                     class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                 >
-                    <option value="pending" @selected($status === 'pending')>Pending</option>
-                    <option value="approved" @selected($status === 'approved')>Approved</option>
-                    <option value="rejected" @selected($status === 'rejected')>Rejected</option>
+                    <option value="pending" @selected($status === 'pending')>Ausstehend</option>
+                    <option value="approved" @selected($status === 'approved')>Freigegeben</option>
+                    <option value="rejected" @selected($status === 'rejected')>Abgelehnt</option>
                     <option value="all" @selected($status === 'all')>Alle</option>
                 </select>
 
@@ -84,9 +84,9 @@
                         required
                         class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
-                        <option value="approved">Auf Approved setzen</option>
-                        <option value="rejected">Auf Rejected setzen</option>
-                        <option value="pending">Auf Pending setzen</option>
+                        <option value="approved">Auf Freigegeben setzen</option>
+                        <option value="rejected">Auf Abgelehnt setzen</option>
+                        <option value="pending">Auf Ausstehend setzen</option>
                     </select>
 
                     <input
@@ -139,7 +139,11 @@
                                             ? 'border-red-700/60 bg-red-900/20 text-red-300'
                                             : 'border-amber-700/60 bg-amber-900/20 text-amber-300')
                                 }}">
-                                    {{ $post->moderation_status }}
+                                    {{ match ($post->moderation_status) {
+                                        'approved' => 'freigegeben',
+                                        'rejected' => 'abgelehnt',
+                                        default => 'ausstehend',
+                                    } }}
                                 </span>
                             </div>
 
@@ -191,7 +195,7 @@
                                             @disabled($post->moderation_status === 'approved')
                                             class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            Approve
+                                            Freigeben
                                         </button>
                                         <button
                                             type="submit"
@@ -200,7 +204,7 @@
                                             @disabled($post->moderation_status === 'rejected')
                                             class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            Reject
+                                            Ablehnen
                                         </button>
                                         <button
                                             type="submit"
@@ -209,7 +213,7 @@
                                             @disabled($post->moderation_status === 'pending')
                                             class="rounded-md border border-amber-700/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-200 transition hover:bg-amber-900/35 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            Pending
+                                            Ausstehend
                                         </button>
                                     </div>
                                 </form>

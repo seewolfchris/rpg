@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DLqi8Tc5.css",
+    "file": "assets/app-D3q5Bgbr.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -41,7 +41,7 @@
     "src": "resources/fonts/Goldman-Regular.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-FdknBqAV.js",
+    "file": "assets/app-Djhv2alp.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

@@ -20,7 +20,7 @@
                 <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                     <h2 class="font-heading text-lg text-stone-100">Moderationsstatus fuer eigene Posts</h2>
                     <p class="mt-1 text-sm text-stone-300">
-                        Benachrichtigung bei Approved/Pending/Rejected-Status.
+                        Benachrichtigung bei Freigegeben/Ausstehend/Abgelehnt.
                     </p>
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">

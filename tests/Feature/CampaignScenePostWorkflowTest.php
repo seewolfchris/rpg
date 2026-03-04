@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
@@ -143,8 +144,24 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
-        $playerCharacter = Character::factory()->create(['user_id' => $player->id]);
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'le_max' => 45,
+            'le_current' => 45,
+            'ae_max' => 30,
+            'ae_current' => 30,
+        ]);
 
         $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
             'post_type' => 'ic',
@@ -155,6 +172,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_character_id' => $playerCharacter->id,
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => -4,
+            'probe_le_delta' => -10,
+            'probe_ae_delta' => -3,
             'probe_explanation' => 'Klettern am zerborstenen Ascheturm bei Sturm',
         ]);
 
@@ -175,6 +194,10 @@ class CampaignScenePostWorkflowTest extends TestCase
             'roll_mode' => DiceRoll::MODE_NORMAL,
             'modifier' => -4,
             'label' => 'Klettern am zerborstenen Ascheturm bei Sturm',
+            'applied_le_delta' => -10,
+            'applied_ae_delta' => -3,
+            'resulting_le_current' => 35,
+            'resulting_ae_current' => 27,
         ]);
 
         $roll = DB::table('dice_rolls')
@@ -184,12 +207,16 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertNotNull($roll);
         $this->assertGreaterThanOrEqual(1, (int) $roll->kept_roll);
         $this->assertLessThanOrEqual(100, (int) $roll->kept_roll);
+        $this->assertSame(35, (int) $playerCharacter->fresh()->le_current);
+        $this->assertSame(27, (int) $playerCharacter->fresh()->ae_current);
 
         $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
         $sceneResponse->assertOk()
             ->assertSeeText('GM-Probe')
             ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
-            ->assertSeeText($playerCharacter->name);
+            ->assertSeeText($playerCharacter->name)
+            ->assertSeeText('LE: -10')
+            ->assertSeeText('AE: -3');
     }
 
     public function test_player_cannot_attach_probe_data_to_post(): void
@@ -228,6 +255,60 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
         $response->assertSessionHasErrors('probe_enabled');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_gm_probe_rejects_target_character_outside_campaign_participants(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+        $outsider = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $outsiderCharacter = Character::factory()->create(['user_id' => $outsider->id]);
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+                'post_type' => 'ic',
+                'content_format' => 'markdown',
+                'character_id' => $gmCharacter->id,
+                'content' => str_repeat('Die Probe soll einen externen Helden treffen. ', 2),
+                'probe_enabled' => '1',
+                'probe_character_id' => $outsiderCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 0,
+                'probe_le_delta' => -5,
+                'probe_ae_delta' => 0,
+                'probe_explanation' => 'Unzulaessiges Ziel ausserhalb der Kampagne',
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertSessionHasErrors('probe_character_id');
         $this->assertDatabaseCount('posts', 0);
         $this->assertDatabaseCount('dice_rolls', 0);
     }
