@@ -58,6 +58,18 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect('/login');
     }
 
+    public function test_character_create_page_loads_character_sheet_bootstrap_script(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('characters.create'));
+
+        $response
+            ->assertOk()
+            ->assertSee('character-sheet.global.js', false)
+            ->assertSee('window.characterSheetForm', false);
+    }
+
     public function test_user_can_create_character(): void
     {
         $user = User::factory()->create();

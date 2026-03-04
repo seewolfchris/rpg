@@ -1,6 +1,6 @@
-const STATIC_CACHE = 'chroniken-static-v5';
-const PAGE_CACHE = 'chroniken-pages-v5';
-const CONTENT_CACHE = 'chroniken-content-v5';
+const STATIC_CACHE = 'chroniken-static-v6';
+const PAGE_CACHE = 'chroniken-pages-v6';
+const CONTENT_CACHE = 'chroniken-content-v6';
 const QUEUE_DB_NAME = 'chroniken-pbp';
 const QUEUE_STORE_NAME = 'postQueue';
 const SYNC_TAG_POSTS = 'pbp-sync-posts';
@@ -19,6 +19,7 @@ const STATIC_ASSETS = [
     '/fonts/Goldman-Regular.woff2',
     '/fonts/DMSerifText-Regular.woff2',
     '/fonts/DMMono-Regular.woff2',
+    '/js/character-sheet.global.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -55,6 +56,11 @@ self.addEventListener('fetch', (event) => {
 
     if (event.request.mode === 'navigate') {
         event.respondWith(networkFirst(event.request, PAGE_CACHE, true));
+        return;
+    }
+
+    if (isBuildAssetPath(requestUrl.pathname)) {
+        event.respondWith(networkFirst(event.request, STATIC_CACHE, false));
         return;
     }
 
@@ -113,11 +119,16 @@ function isStaticAssetRequest(request, pathname) {
 
     return (
         pathname.startsWith('/build/') ||
+        pathname.startsWith('/js/') ||
         pathname.startsWith('/images/') ||
         pathname.startsWith('/fonts/') ||
         pathname === '/manifest.webmanifest' ||
         pathname === '/favicon.ico'
     );
+}
+
+function isBuildAssetPath(pathname) {
+    return pathname.startsWith('/build/');
 }
 
 async function networkFirst(request, cacheName, fallbackToOffline) {

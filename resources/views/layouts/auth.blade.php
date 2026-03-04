@@ -13,6 +13,10 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        @php($characterSheetGlobalPath = public_path('js/character-sheet.global.js'))
+        @if (file_exists($characterSheetGlobalPath))
+            <script defer src="{{ asset('js/character-sheet.global.js') }}?v={{ filemtime($characterSheetGlobalPath) }}"></script>
+        @endif
         <script>
             window.deferLoadingAlpine = function (startAlpine) {
                 window.__startAlpine = startAlpine;
