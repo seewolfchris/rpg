@@ -23,6 +23,7 @@
     </head>
     <body class="min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
         @php($registerUrl = Route::has('register') ? route('register') : url('/register'))
+        @php($loginUrl = Route::has('login') ? route('login') : url('/login'))
 
         <div class="relative isolate overflow-x-clip">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.35),_transparent_44%),radial-gradient(circle_at_80%_30%,_rgba(87,53,120,0.15),_transparent_40%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
@@ -41,6 +42,21 @@
                     >
                         Wissen
                     </a>
+                    @auth
+                        <a
+                            href="{{ route('dashboard') }}"
+                            class="inline-flex items-center justify-center rounded-full border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35 sm:tracking-[0.14em]"
+                        >
+                            Dashboard
+                        </a>
+                    @else
+                        <a
+                            href="{{ $loginUrl }}"
+                            class="inline-flex items-center justify-center rounded-full border border-amber-500/70 bg-amber-500/15 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30 sm:tracking-[0.14em]"
+                        >
+                            Login
+                        </a>
+                    @endauth
                     <div class="inline-flex items-center justify-center rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-200/80 sm:tracking-[0.14em]">
                         PbP RPG Beta
                     </div>
@@ -61,12 +77,27 @@
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-4">
-                        <a
-                            href="{{ $registerUrl }}"
-                            class="inline-flex items-center justify-center rounded-md border border-amber-400/70 bg-amber-500/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                        >
-                            Jetzt mitspielen
-                        </a>
+                        @guest
+                            <a
+                                href="{{ $registerUrl }}"
+                                class="inline-flex items-center justify-center rounded-md border border-amber-400/70 bg-amber-500/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                            >
+                                Jetzt mitspielen
+                            </a>
+                            <a
+                                href="{{ $loginUrl }}"
+                                class="inline-flex items-center justify-center rounded-md border border-stone-500/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-300 hover:text-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200"
+                            >
+                                Zum Login
+                            </a>
+                        @else
+                            <a
+                                href="{{ route('dashboard') }}"
+                                class="inline-flex items-center justify-center rounded-md border border-emerald-600/70 bg-emerald-900/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-200 transition hover:bg-emerald-900/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                            >
+                                Zum Dashboard
+                            </a>
+                        @endguest
                         <a
                             href="#welt"
                             class="inline-flex items-center justify-center rounded-md border border-stone-500/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-300 hover:text-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200"
@@ -111,8 +142,11 @@
                 </div>
             </section>
 
-            <footer class="border-t border-stone-800/80 px-5 py-6 text-center text-xs tracking-[0.12em] text-stone-500 sm:px-8">
-                Chroniken der Asche • Laravel PbP Plattform
+            <footer class="mx-auto w-full max-w-6xl border-t border-stone-800/80 px-5 py-6 text-center text-xs tracking-[0.12em] text-stone-500 sm:px-8">
+                <p>Chroniken der Asche • Laravel PbP Plattform</p>
+                <div class="mt-3">
+                    @include('partials.version-footer')
+                </div>
             </footer>
         </div>
     </body>

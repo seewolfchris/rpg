@@ -36,6 +36,7 @@ Enthalten:
 - Primaerziel: immersives, asynchrones Geschichtenerzaehlen (PbP)
 - Regelkomplexitaet: leichtes d100-/Prozent-System als Unterstuetzung, nicht als Selbstzweck
 - UX-Ziel: Roman-Gefuehl statt Regelbogen-Overload
+- Versionspflege: Bei produktiven Aenderungen `APP_VERSION` anheben, damit der Footer den aktuellen Stand zeigt.
 
 ## Produkt-Entscheidungen (Maerz 2026)
 
