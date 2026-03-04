@@ -39,7 +39,7 @@
                 </li>
                 <li>
                     <strong class="text-stone-100">6. GM-Probe anfragen</strong><br>
-                    Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe aus: mit Anlass, Ziel-Held und Modifikator.
+                    Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe im Post aus: mit Anlass, Ziel-Held und Modifikator.
                 </li>
                 <li>
                     <strong class="text-stone-100">7. Thread weiterfuehren</strong><br>
@@ -64,7 +64,7 @@
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
                     <li>1. Zu lange Vorgeschichte statt aktueller Aktion.</li>
                     <li>2. OOC-Infos mitten im IC-Absatz.</li>
-                    <li>3. Probenergebnisse ohne GM-Freigabe im Freitext festlegen.</li>
+                    <li>3. Eigene Probenergebnisse ohne GM-Freigabe im Freitext festlegen.</li>
                     <li>4. Ohne Rueckbezug auf die letzten zwei Posts schreiben.</li>
                 </ul>
             </article>

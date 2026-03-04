@@ -3,8 +3,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "sync:character-sheet-global": "node scripts/sync-character-sheet-global.mjs",
+        "build": "npm run sync:character-sheet-global && vite build",
+        "dev": "npm run sync:character-sheet-global && vite"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

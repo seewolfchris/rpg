@@ -8,7 +8,7 @@
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Regelwerk</h1>
             <p class="mt-4 text-base leading-relaxed text-stone-300 sm:text-lg">
-                Das Regelwerk definiert, wie Beitragsfluss, Wuerfe und Moderation konsistent funktionieren.
+                Das Regelwerk definiert, wie Beitragsfluss, GM-Proben und Moderation konsistent funktionieren.
             </p>
         </header>
 
@@ -29,10 +29,11 @@
                 <h2 class="font-heading text-xl text-stone-100">2. Prozentproben (d100)</h2>
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
                     <li>1. Proben werden nur durch GM oder Co-GM ausgeloest.</li>
-                    <li>2. Jede Probe braucht Anlass, Ziel-Held und Modifikator (+/-), bevor sie ausgefuehrt wird.</li>
-                    <li>3. Standardprobe: 1W100 gegen den Zielwert der Aktion; Vorteil/Nachteil ist zusaetzlich moeglich.</li>
-                    <li>4. Das Ergebnis wird als klarer Probe-Block im zugehoerigen GM-Post dokumentiert.</li>
+                    <li>2. Jede Probe braucht Anlass, Ziel-Held und Modifikator (+/-) im selben GM-Post.</li>
+                    <li>3. Ausfuehrung: GM wirft 1W100 gegen den Zielwert; optionaler Modus (Vorteil/Nachteil) wird explizit begruendet.</li>
+                    <li>4. Das Ergebnis wird als klarer Probe-Block direkt im ausloesenden GM-Post dokumentiert.</li>
                     <li>5. LE/AE-Auswirkungen werden direkt am Charakterbogen persistiert.</li>
+                    <li>6. Spieler setzen keine eigenen Wuerfelergebnisse als Fakten in IC/OOC-Posts.</li>
                 </ul>
             </article>
 

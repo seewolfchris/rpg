@@ -1,4 +1,4 @@
-# Chroniken der Asche - Projekt-Uebersicht (Stand 4. Maerz 2026)
+# Chroniken der Asche - Projekt-Uebersicht (Stand 5. Maerz 2026)
 
 > Quicklinks:
 > - Technischer Einstieg: `README.md`
@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.03-beta`
+- Aktuelle sichtbare Version: `v0.04-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -42,7 +42,7 @@
 ## Wichtige technische Entscheidungen
 - Alle Tooling- und Deploy-Kommandos auf Server mit Plesk-PHP 8.5 ausfuehren:
   `/opt/plesk/php/8.5/bin/php artisan ...`
-- Charakterformular hat einen robusten globalen Bootstrap-Fallback (`public/js/character-sheet.global.js`), damit Alpine auch bei Asset-Drift initialisiert.
+- Charakterformular hat einen robusten globalen Bootstrap-Fallback (`public/js/character-sheet.global.js`), der automatisch aus `resources/js/character-sheet.js` synchronisiert wird.
 - Service Worker Caches wurden auf `v6` angehoben; Build-Assets (`/build/*`) werden `networkFirst` geladen.
 - Finding 1 geschlossen: `effective_attributes` ist jetzt in Model, Request und Formular konsistent (nur Spezies-Modifikatoren, keine zusaetzlichen Berufungsboni in der Effektiv-Anzeige).
 
@@ -54,6 +54,5 @@
   `php artisan optimize:clear` und `php artisan config:cache`.
 
 ## Offene Prioritaeten
-- Regel-/Hilfetexte weiter auf GM-only-Probenpraxis harmonisieren.
 - PWA Push-Benachrichtigungen planen (nach Beta-Stabilisierung).
-- Optional: weitere Konsolidierung von Legacy-Texten und Doku.
+- Optional: weitere Konsolidierung von Legacy-Doku.

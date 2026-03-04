@@ -1,3 +1,4 @@
+/* Auto-generated from resources/js/character-sheet.js. Do not edit directly. */
 (() => {
     const toInt = (value, fallback = 0) => {
         const parsed = Number.parseInt(value, 10);
@@ -27,356 +28,356 @@
         return list;
     };
 
-    const factory = (payload = {}) => ({
-        config: payload.config ?? {},
-        isEdit: Boolean(payload.isEdit),
-        attributeKeys: Array.isArray(payload.attributeKeys) ? payload.attributeKeys : [],
+    function characterSheetForm(payload = {}) {
+        return {
+            config: payload.config ?? {},
+            isEdit: Boolean(payload.isEdit),
+            attributeKeys: Array.isArray(payload.attributeKeys) ? payload.attributeKeys : [],
 
-        origin: String(payload.initial?.origin ?? ''),
-        species: String(payload.initial?.species ?? ''),
-        calling: String(payload.initial?.calling ?? ''),
-        callingCustomName: String(payload.initial?.callingCustomName ?? ''),
-        callingCustomDescription: String(payload.initial?.callingCustomDescription ?? ''),
-        concept: String(payload.initial?.concept ?? ''),
-        worldConnection: String(payload.initial?.worldConnection ?? ''),
-        gmSecret: String(payload.initial?.gmSecret ?? ''),
-        gmNote: String(payload.initial?.gmNote ?? ''),
+            origin: String(payload.initial?.origin ?? ''),
+            species: String(payload.initial?.species ?? ''),
+            calling: String(payload.initial?.calling ?? ''),
+            callingCustomName: String(payload.initial?.callingCustomName ?? ''),
+            callingCustomDescription: String(payload.initial?.callingCustomDescription ?? ''),
+            concept: String(payload.initial?.concept ?? ''),
+            worldConnection: String(payload.initial?.worldConnection ?? ''),
+            gmSecret: String(payload.initial?.gmSecret ?? ''),
+            gmNote: String(payload.initial?.gmNote ?? ''),
 
-        attributes: payload.initial?.attributes ?? {},
-        attributeNotes: payload.initial?.attributeNotes ?? {},
+            attributes: payload.initial?.attributes ?? {},
+            attributeNotes: payload.initial?.attributeNotes ?? {},
 
-        advantages: [],
-        disadvantages: [],
+            advantages: [],
+            disadvantages: [],
 
-        init() {
-            this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
-            this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
+            init() {
+                this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
+                this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
 
-            if (!this.species) {
-                this.species = Object.keys(this.speciesOptions)[0] ?? '';
-            }
+                if (!this.species) {
+                    this.species = Object.keys(this.speciesOptions)[0] ?? '';
+                }
 
-            if (!this.calling) {
-                this.calling = Object.keys(this.callingOptions)[0] ?? '';
-            }
+                if (!this.calling) {
+                    this.calling = Object.keys(this.callingOptions)[0] ?? '';
+                }
 
-            if (!this.origin) {
-                this.origin = Object.keys(this.originOptions)[0] ?? '';
-            }
+                if (!this.origin) {
+                    this.origin = Object.keys(this.originOptions)[0] ?? '';
+                }
 
-            this.enforceOriginSpeciesConstraint();
+                this.enforceOriginSpeciesConstraint();
 
-            this.attributeKeys.forEach((key) => {
-                const min = this.attributeBounds(key).min;
-                const max = this.attributeBounds(key).max;
-                const current = toInt(this.attributes?.[key], min);
+                this.attributeKeys.forEach((key) => {
+                    const min = this.attributeBounds(key).min;
+                    const max = this.attributeBounds(key).max;
+                    const current = toInt(this.attributes?.[key], min);
 
-                this.attributes[key] = clamp(current, min, max);
-            });
-
-            if (typeof this.$watch === 'function') {
-                this.$watch('origin', () => {
-                    this.enforceOriginSpeciesConstraint();
+                    this.attributes[key] = clamp(current, min, max);
                 });
-            }
-        },
 
-        get originOptions() {
-            return this.config.origins ?? {};
-        },
+                if (typeof this.$watch === 'function') {
+                    this.$watch('origin', () => {
+                        this.enforceOriginSpeciesConstraint();
+                    });
+                }
+            },
 
-        get speciesOptions() {
-            return this.config.species ?? {};
-        },
+            get originOptions() {
+                return this.config.origins ?? {};
+            },
 
-        get originSpeciesConstraints() {
-            return this.config.origin_species_constraints ?? {};
-        },
+            get speciesOptions() {
+                return this.config.species ?? {};
+            },
 
-        get callingOptions() {
-            return this.config.callings ?? {};
-        },
+            get originSpeciesConstraints() {
+                return this.config.origin_species_constraints ?? {};
+            },
 
-        allowedSpeciesForOrigin(originKey = this.origin) {
-            const raw = this.originSpeciesConstraints?.[originKey];
+            get callingOptions() {
+                return this.config.callings ?? {};
+            },
 
-            if (!Array.isArray(raw) || raw.length === 0) {
-                return null;
-            }
+            allowedSpeciesForOrigin(originKey = this.origin) {
+                const raw = this.originSpeciesConstraints?.[originKey];
 
-            const normalized = raw
-                .map((value) => String(value ?? '').trim().toLowerCase())
-                .filter((value) => value.length > 0);
+                if (!Array.isArray(raw) || raw.length === 0) {
+                    return null;
+                }
 
-            return normalized.length > 0 ? normalized : null;
-        },
+                const normalized = raw
+                    .map((value) => String(value ?? '').trim().toLowerCase())
+                    .filter((value) => value.length > 0);
 
-        isSpeciesAllowed(speciesKey) {
-            const allowed = this.allowedSpeciesForOrigin();
+                return normalized.length > 0 ? normalized : null;
+            },
 
-            if (!allowed) {
-                return true;
-            }
+            isSpeciesAllowed(speciesKey) {
+                const allowed = this.allowedSpeciesForOrigin();
 
-            return allowed.includes(String(speciesKey));
-        },
+                if (!allowed) {
+                    return true;
+                }
 
-        enforceOriginSpeciesConstraint() {
-            const allowed = this.allowedSpeciesForOrigin();
+                return allowed.includes(String(speciesKey));
+            },
 
-            if (!allowed || allowed.length === 0) {
-                return;
-            }
+            enforceOriginSpeciesConstraint() {
+                const allowed = this.allowedSpeciesForOrigin();
 
-            if (!allowed.includes(String(this.species))) {
-                this.species = allowed[0];
-            }
-        },
+                if (!allowed || allowed.length === 0) {
+                    return;
+                }
 
-        get visibleSpeciesEntries() {
-            return Object.entries(this.speciesOptions).filter(([speciesKey]) => this.isSpeciesAllowed(speciesKey));
-        },
+                if (!allowed.includes(String(this.species))) {
+                    this.species = allowed[0];
+                }
+            },
 
-        get selectedSpecies() {
-            return this.speciesOptions[this.species] ?? null;
-        },
+            get visibleSpeciesEntries() {
+                return Object.entries(this.speciesOptions).filter(([speciesKey]) => this.isSpeciesAllowed(speciesKey));
+            },
 
-        get selectedCalling() {
-            return this.callingOptions[this.calling] ?? null;
-        },
+            get selectedSpecies() {
+                return this.speciesOptions[this.species] ?? null;
+            },
 
-        get selectedCallingLabel() {
-            return this.selectedCalling?.label ?? 'Unbekannte Berufung';
-        },
+            get selectedCalling() {
+                return this.callingOptions[this.calling] ?? null;
+            },
 
-        get selectedCallingDescription() {
-            return this.selectedCalling?.description ?? 'Keine Beschreibung vorhanden.';
-        },
+            get selectedCallingLabel() {
+                return this.selectedCalling?.label ?? 'Unbekannte Berufung';
+            },
 
-        get callingMinimums() {
-            return this.selectedCalling?.minimums ?? {};
-        },
+            get selectedCallingDescription() {
+                return this.selectedCalling?.description ?? 'Keine Beschreibung vorhanden.';
+            },
 
-        get averageMax() {
-            return toInt(this.config.average_max, 50);
-        },
+            get callingMinimums() {
+                return this.selectedCalling?.minimums ?? {};
+            },
 
-        get traitsMin() {
-            return toInt(this.config.traits?.min, 1);
-        },
+            get averageMax() {
+                return toInt(this.config.average_max, 50);
+            },
 
-        get traitsMax() {
-            return toInt(this.config.traits?.max, 3);
-        },
+            get traitsMin() {
+                return toInt(this.config.traits?.min, 1);
+            },
 
-        get requiresCustomCalling() {
-            return this.calling === 'eigene';
-        },
+            get traitsMax() {
+                return toInt(this.config.traits?.max, 3);
+            },
 
-        get customCallingValid() {
-            if (!this.requiresCustomCalling) {
-                return true;
-            }
+            get requiresCustomCalling() {
+                return this.calling === 'eigene';
+            },
 
-            return this.callingCustomName.trim().length > 0 && this.callingCustomDescription.trim().length > 0;
-        },
+            get customCallingValid() {
+                if (!this.requiresCustomCalling) {
+                    return true;
+                }
 
-        attributeBounds(key) {
-            const meta = this.config.attributes?.[key] ?? {};
+                return this.callingCustomName.trim().length > 0 && this.callingCustomDescription.trim().length > 0;
+            },
 
-            return {
-                min: toInt(meta.min, 30),
-                max: toInt(meta.max, 60),
-            };
-        },
-
-        attributeLabel(key) {
-            return this.config.attributes?.[key]?.label ?? key.toUpperCase();
-        },
-
-        attributeValue(key) {
-            const bounds = this.attributeBounds(key);
-            const current = toInt(this.attributes?.[key], bounds.min);
-
-            return clamp(current, bounds.min, bounds.max);
-        },
-
-        get attributeSum() {
-            return this.attributeKeys.reduce((sum, key) => sum + this.attributeValue(key), 0);
-        },
-
-        get attributeAverage() {
-            if (this.attributeKeys.length === 0) {
-                return 0;
-            }
-
-            return this.attributeSum / this.attributeKeys.length;
-        },
-
-        get averageFormatted() {
-            return `${this.attributeAverage.toFixed(1)} %`;
-        },
-
-        get averageValid() {
-            return this.attributeAverage <= this.averageMax;
-        },
-
-        get averageProgress() {
-            if (this.averageMax <= 0) {
-                return 0;
-            }
-
-            return Math.min(100, (this.attributeAverage / this.averageMax) * 100);
-        },
-
-        get speciesModifiers() {
-            return this.selectedSpecies?.modifiers ?? {};
-        },
-
-        get effectiveAttributes() {
-            const effective = {};
-
-            this.attributeKeys.forEach((key) => {
-                const modifier = toInt(this.speciesModifiers[key], 0);
-                effective[key] = this.attributeValue(key) + modifier;
-            });
-
-            return effective;
-        },
-
-        get callingRequirementEntries() {
-            return Object.entries(this.callingMinimums).map(([key, requiredValue]) => {
-                const currentValue = toInt(this.effectiveAttributes[key], 0);
-                const required = toInt(requiredValue, 0);
+            attributeBounds(key) {
+                const meta = this.config.attributes?.[key] ?? {};
 
                 return {
-                    key,
-                    label: this.attributeLabel(key),
-                    current: currentValue,
-                    required,
-                    met: currentValue >= required,
+                    min: toInt(meta.min, 30),
+                    max: toInt(meta.max, 60),
                 };
-            });
-        },
+            },
 
-        get callingRequirementsValid() {
-            return this.callingRequirementEntries.every((entry) => entry.met);
-        },
+            attributeLabel(key) {
+                return this.config.attributes?.[key]?.label ?? key.toUpperCase();
+            },
 
-        get callingBonuses() {
-            return this.selectedCalling?.bonuses ?? {};
-        },
+            attributeValue(key) {
+                const bounds = this.attributeBounds(key);
+                const current = toInt(this.attributes?.[key], bounds.min);
 
-        get leBase() {
-            const ko = toInt(this.effectiveAttributes.ko, 0);
-            const kk = toInt(this.effectiveAttributes.kk, 0);
-            const mu = toInt(this.effectiveAttributes.mu, 0);
+                return clamp(current, bounds.min, bounds.max);
+            },
 
-            return Math.round((ko + kk + mu) / 3);
-        },
+            get attributeSum() {
+                return this.attributeKeys.reduce((sum, key) => sum + this.attributeValue(key), 0);
+            },
 
-        get aeBase() {
-            const kl = toInt(this.effectiveAttributes.kl, 0);
-            const intuition = toInt(this.effectiveAttributes.in, 0);
-            const ch = toInt(this.effectiveAttributes.ch, 0);
+            get attributeAverage() {
+                if (this.attributeKeys.length === 0) {
+                    return 0;
+                }
 
-            return Math.round((kl + intuition + ch) / 3);
-        },
+                return this.attributeSum / this.attributeKeys.length;
+            },
 
-        get leMax() {
-            const speciesBonus = toInt(this.selectedSpecies?.le_bonus, 0);
-            const callingFlat = toInt(this.callingBonuses.le_flat, 0);
+            get averageFormatted() {
+                return `${this.attributeAverage.toFixed(1)} %`;
+            },
 
-            return Math.max(1, this.leBase + speciesBonus + callingFlat);
-        },
+            get averageValid() {
+                return this.attributeAverage <= this.averageMax;
+            },
 
-        get aeMax() {
-            const speciesBonus = toInt(this.selectedSpecies?.ae_bonus, 0);
-            const callingFlat = toInt(this.callingBonuses.ae_flat, 0);
-            const callingPercent = toInt(this.callingBonuses.ae_percent, 0);
-            const percentBonus = Math.round(this.aeBase * (callingPercent / 100));
+            get averageProgress() {
+                if (this.averageMax <= 0) {
+                    return 0;
+                }
 
-            return Math.max(0, this.aeBase + speciesBonus + callingFlat + percentBonus);
-        },
+                return Math.min(100, (this.attributeAverage / this.averageMax) * 100);
+            },
 
-        get traitsValid() {
-            const advantageCount = this.advantages.length;
-            const disadvantageCount = this.disadvantages.length;
+            get speciesModifiers() {
+                return this.selectedSpecies?.modifiers ?? {};
+            },
 
-            if (advantageCount !== disadvantageCount) {
-                return false;
-            }
+            get effectiveAttributes() {
+                const effective = {};
 
-            if (advantageCount < this.traitsMin || advantageCount > this.traitsMax) {
-                return false;
-            }
+                this.attributeKeys.forEach((key) => {
+                    const modifier = toInt(this.speciesModifiers[key], 0);
+                    effective[key] = this.attributeValue(key) + modifier;
+                });
 
-            if (disadvantageCount < this.traitsMin || disadvantageCount > this.traitsMax) {
-                return false;
-            }
+                return effective;
+            },
 
-            return true;
-        },
+            get callingRequirementEntries() {
+                return Object.entries(this.callingMinimums).map(([key, requiredValue]) => {
+                    const currentValue = toInt(this.effectiveAttributes[key], 0);
+                    const required = toInt(requiredValue, 0);
 
-        addTrait(type) {
-            const key = type === 'disadvantages' ? 'disadvantages' : 'advantages';
+                    return {
+                        key,
+                        label: this.attributeLabel(key),
+                        current: currentValue,
+                        required,
+                        met: currentValue >= required,
+                    };
+                });
+            },
 
-            if (this[key].length >= this.traitsMax) {
-                return;
-            }
+            get callingRequirementsValid() {
+                return this.callingRequirementEntries.every((entry) => entry.met);
+            },
 
-            this[key].push('');
-        },
+            get callingBonuses() {
+                return this.selectedCalling?.bonuses ?? {};
+            },
 
-        removeTrait(type, index) {
-            const key = type === 'disadvantages' ? 'disadvantages' : 'advantages';
+            get leBase() {
+                const ko = toInt(this.effectiveAttributes.ko, 0);
+                const kk = toInt(this.effectiveAttributes.kk, 0);
+                const mu = toInt(this.effectiveAttributes.mu, 0);
 
-            if (this[key].length <= this.traitsMin) {
-                return;
-            }
+                return Math.round((ko + kk + mu) / 3);
+            },
 
-            this[key].splice(index, 1);
-        },
+            get aeBase() {
+                const kl = toInt(this.effectiveAttributes.kl, 0);
+                const intuition = toInt(this.effectiveAttributes.in, 0);
+                const ch = toInt(this.effectiveAttributes.ch, 0);
 
-        formatSpeciesModifiers(speciesKey) {
-            const species = this.speciesOptions[speciesKey] ?? null;
+                return Math.round((kl + intuition + ch) / 3);
+            },
 
-            if (!species) {
-                return '';
-            }
+            get leMax() {
+                const speciesBonus = toInt(this.selectedSpecies?.le_bonus, 0);
+                const callingFlat = toInt(this.callingBonuses.le_flat, 0);
 
-            const parts = [];
-            const modifiers = species.modifiers ?? {};
+                return Math.max(1, this.leBase + speciesBonus + callingFlat);
+            },
 
-            Object.entries(modifiers).forEach(([key, value]) => {
-                const label = this.attributeLabel(key);
-                const amount = toInt(value, 0);
-                const sign = amount >= 0 ? '+' : '';
-                parts.push(`${sign}${amount} ${label}`);
-            });
+            get aeMax() {
+                const speciesBonus = toInt(this.selectedSpecies?.ae_bonus, 0);
+                const callingFlat = toInt(this.callingBonuses.ae_flat, 0);
+                const callingPercent = toInt(this.callingBonuses.ae_percent, 0);
+                const percentBonus = Math.round(this.aeBase * (callingPercent / 100));
 
-            const leBonus = toInt(species.le_bonus, 0);
-            const aeBonus = toInt(species.ae_bonus, 0);
+                return Math.max(0, this.aeBase + speciesBonus + callingFlat + percentBonus);
+            },
 
-            if (leBonus !== 0) {
-                parts.push(`${leBonus >= 0 ? '+' : ''}${leBonus} LE`);
-            }
+            get traitsValid() {
+                const advantageCount = this.advantages.length;
+                const disadvantageCount = this.disadvantages.length;
 
-            if (aeBonus !== 0) {
-                parts.push(`${aeBonus >= 0 ? '+' : ''}${aeBonus} AE`);
-            }
+                if (advantageCount !== disadvantageCount) {
+                    return false;
+                }
 
-            return parts.length ? parts.join(' | ') : 'Keine Modifikatoren';
-        },
-    });
+                if (advantageCount < this.traitsMin || advantageCount > this.traitsMax) {
+                    return false;
+                }
 
-    window.characterSheetForm = factory;
+                if (disadvantageCount < this.traitsMin || disadvantageCount > this.traitsMax) {
+                    return false;
+                }
 
-    window.addEventListener('alpine:init', () => {
-        if (!window.Alpine) {
-            return;
-        }
+                return true;
+            },
 
-        window.Alpine.data('characterSheetForm', factory);
-    });
+            addTrait(type) {
+                const key = type === 'disadvantages' ? 'disadvantages' : 'advantages';
+
+                if (this[key].length >= this.traitsMax) {
+                    return;
+                }
+
+                this[key].push('');
+            },
+
+            removeTrait(type, index) {
+                const key = type === 'disadvantages' ? 'disadvantages' : 'advantages';
+
+                if (this[key].length <= this.traitsMin) {
+                    return;
+                }
+
+                this[key].splice(index, 1);
+            },
+
+            formatSpeciesModifiers(speciesKey) {
+                const species = this.speciesOptions[speciesKey] ?? null;
+
+                if (!species) {
+                    return '';
+                }
+
+                const parts = [];
+                const modifiers = species.modifiers ?? {};
+
+                Object.entries(modifiers).forEach(([key, value]) => {
+                    const label = this.attributeLabel(key);
+                    const amount = toInt(value, 0);
+                    const sign = amount >= 0 ? '+' : '';
+                    parts.push(`${sign}${amount} ${label}`);
+                });
+
+                const leBonus = toInt(species.le_bonus, 0);
+                const aeBonus = toInt(species.ae_bonus, 0);
+
+                if (leBonus !== 0) {
+                    parts.push(`${leBonus >= 0 ? '+' : ''}${leBonus} LE`);
+                }
+
+                if (aeBonus !== 0) {
+                    parts.push(`${aeBonus >= 0 ? '+' : ''}${aeBonus} AE`);
+                }
+
+                return parts.length ? parts.join(' | ') : 'Keine Modifikatoren';
+            },
+        };
+    }
+
+    function registerCharacterSheetComponent(Alpine) {
+        Alpine.data('characterSheetForm', characterSheetForm);
+    }
+
+    if (typeof window !== 'undefined') {
+        window.characterSheetForm = characterSheetForm;
+    }
 })();

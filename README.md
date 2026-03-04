@@ -24,7 +24,7 @@ Enthalten:
 - Einladungen: Ausstehend/Annehmen/Ablehnen inkl. Rollen (Player/Co-GM)
 - Read-Tracking: Ungelesen-Status, Read/Unread-Aktionen, Jump-Links
 - Bookmarks: Szenen-Bookmark je User inkl. Jump auf Post/Page
-- GM-Proben im Post: d100-basiert (normal/vorteil/nachteil) mit Log in DB und direkter LE/AE-Persistenz
+- GM-Proben im Post: GM-only mit Anlass/Ziel-Held/Modifikator, d100-Rollmode, Log in DB und direkter LE/AE-Persistenz
 - Benachrichtigungen: In-App + Mail-Kanäle (präferenzgesteuert)
 - Gamification: Punkte für freigegebene Posts
 - Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie
@@ -130,6 +130,8 @@ Produktionsbuild:
 ```bash
 npm run build
 ```
+
+Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.global.js` aus `resources/js/character-sheet.js` (keine manuelle Doppelpflege mehr).
 
 ## Rollenmodell
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
     <head>
-        @php($appVersion = (string) config('app.version', 'v0.03-beta'))
+        @php($appVersion = (string) config('app.version', 'v0.04-beta'))
         @php($appBuild = (string) config('app.build', ''))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
