@@ -73,7 +73,7 @@
                     </h1>
                     <p class="font-body max-w-xl text-lg leading-relaxed text-stone-300 sm:text-xl">
                         Zwischen verfluchten Dynastien, uralten Blutpforten und flüsternden Ruinen schreiben Spieler und Spielleiter gemeinsame Geschichten. 
-                        Jede Entscheidung hinterlässt Narben in der Welt, jeder Würfelwurf kann den Untergang oder die Erlösung bedeuten.
+                        Jede Entscheidung hinterlässt Narben in der Welt, jede GM-Probe kann den Untergang oder die Erlösung bedeuten.
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-4">

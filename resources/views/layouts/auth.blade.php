@@ -13,7 +13,6 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <script defer src="{{ asset('js/character-sheet.global.js') }}"></script>
         <script>
             window.deferLoadingAlpine = function (startAlpine) {
                 window.__startAlpine = startAlpine;
@@ -48,9 +47,6 @@
                         Wissen
                     </a>
                     @auth
-                        @php($unreadNotificationsCount = auth()->user()->unreadNotifications()->count())
-                        @php($pendingCampaignInvitationsCount = auth()->user()->campaignInvitations()->where('status', \App\Models\CampaignInvitation::STATUS_PENDING)->count())
-                        @php($bookmarkCount = auth()->user()->sceneBookmarks()->whereHas('scene.campaign', fn ($campaignQuery) => $campaignQuery->visibleTo(auth()->user()))->count())
                         <span class="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100">
                             {{ auth()->user()->points }} Punkte
                         </span>

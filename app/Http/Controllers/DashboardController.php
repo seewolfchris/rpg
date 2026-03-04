@@ -95,11 +95,11 @@ class DashboardController extends Controller
                 'cta' => $hasPost ? 'Weiter schreiben' : 'Jetzt posten',
             ],
             [
-                'title' => 'Ersten Probenwurf machen',
-                'description' => 'Lass im Thread eine GM-Probe fuer einen Helden ausfuehren.',
+                'title' => 'Erste GM-Probe im Thread',
+                'description' => 'GM/Co-GM fuehrt Proben mit Anlass, Ziel-Held und Modifikator direkt im Post aus.',
                 'done' => $hasDiceRoll,
                 'url' => route('campaigns.index'),
-                'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe ausfuehren',
+                'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe anstossen',
             ],
             [
                 'title' => 'Erstes Bookmark setzen',

@@ -28,10 +28,11 @@
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-5">
                 <h2 class="font-heading text-xl text-stone-100">2. Prozentproben (d100)</h2>
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
-                    <li>1. Standardprobe: 1W100 gegen den Zielwert der Aktion.</li>
-                    <li>2. Situative Erleichterungen und Erschwernisse werden als Modifikator vorab festgelegt.</li>
-                    <li>3. Das Ergebnis wird immer im Kontext der Szene und der erzaehlerischen Konsequenz bewertet.</li>
-                    <li>4. Jeder Wurf wird im Wurfprotokoll der Szene gespeichert.</li>
+                    <li>1. Proben werden nur durch GM oder Co-GM ausgeloest.</li>
+                    <li>2. Jede Probe braucht Anlass, Ziel-Held und Modifikator (+/-), bevor sie ausgefuehrt wird.</li>
+                    <li>3. Standardprobe: 1W100 gegen den Zielwert der Aktion; Vorteil/Nachteil ist zusaetzlich moeglich.</li>
+                    <li>4. Das Ergebnis wird als klarer Probe-Block im zugehoerigen GM-Post dokumentiert.</li>
+                    <li>5. LE/AE-Auswirkungen werden direkt am Charakterbogen persistiert.</li>
                 </ul>
             </article>
 

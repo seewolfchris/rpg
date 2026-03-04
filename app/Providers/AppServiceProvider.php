@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\CampaignInvitation;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -47,12 +51,32 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(20)->by($key);
         });
 
-        RateLimiter::for('dice-rolls', function (Request $request): Limit {
-            $key = $request->user()
-                ? 'user:'.$request->user()->id
-                : 'ip:'.$request->ip();
+        View::composer('layouts.auth', function ($view): void {
+            $user = Auth::user();
 
-            return Limit::perMinute(40)->by($key);
+            if (! $user) {
+                $view->with([
+                    'unreadNotificationsCount' => 0,
+                    'pendingCampaignInvitationsCount' => 0,
+                    'bookmarkCount' => 0,
+                ]);
+
+                return;
+            }
+
+            $unreadNotificationsCount = $user->unreadNotifications()->count();
+            $pendingCampaignInvitationsCount = $user->campaignInvitations()
+                ->where('status', CampaignInvitation::STATUS_PENDING)
+                ->count();
+            $bookmarkCount = $user->sceneBookmarks()
+                ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+                ->count();
+
+            $view->with(compact(
+                'unreadNotificationsCount',
+                'pendingCampaignInvitationsCount',
+                'bookmarkCount',
+            ));
         });
     }
 }

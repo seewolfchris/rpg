@@ -71,7 +71,7 @@
         <div class="grid gap-4 md:grid-cols-5">
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Charaktere</h2>
-                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro User inkl. Stats, Bio und Portraet.</p>
+                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro User inkl. Eigenschaften, Biografie und Portraet.</p>
                 <a
                     href="{{ route('characters.index') }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
@@ -90,8 +90,8 @@
                 </a>
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
-                <h2 class="font-heading text-lg text-stone-100">Wuerfel</h2>
-                <p class="mt-2 text-sm text-stone-300">d100-Proben mit transparentem Ergebnis-Log.</p>
+                <h2 class="font-heading text-lg text-stone-100">GM-Proben</h2>
+                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen ueber den GM-Post inkl. Anlass, Ziel-Held und Modifikator.</p>
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Rangliste</h2>

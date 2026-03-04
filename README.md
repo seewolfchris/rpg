@@ -1,6 +1,6 @@
 # Chroniken der Asche (Laravel Beta)
 
-Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchronen Kampagnen/Szenen, Post-Moderation, Dice-Roller, Benachrichtigungen, Gamification und PWA-Basis.
+Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchronen Kampagnen/Szenen, Post-Moderation, GM-Proben, Benachrichtigungen, Gamification und PWA-Basis.
 
 ## Dokumentations-Uebersicht
 
@@ -15,7 +15,7 @@ Stand: **Beta 1** (funktional, getestet, build-fähig)
 
 Enthalten:
 - Auth: Registrierung/Login/Logout (Breeze-Style, Blade)
-- Charaktersystem: CRUD, Stats, Bio, Avatar-Upload, Ownership-Checks
+- Charaktersystem: CRUD, Eigenschaften, Biografie, Avatar-Upload, Ownership-Checks
 - Kampagnen/Szenen: Erstellung, Sichtbarkeit, Filter, Rollen (Owner/Co-GM/Player)
 - Posts: IC/OOC, Markdown/BBCode/Plain, Spoiler, Edit-History (Revisionen)
 - Moderation: Ausstehend/Freigegeben/Abgelehnt, Audit-Log, GM-Queue, Bulk-Aktionen
@@ -23,7 +23,7 @@ Enthalten:
 - Einladungen: Ausstehend/Annehmen/Ablehnen inkl. Rollen (Player/Co-GM)
 - Read-Tracking: Ungelesen-Status, Read/Unread-Aktionen, Jump-Links
 - Bookmarks: Szenen-Bookmark je User inkl. Jump auf Post/Page
-- Proben-Roller: d100-basiert (normal/vorteil/nachteil) mit Log in DB
+- GM-Proben im Post: d100-basiert (normal/vorteil/nachteil) mit Log in DB und direkter LE/AE-Persistenz
 - Benachrichtigungen: In-App + Mail-Kanäle (präferenzgesteuert)
 - Gamification: Punkte für freigegebene Posts
 - Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie

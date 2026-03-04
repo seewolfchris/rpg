@@ -1,5 +1,4 @@
 import './bootstrap';
-import { initDiceRoller } from './dice-roller';
 import { characterSheetForm, registerCharacterSheetComponent } from './character-sheet';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
@@ -32,10 +31,6 @@ const startDeferredAlpine = () => {
 startDeferredAlpine();
 window.addEventListener('load', startDeferredAlpine);
 
-const bootDiceRoller = () => {
-    initDiceRoller();
-};
-
 const bootApplication = async () => {
     setupPwaInstallPrompt();
     setupOfflinePostQueue();
@@ -52,11 +47,9 @@ const bootApplication = async () => {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        bootDiceRoller();
         bootApplication();
     });
 } else {
-    bootDiceRoller();
     bootApplication();
 }
 

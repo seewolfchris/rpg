@@ -23,7 +23,7 @@
                 </li>
                 <li>
                     <strong class="text-stone-100">2. Charakter erstellen</strong><br>
-                    Vergib Name, Stats, Bio und ein Bild. Der Charakter braucht ein klares Ziel und ein klares Risiko.
+                    Vergib Name, Eigenschaften, Biografie und ein Bild. Der Charakter braucht ein klares Ziel und ein klares Risiko.
                 </li>
                 <li>
                     <strong class="text-stone-100">3. Kampagne waehlen</strong><br>
@@ -38,8 +38,8 @@
                     IC immer in Ich-Perspektive: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
-                    <strong class="text-stone-100">6. Prozentprobe wuerfeln</strong><br>
-                    Wenn eine Aktion unsicher ist, nutze den integrierten Proben-Roller statt Freitext-Wuerfen.
+                    <strong class="text-stone-100">6. GM-Probe anstossen</strong><br>
+                    Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe aus: mit Anlass, Ziel-Held und Modifikator.
                 </li>
                 <li>
                     <strong class="text-stone-100">7. Thread weiterfuehren</strong><br>
@@ -64,7 +64,7 @@
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
                     <li>1. Zu lange Vorgeschichte statt aktueller Aktion.</li>
                     <li>2. OOC-Infos mitten im IC-Absatz.</li>
-                    <li>3. Wuerfe als Text behaupten statt ueber den Roller.</li>
+                    <li>3. Probenergebnisse ohne GM-Freigabe im Freitext festlegen.</li>
                     <li>4. Ohne Rueckbezug auf die letzten zwei Posts schreiben.</li>
                 </ul>
             </article>

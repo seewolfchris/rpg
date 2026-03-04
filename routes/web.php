@@ -8,7 +8,6 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DiceRollController;
 use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
 use App\Http\Controllers\GmModerationController;
@@ -120,10 +119,6 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::post('/campaigns/{campaign}/scenes/{scene}/posts', [PostController::class, 'store'])
         ->middleware('throttle:posts')
         ->name('campaigns.scenes.posts.store');
-
-    Route::post('/campaigns/{campaign}/scenes/{scene}/dice-rolls', [DiceRollController::class, 'store'])
-        ->middleware('throttle:dice-rolls')
-        ->name('campaigns.scenes.dice-rolls.store');
 
     Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
         ->name('posts.edit');

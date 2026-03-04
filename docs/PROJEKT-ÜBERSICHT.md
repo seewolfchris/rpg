@@ -23,7 +23,7 @@
 | Auth (Login/Register/Reset) | Fertig | inkl. Mail-Reset |
 | Charaktere (CRUD + Avatar + Ownership) | Fertig | validiert, auth-gebunden |
 | Kampagnen/Szenen/Posts | Fertig | IC/OOC, Moderation, Revisionen |
-| Proben-Roller (d100) | Fertig | inkl. Log in DB |
+| GM-Proben im Post (d100) | Fertig | Anlass/Held/Modifikator + LE/AE-Persistenz |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
 | Wissenszentrum | Fertig | Uebersicht/HowTo/Regelwerk/Enzyklopaedie |
