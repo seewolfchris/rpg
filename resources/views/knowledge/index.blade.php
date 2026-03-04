@@ -34,7 +34,7 @@
                 <p class="text-xs uppercase tracking-[0.1em] text-amber-300">System</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Regelwerk</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
-                    IC/OOC-Konventionen, Posting-Standards, d20-Proben, Moderation und Spoiler-Richtlinien.
+                    IC/OOC-Konventionen, Posting-Standards, Prozentproben (d100), Moderation und Spoiler-Richtlinien.
                 </p>
                 <a
                     href="{{ route('knowledge.rules') }}"
@@ -64,7 +64,7 @@
             <ol class="mt-5 space-y-3 text-sm leading-relaxed text-stone-300">
                 <li>1. Lies zuerst <strong>Wie spielt man?</strong> komplett durch.</li>
                 <li>2. Erstelle einen Charakter mit klarer Motivation und Grenzen.</li>
-                <li>3. Nimm dir danach nur die Regelwerk-Abschnitte zu IC/OOC und d20 vor.</li>
+                <li>3. Nimm dir danach nur die Regelwerk-Abschnitte zu IC/OOC und Prozentproben vor.</li>
                 <li>4. Nutze die Enzyklopaedie als Nachschlagewerk waehrend des Schreibens.</li>
                 <li>5. Schreibe den ersten IC-Post kurz, konkret und in Ich-Perspektive.</li>
             </ol>

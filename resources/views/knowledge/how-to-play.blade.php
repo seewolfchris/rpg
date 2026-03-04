@@ -38,8 +38,8 @@
                     IC immer in Ich-Perspektive: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
-                    <strong class="text-stone-100">6. Probe mit d20 wuerfeln</strong><br>
-                    Wenn eine Aktion unsicher ist, nutze den integrierten Dice-Roller statt Freitext-Wuerfen.
+                    <strong class="text-stone-100">6. Prozentprobe wuerfeln</strong><br>
+                    Wenn eine Aktion unsicher ist, nutze den integrierten Proben-Roller statt Freitext-Wuerfen.
                 </li>
                 <li>
                     <strong class="text-stone-100">7. Thread weiterfuehren</strong><br>

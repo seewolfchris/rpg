@@ -14,7 +14,7 @@
 
 ## Kern-Philosophie (das darf NIE verloren gehen)
 - Primaer: Geschichtenerzaehlen & Immersion
-- Sekundaer: leichte d20-Mechanik (kein Crunch, keine Mathe-Orgien)
+- Sekundaer: leichtes d100-/Prozent-System (kein Crunch, keine Mathe-Orgien)
 - Spieler soll sich wie in einem Roman fuehlen, nicht wie beim D&D-Charakterbogen ausfuellen
 
 ## Feature-Status (immer aktuell halten!)
@@ -23,7 +23,7 @@
 | Auth (Login/Register/Reset) | Fertig | inkl. Mail-Reset |
 | Charaktere (CRUD + Avatar + Ownership) | Fertig | validiert, auth-gebunden |
 | Kampagnen/Szenen/Posts | Fertig | IC/OOC, Moderation, Revisionen |
-| Dice Roller (d20) | Fertig | inkl. Log in DB |
+| Proben-Roller (d100) | Fertig | inkl. Log in DB |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
 | Wissenszentrum | Fertig | Uebersicht/HowTo/Regelwerk/Enzyklopaedie |

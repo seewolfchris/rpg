@@ -11,15 +11,15 @@ const normalizeModifier = (value) => {
     return parsed;
 };
 
-const randomD20 = () => {
+const randomRollValue = () => {
     if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
         const buffer = new Uint32Array(1);
         window.crypto.getRandomValues(buffer);
 
-        return (buffer[0] % 20) + 1;
+        return (buffer[0] % 100) + 1;
     }
 
-    return Math.floor(Math.random() * 20) + 1;
+    return Math.floor(Math.random() * 100) + 1;
 };
 
 const keepRoll = (mode, rolls) => {
@@ -42,7 +42,7 @@ const summarizeRoll = (rolls, keptRollValue, modifier, total, mode) => {
     const rollsLabel = `[${rolls.join(', ')}]`;
     const keepLabel = rolls.length > 1 ? ` -> ${keptRollValue}` : `${keptRollValue}`;
 
-    return `d20 ${modeLabel}: ${rollsLabel}${keepLabel} ${formatSigned(modifier)} = ${total}`;
+    return `Probe ${modeLabel}: ${rollsLabel}${keepLabel} ${formatSigned(modifier)} = ${total}`;
 };
 
 const renderLiveMessage = (element, message, variant = 'neutral') => {
@@ -96,9 +96,9 @@ const bindDiceForm = (form) => {
         const mode = String(formData.get('dice_roll_mode') ?? 'normal');
         const modifier = normalizeModifier(String(formData.get('dice_modifier') ?? '0'));
 
-        const localRolls = [randomD20()];
+        const localRolls = [randomRollValue()];
         if (mode === MODE_ADVANTAGE || mode === MODE_DISADVANTAGE) {
-            localRolls.push(randomD20());
+            localRolls.push(randomRollValue());
         }
 
         const localKeptRoll = keepRoll(mode, localRolls);

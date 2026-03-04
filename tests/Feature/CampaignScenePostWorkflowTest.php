@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\Character;
+use App\Models\DiceRoll;
 use App\Models\Scene;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -122,5 +123,154 @@ class CampaignScenePostWorkflowTest extends TestCase
             'moderation_status' => 'approved',
             'approved_by' => $gm->id,
         ]);
+    }
+
+    public function test_gm_can_create_post_with_integrated_probe_result(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $playerCharacter = Character::factory()->create(['user_id' => $player->id]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Der Spielleiter setzt die Szene unter Druck. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $playerCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => -4,
+            'probe_explanation' => 'Klettern am zerborstenen Ascheturm bei Sturm',
+        ]);
+
+        $post = DB::table('posts')
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($post);
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+
+        $this->assertDatabaseHas('dice_rolls', [
+            'scene_id' => $scene->id,
+            'post_id' => $post->id,
+            'user_id' => $gm->id,
+            'character_id' => $playerCharacter->id,
+            'roll_mode' => DiceRoll::MODE_NORMAL,
+            'modifier' => -4,
+            'label' => 'Klettern am zerborstenen Ascheturm bei Sturm',
+        ]);
+
+        $roll = DB::table('dice_rolls')
+            ->where('post_id', $post->id)
+            ->first();
+
+        $this->assertNotNull($roll);
+        $this->assertGreaterThanOrEqual(1, (int) $roll->kept_roll);
+        $this->assertLessThanOrEqual(100, (int) $roll->kept_roll);
+
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse->assertOk()
+            ->assertSeeText('GM-Probe')
+            ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
+            ->assertSeeText($playerCharacter->name);
+    }
+
+    public function test_player_cannot_attach_probe_data_to_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $playerCharacter = Character::factory()->create(['user_id' => $player->id]);
+
+        $response = $this->actingAs($player)
+            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+                'post_type' => 'ic',
+                'content_format' => 'markdown',
+                'character_id' => $playerCharacter->id,
+                'content' => str_repeat('Ich renne ueber das brennende Pflaster. ', 2),
+                'probe_enabled' => '1',
+                'probe_character_id' => $playerCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 2,
+                'probe_explanation' => 'Unerlaubte Probe durch Spieler',
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertSessionHasErrors('probe_enabled');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_scene_show_separates_ic_and_ooc_sections(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $character = Character::factory()->create(['user_id' => $player->id]);
+
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'character_id' => $character->id,
+            'content' => 'IC-Text am roten Tor mit Blutmondschein.',
+        ]);
+
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'OOC-Abstimmung fuer die naechste Runde.',
+        ]);
+
+        $response = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+
+        $response->assertOk()
+            ->assertSeeText('Abenteuerfluss (IC)')
+            ->assertSeeText('OOC-Kanal')
+            ->assertSeeText('IC-Text am roten Tor mit Blutmondschein.')
+            ->assertSeeText('OOC-Abstimmung fuer die naechste Runde.');
     }
 }

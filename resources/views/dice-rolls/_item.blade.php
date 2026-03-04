@@ -33,8 +33,8 @@
     </p>
 
     @if ($roll->is_critical_success)
-        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-emerald-300">Critical Success (Natural 20)</p>
+        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-emerald-300">Kritischer Erfolg</p>
     @elseif ($roll->is_critical_failure)
-        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-red-300">Critical Failure (Natural 1)</p>
+        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-red-300">Kritischer Fehlschlag</p>
     @endif
 </li>

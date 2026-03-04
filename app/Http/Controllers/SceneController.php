@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Scene\StoreSceneRequest;
 use App\Http\Requests\Scene\UpdateSceneRequest;
 use App\Models\Campaign;
-use App\Models\DiceRoll;
+use App\Models\CampaignInvitation;
+use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class SceneController extends Controller
@@ -106,7 +108,7 @@ class SceneController extends Controller
 
         $posts = Post::query()
             ->where('scene_id', $scene->id)
-            ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator'])
+            ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator', 'diceRoll.character.user'])
             ->latest()
             ->paginate(self::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
@@ -124,17 +126,15 @@ class SceneController extends Controller
             $pinnedPostJumpUrls[$pinnedPost->id] = $this->buildPostAnchorUrl($campaign, $scene, (int) $pinnedPost->id);
         }
 
-        $diceRolls = DiceRoll::query()
-            ->where('scene_id', $scene->id)
-            ->with(['user', 'character'])
-            ->latest()
-            ->limit(30)
-            ->get();
-
         $characters = auth()->user()
             ->characters()
             ->orderBy('name')
             ->get();
+
+        $canModerateScene = auth()->user()->isGmOrAdmin() || $scene->campaign->isCoGm(auth()->user());
+        $probeCharacters = $canModerateScene
+            ? $this->resolveProbeCharacters($campaign, $scene)
+            : collect();
 
         $userBookmark = SceneBookmark::query()
             ->where('scene_id', $scene->id)
@@ -165,7 +165,8 @@ class SceneController extends Controller
             'pinnedPosts',
             'pinnedPostJumpUrls',
             'characters',
-            'diceRolls',
+            'probeCharacters',
+            'canModerateScene',
             'subscription',
             'latestPostId',
             'newPostsSinceLastRead',
@@ -257,5 +258,35 @@ class SceneController extends Controller
             'scene' => $scene,
             'page' => $page,
         ]).'#post-'.$targetPost->id;
+    }
+
+    /**
+     * @return Collection<int, Character>
+     */
+    private function resolveProbeCharacters(Campaign $campaign, Scene $scene): Collection
+    {
+        $acceptedUserIds = $campaign->invitations()
+            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+            ->pluck('user_id');
+
+        $scenePosterIds = Post::query()
+            ->where('scene_id', $scene->id)
+            ->pluck('user_id');
+
+        $userIds = $acceptedUserIds
+            ->merge([(int) $campaign->owner_id])
+            ->merge($scenePosterIds)
+            ->unique()
+            ->values();
+
+        if ($userIds->isEmpty()) {
+            return collect();
+        }
+
+        return Character::query()
+            ->whereIn('user_id', $userIds)
+            ->with('user:id,name')
+            ->orderBy('name')
+            ->get(['id', 'user_id', 'name']);
     }
 }

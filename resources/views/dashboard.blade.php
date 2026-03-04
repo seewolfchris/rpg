@@ -91,7 +91,7 @@
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Wuerfel</h2>
-                <p class="mt-2 text-sm text-stone-300">d20-Rolls mit transparentem Ergebnis-Log.</p>
+                <p class="mt-2 text-sm text-stone-300">d100-Proben mit transparentem Ergebnis-Log.</p>
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Rangliste</h2>

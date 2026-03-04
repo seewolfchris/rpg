@@ -23,7 +23,7 @@ Enthalten:
 - Einladungen: Pending/Accept/Decline inkl. Rollen (Player/Co-GM)
 - Read-Tracking: Ungelesen-Status, Read/Unread-Aktionen, Jump-Links
 - Bookmarks: Szenen-Bookmark je User inkl. Jump auf Post/Page
-- Dice-Roller: d20 (normal/advantage/disadvantage) mit Log in DB
+- Proben-Roller: d100-basiert (normal/vorteil/nachteil) mit Log in DB
 - Benachrichtigungen: In-App + Mail-Kanäle (präferenzgesteuert)
 - Gamification: Punkte für freigegebene Posts
 - Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie
@@ -34,7 +34,7 @@ Enthalten:
 ## Produkt-Leitlinien
 
 - Primaerziel: immersives, asynchrones Geschichtenerzaehlen (PbP)
-- Regelkomplexitaet: leichtes d20-System als Unterstuetzung, nicht als Selbstzweck
+- Regelkomplexitaet: leichtes d100-/Prozent-System als Unterstuetzung, nicht als Selbstzweck
 - UX-Ziel: Roman-Gefuehl statt Regelbogen-Overload
 
 ## Produkt-Entscheidungen (Maerz 2026)

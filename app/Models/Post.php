@@ -85,6 +85,11 @@ class Post extends Model
         return $this->hasMany(PostModerationLog::class)->orderByDesc('created_at');
     }
 
+    public function diceRoll(): HasOne
+    {
+        return $this->hasOne(DiceRoll::class);
+    }
+
     public function latestModerationLog(): HasOne
     {
         return $this->hasOne(PostModerationLog::class)->latestOfMany('created_at');

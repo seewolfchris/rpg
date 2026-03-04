@@ -6,6 +6,7 @@ use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -28,7 +29,9 @@ class CharacterController extends Controller
 
     public function store(StoreCharacterRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except(['avatar']);
+        $data = array_merge($request->validated(), $request->derivedPools());
+        unset($data['avatar'], $data['remove_avatar']);
+        $data = $this->backfillLegacyCharacterData($data);
 
         $character = new Character($data);
         $character->user_id = auth()->id();
@@ -62,7 +65,10 @@ class CharacterController extends Controller
     {
         $this->ensureOwnership($character);
 
-        $data = $request->safe()->except(['avatar', 'remove_avatar']);
+        $data = array_merge($request->validated(), $request->derivedPools());
+        unset($data['avatar'], $data['remove_avatar']);
+        $data = $this->backfillLegacyCharacterData($data, $character);
+
         $character->fill($data);
 
         if ($request->boolean('remove_avatar') && $character->avatar_path) {
@@ -103,5 +109,83 @@ class CharacterController extends Controller
     private function ensureOwnership(Character $character): void
     {
         abort_unless($character->user_id === auth()->id(), 403);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function backfillLegacyCharacterData(array $data, ?Character $character = null): array
+    {
+        $sheet = (array) config('character_sheet', []);
+        $origins = (array) Arr::get($sheet, 'origins', []);
+        $speciesOptions = (array) Arr::get($sheet, 'species', []);
+        $callingOptions = (array) Arr::get($sheet, 'callings', []);
+        $legacyMap = (array) Arr::get($sheet, 'legacy_column_map', []);
+
+        $defaultOrigin = array_key_exists('native_vhaltor', $origins)
+            ? 'native_vhaltor'
+            : (array_key_first($origins) ?? null);
+        $defaultSpecies = array_key_exists('mensch', $speciesOptions)
+            ? 'mensch'
+            : (array_key_first($speciesOptions) ?? null);
+        $defaultCalling = array_key_exists('abenteurer', $callingOptions)
+            ? 'abenteurer'
+            : (array_key_first($callingOptions) ?? null);
+
+        $data['origin'] = (string) ($data['origin'] ?? $character?->origin ?? $defaultOrigin ?? '');
+        $data['species'] = (string) ($data['species'] ?? $character?->species ?? $defaultSpecies ?? '');
+        $data['calling'] = (string) ($data['calling'] ?? $character?->calling ?? $defaultCalling ?? '');
+
+        foreach ([
+            'calling_custom_name',
+            'calling_custom_description',
+            'concept',
+            'gm_secret',
+            'world_connection',
+            'gm_note',
+        ] as $key) {
+            if (! array_key_exists($key, $data) && $character) {
+                $data[$key] = $character->{$key};
+            }
+        }
+
+        foreach ($legacyMap as $legacyColumn => $attributeKey) {
+            if (! array_key_exists($attributeKey, $data) || $data[$attributeKey] === null) {
+                if ($character && $character->{$attributeKey} !== null) {
+                    $data[$attributeKey] = (int) $character->{$attributeKey};
+                } elseif ($character && $character->{$legacyColumn} !== null) {
+                    $data[$attributeKey] = $this->convertLegacyValueToPercent((int) $character->{$legacyColumn});
+                }
+            }
+
+            if (array_key_exists($attributeKey, $data) && $data[$attributeKey] !== null) {
+                $data[$legacyColumn] = (int) $data[$attributeKey];
+            }
+        }
+
+        $data['advantages'] = is_array($data['advantages'] ?? null)
+            ? array_values($data['advantages'])
+            : ($character?->advantages ?? []);
+        $data['disadvantages'] = is_array($data['disadvantages'] ?? null)
+            ? array_values($data['disadvantages'])
+            : ($character?->disadvantages ?? []);
+
+        foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
+            if (! array_key_exists($poolKey, $data) && $character) {
+                $data[$poolKey] = $character->{$poolKey};
+            }
+        }
+
+        return $data;
+    }
+
+    private function convertLegacyValueToPercent(int $legacyValue): int
+    {
+        $converted = $legacyValue <= 20
+            ? (int) round($legacyValue * 5)
+            : $legacyValue;
+
+        return (int) max(30, min(60, $converted));
     }
 }

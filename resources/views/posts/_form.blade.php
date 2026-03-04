@@ -4,6 +4,13 @@
     $currentFormat = old('content_format', $post->content_format ?? 'markdown');
     $currentModeration = old('moderation_status', $post->moderation_status ?? 'pending');
     $currentModerationNote = old('moderation_note');
+    $showProbeControls = (bool) ($showProbeControls ?? false);
+    $probeCharacters = $probeCharacters ?? collect();
+    $currentProbeEnabled = (bool) old('probe_enabled', false);
+    $currentProbeCharacter = old('probe_character_id');
+    $currentProbeMode = old('probe_roll_mode', 'normal');
+    $currentProbeModifier = old('probe_modifier', 0);
+    $currentProbeExplanation = old('probe_explanation');
 @endphp
 
 <div class="space-y-5">
@@ -79,6 +86,105 @@
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror
     </div>
+
+    @if ($showProbeControls)
+        <section class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="font-heading text-lg text-amber-100">GM-Probe fuer diesen Beitrag</h3>
+                    <p class="mt-1 text-xs leading-relaxed text-amber-200/80">
+                        Eine Probe wird beim Speichern direkt ausgefuehrt und als Ergebnisblock im Beitrag angezeigt.
+                    </p>
+                </div>
+                <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
+                    <input
+                        type="checkbox"
+                        name="probe_enabled"
+                        value="1"
+                        @checked($currentProbeEnabled)
+                        class="h-4 w-4 rounded border-amber-600/70 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                    >
+                    Probe aktivieren
+                </label>
+            </div>
+            @error('probe_enabled')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+
+            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="lg:col-span-2">
+                    <label for="probe_explanation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Erklaerung / Anlass</label>
+                    <input
+                        id="probe_explanation"
+                        type="text"
+                        name="probe_explanation"
+                        value="{{ $currentProbeExplanation }}"
+                        maxlength="180"
+                        placeholder="z. B. Klettern am Ascheturm unter Zeitdruck"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                    @error('probe_explanation')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_character_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ziel-Held</label>
+                    <select
+                        id="probe_character_id"
+                        name="probe_character_id"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                        <option value="">Held waehlen</option>
+                        @foreach ($probeCharacters as $probeCharacter)
+                            <option value="{{ $probeCharacter->id }}" @selected((string) $currentProbeCharacter === (string) $probeCharacter->id)>
+                                {{ $probeCharacter->name }}
+                                @if ($probeCharacter->relationLoaded('user') && $probeCharacter->user)
+                                    ({{ $probeCharacter->user->name }})
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('probe_character_id')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_roll_mode" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Modus</label>
+                    <select
+                        id="probe_roll_mode"
+                        name="probe_roll_mode"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                        <option value="normal" @selected($currentProbeMode === 'normal')>Normal</option>
+                        <option value="advantage" @selected($currentProbeMode === 'advantage')>Vorteil</option>
+                        <option value="disadvantage" @selected($currentProbeMode === 'disadvantage')>Nachteil</option>
+                    </select>
+                    @error('probe_roll_mode')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="mt-4 max-w-xs">
+                <label for="probe_modifier" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Modifikator (+/-)</label>
+                <input
+                    id="probe_modifier"
+                    type="number"
+                    name="probe_modifier"
+                    value="{{ $currentProbeModifier }}"
+                    min="-40"
+                    max="40"
+                    step="1"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                >
+                @error('probe_modifier')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+        </section>
+    @endif
 
     @if ($showModerationControls)
         <div>

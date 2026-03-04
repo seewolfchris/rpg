@@ -65,7 +65,11 @@ class DashboardController extends Controller
             ->exists();
 
         $hasDiceRoll = DiceRoll::query()
-            ->where('user_id', $user->id)
+            ->where(function (Builder $query) use ($user): void {
+                $query
+                    ->where('user_id', $user->id)
+                    ->orWhereHas('character', fn (Builder $characterQuery) => $characterQuery->where('user_id', $user->id));
+            })
             ->exists();
 
         $tutorialSteps = [
@@ -91,11 +95,11 @@ class DashboardController extends Controller
                 'cta' => $hasPost ? 'Weiter schreiben' : 'Jetzt posten',
             ],
             [
-                'title' => 'Ersten d20-Wurf machen',
-                'description' => 'Nutze den eingebauten Dice-Roller statt manuellem Wurf-Text.',
+                'title' => 'Ersten Probenwurf machen',
+                'description' => 'Lass im Thread eine GM-Probe fuer einen Helden ausfuehren.',
                 'done' => $hasDiceRoll,
                 'url' => route('campaigns.index'),
-                'cta' => $hasDiceRoll ? 'Wurfverlauf ansehen' : 'Jetzt wuerfeln',
+                'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe ausfuehren',
             ],
             [
                 'title' => 'Erstes Bookmark setzen',

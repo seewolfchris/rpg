@@ -38,8 +38,8 @@
                     <dd class="mt-2 text-sm text-stone-300">Kampagne = Oberrahmen. Szene = einzelner Story-Thread innerhalb der Kampagne.</dd>
                 </div>
                 <div class="rounded-lg border border-stone-800 bg-neutral-900/70 p-4">
-                    <dt class="font-heading text-sm tracking-[0.08em] text-amber-300">Dice Roll / d20</dt>
-                    <dd class="mt-2 text-sm text-stone-300">Wuerfelwurf im System. Ergebnis wird im Log gespeichert.</dd>
+                    <dt class="font-heading text-sm tracking-[0.08em] text-amber-300">Probenwurf / d100</dt>
+                    <dd class="mt-2 text-sm text-stone-300">Prozentprobe im System. Ergebnis wird im Log gespeichert.</dd>
                 </div>
                 <div class="rounded-lg border border-stone-800 bg-neutral-900/70 p-4">
                     <dt class="font-heading text-sm tracking-[0.08em] text-amber-300">Spoiler</dt>
@@ -87,7 +87,7 @@
                 <li>2. Charakter erstellen (Stats, Bio, Bild).</li>
                 <li>3. Einer Kampagne beitreten oder Einladung annehmen.</li>
                 <li>4. Szene oeffnen und IC-Post verfassen.</li>
-                <li>5. Bei Proben den eingebauten d20-Wuerfel nutzen.</li>
+                <li>5. Bei Proben den eingebauten d100-Roller nutzen.</li>
             </ol>
         </section>
     </section>

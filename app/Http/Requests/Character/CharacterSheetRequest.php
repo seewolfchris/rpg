@@ -86,6 +86,19 @@ abstract class CharacterSheetRequest extends FormRequest
         return array_merge($this->baseRules(), $this->extraRules());
     }
 
+    public function validated($key = null, $default = null): mixed
+    {
+        /** @var array<string, mixed> $validated */
+        $validated = parent::validated();
+        $withDerived = array_merge($validated, $this->derivedPools());
+
+        if ($key === null) {
+            return $withDerived;
+        }
+
+        return data_get($withDerived, $key, $default);
+    }
+
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -134,11 +147,7 @@ abstract class CharacterSheetRequest extends FormRequest
             }
         }
 
-        $derived = $this->calculateDerivedPools($merged);
-        $merged['le_max'] = $derived['le_max'];
-        $merged['le_current'] = (int) $this->input('le_current', $derived['le_max']);
-        $merged['ae_max'] = $derived['ae_max'];
-        $merged['ae_current'] = (int) $this->input('ae_current', $derived['ae_max']);
+        $merged = array_merge($merged, $this->resolveDerivedPools($merged));
 
         $this->merge($merged);
     }
@@ -213,7 +222,9 @@ abstract class CharacterSheetRequest extends FormRequest
 
     protected function convertLegacyValueToPercent(int $legacyValue): int
     {
-        $converted = (int) round($legacyValue * 5);
+        $converted = $legacyValue <= 20
+            ? (int) round($legacyValue * 5)
+            : $legacyValue;
 
         return (int) max(30, min(60, $converted));
     }
@@ -284,6 +295,36 @@ abstract class CharacterSheetRequest extends FormRequest
         return [
             'le_max' => max($le, 1),
             'ae_max' => max($ae, 0),
+        ];
+    }
+
+    /**
+     * @return array{le_max: int, le_current: int, ae_max: int, ae_current: int}
+     */
+    public function derivedPools(): array
+    {
+        return $this->resolveDerivedPools($this->all());
+    }
+
+    /**
+     * @param  array<string, mixed>  $source
+     * @return array{le_max: int, le_current: int, ae_max: int, ae_current: int}
+     */
+    protected function resolveDerivedPools(array $source): array
+    {
+        $derived = $this->calculateDerivedPools($source);
+
+        $leMax = (int) $derived['le_max'];
+        $aeMax = (int) $derived['ae_max'];
+
+        $leCurrent = (int) ($source['le_current'] ?? $leMax);
+        $aeCurrent = (int) ($source['ae_current'] ?? $aeMax);
+
+        return [
+            'le_max' => $leMax,
+            'le_current' => max(0, min($leCurrent, $leMax)),
+            'ae_max' => $aeMax,
+            'ae_current' => max(0, min($aeCurrent, $aeMax)),
         ];
     }
 

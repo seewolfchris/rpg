@@ -37,6 +37,10 @@ export function characterSheetForm(payload = {}) {
         calling: String(payload.initial?.calling ?? ''),
         callingCustomName: String(payload.initial?.callingCustomName ?? ''),
         callingCustomDescription: String(payload.initial?.callingCustomDescription ?? ''),
+        concept: String(payload.initial?.concept ?? ''),
+        worldConnection: String(payload.initial?.worldConnection ?? ''),
+        gmSecret: String(payload.initial?.gmSecret ?? ''),
+        gmNote: String(payload.initial?.gmNote ?? ''),
 
         attributes: payload.initial?.attributes ?? {},
         attributeNotes: payload.initial?.attributeNotes ?? {},

@@ -82,7 +82,7 @@
                         </article>
                         <article class="rounded-lg border border-stone-700/70 bg-black/35 p-4 backdrop-blur-sm">
                             <h2 class="text-xs uppercase tracking-[0.14em] text-stone-400">System</h2>
-                            <p class="mt-2 text-sm text-stone-200">d20-Würfe, Logbuch und narrative Konsequenzen.</p>
+                            <p class="mt-2 text-sm text-stone-200">d100-Proben, Logbuch und narrative Konsequenzen.</p>
                         </article>
                     </div>
                 </section>

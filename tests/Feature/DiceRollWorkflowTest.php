@@ -14,7 +14,7 @@ class DiceRollWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_player_can_create_dice_roll_in_open_scene(): void
+    public function test_player_cannot_create_dice_roll_in_open_scene(): void
     {
         [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext('open');
 
@@ -25,11 +25,26 @@ class DiceRollWorkflowTest extends TestCase
             'dice_label' => 'Athletik-Check',
         ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#dice-log');
+        $response->assertForbidden();
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_gm_can_create_dice_roll_in_open_scene(): void
+    {
+        [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext('open');
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
+            'dice_character_id' => $character->id,
+            'dice_roll_mode' => 'normal',
+            'dice_modifier' => 3,
+            'dice_label' => 'Athletik-Check',
+        ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#new-post-form');
 
         $this->assertDatabaseHas('dice_rolls', [
             'scene_id' => $scene->id,
-            'user_id' => $player->id,
+            'user_id' => $gm->id,
             'character_id' => $character->id,
             'roll_mode' => 'normal',
             'modifier' => 3,
@@ -38,7 +53,7 @@ class DiceRollWorkflowTest extends TestCase
 
         $roll = DB::table('dice_rolls')
             ->where('scene_id', $scene->id)
-            ->where('user_id', $player->id)
+            ->where('user_id', $gm->id)
             ->latest('id')
             ->first();
 
@@ -47,37 +62,26 @@ class DiceRollWorkflowTest extends TestCase
         $rollValues = json_decode((string) $roll->rolls, true, 512, JSON_THROW_ON_ERROR);
         $this->assertCount(1, $rollValues);
         $this->assertGreaterThanOrEqual(1, $rollValues[0]);
-        $this->assertLessThanOrEqual(20, $rollValues[0]);
+        $this->assertLessThanOrEqual(100, $rollValues[0]);
         $this->assertSame((int) $roll->kept_roll + 3, (int) $roll->total);
     }
 
-    public function test_player_cannot_roll_in_closed_scene(): void
+    public function test_gm_advantage_roll_keeps_the_highest_result(): void
     {
-        [$gm, $player, $campaign, $scene] = $this->seedSceneContext('closed');
+        [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext('open');
 
-        $response = $this->actingAs($player)->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
-            'dice_roll_mode' => 'normal',
-            'dice_modifier' => 0,
-        ]);
-
-        $response->assertForbidden();
-        $this->assertDatabaseCount('dice_rolls', 0);
-    }
-
-    public function test_advantage_roll_keeps_the_highest_result(): void
-    {
-        [$gm, $player, $campaign, $scene] = $this->seedSceneContext('open');
-
-        $response = $this->actingAs($player)->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
+            'dice_character_id' => $character->id,
             'dice_roll_mode' => 'advantage',
             'dice_modifier' => -1,
+            'dice_label' => 'Wagemut',
         ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#dice-log');
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#new-post-form');
 
         $roll = DB::table('dice_rolls')
             ->where('scene_id', $scene->id)
-            ->where('user_id', $player->id)
+            ->where('user_id', $gm->id)
             ->latest('id')
             ->first();
 
@@ -91,14 +95,16 @@ class DiceRollWorkflowTest extends TestCase
 
     public function test_gm_can_roll_in_closed_scene(): void
     {
-        [$gm, $player, $campaign, $scene] = $this->seedSceneContext('closed');
+        [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext('closed');
 
         $response = $this->actingAs($gm)->post(route('campaigns.scenes.dice-rolls.store', [$campaign, $scene]), [
+            'dice_character_id' => $character->id,
             'dice_roll_mode' => 'disadvantage',
             'dice_modifier' => 2,
+            'dice_label' => 'Unsichtbarer Schritt',
         ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#dice-log');
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#new-post-form');
 
         $this->assertDatabaseHas('dice_rolls', [
             'scene_id' => $scene->id,

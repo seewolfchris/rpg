@@ -7,11 +7,16 @@ use App\Models\Campaign;
 use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Support\ProbeRoller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 class DiceRollController extends Controller
 {
+    public function __construct(
+        private readonly ProbeRoller $probeRoller,
+    ) {}
+
     public function store(StoreDiceRollRequest $request, Campaign $campaign, Scene $scene): JsonResponse|RedirectResponse
     {
         $this->ensureSceneBelongsToCampaign($campaign, $scene);
@@ -22,22 +27,21 @@ class DiceRollController extends Controller
 
         $rollMode = (string) $data['dice_roll_mode'];
         $modifier = (int) ($data['dice_modifier'] ?? 0);
-        $rolls = $this->generateRolls($rollMode);
-        $keptRoll = $this->resolveKeptRoll($rollMode, $rolls);
-        $total = $keptRoll + $modifier;
+        $rolled = $this->probeRoller->roll($rollMode, $modifier);
 
         $diceRoll = DiceRoll::query()->create([
             'scene_id' => $scene->id,
+            'post_id' => null,
             'user_id' => auth()->id(),
             'character_id' => $data['dice_character_id'] ?? null,
-            'roll_mode' => $rollMode,
-            'modifier' => $modifier,
+            'roll_mode' => $rolled['mode'],
+            'modifier' => $rolled['modifier'],
             'label' => isset($data['dice_label']) ? trim((string) $data['dice_label']) ?: null : null,
-            'rolls' => $rolls,
-            'kept_roll' => $keptRoll,
-            'total' => $total,
-            'is_critical_success' => $keptRoll === 20,
-            'is_critical_failure' => $keptRoll === 1,
+            'rolls' => $rolled['rolls'],
+            'kept_roll' => $rolled['kept_roll'],
+            'total' => $rolled['total'],
+            'is_critical_success' => $rolled['critical_success'],
+            'is_critical_failure' => $rolled['critical_failure'],
         ]);
 
         if ($request->expectsJson()) {
@@ -62,44 +66,13 @@ class DiceRollController extends Controller
         }
 
         return redirect()
-            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#dice-log')
-            ->with('status', 'Wurf gespeichert: d20 '.$this->modeLabel($rollMode).' => '.$keptRoll.' '.($modifier >= 0 ? '+' : '').$modifier.' = '.$total);
+            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#new-post-form')
+            ->with('status', 'Probe gespeichert: '.$this->modeLabel((string) $rolled['mode']).' => '.$rolled['kept_roll'].' '.($rolled['modifier'] >= 0 ? '+' : '').$rolled['modifier'].' = '.$rolled['total']);
     }
 
     private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void
     {
         abort_unless($scene->campaign_id === $campaign->id, 404);
-    }
-
-    /**
-     * @return array<int, int>
-     */
-    private function generateRolls(string $mode): array
-    {
-        $rolls = [$this->rollD20()];
-
-        if (in_array($mode, [DiceRoll::MODE_ADVANTAGE, DiceRoll::MODE_DISADVANTAGE], true)) {
-            $rolls[] = $this->rollD20();
-        }
-
-        return $rolls;
-    }
-
-    /**
-     * @param  array<int, int>  $rolls
-     */
-    private function resolveKeptRoll(string $mode, array $rolls): int
-    {
-        return match ($mode) {
-            DiceRoll::MODE_ADVANTAGE => max($rolls),
-            DiceRoll::MODE_DISADVANTAGE => min($rolls),
-            default => $rolls[0],
-        };
-    }
-
-    private function rollD20(): int
-    {
-        return random_int(1, 20);
     }
 
     private function modeLabel(string $mode): string

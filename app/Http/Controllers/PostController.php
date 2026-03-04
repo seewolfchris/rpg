@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Notifications\PostModerationStatusNotification;
 use App\Notifications\SceneNewPostNotification;
 use App\Support\Gamification\PointService;
+use App\Support\ProbeRoller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
@@ -23,6 +24,7 @@ class PostController extends Controller
 {
     public function __construct(
         private readonly PointService $pointService,
+        private readonly ProbeRoller $probeRoller,
     ) {}
 
     public function store(StorePostRequest $request, Campaign $campaign, Scene $scene): RedirectResponse
@@ -46,6 +48,13 @@ class PostController extends Controller
             'approved_at' => $isModerator ? now() : null,
             'approved_by' => $isModerator ? $user->id : null,
         ]);
+        $probeCreated = $this->createProbeRollForPostIfRequested(
+            post: $post,
+            data: $data,
+            user: $user,
+            scene: $scene,
+            isModerator: $isModerator,
+        );
 
         $this->ensureAuthorSubscription($post, $user);
         $this->pointService->syncApprovedPost($post);
@@ -53,7 +62,7 @@ class PostController extends Controller
 
         return redirect()
             ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id)
-            ->with('status', 'Beitrag gespeichert.');
+            ->with('status', $probeCreated ? 'Beitrag und Probe gespeichert.' : 'Beitrag gespeichert.');
     }
 
     public function edit(Post $post): View
@@ -348,5 +357,47 @@ class PostController extends Controller
             'last_read_post_id' => $post->id,
             'last_read_at' => now(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function createProbeRollForPostIfRequested(
+        Post $post,
+        array $data,
+        User $user,
+        Scene $scene,
+        bool $isModerator,
+    ): bool {
+        $probeEnabled = (bool) ($data['probe_enabled'] ?? false);
+        if (! $probeEnabled || ! $isModerator) {
+            return false;
+        }
+
+        $explanation = trim((string) ($data['probe_explanation'] ?? ''));
+        if ($explanation === '') {
+            return false;
+        }
+
+        $modifier = (int) ($data['probe_modifier'] ?? 0);
+        $rollMode = (string) ($data['probe_roll_mode'] ?? 'normal');
+        $rolled = $this->probeRoller->roll($rollMode, $modifier);
+
+        $post->diceRoll()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'character_id' => (int) $data['probe_character_id'],
+            'roll_mode' => $rolled['mode'],
+            'modifier' => $rolled['modifier'],
+            'label' => $explanation,
+            'rolls' => $rolled['rolls'],
+            'kept_roll' => $rolled['kept_roll'],
+            'total' => $rolled['total'],
+            'is_critical_success' => $rolled['critical_success'],
+            'is_critical_failure' => $rolled['critical_failure'],
+            'created_at' => now(),
+        ]);
+
+        return true;
     }
 }

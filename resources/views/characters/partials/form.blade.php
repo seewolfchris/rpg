@@ -18,12 +18,12 @@
     $defaultSpecies = array_key_exists('mensch', $speciesOptions) ? 'mensch' : (array_key_first($speciesOptions) ?? '');
     $defaultCalling = array_key_exists('abenteurer', $callingOptions) ? 'abenteurer' : (array_key_first($callingOptions) ?? '');
 
-    $selectedOrigin = (string) old('origin', $defaultOrigin);
-    $selectedSpecies = (string) old('species', $defaultSpecies);
-    $selectedCalling = (string) old('calling', $defaultCalling);
-
     $character = $character ?? null;
     $isEdit = $mode === 'edit';
+
+    $selectedOrigin = (string) old('origin', $character?->origin ?? $defaultOrigin);
+    $selectedSpecies = (string) old('species', $character?->species ?? $defaultSpecies);
+    $selectedCalling = (string) old('calling', $character?->calling ?? $defaultCalling);
 
     $legacyToPercent = function (?int $rawValue): int {
         if ($rawValue === null) {
@@ -39,15 +39,19 @@
     $initialAttributeNotes = [];
 
     foreach ($attributeKeys as $key) {
+        $storedAttributeValue = $character?->{$key};
         $legacyColumn = $legacyColumnByAttribute[$key] ?? null;
         $legacyValue = ($legacyColumn && $character) ? $character->{$legacyColumn} : null;
+        $baseAttribute = $storedAttributeValue !== null
+            ? (int) $storedAttributeValue
+            : $legacyToPercent($legacyValue !== null ? (int) $legacyValue : null);
 
-        $initialAttributes[$key] = (int) old($key, $legacyToPercent($legacyValue !== null ? (int) $legacyValue : null));
-        $initialAttributeNotes[$key] = (string) old($key.'_note', '');
+        $initialAttributes[$key] = (int) old($key, $baseAttribute);
+        $initialAttributeNotes[$key] = (string) old($key.'_note', (string) ($character?->{$key.'_note'} ?? ''));
     }
 
-    $initialAdvantages = old('advantages', []);
-    $initialDisadvantages = old('disadvantages', []);
+    $initialAdvantages = old('advantages', $character?->advantages ?? []);
+    $initialDisadvantages = old('disadvantages', $character?->disadvantages ?? []);
 
     if (is_string($initialAdvantages)) {
         $initialAdvantages = preg_split('/[\r\n,]+/', $initialAdvantages) ?: [];
@@ -78,11 +82,15 @@
         'isEdit' => $isEdit,
         'attributeKeys' => $attributeKeys,
         'initial' => [
-            'origin' => (string) old('origin', $defaultOrigin),
-            'species' => (string) old('species', $defaultSpecies),
-            'calling' => (string) old('calling', $defaultCalling),
-            'callingCustomName' => (string) old('calling_custom_name', ''),
-            'callingCustomDescription' => (string) old('calling_custom_description', ''),
+            'origin' => $selectedOrigin,
+            'species' => $selectedSpecies,
+            'calling' => $selectedCalling,
+            'callingCustomName' => (string) old('calling_custom_name', $character?->calling_custom_name ?? ''),
+            'callingCustomDescription' => (string) old('calling_custom_description', $character?->calling_custom_description ?? ''),
+            'concept' => (string) old('concept', $character?->concept ?? ''),
+            'worldConnection' => (string) old('world_connection', $character?->world_connection ?? ''),
+            'gmSecret' => (string) old('gm_secret', $character?->gm_secret ?? ''),
+            'gmNote' => (string) old('gm_note', $character?->gm_note ?? ''),
             'attributes' => $initialAttributes,
             'attributeNotes' => $initialAttributeNotes,
             'advantages' => $initialAdvantages,
@@ -193,9 +201,10 @@
                             name="concept"
                             rows="2"
                             maxlength="180"
+                            x-model="concept"
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Wer bist du in einem einzigen, klaren Satz?"
-                        >{{ old('concept', '') }}</textarea>
+                        >{{ old('concept', $character->concept ?? '') }}</textarea>
                     </div>
 
                     <div>
@@ -205,9 +214,10 @@
                             name="world_connection"
                             rows="3"
                             maxlength="2000"
+                            x-model="worldConnection"
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Fraktion, Ort, Blutlinie, Schuld oder Schwur"
-                        >{{ old('world_connection', '') }}</textarea>
+                        >{{ old('world_connection', $character->world_connection ?? '') }}</textarea>
                     </div>
 
                     <div>
@@ -217,9 +227,10 @@
                             name="gm_secret"
                             rows="3"
                             maxlength="3000"
+                            x-model="gmSecret"
                             class="w-full rounded-md border border-red-800/70 bg-red-950/25 px-4 py-3 text-red-100 outline-none transition placeholder:text-red-300/70 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Was darf die Gruppe vorerst nicht wissen?"
-                        >{{ old('gm_secret', '') }}</textarea>
+                        >{{ old('gm_secret', $character->gm_secret ?? '') }}</textarea>
                     </div>
                 </div>
             </article>
@@ -508,9 +519,10 @@
                     name="gm_note"
                     rows="3"
                     maxlength="2000"
+                    x-model="gmNote"
                     class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                     placeholder="Absprachen, Grenzen, Balance-Notizen"
-                >{{ old('gm_note', '') }}</textarea>
+                >{{ old('gm_note', $character->gm_note ?? '') }}</textarea>
             </div>
         </section>
 

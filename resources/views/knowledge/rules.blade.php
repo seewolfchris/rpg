@@ -26,11 +26,11 @@
             </article>
 
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-5">
-                <h2 class="font-heading text-xl text-stone-100">2. d20-Proben</h2>
+                <h2 class="font-heading text-xl text-stone-100">2. Prozentproben (d100)</h2>
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
-                    <li>1. Standardwurf: 1d20 + Modifikator.</li>
-                    <li>2. Vorteil: 2d20, hoechstes Ergebnis zaehlt.</li>
-                    <li>3. Nachteil: 2d20, niedrigstes Ergebnis zaehlt.</li>
+                    <li>1. Standardprobe: 1W100 gegen den Zielwert der Aktion.</li>
+                    <li>2. Situative Erleichterungen und Erschwernisse werden als Modifikator vorab festgelegt.</li>
+                    <li>3. Das Ergebnis wird immer im Kontext der Szene und der erzaehlerischen Konsequenz bewertet.</li>
                     <li>4. Jeder Wurf wird im Wurfprotokoll der Szene gespeichert.</li>
                 </ul>
             </article>

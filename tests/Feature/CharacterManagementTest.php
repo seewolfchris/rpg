@@ -64,11 +64,34 @@ class CharacterManagementTest extends TestCase
 
         $response = $this->actingAs($user)->post('/characters', $this->characterPayload());
 
+        $character = Character::query()
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->firstOrFail();
+
         $this->assertDatabaseHas('characters', [
-            'user_id' => $user->id,
-            'name' => 'Aldric',
+            'id' => $character->id,
+            'origin' => 'native_vhaltor',
+            'species' => 'mensch',
+            'calling' => 'abenteurer',
+            'concept' => 'Ich jage Wahrheiten durch Asche und Nebel.',
             'strength' => 40,
+            'mu' => 40,
+            'kl' => 45,
+            'in' => 40,
+            'ch' => 35,
+            'ff' => 40,
+            'ge' => 40,
+            'ko' => 45,
+            'kk' => 40,
+            'le_max' => 42,
+            'le_current' => 42,
+            'ae_max' => 40,
+            'ae_current' => 40,
         ]);
+
+        $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
+        $this->assertSame(['Aschesucht'], $character->disadvantages);
 
         $response->assertRedirect();
     }
@@ -113,11 +136,29 @@ class CharacterManagementTest extends TestCase
             ]),
         ]);
 
+        $character->refresh();
+
         $this->assertDatabaseHas('characters', [
             'id' => $character->id,
             'name' => 'Nachher',
+            'calling' => 'ritter',
             'strength' => 46,
+            'mu' => 45,
+            'kl' => 42,
+            'in' => 40,
+            'ch' => 36,
+            'ff' => 38,
+            'ge' => 37,
+            'ko' => 44,
+            'kk' => 46,
+            'le_max' => 50,
+            'le_current' => 50,
+            'ae_max' => 39,
+            'ae_current' => 39,
         ]);
+
+        $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
+        $this->assertSame(['Aschesucht'], $character->disadvantages);
 
         $response->assertRedirect(route('characters.show', $character));
     }

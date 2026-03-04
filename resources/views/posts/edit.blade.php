@@ -19,6 +19,7 @@
             @include('posts._form', [
                 'post' => $post,
                 'characters' => $characters,
+                'showProbeControls' => false,
                 'submitLabel' => 'Speichern',
                 'showModerationControls' => auth()->user()->can('moderate', $post),
             ])

@@ -31,7 +31,7 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.rules'))
             ->assertOk()
             ->assertSeeText('Regelwerk')
-            ->assertSeeText('d20-Proben');
+            ->assertSeeText('Prozentproben (d100)');
 
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()

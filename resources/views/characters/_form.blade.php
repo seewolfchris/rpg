@@ -94,7 +94,7 @@
     </div>
 
     <div>
-        <h2 class="font-heading text-xl text-stone-100">Werte (d20)</h2>
+        <h2 class="font-heading text-xl text-stone-100">Werte (Legacy-Format)</h2>
         <p class="mt-1 text-sm text-stone-400">Jeder Wert muss zwischen 1 und 20 liegen.</p>
 
         <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

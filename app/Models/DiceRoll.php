@@ -29,6 +29,7 @@ class DiceRoll extends Model
      */
     protected $fillable = [
         'scene_id',
+        'post_id',
         'user_id',
         'character_id',
         'roll_mode',
@@ -61,6 +62,11 @@ class DiceRoll extends Model
     public function scene(): BelongsTo
     {
         return $this->belongsTo(Scene::class);
+    }
+
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(Post::class);
     }
 
     public function user(): BelongsTo
