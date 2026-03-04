@@ -38,7 +38,7 @@
                     IC immer in Ich-Perspektive: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
-                    <strong class="text-stone-100">6. GM-Probe anstossen</strong><br>
+                    <strong class="text-stone-100">6. GM-Probe anfragen</strong><br>
                     Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe aus: mit Anlass, Ziel-Held und Modifikator.
                 </li>
                 <li>

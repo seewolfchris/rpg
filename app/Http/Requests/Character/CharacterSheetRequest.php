@@ -318,14 +318,11 @@ abstract class CharacterSheetRequest extends FormRequest
         $leMax = (int) $derived['le_max'];
         $aeMax = (int) $derived['ae_max'];
 
-        $leCurrent = (int) ($source['le_current'] ?? $leMax);
-        $aeCurrent = (int) ($source['ae_current'] ?? $aeMax);
-
         return [
             'le_max' => $leMax,
-            'le_current' => max(0, min($leCurrent, $leMax)),
+            'le_current' => $leMax,
             'ae_max' => $aeMax,
-            'ae_current' => max(0, min($aeCurrent, $aeMax)),
+            'ae_current' => $aeMax,
         ];
     }
 

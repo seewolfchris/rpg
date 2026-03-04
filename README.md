@@ -45,8 +45,8 @@ Enthalten:
 - Wissenszentrum ist zentrale Einstiegsseite (`/wissen`)
 - Enzyklopaedie wird redaktionell durch GM/Admin gepflegt
 - Charakter-Erstellung mit zwei Modi:
-  - `Real-World Anfaenger` (geplant)
-  - `Native aus Vhal'Tor` (geplant)
+  - `Real-World Anfaenger` (aktiv, Spezies-Zwang: Mensch)
+  - `Native aus Vhal'Tor` (aktiv)
 
 ## Tech Stack
 

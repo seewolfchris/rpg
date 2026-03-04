@@ -99,7 +99,7 @@ class DashboardController extends Controller
                 'description' => 'GM/Co-GM fuehrt Proben mit Anlass, Ziel-Held und Modifikator direkt im Post aus.',
                 'done' => $hasDiceRoll,
                 'url' => route('campaigns.index'),
-                'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe anstossen',
+                'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe verfolgen',
             ],
             [
                 'title' => 'Erstes Bookmark setzen',

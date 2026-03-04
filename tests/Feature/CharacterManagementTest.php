@@ -193,6 +193,38 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect(route('characters.show', $character));
     }
 
+    public function test_updating_character_keeps_current_pools_and_ignores_injected_pool_values(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'le_max' => 42,
+            'le_current' => 17,
+            'ae_max' => 40,
+            'ae_current' => 12,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('characters.update', $character), [
+            ...$this->characterPayload([
+                'name' => 'Pool bleibt',
+                'calling' => 'abenteurer',
+            ]),
+            // Manipulationsversuch: diese Werte duerfen nicht uebernommen werden.
+            'le_current' => 999,
+            'ae_current' => 999,
+        ]);
+
+        $character->refresh();
+
+        $this->assertSame(17, (int) $character->le_current);
+        $this->assertSame(12, (int) $character->ae_current);
+        $this->assertSame(42, (int) $character->le_max);
+        $this->assertSame(40, (int) $character->ae_max);
+
+        $response->assertRedirect(route('characters.show', $character));
+    }
+
     public function test_user_can_delete_own_character(): void
     {
         $user = User::factory()->create();

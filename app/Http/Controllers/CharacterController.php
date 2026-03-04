@@ -32,6 +32,7 @@ class CharacterController extends Controller
         $data = array_merge($request->validated(), $request->derivedPools());
         unset($data['avatar'], $data['remove_avatar']);
         $data = $this->backfillLegacyCharacterData($data);
+        $data = $this->sanitizePoolState($data);
 
         $character = new Character($data);
         $character->user_id = auth()->id();
@@ -68,6 +69,7 @@ class CharacterController extends Controller
         $data = array_merge($request->validated(), $request->derivedPools());
         unset($data['avatar'], $data['remove_avatar']);
         $data = $this->backfillLegacyCharacterData($data, $character);
+        $data = $this->sanitizePoolState($data, $character);
 
         $character->fill($data);
 
@@ -195,5 +197,32 @@ class CharacterController extends Controller
             : $legacyValue;
 
         return (int) max(30, min(60, $converted));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function sanitizePoolState(array $data, ?Character $character = null): array
+    {
+        foreach (['le', 'ae'] as $prefix) {
+            $maxKey = $prefix.'_max';
+            $currentKey = $prefix.'_current';
+
+            $maxValue = max(0, (int) ($data[$maxKey] ?? 0));
+            $existingCurrent = $character?->{$currentKey};
+
+            $data[$maxKey] = $maxValue;
+            $data[$currentKey] = $existingCurrent === null
+                ? $maxValue
+                : $this->clampInt((int) $existingCurrent, 0, $maxValue);
+        }
+
+        return $data;
+    }
+
+    private function clampInt(int $value, int $min, int $max): int
+    {
+        return max($min, min($value, $max));
     }
 }
