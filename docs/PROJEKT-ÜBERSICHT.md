@@ -2,6 +2,7 @@
 
 > Quicklinks:
 > - Technischer Einstieg: `README.md`
+> - Release-Checkliste: `docs/RELEASE-CHECKLISTE.md`
 > - Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 

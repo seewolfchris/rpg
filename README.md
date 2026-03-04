@@ -6,6 +6,7 @@ Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchro
 
 - Projekt-Quickstart und Betrieb: `README.md`
 - Master-Handbuch (fachliche Gesamtuebersicht): `docs/PROJEKT-ÜBERSICHT.md`
+- Release-Ablauf (Version + Deploy): `docs/RELEASE-CHECKLISTE.md`
 - Plesk Deployment fuer Einsteiger: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
