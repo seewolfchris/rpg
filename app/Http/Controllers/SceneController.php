@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Scene\StoreSceneRequest;
+use App\Http\Requests\Scene\StoreSceneInventoryActionRequest;
 use App\Http\Requests\Scene\UpdateSceneRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
@@ -14,6 +15,7 @@ use App\Models\SceneSubscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SceneController extends Controller
@@ -209,6 +211,98 @@ class SceneController extends Controller
         return redirect()
             ->route('campaigns.show', $campaign)
             ->with('status', 'Szene geloescht.');
+    }
+
+    public function inventoryQuickAction(
+        StoreSceneInventoryActionRequest $request,
+        Campaign $campaign,
+        Scene $scene
+    ): RedirectResponse {
+        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->authorize('view', $scene);
+
+        $data = $request->validated();
+        $characterId = (int) $data['inventory_action_character_id'];
+        $actionType = (string) $data['inventory_action_type'];
+        $item = trim((string) $data['inventory_action_item']);
+        $note = trim((string) ($data['inventory_action_note'] ?? ''));
+
+        $result = DB::transaction(function () use ($characterId, $actionType, $item): array {
+            $character = Character::query()
+                ->lockForUpdate()
+                ->find($characterId);
+
+            if (! $character) {
+                return ['status' => 'missing_character'];
+            }
+
+            $inventory = is_array($character->inventory)
+                ? array_values(array_filter(array_map(
+                    static fn ($entry): string => trim((string) $entry),
+                    $character->inventory
+                ), static fn (string $entry): bool => $entry !== ''))
+                : [];
+
+            if ($actionType === 'remove') {
+                $removeIndex = null;
+
+                foreach ($inventory as $index => $entry) {
+                    if (strcasecmp($entry, $item) === 0) {
+                        $removeIndex = $index;
+                        break;
+                    }
+                }
+
+                if ($removeIndex === null) {
+                    return [
+                        'status' => 'item_not_found',
+                        'character_name' => (string) $character->name,
+                    ];
+                }
+
+                unset($inventory[$removeIndex]);
+                $inventory = array_values($inventory);
+            } else {
+                $inventory[] = $item;
+            }
+
+            $character->inventory = $inventory;
+            $character->save();
+
+            return [
+                'status' => 'ok',
+                'character_name' => (string) $character->name,
+            ];
+        });
+
+        if (($result['status'] ?? '') === 'item_not_found') {
+            return redirect()
+                ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+                ->withInput()
+                ->withErrors([
+                    'inventory_action_item' => 'Dieser Gegenstand wurde im Inventar des Ziel-Helden nicht gefunden.',
+                ]);
+        }
+
+        if (($result['status'] ?? '') !== 'ok') {
+            return redirect()
+                ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+                ->withInput()
+                ->withErrors([
+                    'inventory_action_character_id' => 'Der Ziel-Held konnte nicht aktualisiert werden.',
+                ]);
+        }
+
+        $statusLabel = $actionType === 'remove' ? 'entfernt' : 'hinzugefuegt';
+        $statusMessage = 'Inventar-Schnellaktion: '.$item.' bei '.$result['character_name'].' '.$statusLabel.'.';
+
+        if ($note !== '') {
+            $statusMessage .= ' Notiz: '.$note;
+        }
+
+        return redirect()
+            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+            ->with('status', $statusMessage);
     }
 
     private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void

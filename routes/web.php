@@ -119,6 +119,8 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::post('/campaigns/{campaign}/scenes/{scene}/posts', [PostController::class, 'store'])
         ->middleware('throttle:posts')
         ->name('campaigns.scenes.posts.store');
+    Route::post('/campaigns/{campaign}/scenes/{scene}/inventory-quick-action', [SceneController::class, 'inventoryQuickAction'])
+        ->name('campaigns.scenes.inventory-quick-action');
 
     Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
         ->name('posts.edit');

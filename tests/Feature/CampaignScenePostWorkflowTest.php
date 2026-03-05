@@ -520,4 +520,149 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->assertSeeText('IC-Text am roten Tor mit Blutmondschein.')
             ->assertSeeText('OOC-Abstimmung fuer die naechste Runde.');
     }
+
+    public function test_gm_can_use_scene_inventory_quick_action_to_add_and_remove_items(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'inventory' => ['Fackel', 'Seil 10m lang'],
+        ]);
+
+        $addResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+            'inventory_action_character_id' => $targetCharacter->id,
+            'inventory_action_type' => 'add',
+            'inventory_action_item' => 'Heiltrank',
+            'inventory_action_note' => 'Gefunden in der Nebelkammer',
+        ]);
+
+        $addResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $this->assertSame(['Fackel', 'Seil 10m lang', 'Heiltrank'], $targetCharacter->fresh()->inventory);
+
+        $removeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+            'inventory_action_character_id' => $targetCharacter->id,
+            'inventory_action_type' => 'remove',
+            'inventory_action_item' => 'seil 10m lang',
+        ]);
+
+        $removeResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $this->assertSame(['Fackel', 'Heiltrank'], $targetCharacter->fresh()->inventory);
+    }
+
+    public function test_inventory_quick_action_rejects_unknown_item_removal(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'inventory' => ['Fackel'],
+        ]);
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+                'inventory_action_character_id' => $targetCharacter->id,
+                'inventory_action_type' => 'remove',
+                'inventory_action_item' => 'Unbekannter Gegenstand',
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $response->assertSessionHasErrors('inventory_action_item');
+        $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
+    }
+
+    public function test_player_cannot_use_scene_inventory_quick_action(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'inventory' => ['Fackel'],
+        ]);
+
+        $response = $this->actingAs($player)
+            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+                'inventory_action_character_id' => $targetCharacter->id,
+                'inventory_action_type' => 'add',
+                'inventory_action_item' => 'Heiltrank',
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertSessionHasErrors('inventory_action_character_id');
+        $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
+    }
 }

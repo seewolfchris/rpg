@@ -127,6 +127,14 @@
                         Zum Schreibfeld
                     </a>
                 @endcan
+                @if ($canModerateScene)
+                    <a
+                        href="#inventory-quick-action"
+                        class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
+                    >
+                        Inventar-Schnellaktion
+                    </a>
+                @endif
 
                 @if ($subscription)
                     <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', [$campaign, $scene]) }}">
@@ -244,6 +252,103 @@
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror
         </div>
+
+        @if ($canModerateScene)
+            <section id="inventory-quick-action" class="rounded-2xl border border-emerald-800/40 bg-emerald-950/15 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+                <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
+                <p class="mt-2 text-sm text-emerald-200/90">
+                    Gegenstaende direkt in der Szene hinzufuegen oder entfernen, ohne den Charakterbogen zu oeffnen.
+                </p>
+
+                <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    @csrf
+
+                    <div>
+                        <label for="inventory_action_character_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ziel-Held</label>
+                        <select
+                            id="inventory_action_character_id"
+                            name="inventory_action_character_id"
+                            required
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                        >
+                            <option value="">Held waehlen</option>
+                            @foreach ($probeCharacters as $probeCharacter)
+                                <option value="{{ $probeCharacter->id }}" @selected((string) old('inventory_action_character_id') === (string) $probeCharacter->id)>
+                                    {{ $probeCharacter->name }}
+                                    @if ($probeCharacter->relationLoaded('user') && $probeCharacter->user)
+                                        ({{ $probeCharacter->user->name }})
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('inventory_action_character_id')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="inventory_action_type" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Aktion</label>
+                        <select
+                            id="inventory_action_type"
+                            name="inventory_action_type"
+                            required
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                        >
+                            <option value="add" @selected((string) old('inventory_action_type', 'add') === 'add')>Hinzufuegen</option>
+                            <option value="remove" @selected((string) old('inventory_action_type') === 'remove')>Entfernen</option>
+                        </select>
+                        @error('inventory_action_type')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="inventory_action_item" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gegenstand</label>
+                        <input
+                            id="inventory_action_item"
+                            type="text"
+                            name="inventory_action_item"
+                            value="{{ old('inventory_action_item') }}"
+                            maxlength="180"
+                            required
+                            placeholder="z. B. Seil 10m lang"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                        >
+                        @error('inventory_action_item')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="inventory_action_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Notiz (optional)</label>
+                        <input
+                            id="inventory_action_note"
+                            type="text"
+                            name="inventory_action_note"
+                            value="{{ old('inventory_action_note') }}"
+                            maxlength="180"
+                            placeholder="Kontext fuer den Log"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                        >
+                        @error('inventory_action_note')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="md:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-3">
+                        <button
+                            type="submit"
+                            class="rounded-md border border-emerald-500/70 bg-emerald-500/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100 transition hover:bg-emerald-500/30"
+                        >
+                            Inventar aktualisieren
+                        </button>
+                        <p class="text-xs text-stone-400">
+                            Entfernen arbeitet auf exaktem Gegenstandsnamen (ohne Gross/Kleinschreibung).
+                        </p>
+                    </div>
+                </form>
+            </section>
+        @endif
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>

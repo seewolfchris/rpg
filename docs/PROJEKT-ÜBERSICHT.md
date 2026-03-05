@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.10-beta`
+- Aktuelle sichtbare Version: `v0.11-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -34,6 +34,7 @@
 | GM-only Proben im Post | Fertig | Anlass/Held/Probe-Eigenschaft/Modifikator + Ergebnis im GM-Post |
 | Proben-Persistenz auf Zielcharakter | Fertig | LE/AE-Impact wird gespeichert |
 | GM-Inventar-Fund im Post | Fertig | Gegenstand wird direkt in Ziel-Charakterinventar geschrieben |
+| GM-Inventar-Schnellaktion in Szene | Fertig | Add/Remove direkt in Szenenansicht ohne Charakterbogen |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
 | Wissenszentrum | Fertig | HowTo, Regeln, Enzyklopaedie |
