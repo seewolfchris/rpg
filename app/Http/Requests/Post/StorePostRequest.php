@@ -36,15 +36,21 @@ class StorePostRequest extends FormRequest
             'probe_explanation' => ['nullable', 'required_if:probe_enabled,1', 'string', 'min:3', 'max:180'],
             'probe_le_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
             'probe_ae_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
+            'inventory_award_enabled' => ['nullable', 'boolean'],
+            'inventory_award_character_id' => ['nullable', 'integer', 'required_if:inventory_award_enabled,1', 'exists:characters,id'],
+            'inventory_award_item' => ['nullable', 'required_if:inventory_award_enabled,1', 'string', 'min:2', 'max:180'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
         $probeEnabled = $this->boolean('probe_enabled');
+        $inventoryAwardEnabled = $this->boolean('inventory_award_enabled');
 
         $normalized = [
             'probe_enabled' => $probeEnabled,
+            'inventory_award_enabled' => $inventoryAwardEnabled,
+            'inventory_award_item' => trim((string) $this->input('inventory_award_item', '')),
         ];
 
         if ($probeEnabled && ! $this->filled('probe_modifier')) {
@@ -110,52 +116,77 @@ class StorePostRequest extends FormRequest
                 }
             }
 
-            $probeEnabled = (bool) $this->boolean('probe_enabled');
-            if (! $probeEnabled) {
-                return;
-            }
-
             $user = $this->user();
             $canModerate = $user
                 && ($user->isGmOrAdmin() || $scene->campaign->isCoGm($user));
 
-            if (! $canModerate) {
-                $validator->errors()->add('probe_enabled', 'Nur GM oder Co-GM duerfen Proben ausfuehren.');
+            $probeEnabled = (bool) $this->boolean('probe_enabled');
+            $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');
 
-                return;
+            $campaignParticipantUserIds = collect();
+            if ($probeEnabled || $inventoryAwardEnabled) {
+                $campaignParticipantUserIds = $scene->campaign->invitations()
+                    ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+                    ->pluck('user_id')
+                    ->push((int) $scene->campaign->owner_id)
+                    ->unique();
             }
 
-            $probeCharacterId = $this->filled('probe_character_id')
-                ? (int) $this->input('probe_character_id')
-                : null;
+            if ($probeEnabled) {
+                if (! $canModerate) {
+                    $validator->errors()->add('probe_enabled', 'Nur GM oder Co-GM duerfen Proben ausfuehren.');
+                } else {
+                    $probeCharacterId = $this->filled('probe_character_id')
+                        ? (int) $this->input('probe_character_id')
+                        : null;
 
-            if (! $probeCharacterId) {
-                $validator->errors()->add('probe_character_id', 'Fuer die Probe muss ein Ziel-Held gewaehlt werden.');
+                    if (! $probeCharacterId) {
+                        $validator->errors()->add('probe_character_id', 'Fuer die Probe muss ein Ziel-Held gewaehlt werden.');
+                    } else {
+                        $probeCharacter = Character::query()
+                            ->select(['id', 'user_id'])
+                            ->find($probeCharacterId);
 
-                return;
+                        if (! $probeCharacter) {
+                            $validator->errors()->add('probe_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
+                        } elseif (! $campaignParticipantUserIds->contains((int) $probeCharacter->user_id)) {
+                            $validator->errors()->add(
+                                'probe_character_id',
+                                'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                            );
+                        }
+                    }
+                }
             }
 
-            $probeCharacter = Character::query()
-                ->select(['id', 'user_id'])
-                ->find($probeCharacterId);
+            if ($inventoryAwardEnabled) {
+                if (! $canModerate) {
+                    $validator->errors()->add('inventory_award_enabled', 'Nur GM oder Co-GM duerfen Inventar-Funde vergeben.');
+                } else {
+                    $awardCharacterId = $this->filled('inventory_award_character_id')
+                        ? (int) $this->input('inventory_award_character_id')
+                        : null;
 
-            if (! $probeCharacter) {
-                $validator->errors()->add('probe_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
+                    if (! $awardCharacterId) {
+                        $validator->errors()->add(
+                            'inventory_award_character_id',
+                            'Fuer den Inventar-Fund muss ein Ziel-Held gewaehlt werden.'
+                        );
+                    } else {
+                        $awardCharacter = Character::query()
+                            ->select(['id', 'user_id'])
+                            ->find($awardCharacterId);
 
-                return;
-            }
-
-            $campaignParticipantUserIds = $scene->campaign->invitations()
-                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                ->pluck('user_id')
-                ->push((int) $scene->campaign->owner_id)
-                ->unique();
-
-            if (! $campaignParticipantUserIds->contains((int) $probeCharacter->user_id)) {
-                $validator->errors()->add(
-                    'probe_character_id',
-                    'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
-                );
+                        if (! $awardCharacter) {
+                            $validator->errors()->add('inventory_award_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
+                        } elseif (! $campaignParticipantUserIds->contains((int) $awardCharacter->user_id)) {
+                            $validator->errors()->add(
+                                'inventory_award_character_id',
+                                'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                            );
+                        }
+                    }
+                }
             }
         });
     }
@@ -170,6 +201,8 @@ class StorePostRequest extends FormRequest
             'probe_outcome' => 'Probe-Ergebnis',
             'probe_character_id' => 'Ziel-Held',
             'probe_explanation' => 'Erklaerung / Anlass',
+            'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',
+            'inventory_award_item' => 'Inventar-Fund',
         ];
     }
 }

@@ -164,6 +164,51 @@
                         @endif
                     </article>
                 </section>
+
+                <section class="grid gap-3 lg:grid-cols-[1.05fr_1fr]">
+                    <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/10 p-3">
+                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200">Inventar</h4>
+                        @if (is_array($character->inventory) && count($character->inventory) > 0)
+                            <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
+                                @foreach ($character->inventory as $inventoryEntry)
+                                    <li>- {{ $inventoryEntry }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="mt-2 text-sm text-emerald-100/80">Keine Eintraege.</p>
+                        @endif
+                    </article>
+
+                    <article class="rounded-lg border border-amber-700/50 bg-amber-950/10 p-3">
+                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-amber-200">Waffen</h4>
+                        @if (is_array($character->weapons) && count($character->weapons) > 0)
+                            <div class="mt-2 overflow-x-auto">
+                                <table class="min-w-full border-collapse text-sm text-stone-200">
+                                    <thead>
+                                        <tr class="text-left text-xs uppercase tracking-[0.08em] text-stone-400">
+                                            <th class="border-b border-stone-700/70 px-2 py-1">Waffe</th>
+                                            <th class="border-b border-stone-700/70 px-2 py-1">AT %</th>
+                                            <th class="border-b border-stone-700/70 px-2 py-1">PA %</th>
+                                            <th class="border-b border-stone-700/70 px-2 py-1">SP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($character->weapons as $weapon)
+                                            <tr>
+                                                <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'name', '-') }}</td>
+                                                <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'attack', 0) }}</td>
+                                                <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'parry', 0) }}</td>
+                                                <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'damage', '-') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="mt-2 text-sm text-amber-100/80">Keine Eintraege.</p>
+                        @endif
+                    </article>
+                </section>
             </article>
         </div>
 

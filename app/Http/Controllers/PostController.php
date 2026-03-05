@@ -52,10 +52,17 @@ class PostController extends Controller
             'approved_at' => $isModerator ? now() : null,
             'approved_by' => $isModerator ? $user->id : null,
         ]);
+
         $probeCreated = $this->createProbeRollForPostIfRequested(
             post: $post,
             data: $data,
             user: $user,
+            scene: $scene,
+            isModerator: $isModerator,
+        );
+        $inventoryAwardApplied = $this->applyInventoryAwardForPostIfRequested(
+            post: $post,
+            data: $data,
             scene: $scene,
             isModerator: $isModerator,
         );
@@ -64,9 +71,18 @@ class PostController extends Controller
         $this->pointService->syncApprovedPost($post);
         $this->notifySceneParticipantsAboutNewPost($post, $user);
 
+        $statusMessage = 'Beitrag gespeichert.';
+        if ($probeCreated && $inventoryAwardApplied !== null) {
+            $statusMessage = 'Beitrag, Probe und Inventar-Fund gespeichert.';
+        } elseif ($probeCreated) {
+            $statusMessage = 'Beitrag und Probe gespeichert.';
+        } elseif ($inventoryAwardApplied !== null) {
+            $statusMessage = 'Beitrag und Inventar-Fund gespeichert.';
+        }
+
         return redirect()
             ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id)
-            ->with('status', $probeCreated ? 'Beitrag und Probe gespeichert.' : 'Beitrag gespeichert.');
+            ->with('status', $statusMessage);
     }
 
     public function edit(Post $post): View
@@ -470,6 +486,77 @@ class PostController extends Controller
             ]);
 
             return true;
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{character_id: int, character_name: string, item: string}|null
+     */
+    private function applyInventoryAwardForPostIfRequested(
+        Post $post,
+        array $data,
+        Scene $scene,
+        bool $isModerator,
+    ): ?array {
+        $awardEnabled = (bool) ($data['inventory_award_enabled'] ?? false);
+        if (! $awardEnabled || ! $isModerator) {
+            return null;
+        }
+
+        $targetCharacterId = (int) ($data['inventory_award_character_id'] ?? 0);
+        $item = trim((string) ($data['inventory_award_item'] ?? ''));
+        if ($targetCharacterId <= 0 || $item === '') {
+            return null;
+        }
+
+        $participantUserIds = $scene->campaign->invitations()
+            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+            ->pluck('user_id')
+            ->push((int) $scene->campaign->owner_id)
+            ->unique();
+
+        return DB::transaction(function () use (
+            $post,
+            $targetCharacterId,
+            $participantUserIds,
+            $item,
+        ): ?array {
+            $targetCharacter = Character::query()
+                ->lockForUpdate()
+                ->find($targetCharacterId);
+
+            if (! $targetCharacter) {
+                return null;
+            }
+
+            if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
+                return null;
+            }
+
+            $inventory = is_array($targetCharacter->inventory)
+                ? array_values(array_filter(array_map(
+                    static fn ($entry): string => trim((string) $entry),
+                    $targetCharacter->inventory
+                ), static fn (string $entry): bool => $entry !== ''))
+                : [];
+
+            $inventory[] = $item;
+            $targetCharacter->inventory = $inventory;
+            $targetCharacter->save();
+
+            $awardMeta = [
+                'character_id' => (int) $targetCharacter->id,
+                'character_name' => (string) $targetCharacter->name,
+                'item' => $item,
+            ];
+
+            $meta = is_array($post->meta) ? $post->meta : [];
+            $meta['inventory_award'] = $awardMeta;
+            $post->meta = $meta;
+            $post->save();
+
+            return $awardMeta;
         });
     }
 

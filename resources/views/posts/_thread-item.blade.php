@@ -182,6 +182,21 @@
         </section>
     @endif
 
+    @php($inventoryAward = is_array($post->meta) ? ($post->meta['inventory_award'] ?? null) : null)
+    @if (is_array($inventoryAward) && trim((string) ($inventoryAward['item'] ?? '')) !== '')
+        <section class="mt-4 rounded-lg border border-emerald-700/40 bg-emerald-900/10 p-4">
+            <p class="text-xs uppercase tracking-[0.1em] text-emerald-300">Inventar aktualisiert</p>
+            <p class="mt-2 text-sm text-stone-200">
+                Held:
+                <span class="font-semibold text-emerald-200">{{ $inventoryAward['character_name'] ?? 'Unbekannt' }}</span>
+            </p>
+            <p class="mt-1 text-sm text-stone-200">
+                Neuer Gegenstand:
+                <span class="font-semibold text-emerald-100">{{ $inventoryAward['item'] }}</span>
+            </p>
+        </section>
+    @endif
+
     @if ($post->revisions->isNotEmpty())
         <details class="mt-4 rounded-lg border border-stone-800/80 bg-black/30 p-3">
             <summary class="cursor-pointer text-xs uppercase tracking-[0.08em] text-stone-400">

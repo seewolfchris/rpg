@@ -26,6 +26,45 @@ const withMinimumEmptyRows = (values, minimum) => {
     return list;
 };
 
+const emptyWeaponEntry = () => ({
+    name: '',
+    attack: '',
+    parry: '',
+    damage: '',
+});
+
+const normalizeWeaponEntries = (values) => {
+    if (!Array.isArray(values)) {
+        return [];
+    }
+
+    return values.map((entry) => {
+        if (!entry || typeof entry !== 'object') {
+            return emptyWeaponEntry();
+        }
+
+        const rawAttack = entry.attack ?? '';
+        const rawParry = entry.parry ?? '';
+
+        return {
+            name: String(entry.name ?? '').trim(),
+            attack: rawAttack === '' || rawAttack === null ? '' : toInt(rawAttack, 0),
+            parry: rawParry === '' || rawParry === null ? '' : toInt(rawParry, 0),
+            damage: String(entry.damage ?? '').trim(),
+        };
+    });
+};
+
+const withMinimumWeaponRows = (values, minimum) => {
+    const list = normalizeWeaponEntries(values);
+
+    while (list.length < minimum) {
+        list.push(emptyWeaponEntry());
+    }
+
+    return list;
+};
+
 export function characterSheetForm(payload = {}) {
     return {
         config: payload.config ?? {},
@@ -47,10 +86,14 @@ export function characterSheetForm(payload = {}) {
 
         advantages: [],
         disadvantages: [],
+        inventory: [],
+        weapons: [],
 
         init() {
             this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
             this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
+            this.inventory = withMinimumEmptyRows(payload.initial?.inventory ?? [], this.inventoryMin);
+            this.weapons = withMinimumWeaponRows(payload.initial?.weapons ?? [], this.weaponsMin);
 
             if (!this.species) {
                 this.species = Object.keys(this.speciesOptions)[0] ?? '';
@@ -167,6 +210,22 @@ export function characterSheetForm(payload = {}) {
 
         get traitsMax() {
             return toInt(this.config.traits?.max, 3);
+        },
+
+        get inventoryMin() {
+            return 1;
+        },
+
+        get inventoryMax() {
+            return 40;
+        },
+
+        get weaponsMin() {
+            return 1;
+        },
+
+        get weaponsMax() {
+            return 16;
         },
 
         get requiresCustomCalling() {
@@ -336,6 +395,38 @@ export function characterSheetForm(payload = {}) {
             }
 
             this[key].splice(index, 1);
+        },
+
+        addInventoryItem() {
+            if (this.inventory.length >= this.inventoryMax) {
+                return;
+            }
+
+            this.inventory.push('');
+        },
+
+        removeInventoryItem(index) {
+            if (this.inventory.length <= this.inventoryMin) {
+                return;
+            }
+
+            this.inventory.splice(index, 1);
+        },
+
+        addWeapon() {
+            if (this.weapons.length >= this.weaponsMax) {
+                return;
+            }
+
+            this.weapons.push(emptyWeaponEntry());
+        },
+
+        removeWeapon(index) {
+            if (this.weapons.length <= this.weaponsMin) {
+                return;
+            }
+
+            this.weapons.splice(index, 1);
         },
 
         formatSpeciesModifiers(speciesKey) {

@@ -180,6 +180,12 @@ class CharacterController extends Controller
         $data['disadvantages'] = is_array($data['disadvantages'] ?? null)
             ? array_values($data['disadvantages'])
             : ($character?->disadvantages ?? []);
+        $data['inventory'] = is_array($data['inventory'] ?? null)
+            ? $this->sanitizeInventoryEntries($data['inventory'])
+            : $this->sanitizeInventoryEntries($character?->inventory ?? []);
+        $data['weapons'] = is_array($data['weapons'] ?? null)
+            ? $this->sanitizeWeapons($data['weapons'])
+            : $this->sanitizeWeapons($character?->weapons ?? []);
 
         foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
             if (! array_key_exists($poolKey, $data) && $character) {
@@ -224,5 +230,66 @@ class CharacterController extends Controller
     private function clampInt(int $value, int $min, int $max): int
     {
         return max($min, min($value, $max));
+    }
+
+    /**
+     * @param  mixed  $entries
+     * @return array<int, string>
+     */
+    private function sanitizeInventoryEntries(mixed $entries): array
+    {
+        if (! is_array($entries)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($entries as $entry) {
+            $value = trim((string) $entry);
+            if ($value === '') {
+                continue;
+            }
+
+            $normalized[] = $value;
+        }
+
+        return array_values($normalized);
+    }
+
+    /**
+     * @param  mixed  $weapons
+     * @return array<int, array{name: string, attack: int, parry: int, damage: string}>
+     */
+    private function sanitizeWeapons(mixed $weapons): array
+    {
+        if (! is_array($weapons)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($weapons as $weapon) {
+            if (! is_array($weapon)) {
+                continue;
+            }
+
+            $name = trim((string) ($weapon['name'] ?? ''));
+            $damage = trim((string) ($weapon['damage'] ?? ''));
+            $attack = (int) ($weapon['attack'] ?? 0);
+            $parry = (int) ($weapon['parry'] ?? 0);
+
+            if ($name === '' || $damage === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'attack' => max(0, min(100, $attack)),
+                'parry' => max(0, min(100, $parry)),
+                'damage' => $damage,
+            ];
+        }
+
+        return array_values($normalized);
     }
 }

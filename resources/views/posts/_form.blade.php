@@ -16,6 +16,9 @@
     $currentProbeLeDelta = old('probe_le_delta', 0);
     $currentProbeAeDelta = old('probe_ae_delta', 0);
     $currentProbeExplanation = old('probe_explanation');
+    $currentInventoryAwardEnabled = (bool) old('inventory_award_enabled', false);
+    $currentInventoryAwardCharacter = old('inventory_award_character_id');
+    $currentInventoryAwardItem = old('inventory_award_item');
 @endphp
 
 <div class="space-y-5">
@@ -257,6 +260,67 @@
                     @error('probe_ae_delta')
                         <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            <div class="mt-5 rounded-md border border-stone-700/80 bg-black/25 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h4 class="text-sm font-semibold uppercase tracking-[0.1em] text-amber-200">Inventar-Fund im gleichen Post</h4>
+                        <p class="mt-1 text-xs text-stone-400">Optional: Fuegt dem Ziel-Held direkt einen Gegenstand im Charakterbogen hinzu.</p>
+                    </div>
+                    <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
+                        <input
+                            type="checkbox"
+                            name="inventory_award_enabled"
+                            value="1"
+                            @checked($currentInventoryAwardEnabled)
+                            class="h-4 w-4 rounded border-amber-600/70 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                        >
+                        Aktivieren
+                    </label>
+                </div>
+                @error('inventory_award_enabled')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="inventory_award_character_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ziel-Held</label>
+                        <select
+                            id="inventory_award_character_id"
+                            name="inventory_award_character_id"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        >
+                            <option value="">Held waehlen</option>
+                            @foreach ($probeCharacters as $probeCharacter)
+                                <option value="{{ $probeCharacter->id }}" @selected((string) $currentInventoryAwardCharacter === (string) $probeCharacter->id)>
+                                    {{ $probeCharacter->name }}
+                                    @if ($probeCharacter->relationLoaded('user') && $probeCharacter->user)
+                                        ({{ $probeCharacter->user->name }})
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('inventory_award_character_id')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="inventory_award_item" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gefundener Gegenstand</label>
+                        <input
+                            id="inventory_award_item"
+                            type="text"
+                            name="inventory_award_item"
+                            value="{{ $currentInventoryAwardItem }}"
+                            maxlength="180"
+                            placeholder="z. B. Seil 10m lang"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        >
+                        @error('inventory_award_item')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
         </section>

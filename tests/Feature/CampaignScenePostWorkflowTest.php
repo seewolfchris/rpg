@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
+use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -307,6 +308,75 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseCount('dice_rolls', 2);
     }
 
+    public function test_gm_can_add_inventory_item_to_character_from_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'inventory' => ['Fackel'],
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Ein Fund wird im Lager notiert. ', 2),
+            'inventory_award_enabled' => '1',
+            'inventory_award_character_id' => $playerCharacter->id,
+            'inventory_award_item' => 'Seil 10m lang',
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+
+        $playerCharacter->refresh();
+        $this->assertSame(['Fackel', 'Seil 10m lang'], $playerCharacter->inventory);
+
+        $meta = is_array($post->meta) ? $post->meta : [];
+        $award = is_array($meta['inventory_award'] ?? null) ? $meta['inventory_award'] : [];
+
+        $this->assertSame($playerCharacter->id, (int) ($award['character_id'] ?? 0));
+        $this->assertSame($playerCharacter->name, (string) ($award['character_name'] ?? ''));
+        $this->assertSame('Seil 10m lang', (string) ($award['item'] ?? ''));
+
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse->assertOk()
+            ->assertSeeText('Inventar aktualisiert')
+            ->assertSeeText($playerCharacter->name)
+            ->assertSeeText('Seil 10m lang');
+    }
+
     public function test_player_cannot_attach_probe_data_to_post(): void
     {
         $gm = User::factory()->gm()->create();
@@ -341,10 +411,14 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_attribute_key' => 'in',
                 'probe_outcome' => DiceRoll::OUTCOME_SUCCESS,
                 'probe_explanation' => 'Unerlaubte Probe durch Spieler',
+                'inventory_award_enabled' => '1',
+                'inventory_award_character_id' => $playerCharacter->id,
+                'inventory_award_item' => 'Verbotener Eintrag',
             ]);
 
         $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
         $response->assertSessionHasErrors('probe_enabled');
+        $response->assertSessionHasErrors('inventory_award_enabled');
         $this->assertDatabaseCount('posts', 0);
         $this->assertDatabaseCount('dice_rolls', 0);
     }

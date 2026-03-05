@@ -29,6 +29,13 @@ class CharacterManagementTest extends TestCase
             'world_connection' => 'Meine Schwester dient den Glutrichtern als Schreiberin.',
             'advantages' => ['Blutpforten-Sinn'],
             'disadvantages' => ['Aschesucht'],
+            'inventory' => ['Seil 10m lang', 'Feuerstein'],
+            'weapons' => [[
+                'name' => 'Kurzschwert',
+                'attack' => 48,
+                'parry' => 41,
+                'damage' => '1W6+2',
+            ]],
             'gm_note' => 'Vorteil/Nachteil fuer Kampagne freigegeben.',
             'mu' => 40,
             'kl' => 45,
@@ -106,6 +113,13 @@ class CharacterManagementTest extends TestCase
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
         $this->assertSame(['Aschesucht'], $character->disadvantages);
+        $this->assertSame(['Seil 10m lang', 'Feuerstein'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Kurzschwert',
+            'attack' => 48,
+            'parry' => 41,
+            'damage' => '1W6+2',
+        ]], $character->weapons);
 
         $response->assertRedirect();
     }
@@ -207,6 +221,13 @@ class CharacterManagementTest extends TestCase
             'gm_secret' => 'Schwur im schwarzen Archiv.',
             'advantages' => ['Klingenfokus'],
             'disadvantages' => ['Blutschuld'],
+            'inventory' => ['Alte Muenze aus Erest'],
+            'weapons' => [[
+                'name' => 'Speer',
+                'attack' => 42,
+                'parry' => 33,
+                'damage' => '1W6+3',
+            ]],
         ]);
 
         $response = $this->actingAs($user)->get(route('characters.edit', $character));
@@ -214,7 +235,10 @@ class CharacterManagementTest extends TestCase
         $response->assertOk()
             ->assertSeeText('Reliktjaeger aus den verbrannten Archiven.')
             ->assertSeeText('Verbindung zur Glutpforte von Erest.')
-            ->assertSeeText('Schwur im schwarzen Archiv.');
+            ->assertSeeText('Schwur im schwarzen Archiv.')
+            ->assertSee('Alte Muenze aus Erest', false)
+            ->assertSee('Speer', false)
+            ->assertSee('1W6+3', false);
 
         $content = $response->getContent();
 
@@ -246,6 +270,13 @@ class CharacterManagementTest extends TestCase
                 'ge' => 37,
                 'ko' => 44,
                 'kk' => 46,
+                'inventory' => ['Wurfhaken', 'Salbe gegen Brandwunden'],
+                'weapons' => [[
+                    'name' => 'Langschwert',
+                    'attack' => 53,
+                    'parry' => 47,
+                    'damage' => '1W6+4',
+                ]],
             ]),
         ]);
 
@@ -272,6 +303,13 @@ class CharacterManagementTest extends TestCase
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
         $this->assertSame(['Aschesucht'], $character->disadvantages);
+        $this->assertSame(['Wurfhaken', 'Salbe gegen Brandwunden'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Langschwert',
+            'attack' => 53,
+            'parry' => 47,
+            'damage' => '1W6+4',
+        ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
     }

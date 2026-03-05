@@ -52,6 +52,13 @@ abstract class CharacterSheetRequest extends FormRequest
             'advantages.*' => ['required', 'string', 'min:2', 'max:120', 'distinct'],
             'disadvantages' => ['required', 'array', 'min:'.$traitMin, 'max:'.$traitMax],
             'disadvantages.*' => ['required', 'string', 'min:2', 'max:120', 'distinct'],
+            'inventory' => ['nullable', 'array', 'max:200'],
+            'inventory.*' => ['required', 'string', 'min:2', 'max:180'],
+            'weapons' => ['nullable', 'array', 'max:20'],
+            'weapons.*.name' => ['required', 'string', 'min:2', 'max:120'],
+            'weapons.*.attack' => ['required', 'integer', 'between:0,100'],
+            'weapons.*.parry' => ['required', 'integer', 'between:0,100'],
+            'weapons.*.damage' => ['required', 'string', 'min:1', 'max:60'],
 
             // Altes 6-Werte-Schema bleibt als technische Persistenz erhalten.
             'strength' => ['sometimes', 'integer', 'between:0,100'],
@@ -118,6 +125,8 @@ abstract class CharacterSheetRequest extends FormRequest
             'origin' => Str::lower(trim((string) $this->input('origin', ''))),
             'advantages' => $this->normalizeTraitInput($this->input('advantages')),
             'disadvantages' => $this->normalizeTraitInput($this->input('disadvantages')),
+            'inventory' => $this->normalizeTraitInput($this->input('inventory')),
+            'weapons' => $this->normalizeWeaponInput($this->input('weapons')),
             'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
             'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
             'concept' => $this->nullIfEmpty((string) $this->input('concept', '')),
@@ -212,6 +221,51 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         return [];
+    }
+
+    /**
+     * @param  mixed  $input
+     * @return array<int, array{name: string, attack: int|string, parry: int|string, damage: string}>
+     */
+    protected function normalizeWeaponInput(mixed $input): array
+    {
+        if (! is_array($input)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($input as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $name = trim((string) ($entry['name'] ?? ''));
+            $damage = trim((string) ($entry['damage'] ?? ''));
+
+            $rawAttack = $entry['attack'] ?? null;
+            $rawParry = $entry['parry'] ?? null;
+
+            $attack = $rawAttack === null || $rawAttack === ''
+                ? ''
+                : (int) $rawAttack;
+            $parry = $rawParry === null || $rawParry === ''
+                ? ''
+                : (int) $rawParry;
+
+            if ($name === '' && $damage === '' && $attack === '' && $parry === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'attack' => $attack,
+                'parry' => $parry,
+                'damage' => $damage,
+            ];
+        }
+
+        return array_values($normalized);
     }
 
     protected function nullIfEmpty(string $value): ?string
@@ -462,6 +516,13 @@ abstract class CharacterSheetRequest extends FormRequest
             'calling_custom_description' => 'Eigene Berufung (Beschreibung)',
             'advantages' => 'Vorteile',
             'disadvantages' => 'Nachteile',
+            'inventory' => 'Inventar',
+            'inventory.*' => 'Inventar-Eintrag',
+            'weapons' => 'Waffen',
+            'weapons.*.name' => 'Waffenname',
+            'weapons.*.attack' => 'Angriffswert',
+            'weapons.*.parry' => 'Paradewert',
+            'weapons.*.damage' => 'Schadenspunkte',
         ];
 
         foreach ((array) data_get($this->sheet(), 'attributes', []) as $key => $meta) {
@@ -495,6 +556,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages.min' => 'Bitte mindestens einen Nachteil eintragen.',
             'advantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'disadvantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
+            'inventory.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
+            'weapons.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
+            'weapons.*.damage.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'min' => 'Bitte mindestens :min eingeben.',
             'max' => 'Bitte maximal :max eingeben.',
             'between' => 'Der Wert muss zwischen :min und :max liegen.',
