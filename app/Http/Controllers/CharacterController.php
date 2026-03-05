@@ -14,8 +14,14 @@ class CharacterController extends Controller
 {
     public function index(): View
     {
+        $user = auth()->user();
+
         $characters = Character::query()
-            ->where('user_id', auth()->id())
+            ->when(
+                ! $user->isGmOrAdmin(),
+                fn ($query) => $query->where('user_id', $user->id)
+            )
+            ->with('user')
             ->latest()
             ->paginate(12);
 
@@ -50,21 +56,21 @@ class CharacterController extends Controller
 
     public function show(Character $character): View
     {
-        $this->ensureOwnership($character);
+        $this->ensureCanManageCharacter($character);
 
         return view('characters.show', compact('character'));
     }
 
     public function edit(Character $character): View
     {
-        $this->ensureOwnership($character);
+        $this->ensureCanManageCharacter($character);
 
         return view('characters.edit', compact('character'));
     }
 
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse
     {
-        $this->ensureOwnership($character);
+        $this->ensureCanManageCharacter($character);
 
         $data = array_merge($request->validated(), $request->derivedPools());
         unset($data['avatar'], $data['remove_avatar']);
@@ -111,6 +117,16 @@ class CharacterController extends Controller
     private function ensureOwnership(Character $character): void
     {
         abort_unless($character->user_id === auth()->id(), 403);
+    }
+
+    private function ensureCanManageCharacter(Character $character): void
+    {
+        $user = auth()->user();
+
+        abort_unless(
+            $character->user_id === $user->id || $user->isGmOrAdmin(),
+            403
+        );
     }
 
     /**

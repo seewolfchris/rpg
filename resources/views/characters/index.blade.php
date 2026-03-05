@@ -5,6 +5,7 @@
 @section('content')
     @php
         $sheet = (array) config('character_sheet', []);
+        $isGmView = auth()->user()->isGmOrAdmin();
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
         $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
         $indexAttributeKeys = ['mu', 'kl', 'in', 'ch'];
@@ -35,9 +36,13 @@
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Deine Chroniken</p>
+                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Chroniken (GM-Ansicht)' : 'Deine Chroniken' }}</p>
                 <h1 class="font-heading text-3xl text-stone-100">Charaktere</h1>
-                <p class="mt-2 text-stone-300">Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren.</p>
+                <p class="mt-2 text-stone-300">
+                    {{ $isGmView
+                        ? 'Verwalte Charaktere aller Spieler sowie Herkunft, Spezies, Berufung und d100-Eigenschaften.'
+                        : 'Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren.' }}
+                </p>
             </div>
 
             <a
@@ -73,6 +78,9 @@
                                 <h2 class="font-heading text-xl text-stone-100">{{ $character->name }}</h2>
                                 @if ($character->epithet)
                                     <p class="text-sm text-amber-300/90">{{ $character->epithet }}</p>
+                                @endif
+                                @if ($isGmView && $character->relationLoaded('user') && $character->user)
+                                    <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">Spieler: <span class="text-stone-200">{{ $character->user->name }}</span></p>
                                 @endif
                             </div>
 

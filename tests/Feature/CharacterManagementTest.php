@@ -207,6 +207,73 @@ class CharacterManagementTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_gm_can_view_and_update_other_users_character_inventory(): void
+    {
+        $owner = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+            'inventory' => ['Fackel'],
+            'weapons' => [[
+                'name' => 'Dolch',
+                'attack' => 40,
+                'parry' => 32,
+                'damage' => '1W6',
+            ]],
+        ]);
+
+        $this->actingAs($gm)
+            ->get(route('characters.show', $character))
+            ->assertOk()
+            ->assertSeeText($character->name);
+
+        $this->actingAs($gm)
+            ->get(route('characters.edit', $character))
+            ->assertOk();
+
+        $response = $this->actingAs($gm)->put(route('characters.update', $character), [
+            ...$this->characterPayload([
+                'name' => $character->name,
+                'inventory' => ['Fackel', 'Seil 10m lang'],
+                'weapons' => [[
+                    'name' => 'Dolch',
+                    'attack' => 42,
+                    'parry' => 35,
+                    'damage' => '1W6+1',
+                ]],
+            ]),
+        ]);
+
+        $character->refresh();
+
+        $this->assertSame(['Fackel', 'Seil 10m lang'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Dolch',
+            'attack' => 42,
+            'parry' => 35,
+            'damage' => '1W6+1',
+        ]], $character->weapons);
+
+        $response->assertRedirect(route('characters.show', $character));
+    }
+
+    public function test_gm_cannot_delete_other_users_character(): void
+    {
+        $owner = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($gm)
+            ->delete(route('characters.destroy', $character))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('characters', ['id' => $character->id]);
+    }
+
     public function test_character_edit_form_prefills_existing_sheet_values(): void
     {
         $user = User::factory()->create();
