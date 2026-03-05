@@ -126,6 +126,35 @@ class CharacterManagementTest extends TestCase
         $this->assertDatabaseCount('characters', 0);
     }
 
+    public function test_character_sheet_min_validation_shows_readable_messages_instead_of_translation_keys(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.create'))
+            ->post(route('characters.store'), $this->characterPayload([
+                'concept' => 'Kurz',
+                'gm_secret' => 'zu kurz',
+                'world_connection' => 'kurz',
+            ]));
+
+        $response->assertRedirect(route('characters.create'));
+        $response->assertSessionHasErrors(['concept', 'gm_secret', 'world_connection']);
+
+        /** @var \Illuminate\Support\ViewErrorBag|null $errors */
+        $errors = session('errors');
+        $this->assertNotNull($errors);
+
+        $messages = $errors->getBag('default')->all();
+
+        $this->assertFalse(in_array('validation.min.string', $messages, true));
+        $this->assertTrue(
+            collect($messages)->contains(
+                fn (string $message): bool => str_contains($message, 'mindestens')
+            )
+        );
+    }
+
     public function test_user_cannot_view_other_users_character(): void
     {
         $owner = User::factory()->create();

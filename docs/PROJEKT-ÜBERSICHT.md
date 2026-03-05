@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.04-beta`
+- Aktuelle sichtbare Version: `v0.05-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -45,6 +45,7 @@
 - Charakterformular hat einen robusten globalen Bootstrap-Fallback (`public/js/character-sheet.global.js`), der automatisch aus `resources/js/character-sheet.js` synchronisiert wird.
 - Service Worker Caches wurden auf `v6` angehoben; Build-Assets (`/build/*`) werden `networkFirst` geladen.
 - Finding 1 geschlossen: `effective_attributes` ist jetzt in Model, Request und Formular konsistent (nur Spezies-Modifikatoren, keine zusaetzlichen Berufungsboni in der Effektiv-Anzeige).
+- Deutsche Validation-Locales sind hinterlegt (`lang/de/*`), damit im UI keine Roh-Keys wie `validation.min.string` mehr erscheinen.
 
 ## Versionierungs-Regel (verbindlich)
 - Laufende Instanz: `APP_VERSION` in `.env` setzen.
