@@ -2,9 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\CampaignInvitation;
+use App\Support\NavigationCounters;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -52,31 +51,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.auth', function ($view): void {
-            $user = Auth::user();
-
-            if (! $user) {
-                $view->with([
-                    'unreadNotificationsCount' => 0,
-                    'pendingCampaignInvitationsCount' => 0,
-                    'bookmarkCount' => 0,
-                ]);
-
-                return;
-            }
-
-            $unreadNotificationsCount = $user->unreadNotifications()->count();
-            $pendingCampaignInvitationsCount = $user->campaignInvitations()
-                ->where('status', CampaignInvitation::STATUS_PENDING)
-                ->count();
-            $bookmarkCount = $user->sceneBookmarks()
-                ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
-                ->count();
-
-            $view->with(compact(
-                'unreadNotificationsCount',
-                'pendingCampaignInvitationsCount',
-                'bookmarkCount',
-            ));
+            $view->with(
+                app(NavigationCounters::class)->forUser(Auth::user())
+            );
         });
     }
 }

@@ -38,4 +38,14 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Enzyklopaedie von Vhal')
             ->assertSeeText('Zeitalter der Sonnenkronen');
     }
+
+    public function test_rules_page_uses_gm_only_probe_wording_without_d20_legacy(): void
+    {
+        $response = $this->get(route('knowledge.rules'));
+
+        $response->assertOk()
+            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgeloest.')
+            ->assertSeeText('Anlass, Ziel-Held und Modifikator')
+            ->assertDontSeeText('d20');
+    }
 }

@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.05-beta`
+- Aktuelle sichtbare Version: `v0.06-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -46,6 +46,7 @@
 - Service Worker Caches wurden auf `v6` angehoben; Build-Assets (`/build/*`) werden `networkFirst` geladen.
 - Finding 1 geschlossen: `effective_attributes` ist jetzt in Model, Request und Formular konsistent (nur Spezies-Modifikatoren, keine zusaetzlichen Berufungsboni in der Effektiv-Anzeige).
 - Deutsche Validation-Locales sind hinterlegt (`lang/de/*`), damit im UI keine Roh-Keys wie `validation.min.string` mehr erscheinen.
+- Navigations-Counter im Auth-Layout laufen zentral ueber `NavigationCounters` (aggregierte Count-Query statt mehrerer Einzelqueries).
 
 ## Versionierungs-Regel (verbindlich)
 - Laufende Instanz: `APP_VERSION` in `.env` setzen.

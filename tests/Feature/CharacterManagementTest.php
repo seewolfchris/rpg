@@ -169,6 +169,36 @@ class CharacterManagementTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_character_edit_form_prefills_existing_sheet_values(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'origin' => 'native_vhaltor',
+            'species' => 'elf',
+            'calling' => 'gelehrter',
+            'concept' => 'Reliktjaeger aus den verbrannten Archiven.',
+            'world_connection' => 'Verbindung zur Glutpforte von Erest.',
+            'gm_secret' => 'Schwur im schwarzen Archiv.',
+            'advantages' => ['Klingenfokus'],
+            'disadvantages' => ['Blutschuld'],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('characters.edit', $character));
+
+        $response->assertOk()
+            ->assertSeeText('Reliktjaeger aus den verbrannten Archiven.')
+            ->assertSeeText('Verbindung zur Glutpforte von Erest.')
+            ->assertSeeText('Schwur im schwarzen Archiv.');
+
+        $content = $response->getContent();
+
+        $this->assertMatchesRegularExpression('/name="origin" value="native_vhaltor"[^>]*checked/', $content);
+        $this->assertMatchesRegularExpression('/name="species" value="elf"[^>]*checked/', $content);
+        $this->assertMatchesRegularExpression('/name="calling" value="gelehrter"[^>]*checked/', $content);
+    }
+
     public function test_user_can_update_own_character(): void
     {
         $user = User::factory()->create();
