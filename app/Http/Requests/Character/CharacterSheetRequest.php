@@ -61,7 +61,11 @@ abstract class CharacterSheetRequest extends FormRequest
             'weapons.*.name' => ['required', 'string', 'min:2', 'max:120'],
             'weapons.*.attack' => ['required', 'integer', 'between:0,100'],
             'weapons.*.parry' => ['required', 'integer', 'between:0,100'],
-            'weapons.*.damage' => ['required', 'string', 'min:1', 'max:60'],
+            'weapons.*.damage' => ['required', 'integer', 'between:1,999'],
+            'armors' => ['nullable', 'array', 'max:12'],
+            'armors.*.name' => ['required', 'string', 'min:2', 'max:120'],
+            'armors.*.protection' => ['required', 'integer', 'between:0,99'],
+            'armors.*.equipped' => ['nullable', 'boolean'],
 
             // Altes 6-Werte-Schema bleibt als technische Persistenz erhalten.
             'strength' => ['sometimes', 'integer', 'between:0,100'],
@@ -130,6 +134,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages' => $this->normalizeTraitInput($this->input('disadvantages')),
             'inventory' => $this->normalizeInventoryInput($this->input('inventory')),
             'weapons' => $this->normalizeWeaponInput($this->input('weapons')),
+            'armors' => $this->normalizeArmorInput($this->input('armors')),
             'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
             'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
             'concept' => $this->nullIfEmpty((string) $this->input('concept', '')),
@@ -245,7 +250,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
     /**
      * @param  mixed  $input
-     * @return array<int, array{name: string, attack: int|string, parry: int|string, damage: string}>
+     * @return array<int, array{name: string, attack: int|string, parry: int|string, damage: int|string}>
      */
     protected function normalizeWeaponInput(mixed $input): array
     {
@@ -265,6 +270,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
             $rawAttack = $entry['attack'] ?? null;
             $rawParry = $entry['parry'] ?? null;
+            $rawDamage = $entry['damage'] ?? null;
 
             $attack = $rawAttack === null || $rawAttack === ''
                 ? ''
@@ -272,6 +278,7 @@ abstract class CharacterSheetRequest extends FormRequest
             $parry = $rawParry === null || $rawParry === ''
                 ? ''
                 : (int) $rawParry;
+            $damage = $this->normalizeWeaponDamageValue($rawDamage);
 
             if ($name === '' && $damage === '' && $attack === '' && $parry === '') {
                 continue;
@@ -286,6 +293,79 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         return array_values($normalized);
+    }
+
+    /**
+     * @param  mixed  $input
+     * @return array<int, array{name: string, protection: int, equipped: bool}>
+     */
+    protected function normalizeArmorInput(mixed $input): array
+    {
+        if (! is_array($input)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($input as $entry) {
+            if (is_string($entry)) {
+                $name = trim($entry);
+                $protection = 0;
+                $equipped = false;
+            } elseif (is_array($entry)) {
+                $name = trim((string) ($entry['name'] ?? $entry['item'] ?? ''));
+                $protection = (int) ($entry['protection'] ?? $entry['rs'] ?? 0);
+                $equipped = (bool) ($entry['equipped'] ?? false);
+            } else {
+                continue;
+            }
+
+            if ($name === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'protection' => max(0, min(99, $protection)),
+                'equipped' => $equipped,
+            ];
+        }
+
+        return array_values($normalized);
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    protected function normalizeWeaponDamageValue(mixed $value): int|string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (is_numeric($value)) {
+            return max(1, min(999, (int) $value));
+        }
+
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/^(\d+)\s*[wWdD]\s*(\d+)\s*([+-]\s*\d+)?$/', $raw, $matches) === 1) {
+            $count = (int) ($matches[1] ?? 0);
+            $faces = (int) ($matches[2] ?? 0);
+            $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
+            $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
+
+            return max(1, min(999, $estimated));
+        }
+
+        if (preg_match('/-?\d+/', $raw, $matches) === 1) {
+            return max(1, min(999, (int) $matches[0]));
+        }
+
+        return '';
     }
 
     protected function nullIfEmpty(string $value): ?string
@@ -362,15 +442,48 @@ abstract class CharacterSheetRequest extends FormRequest
         $le += (int) Arr::get($callingBonuses, 'le_flat', 0);
         $ae += (int) Arr::get($callingBonuses, 'ae_flat', 0);
 
-        $aePercent = (int) Arr::get($callingBonuses, 'ae_percent', 0);
-        if ($aePercent > 0) {
-            $ae += (int) round($aeBase * ($aePercent / 100));
+        if ($this->hasAstralAccess($source, $callingBonuses)) {
+            $aePercent = (int) Arr::get($callingBonuses, 'ae_percent', 0);
+            if ($aePercent > 0) {
+                $ae += (int) round($aeBase * ($aePercent / 100));
+            }
+        } else {
+            $ae = 0;
         }
 
         return [
             'le_max' => max($le, 1),
             'ae_max' => max($ae, 0),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $source
+     * @param  array<string, mixed>  $callingBonuses
+     */
+    protected function hasAstralAccess(array $source, array $callingBonuses): bool
+    {
+        $speciesKey = Str::lower((string) ($source['species'] ?? ''));
+        $callingKey = Str::lower((string) ($source['calling'] ?? ''));
+
+        $magicSpecies = array_map(
+            static fn ($value): string => Str::lower((string) $value),
+            (array) data_get($this->sheet(), 'magic_capable_species', [])
+        );
+        $magicCallings = array_map(
+            static fn ($value): string => Str::lower((string) $value),
+            (array) data_get($this->sheet(), 'magic_capable_callings', [])
+        );
+
+        if (in_array($speciesKey, $magicSpecies, true) || in_array($callingKey, $magicCallings, true)) {
+            return true;
+        }
+
+        $speciesAeBonus = (int) data_get($this->sheet(), 'species.'.$speciesKey.'.ae_bonus', 0);
+        $callingAeFlat = (int) Arr::get($callingBonuses, 'ae_flat', 0);
+        $callingAePercent = (int) Arr::get($callingBonuses, 'ae_percent', 0);
+
+        return $speciesAeBonus > 0 || $callingAeFlat > 0 || $callingAePercent > 0;
     }
 
     /**
@@ -545,6 +658,10 @@ abstract class CharacterSheetRequest extends FormRequest
             'weapons.*.attack' => 'Angriffswert',
             'weapons.*.parry' => 'Paradewert',
             'weapons.*.damage' => 'Schadenspunkte',
+            'armors' => 'Ruestungen',
+            'armors.*.name' => 'Ruestungsname',
+            'armors.*.protection' => 'Ruestungsschutz',
+            'armors.*.equipped' => 'Ausgeruestet',
         ];
 
         foreach ((array) data_get($this->sheet(), 'attributes', []) as $key => $meta) {
@@ -580,7 +697,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'inventory.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'weapons.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
-            'weapons.*.damage.min' => 'Bitte mindestens :min Zeichen eingeben.',
+            'armors.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'min' => 'Bitte mindestens :min eingeben.',
             'max' => 'Bitte maximal :max eingeben.',
             'between' => 'Der Wert muss zwischen :min und :max liegen.',

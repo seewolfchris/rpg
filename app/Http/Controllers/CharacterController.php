@@ -230,6 +230,9 @@ class CharacterController extends Controller
         $data['weapons'] = is_array($data['weapons'] ?? null)
             ? $this->sanitizeWeapons($data['weapons'])
             : $this->sanitizeWeapons($character?->weapons ?? []);
+        $data['armors'] = is_array($data['armors'] ?? null)
+            ? $this->sanitizeArmors($data['armors'])
+            : $this->sanitizeArmors($character?->armors ?? []);
 
         foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
             if (! array_key_exists($poolKey, $data) && $character) {
@@ -278,7 +281,7 @@ class CharacterController extends Controller
 
     /**
      * @param  mixed  $weapons
-     * @return array<int, array{name: string, attack: int, parry: int, damage: string}>
+     * @return array<int, array{name: string, attack: int, parry: int, damage: int}>
      */
     private function sanitizeWeapons(mixed $weapons): array
     {
@@ -294,11 +297,11 @@ class CharacterController extends Controller
             }
 
             $name = trim((string) ($weapon['name'] ?? ''));
-            $damage = trim((string) ($weapon['damage'] ?? ''));
+            $damage = $this->normalizeWeaponDamageValue($weapon['damage'] ?? null);
             $attack = (int) ($weapon['attack'] ?? 0);
             $parry = (int) ($weapon['parry'] ?? 0);
 
-            if ($name === '' || $damage === '') {
+            if ($name === '' || $damage <= 0) {
                 continue;
             }
 
@@ -311,5 +314,80 @@ class CharacterController extends Controller
         }
 
         return array_values($normalized);
+    }
+
+    /**
+     * @param  mixed  $armors
+     * @return array<int, array{name: string, protection: int, equipped: bool}>
+     */
+    private function sanitizeArmors(mixed $armors): array
+    {
+        if (! is_array($armors)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($armors as $armor) {
+            if (! is_array($armor) && ! is_string($armor)) {
+                continue;
+            }
+
+            if (is_string($armor)) {
+                $name = trim($armor);
+                $protection = 0;
+                $equipped = false;
+            } else {
+                $name = trim((string) ($armor['name'] ?? $armor['item'] ?? ''));
+                $protection = (int) ($armor['protection'] ?? $armor['rs'] ?? 0);
+                $equipped = (bool) ($armor['equipped'] ?? false);
+            }
+
+            if ($name === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'protection' => max(0, min(99, $protection)),
+                'equipped' => $equipped,
+            ];
+        }
+
+        return array_values($normalized);
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    private function normalizeWeaponDamageValue(mixed $value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return max(1, min(999, (int) $value));
+        }
+
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return 0;
+        }
+
+        if (preg_match('/^(\d+)\s*[wWdD]\s*(\d+)\s*([+-]\s*\d+)?$/', $raw, $matches) === 1) {
+            $count = (int) ($matches[1] ?? 0);
+            $faces = (int) ($matches[2] ?? 0);
+            $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
+            $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
+
+            return max(1, min(999, $estimated));
+        }
+
+        if (preg_match('/-?\d+/', $raw, $matches) === 1) {
+            return max(1, min(999, (int) $matches[0]));
+        }
+
+        return 0;
     }
 }

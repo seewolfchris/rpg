@@ -37,6 +37,11 @@
             })
             ->filter(static fn (array $entry): bool => $entry['name'] !== '')
             ->values();
+        $armorEntries = collect($character->normalizedArmors());
+        $equippedArmorEntries = $armorEntries->where('equipped', true);
+        $effectiveArmorEntries = $equippedArmorEntries->isNotEmpty() ? $equippedArmorEntries->values() : $armorEntries;
+        $totalArmorProtection = $effectiveArmorEntries
+            ->sum(static fn (array $armor): int => max(0, (int) ($armor['protection'] ?? 0)));
         $inventoryLogs = isset($inventoryLogs) ? collect($inventoryLogs) : collect();
         $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
             $value = $characterModel->{$attributeKey};
@@ -192,7 +197,7 @@
                     </article>
                 </section>
 
-                <section class="grid gap-3 lg:grid-cols-[1.05fr_1fr]">
+                <section class="grid gap-3 lg:grid-cols-3">
                     <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/10 p-3">
                         <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200">Inventar</h4>
                         @if ($inventoryEntries->isNotEmpty())
@@ -238,6 +243,32 @@
                             </div>
                         @else
                             <p class="mt-2 text-sm text-amber-100/80">Keine Eintraege.</p>
+                        @endif
+                    </article>
+
+                    <article class="rounded-lg border border-sky-700/50 bg-sky-950/10 p-3">
+                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-sky-200">Ruestung</h4>
+                        @if ($armorEntries->isNotEmpty())
+                            <p class="mt-2 text-xs uppercase tracking-[0.08em] text-sky-300">
+                                Effektiver RS: {{ $totalArmorProtection }}
+                                @if ($equippedArmorEntries->isNotEmpty())
+                                    (nur ausgeruestet)
+                                @else
+                                    (alle Eintraege)
+                                @endif
+                            </p>
+                            <ul class="mt-2 space-y-1 text-sm text-sky-100/90">
+                                @foreach ($armorEntries as $armor)
+                                    <li>
+                                        - {{ data_get($armor, 'name', '-') }} (RS {{ data_get($armor, 'protection', 0) }})
+                                        @if ((bool) data_get($armor, 'equipped', false))
+                                            <span class="text-xs uppercase tracking-[0.08em] text-sky-300">(ausgeruestet)</span>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="mt-2 text-sm text-sky-100/80">Keine Eintraege.</p>
                         @endif
                     </article>
                 </section>

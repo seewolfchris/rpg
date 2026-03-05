@@ -51,6 +51,7 @@ class Character extends Model
         'disadvantages',
         'inventory',
         'weapons',
+        'armors',
         'le_max',
         'le_current',
         'ae_max',
@@ -89,6 +90,7 @@ class Character extends Model
             'disadvantages' => 'array',
             'inventory' => 'array',
             'weapons' => 'array',
+            'armors' => 'array',
             'le_max' => 'integer',
             'le_current' => 'integer',
             'ae_max' => 'integer',
@@ -247,5 +249,52 @@ class Character extends Model
             : $legacyValue;
 
         return (int) max(30, min(60, $converted));
+    }
+
+    /**
+     * @return array<int, array{name: string, protection: int, equipped: bool}>
+     */
+    public function normalizedArmors(): array
+    {
+        $entries = is_array($this->armors) ? $this->armors : [];
+        $normalized = [];
+
+        foreach ($entries as $entry) {
+            if (is_string($entry)) {
+                $name = trim($entry);
+                $protection = 0;
+                $equipped = false;
+            } elseif (is_array($entry)) {
+                $name = trim((string) ($entry['name'] ?? $entry['item'] ?? ''));
+                $protection = max(0, min(99, (int) ($entry['protection'] ?? $entry['rs'] ?? 0)));
+                $equipped = (bool) ($entry['equipped'] ?? false);
+            } else {
+                continue;
+            }
+
+            if ($name === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'protection' => $protection,
+                'equipped' => $equipped,
+            ];
+        }
+
+        return array_values($normalized);
+    }
+
+    public function armorProtectionValue(): int
+    {
+        $armors = $this->normalizedArmors();
+        $equipped = array_values(array_filter($armors, static fn (array $armor): bool => (bool) $armor['equipped']));
+        $effectiveArmors = $equipped !== [] ? $equipped : $armors;
+
+        return array_sum(array_map(
+            static fn (array $armor): int => max(0, (int) ($armor['protection'] ?? 0)),
+            $effectiveArmors
+        ));
     }
 }

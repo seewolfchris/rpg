@@ -307,6 +307,97 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseCount('dice_rolls', 2);
     }
 
+    public function test_probe_damage_is_reduced_by_equipped_armor_rs(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 45,
+            'le_max' => 50,
+            'le_current' => 50,
+            'ae_max' => 0,
+            'ae_current' => 0,
+            'armors' => [[
+                'name' => 'Lederruestung',
+                'protection' => 5,
+                'equipped' => true,
+            ]],
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Der Angriff trifft den Helden mit voller Wucht. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_le_delta' => -12,
+            'probe_ae_delta' => 0,
+            'probe_explanation' => 'Schwerttreffer auf den Torso',
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+
+        $this->assertDatabaseHas('dice_rolls', [
+            'post_id' => $post->id,
+            'character_id' => $targetCharacter->id,
+            'applied_le_delta' => -7,
+            'resulting_le_current' => 43,
+        ]);
+
+        $targetCharacter->refresh();
+        $this->assertSame(43, (int) $targetCharacter->le_current);
+
+        $meta = is_array($post->meta) ? $post->meta : [];
+        $probeDamage = is_array($meta['probe_damage'] ?? null) ? $meta['probe_damage'] : [];
+
+        $this->assertSame(12, (int) ($probeDamage['requested_damage'] ?? 0));
+        $this->assertSame(5, (int) ($probeDamage['armor_rs'] ?? 0));
+        $this->assertSame(7, (int) ($probeDamage['effective_damage'] ?? 0));
+
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse->assertOk()
+            ->assertSeeText('Schaden:')
+            ->assertSeeText('RS 5')
+            ->assertSeeText('= 7');
+    }
+
     public function test_probe_outcome_is_computed_automatically_and_manual_field_is_ignored(): void
     {
         $gm = User::factory()->gm()->create();

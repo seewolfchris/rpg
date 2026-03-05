@@ -43,7 +43,12 @@ class CharacterManagementTest extends TestCase
                 'name' => 'Kurzschwert',
                 'attack' => 48,
                 'parry' => 41,
-                'damage' => '1W6+2',
+                'damage' => 12,
+            ]],
+            'armors' => [[
+                'name' => 'Lederruestung',
+                'protection' => 5,
+                'equipped' => true,
             ]],
             'gm_note' => 'Vorteil/Nachteil fuer Kampagne freigegeben.',
             'mu' => 40,
@@ -116,8 +121,8 @@ class CharacterManagementTest extends TestCase
             'kk_note' => 'Schultert Lasten ohne Klage.',
             'le_max' => 42,
             'le_current' => 42,
-            'ae_max' => 40,
-            'ae_current' => 40,
+            'ae_max' => 0,
+            'ae_current' => 0,
         ]);
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
@@ -135,8 +140,13 @@ class CharacterManagementTest extends TestCase
             'name' => 'Kurzschwert',
             'attack' => 48,
             'parry' => 41,
-            'damage' => '1W6+2',
+            'damage' => 12,
         ]], $character->weapons);
+        $this->assertSame([[
+            'name' => 'Lederruestung',
+            'protection' => 5,
+            'equipped' => true,
+        ]], $character->armors);
 
         $response->assertRedirect();
     }
@@ -155,6 +165,39 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect(route('characters.create'));
         $response->assertSessionHasErrors('species');
         $this->assertDatabaseCount('characters', 0);
+    }
+
+    public function test_non_magical_characters_have_no_ae_but_magical_callings_gain_ae(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('characters.store'), $this->characterPayload([
+            'name' => 'Nichtmagier',
+            'species' => 'mensch',
+            'calling' => 'abenteurer',
+        ]))->assertRedirect();
+
+        $nonMagical = Character::query()
+            ->where('user_id', $user->id)
+            ->where('name', 'Nichtmagier')
+            ->firstOrFail();
+
+        $this->assertSame(0, (int) $nonMagical->ae_max);
+        $this->assertSame(0, (int) $nonMagical->ae_current);
+
+        $this->actingAs($user)->post(route('characters.store'), $this->characterPayload([
+            'name' => 'Magiebegabt',
+            'species' => 'mensch',
+            'calling' => 'heiler',
+        ]))->assertRedirect();
+
+        $magical = Character::query()
+            ->where('user_id', $user->id)
+            ->where('name', 'Magiebegabt')
+            ->firstOrFail();
+
+        $this->assertSame(45, (int) $magical->ae_max);
+        $this->assertSame(45, (int) $magical->ae_current);
     }
 
     public function test_character_sheet_min_validation_shows_readable_messages_instead_of_translation_keys(): void
@@ -240,7 +283,7 @@ class CharacterManagementTest extends TestCase
                 'name' => 'Dolch',
                 'attack' => 40,
                 'parry' => 32,
-                'damage' => '1W6',
+                'damage' => 8,
             ]],
         ]);
 
@@ -269,7 +312,7 @@ class CharacterManagementTest extends TestCase
                     'name' => 'Dolch',
                     'attack' => 42,
                     'parry' => 35,
-                    'damage' => '1W6+1',
+                    'damage' => 9,
                 ]],
             ]),
         ]);
@@ -289,7 +332,7 @@ class CharacterManagementTest extends TestCase
             'name' => 'Dolch',
             'attack' => 42,
             'parry' => 35,
-            'damage' => '1W6+1',
+            'damage' => 9,
         ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
@@ -379,7 +422,7 @@ class CharacterManagementTest extends TestCase
                 'name' => 'Speer',
                 'attack' => 42,
                 'parry' => 33,
-                'damage' => '1W6+3',
+                'damage' => 12,
             ]],
         ]);
 
@@ -391,7 +434,7 @@ class CharacterManagementTest extends TestCase
             ->assertSeeText('Schwur im schwarzen Archiv.')
             ->assertSee('Alte Muenze aus Erest', false)
             ->assertSee('Speer', false)
-            ->assertSee('1W6+3', false);
+            ->assertSee('12', false);
 
         $content = $response->getContent();
 
@@ -436,7 +479,7 @@ class CharacterManagementTest extends TestCase
                     'name' => 'Langschwert',
                     'attack' => 53,
                     'parry' => 47,
-                    'damage' => '1W6+4',
+                    'damage' => 12,
                 ]],
             ]),
         ]);
@@ -458,8 +501,8 @@ class CharacterManagementTest extends TestCase
             'kk' => 46,
             'le_max' => 50,
             'le_current' => 50,
-            'ae_max' => 39,
-            'ae_current' => 39,
+            'ae_max' => 0,
+            'ae_current' => 0,
         ]);
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
@@ -477,7 +520,7 @@ class CharacterManagementTest extends TestCase
             'name' => 'Langschwert',
             'attack' => 53,
             'parry' => 47,
-            'damage' => '1W6+4',
+            'damage' => 12,
         ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
@@ -491,14 +534,17 @@ class CharacterManagementTest extends TestCase
             'user_id' => $user->id,
             'le_max' => 42,
             'le_current' => 17,
-            'ae_max' => 40,
+            'ae_max' => 45,
             'ae_current' => 12,
+            'species' => 'mensch',
+            'calling' => 'heiler',
         ]);
 
         $response = $this->actingAs($user)->put(route('characters.update', $character), [
             ...$this->characterPayload([
                 'name' => 'Pool bleibt',
-                'calling' => 'abenteurer',
+                'species' => 'mensch',
+                'calling' => 'heiler',
             ]),
             // Manipulationsversuch: diese Werte duerfen nicht uebernommen werden.
             'le_current' => 999,
@@ -510,7 +556,7 @@ class CharacterManagementTest extends TestCase
         $this->assertSame(17, (int) $character->le_current);
         $this->assertSame(12, (int) $character->ae_current);
         $this->assertSame(42, (int) $character->le_max);
-        $this->assertSame(40, (int) $character->ae_max);
+        $this->assertSame(45, (int) $character->ae_max);
 
         $response->assertRedirect(route('characters.show', $character));
     }

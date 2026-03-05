@@ -34,6 +34,35 @@
 
         return max(30, min(60, $value));
     };
+    $legacyWeaponDamageToInt = function (mixed $rawDamage): int|string {
+        if ($rawDamage === null || $rawDamage === '') {
+            return '';
+        }
+
+        if (is_numeric($rawDamage)) {
+            return max(1, min(999, (int) $rawDamage));
+        }
+
+        $value = trim((string) $rawDamage);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match('/^(\d+)\s*[wWdD]\s*(\d+)\s*([+-]\s*\d+)?$/', $value, $matches) === 1) {
+            $count = (int) ($matches[1] ?? 0);
+            $faces = (int) ($matches[2] ?? 0);
+            $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
+            $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
+
+            return max(1, min(999, $estimated));
+        }
+
+        if (preg_match('/-?\d+/', $value, $matches) === 1) {
+            return max(1, min(999, (int) $matches[0]));
+        }
+
+        return '';
+    };
 
     $initialAttributes = [];
     $initialAttributeNotes = [];
@@ -118,7 +147,7 @@
 
     $initialWeapons = old('weapons', $character?->weapons ?? []);
     $initialWeapons = is_array($initialWeapons)
-        ? array_values(array_map(static function ($weapon): array {
+        ? array_values(array_map(function ($weapon) use ($legacyWeaponDamageToInt): array {
             if (! is_array($weapon)) {
                 return [
                     'name' => '',
@@ -132,7 +161,7 @@
                 'name' => trim((string) ($weapon['name'] ?? '')),
                 'attack' => ($weapon['attack'] ?? '') === '' ? '' : (int) $weapon['attack'],
                 'parry' => ($weapon['parry'] ?? '') === '' ? '' : (int) $weapon['parry'],
-                'damage' => trim((string) ($weapon['damage'] ?? '')),
+                'damage' => $legacyWeaponDamageToInt($weapon['damage'] ?? ''),
             ];
         }, $initialWeapons))
         : [];
@@ -142,6 +171,44 @@
             'attack' => '',
             'parry' => '',
             'damage' => '',
+        ]];
+    }
+
+    $initialArmors = old('armors', $character?->armors ?? []);
+    $initialArmors = is_array($initialArmors)
+        ? array_values(array_map(static function ($armor): array {
+            if (! is_array($armor)) {
+                if (is_string($armor)) {
+                    return [
+                        'name' => trim($armor),
+                        'protection' => 0,
+                        'equipped' => false,
+                    ];
+                }
+
+                return [
+                    'name' => '',
+                    'protection' => 0,
+                    'equipped' => false,
+                ];
+            }
+
+            return [
+                'name' => trim((string) ($armor['name'] ?? $armor['item'] ?? '')),
+                'protection' => max(0, min(99, (int) ($armor['protection'] ?? $armor['rs'] ?? 0))),
+                'equipped' => (bool) ($armor['equipped'] ?? false),
+            ];
+        }, $initialArmors))
+        : [];
+    $initialArmors = array_values(array_filter(
+        $initialArmors,
+        static fn (array $armor): bool => ($armor['name'] ?? '') !== ''
+    ));
+    if ($initialArmors === []) {
+        $initialArmors = [[
+            'name' => '',
+            'protection' => 0,
+            'equipped' => false,
         ]];
     }
 
@@ -165,6 +232,7 @@
             'disadvantages' => $initialDisadvantages,
             'inventory' => $initialInventory,
             'weapons' => $initialWeapons,
+            'armors' => $initialArmors,
         ],
     ];
 @endphp
@@ -488,7 +556,8 @@
                         <div class="mt-2 h-2 rounded-full bg-indigo-950/70">
                             <div class="h-full rounded-full bg-indigo-500/80" style="width: 100%"></div>
                         </div>
-                        <p class="mt-2 text-xs text-indigo-200/85">AE = runde((KL + IN + CH) / 3) + Spezies/Berufung</p>
+                        <p class="mt-2 text-xs text-indigo-200/85" x-show="hasAstralAccess">AE = runde((KL + IN + CH) / 3) + Spezies/Berufung</p>
+                        <p class="mt-2 text-xs text-indigo-200/85" x-show="!hasAstralAccess">Keine Astralenergie ohne Magiebegabung (z. B. Elf, Magier, Geistlicher).</p>
                     </div>
                 </div>
             </article>
@@ -601,7 +670,7 @@
             </div>
         </section>
 
-        <section class="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+        <section class="grid gap-6 xl:grid-cols-3">
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <div class="flex items-center justify-between gap-3">
                     <div>
@@ -721,11 +790,13 @@
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Schadenspunkte</label>
                                     <input
                                         :name="`weapons[${index}][damage]`"
-                                        x-model="weapon.damage"
-                                        type="text"
-                                        maxlength="60"
+                                        x-model.number="weapon.damage"
+                                        type="number"
+                                        min="1"
+                                        max="999"
+                                        step="1"
                                         class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30"
-                                        placeholder="z. B. 1W6+2"
+                                        placeholder="z. B. 12"
                                     >
                                 </div>
                             </div>
@@ -741,7 +812,78 @@
                         </div>
                     </template>
                 </div>
-                <p class="mt-2 text-xs text-stone-500">Leere Waffenzeilen werden beim Speichern ignoriert.</p>
+                <p class="mt-2 text-xs text-stone-500">Schaden als feste Schadenspunkte (kein Wuerfelcode). Leere Waffenzeilen werden beim Speichern ignoriert.</p>
+            </article>
+
+            <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="font-heading text-2xl text-stone-100">Ruestung</h2>
+                        <p class="mt-1 text-sm text-stone-300">Ruestungsschutz (RS) wird bei Angriffsschaden von LE-Verlusten abgezogen.</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-md border border-sky-500/50 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-sky-100 disabled:opacity-40"
+                        @click="addArmor()"
+                        :disabled="armors.length >= armorsMax"
+                    >
+                        Ruestung +
+                    </button>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <template x-for="(armor, index) in armors" :key="'armor-' + index">
+                        <div class="rounded-lg border border-stone-700/80 bg-black/35 p-3">
+                            <div class="grid gap-2 sm:grid-cols-[1fr_7rem_auto] sm:items-center">
+                                <div>
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Name</label>
+                                    <input
+                                        :name="`armors[${index}][name]`"
+                                        x-model="armor.name"
+                                        type="text"
+                                        maxlength="120"
+                                        class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30"
+                                        placeholder="z. B. Lederruestung"
+                                    >
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">RS</label>
+                                    <input
+                                        :name="`armors[${index}][protection]`"
+                                        x-model.number="armor.protection"
+                                        type="number"
+                                        min="0"
+                                        max="99"
+                                        step="1"
+                                        class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30"
+                                    >
+                                </div>
+                                <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
+                                    <input
+                                        :name="`armors[${index}][equipped]`"
+                                        x-model="armor.equipped"
+                                        value="1"
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-sky-500 focus:ring-sky-500/60"
+                                    >
+                                    Ausger.
+                                </label>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="mt-3 rounded-md border border-stone-600/80 px-2 py-1 text-xs text-stone-300 hover:border-stone-400"
+                                @click="removeArmor(index)"
+                                :disabled="armors.length <= armorsMin"
+                            >
+                                Ruestung entfernen
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <p class="mt-2 text-xs text-stone-500">
+                    Wenn keine Ruestung explizit als ausgeruestet markiert ist, wird die Summe aller RS-Eintraege verwendet.
+                </p>
             </article>
         </section>
 

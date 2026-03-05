@@ -77,6 +77,12 @@
         damage: '',
     });
 
+    const emptyArmorEntry = () => ({
+        name: '',
+        protection: 0,
+        equipped: false,
+    });
+
     const normalizeWeaponEntries = (values) => {
         if (!Array.isArray(values)) {
             return [];
@@ -94,7 +100,7 @@
                 name: String(entry.name ?? '').trim(),
                 attack: rawAttack === '' || rawAttack === null ? '' : toInt(rawAttack, 0),
                 parry: rawParry === '' || rawParry === null ? '' : toInt(rawParry, 0),
-                damage: String(entry.damage ?? '').trim(),
+                damage: entry.damage === '' || entry.damage === null ? '' : clamp(toInt(entry.damage, 0), 0, 999),
             };
         });
     };
@@ -104,6 +110,42 @@
 
         while (list.length < minimum) {
             list.push(emptyWeaponEntry());
+        }
+
+        return list;
+    };
+
+    const normalizeArmorEntries = (values) => {
+        if (!Array.isArray(values)) {
+            return [];
+        }
+
+        return values.map((entry) => {
+            if (typeof entry === 'string') {
+                return {
+                    name: entry.trim(),
+                    protection: 0,
+                    equipped: false,
+                };
+            }
+
+            if (!entry || typeof entry !== 'object') {
+                return emptyArmorEntry();
+            }
+
+            return {
+                name: String(entry.name ?? entry.item ?? '').trim(),
+                protection: clamp(toInt(entry.protection ?? entry.rs ?? 0, 0), 0, 99),
+                equipped: Boolean(entry.equipped ?? false),
+            };
+        });
+    };
+
+    const withMinimumArmorRows = (values, minimum) => {
+        const list = normalizeArmorEntries(values);
+
+        while (list.length < minimum) {
+            list.push(emptyArmorEntry());
         }
 
         return list;
@@ -132,12 +174,14 @@
             disadvantages: [],
             inventory: [],
             weapons: [],
+            armors: [],
 
             init() {
                 this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
                 this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
                 this.inventory = withMinimumInventoryRows(payload.initial?.inventory ?? [], this.inventoryMin);
                 this.weapons = withMinimumWeaponRows(payload.initial?.weapons ?? [], this.weaponsMin);
+                this.armors = withMinimumArmorRows(payload.initial?.armors ?? [], this.armorsMin);
 
                 if (!this.species) {
                     this.species = Object.keys(this.speciesOptions)[0] ?? '';
@@ -272,6 +316,14 @@
                 return 16;
             },
 
+            get armorsMin() {
+                return 1;
+            },
+
+            get armorsMax() {
+                return 12;
+            },
+
             get requiresCustomCalling() {
                 return this.calling === 'eigene';
             },
@@ -370,6 +422,35 @@
                 return this.selectedCalling?.bonuses ?? {};
             },
 
+            get magicCapableSpecies() {
+                return Array.isArray(this.config.magic_capable_species) ? this.config.magic_capable_species : [];
+            },
+
+            get magicCapableCallings() {
+                return Array.isArray(this.config.magic_capable_callings) ? this.config.magic_capable_callings : [];
+            },
+
+            get hasAstralAccess() {
+                const speciesKey = String(this.species ?? '').toLowerCase();
+                const callingKey = String(this.calling ?? '').toLowerCase();
+                const speciesAllows = this.magicCapableSpecies
+                    .map((entry) => String(entry ?? '').toLowerCase())
+                    .includes(speciesKey);
+                const callingAllows = this.magicCapableCallings
+                    .map((entry) => String(entry ?? '').toLowerCase())
+                    .includes(callingKey);
+
+                if (speciesAllows || callingAllows) {
+                    return true;
+                }
+
+                const speciesAeBonus = toInt(this.selectedSpecies?.ae_bonus, 0);
+                const callingAeFlat = toInt(this.callingBonuses.ae_flat, 0);
+                const callingAePercent = toInt(this.callingBonuses.ae_percent, 0);
+
+                return speciesAeBonus > 0 || callingAeFlat > 0 || callingAePercent > 0;
+            },
+
             get leBase() {
                 const ko = toInt(this.effectiveAttributes.ko, 0);
                 const kk = toInt(this.effectiveAttributes.kk, 0);
@@ -394,6 +475,10 @@
             },
 
             get aeMax() {
+                if (!this.hasAstralAccess) {
+                    return 0;
+                }
+
                 const speciesBonus = toInt(this.selectedSpecies?.ae_bonus, 0);
                 const callingFlat = toInt(this.callingBonuses.ae_flat, 0);
                 const callingPercent = toInt(this.callingBonuses.ae_percent, 0);
@@ -471,6 +556,22 @@
                 }
 
                 this.weapons.splice(index, 1);
+            },
+
+            addArmor() {
+                if (this.armors.length >= this.armorsMax) {
+                    return;
+                }
+
+                this.armors.push(emptyArmorEntry());
+            },
+
+            removeArmor(index) {
+                if (this.armors.length <= this.armorsMin) {
+                    return;
+                }
+
+                this.armors.splice(index, 1);
             },
 
             formatSpeciesModifiers(speciesKey) {

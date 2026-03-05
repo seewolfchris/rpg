@@ -139,6 +139,10 @@ return [
         ],
     ],
 
+    // Nur diese Spezies/Berufungen besitzen von Beginn an Astralzugang.
+    'magic_capable_species' => ['elf'],
+    'magic_capable_callings' => ['magier', 'geistlicher', 'heiler'],
+
     'traits' => [
         'min' => 1,
         'max' => 3,

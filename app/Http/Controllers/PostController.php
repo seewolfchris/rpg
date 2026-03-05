@@ -456,7 +456,19 @@ class PostController extends Controller
                 ? (int) $rolled['total'] <= $probeTargetValue
                 : false;
 
-            [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $requestedLeDelta);
+            $incomingDamage = 0;
+            $armorProtection = 0;
+            $damageAfterArmor = 0;
+            $effectiveLeDelta = $requestedLeDelta;
+
+            if ($requestedLeDelta < 0) {
+                $incomingDamage = abs($requestedLeDelta);
+                $armorProtection = max(0, $targetCharacter->armorProtectionValue());
+                $damageAfterArmor = max(0, $incomingDamage - $armorProtection);
+                $effectiveLeDelta = -$damageAfterArmor;
+            }
+
+            [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $effectiveLeDelta);
             [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
 
             if ($targetCharacter->isDirty(['le_current', 'ae_current'])) {
@@ -485,13 +497,25 @@ class PostController extends Controller
                 'created_at' => now(),
             ]);
 
+            if ($incomingDamage > 0) {
+                $meta = is_array($post->meta) ? $post->meta : [];
+                $meta['probe_damage'] = [
+                    'requested_damage' => $incomingDamage,
+                    'armor_rs' => $armorProtection,
+                    'effective_damage' => $damageAfterArmor,
+                    'effective_le_delta' => $appliedLeDelta,
+                ];
+                $post->meta = $meta;
+                $post->save();
+            }
+
             return true;
         });
     }
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{character_id: int, character_name: string, item: string}|null
+     * @return array{character_id: int, character_name: string, item: string, quantity: int, equipped: bool}|null
      */
     private function applyInventoryAwardForPostIfRequested(
         Post $post,

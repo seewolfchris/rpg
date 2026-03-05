@@ -177,6 +177,14 @@
                             @endif
                         </span>
                     </div>
+                    @php($probeDamageMeta = is_array($post->meta) ? ($post->meta['probe_damage'] ?? null) : null)
+                    @if (is_array($probeDamageMeta) && (int) ($probeDamageMeta['requested_damage'] ?? 0) > 0)
+                        <p class="mt-2 text-[0.7rem] text-stone-400">
+                            Schaden: {{ (int) $probeDamageMeta['requested_damage'] }}
+                            - RS {{ (int) ($probeDamageMeta['armor_rs'] ?? 0) }}
+                            = {{ (int) ($probeDamageMeta['effective_damage'] ?? 0) }}
+                        </p>
+                    @endif
                 </div>
             @endif
         </section>
