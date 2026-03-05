@@ -7,11 +7,12 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.14-beta`
+- Aktuelle sichtbare Version: `v0.15-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
 ## Letzte Aenderungen
+- `in Arbeit` (5. Maerz 2026): Enzyklopaedie-Upgrade mit Kartenlayout, Detailseiten pro Eintrag, sicherem Markdown-Rendering, Spielrelevanz-JSON und Lore-Pack "Voelker & Spezies" (8 Eintraege).
 - `d6d9a59` (5. Maerz 2026): Ruestungssektion mit RS und `ausgeruestet` im Charakterbogen, feste Waffenschadenswerte, LE-Schadensminderung durch RS bei GM-Proben, AE nur bei Magiebegabung.
 
 ## Aktueller Tech-Stack
@@ -42,7 +43,7 @@
 | Inventar-Audit-Log | Fertig | Jede Inventar-Aenderung speichert wer/wann/was (inkl. Quelle) |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
-| Wissenszentrum | Fertig | HowTo, Regeln, Enzyklopaedie |
+| Wissenszentrum | Fertig | HowTo, Regeln, Enzyklopaedie mit Such-/Kategorie-Filter, Card-Index und Detailseiten |
 | Enzyklopaedie Admin | Fertig | GM/Admin CRUD Kategorien + Eintraege |
 | PWA Basis | Teilweise fertig | Offline-Lesen + Queue aktiv, Push spaeter |
 | Push Notifications | Geplant | nach Beta-Phase |
@@ -63,6 +64,9 @@
 - Alle Inventar-Aenderungen werden in `character_inventory_logs` auditiert (Character-Form, GM-Post-Fund, Szenen-Schnellaktion).
 - Ruestungen werden als JSON (`armors`) gespeichert; RS aus ausgeruesteten Ruestungen reduziert LE-Schaden bei GM-Proben.
 - Astralenergie wird nur bei Magiebegabung vergeben (z. B. magische Spezies/Berufung); nicht-magische Menschen starten mit `AE=0`.
+- Enzyklopaedie-Eintraege haben optional `game_relevance` (JSON) fuer LE/RS/AE/Probe/Real-World-Hinweise.
+- Oeffentliche Enzyklopaedie unterstuetzt jetzt Detailroute pro Eintrag: `/wissen/enzyklopaedie/{kategorie}/{slug}`.
+- Enzyklopaedie-Inhalte werden ueber `EncyclopediaContentRenderer` als bereinigtes Markdown gerendert (`html_input=strip`, `allow_unsafe_links=false`).
 
 ## Versionierungs-Regel (verbindlich)
 - Laufende Instanz: `APP_VERSION` in `.env` setzen.

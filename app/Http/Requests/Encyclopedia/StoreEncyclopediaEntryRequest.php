@@ -9,6 +9,14 @@ use Illuminate\Validation\Rule;
 
 class StoreEncyclopediaEntryRequest extends FormRequest
 {
+    private const GAME_RELEVANCE_INPUT_MAP = [
+        'game_relevance_le' => 'le_hint',
+        'game_relevance_rs' => 'rs_hint',
+        'game_relevance_ae' => 'ae_hint',
+        'game_relevance_probe' => 'probe_hint',
+        'game_relevance_real_world' => 'real_world_hint',
+    ];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -45,6 +53,17 @@ class StoreEncyclopediaEntryRequest extends FormRequest
             ])],
             'position' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'published_at' => ['nullable', 'date'],
+            'game_relevance' => ['nullable', 'array'],
+            'game_relevance.le_hint' => ['nullable', 'string', 'max:1000'],
+            'game_relevance.rs_hint' => ['nullable', 'string', 'max:1000'],
+            'game_relevance.ae_hint' => ['nullable', 'string', 'max:1000'],
+            'game_relevance.probe_hint' => ['nullable', 'string', 'max:1000'],
+            'game_relevance.real_world_hint' => ['nullable', 'string', 'max:1000'],
+            'game_relevance_le' => ['nullable', 'string', 'max:1000'],
+            'game_relevance_rs' => ['nullable', 'string', 'max:1000'],
+            'game_relevance_ae' => ['nullable', 'string', 'max:1000'],
+            'game_relevance_probe' => ['nullable', 'string', 'max:1000'],
+            'game_relevance_real_world' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -54,12 +73,45 @@ class StoreEncyclopediaEntryRequest extends FormRequest
         $titleInput = $this->input('title');
         $generatedSlug = Str::slug((string) ($slugInput ?: $titleInput));
         $publishedAt = $this->input('published_at');
+        $gameRelevance = $this->compactGameRelevance();
 
         $this->merge([
             'slug' => $generatedSlug !== '' ? $generatedSlug : 'eintrag-'.Str::lower(Str::random(8)),
             'status' => Str::lower((string) $this->input('status', EncyclopediaEntry::STATUS_DRAFT)),
             'position' => (int) $this->input('position', 0),
             'published_at' => $publishedAt !== '' ? $publishedAt : null,
+            'game_relevance' => $gameRelevance,
         ]);
+    }
+
+    public function validated($key = null, $default = null): mixed
+    {
+        $validated = parent::validated();
+
+        foreach (array_keys(self::GAME_RELEVANCE_INPUT_MAP) as $inputField) {
+            unset($validated[$inputField]);
+        }
+
+        return $key === null ? $validated : data_get($validated, $key, $default);
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    private function compactGameRelevance(): ?array
+    {
+        $gameRelevance = [];
+
+        foreach (self::GAME_RELEVANCE_INPUT_MAP as $inputField => $jsonKey) {
+            $value = trim((string) $this->input($inputField, ''));
+
+            if ($value === '') {
+                continue;
+            }
+
+            $gameRelevance[$jsonKey] = $value;
+        }
+
+        return $gameRelevance === [] ? null : $gameRelevance;
     }
 }

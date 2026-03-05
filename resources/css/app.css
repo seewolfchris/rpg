@@ -157,6 +157,93 @@
         text-align: center;
     }
 
+    .knowledge-content {
+        position: relative;
+        display: grid;
+        gap: 1rem;
+        line-height: 1.7;
+    }
+
+    .knowledge-content::before {
+        content: '';
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 10% 15%, rgb(166 80 40 / 10%), transparent 36%),
+            radial-gradient(circle at 90% 85%, rgb(120 30 30 / 10%), transparent 34%);
+        mix-blend-mode: screen;
+    }
+
+    .knowledge-content > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .knowledge-content h1,
+    .knowledge-content h2,
+    .knowledge-content h3,
+    .knowledge-content h4 {
+        color: rgb(245 245 244);
+        margin-top: 1rem;
+    }
+
+    .knowledge-content p {
+        color: rgb(212 212 212);
+    }
+
+    .knowledge-content a {
+        color: rgb(252 211 77);
+        text-decoration: underline;
+        text-decoration-color: rgb(127 29 29 / 75%);
+        text-underline-offset: 0.2em;
+    }
+
+    .knowledge-content a:hover {
+        color: rgb(254 243 199);
+    }
+
+    .knowledge-content ul,
+    .knowledge-content ol {
+        display: grid;
+        gap: 0.4rem;
+        padding-left: 1.35rem;
+    }
+
+    .knowledge-content li {
+        color: rgb(214 211 209);
+    }
+
+    .knowledge-content blockquote {
+        border-left: 3px solid rgb(127 29 29 / 80%);
+        background: rgb(28 25 23 / 60%);
+        color: rgb(231 229 228);
+        padding: 0.75rem 1rem;
+    }
+
+    .knowledge-content code {
+        background: rgb(0 0 0 / 55%);
+        border: 1px solid rgb(82 82 91 / 70%);
+        border-radius: 0.35rem;
+        color: rgb(253 230 138);
+        padding: 0.1rem 0.35rem;
+        font-size: 0.9em;
+    }
+
+    .knowledge-content pre {
+        background: rgb(10 10 10 / 85%);
+        border: 1px solid rgb(68 64 60 / 80%);
+        border-radius: 0.6rem;
+        overflow-x: auto;
+        padding: 0.9rem;
+    }
+
+    .knowledge-content hr {
+        border: 0;
+        border-top: 1px solid rgb(87 83 78 / 80%);
+        margin: 1rem 0;
+    }
+
     @media (min-width: 640px) {
         .app-nav {
             display: flex;

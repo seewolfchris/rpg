@@ -26,6 +26,7 @@ class EncyclopediaEntry extends Model
         'slug',
         'excerpt',
         'content',
+        'game_relevance',
         'status',
         'position',
         'published_at',
@@ -41,6 +42,7 @@ class EncyclopediaEntry extends Model
         return [
             'position' => 'integer',
             'published_at' => 'datetime',
+            'game_relevance' => 'array',
         ];
     }
 

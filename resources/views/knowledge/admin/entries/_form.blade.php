@@ -6,6 +6,9 @@
     ];
 
     $publishedAtValue = old('published_at', isset($entry) && $entry->published_at ? $entry->published_at->format('Y-m-d\\TH:i') : '');
+    $gameRelevance = is_array(old('game_relevance'))
+        ? old('game_relevance')
+        : (is_array($entry->game_relevance ?? null) ? $entry->game_relevance : []);
 @endphp
 
 <div class="space-y-5">
@@ -70,6 +73,90 @@
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror
     </div>
+
+    <section class="rounded-xl border border-stone-700/70 bg-black/30 p-4">
+        <h3 class="font-heading text-lg text-stone-100">Spielrelevanz (optional)</h3>
+        <p class="mt-1 text-xs text-stone-400">
+            Strukturierte Hinweise fuer LE/RS/AE/Proben sowie Real-World-Anfaenger.
+        </p>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+                <label for="game_relevance_le" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">LE-Hinweis</label>
+                <textarea
+                    id="game_relevance_le"
+                    name="game_relevance_le"
+                    rows="3"
+                    maxlength="1000"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    placeholder="z. B. Frontkaempfer sollten frueh LE-Verluste einkalkulieren."
+                >{{ old('game_relevance_le', data_get($gameRelevance, 'le_hint', '')) }}</textarea>
+                @error('game_relevance_le')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="game_relevance_rs" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">RS-Hinweis</label>
+                <textarea
+                    id="game_relevance_rs"
+                    name="game_relevance_rs"
+                    rows="3"
+                    maxlength="1000"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    placeholder="z. B. Leichte Ruestung reicht oft nicht gegen schwere Treffer."
+                >{{ old('game_relevance_rs', data_get($gameRelevance, 'rs_hint', '')) }}</textarea>
+                @error('game_relevance_rs')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="game_relevance_ae" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">AE-Hinweis</label>
+                <textarea
+                    id="game_relevance_ae"
+                    name="game_relevance_ae"
+                    rows="3"
+                    maxlength="1000"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    placeholder="z. B. Astralenergie nur bei magiebegabten Figuren."
+                >{{ old('game_relevance_ae', data_get($gameRelevance, 'ae_hint', '')) }}</textarea>
+                @error('game_relevance_ae')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="game_relevance_probe" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Proben-Hinweis</label>
+                <textarea
+                    id="game_relevance_probe"
+                    name="game_relevance_probe"
+                    rows="3"
+                    maxlength="1000"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    placeholder="z. B. Typische Eigenschaften fuer GM-Proben."
+                >{{ old('game_relevance_probe', data_get($gameRelevance, 'probe_hint', '')) }}</textarea>
+                @error('game_relevance_probe')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="game_relevance_real_world" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Real-World-Hinweis</label>
+                <textarea
+                    id="game_relevance_real_world"
+                    name="game_relevance_real_world"
+                    rows="3"
+                    maxlength="1000"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    placeholder="z. B. Welche Einschraenkungen fuer Real-World-Anfaenger gelten."
+                >{{ old('game_relevance_real_world', data_get($gameRelevance, 'real_world_hint', '')) }}</textarea>
+                @error('game_relevance_real_world')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+    </section>
 
     <div class="grid gap-4 sm:grid-cols-3">
         <div>

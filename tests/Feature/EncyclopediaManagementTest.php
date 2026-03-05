@@ -17,7 +17,53 @@ class EncyclopediaManagementTest extends TestCase
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()
             ->assertSeeText('Enzyklopaedie von Vhal')
-            ->assertSeeText('Zeitalter der Sonnenkronen');
+            ->assertSeeText('Zeitalter der Sonnenkronen')
+            ->assertSeeText('Mehr lesen');
+    }
+
+    public function test_public_encyclopedia_filters_by_query_and_category(): void
+    {
+        $this->get(route('knowledge.encyclopedia', [
+            'q' => 'Schattenhaeuser',
+        ]))
+            ->assertOk()
+            ->assertSeeText('Schattenhaeuser von Nerez')
+            ->assertDontSeeText('Zeitalter der Sonnenkronen');
+
+        $this->get(route('knowledge.encyclopedia', [
+            'k' => 'regionen',
+        ]))
+            ->assertOk()
+            ->assertSeeText('Aschelande')
+            ->assertDontSeeText('Schattenhaeuser von Nerez');
+    }
+
+    public function test_public_entry_detail_route_renders_published_content(): void
+    {
+        $entry = EncyclopediaEntry::query()
+            ->where('status', EncyclopediaEntry::STATUS_PUBLISHED)
+            ->with('category')
+            ->firstOrFail();
+
+        $this->get(route('knowledge.encyclopedia.entry', [$entry->category->slug, $entry->slug]))
+            ->assertOk()
+            ->assertSeeText($entry->title)
+            ->assertSeeText('Alle Eintraege');
+    }
+
+    public function test_public_entry_detail_returns_404_for_category_slug_mismatch(): void
+    {
+        $entry = EncyclopediaEntry::query()
+            ->where('status', EncyclopediaEntry::STATUS_PUBLISHED)
+            ->with('category')
+            ->firstOrFail();
+
+        $mismatchingCategory = EncyclopediaCategory::query()
+            ->where('id', '!=', $entry->encyclopedia_category_id)
+            ->firstOrFail();
+
+        $this->get(route('knowledge.encyclopedia.entry', [$mismatchingCategory->slug, $entry->slug]))
+            ->assertNotFound();
     }
 
     public function test_player_cannot_access_encyclopedia_admin(): void
@@ -29,7 +75,7 @@ class EncyclopediaManagementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_gm_can_create_category_and_entry(): void
+    public function test_gm_can_create_category_and_entry_with_game_relevance(): void
     {
         $gm = User::factory()->gm()->create();
 
@@ -55,24 +101,46 @@ class EncyclopediaManagementTest extends TestCase
                 'content' => 'Im Schwurhort werden Erbbuendnisse, Blutvertraege und Bannschwure registriert.',
                 'status' => EncyclopediaEntry::STATUS_PUBLISHED,
                 'position' => 5,
+                'game_relevance_le' => 'Frontlastige Szenen koennen schnelle LE-Verluste erzeugen.',
+                'game_relevance_probe' => 'Mut und Charisma sind hier haeufige GM-Proben.',
             ])
             ->assertRedirect(route('knowledge.admin.kategorien.edit', $category));
 
-        $this->assertDatabaseHas('encyclopedia_entries', [
-            'encyclopedia_category_id' => $category->id,
-            'title' => 'Schwurhort von Carron',
-            'slug' => 'schwurhort-von-carron',
-            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
-            'created_by' => $gm->id,
-            'updated_by' => $gm->id,
-        ]);
+        $entry = EncyclopediaEntry::query()
+            ->where('encyclopedia_category_id', $category->id)
+            ->where('slug', 'schwurhort-von-carron')
+            ->first();
+
+        $this->assertNotNull($entry);
+        $this->assertSame('Frontlastige Szenen koennen schnelle LE-Verluste erzeugen.', data_get($entry->game_relevance, 'le_hint'));
+        $this->assertSame('Mut und Charisma sind hier haeufige GM-Proben.', data_get($entry->game_relevance, 'probe_hint'));
+
+        $this->actingAs($gm)
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [$category, $entry]), [
+                'title' => 'Schwurhort von Carron',
+                'slug' => 'schwurhort-von-carron',
+                'excerpt' => 'Zentraler Ort fuer Eide der alten Haeuser.',
+                'content' => 'Im Schwurhort werden Erbbuendnisse, Blutvertraege und Bannschwure registriert.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 5,
+                'game_relevance_le' => '',
+                'game_relevance_ae' => 'Keine AE ohne magische Veranlagung.',
+                'game_relevance_real_world' => 'Real-World-Anfaenger bleiben in der Regel Mensch.',
+            ])
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', $category));
+
+        $entry->refresh();
+
+        $this->assertNull(data_get($entry->game_relevance, 'le_hint'));
+        $this->assertSame('Keine AE ohne magische Veranlagung.', data_get($entry->game_relevance, 'ae_hint'));
+        $this->assertSame('Real-World-Anfaenger bleiben in der Regel Mensch.', data_get($entry->game_relevance, 'real_world_hint'));
     }
 
-    public function test_draft_entry_is_hidden_on_public_encyclopedia(): void
+    public function test_draft_and_archived_entries_are_hidden_on_public_index_and_detail(): void
     {
         $category = EncyclopediaCategory::query()->firstOrFail();
 
-        EncyclopediaEntry::query()->create([
+        $draft = EncyclopediaEntry::query()->create([
             'encyclopedia_category_id' => $category->id,
             'title' => 'Verborgene Wahrheit',
             'slug' => 'verborgene-wahrheit',
@@ -83,9 +151,66 @@ class EncyclopediaManagementTest extends TestCase
             'published_at' => null,
         ]);
 
+        $archived = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Vergessene Chronik',
+            'slug' => 'vergessene-chronik',
+            'excerpt' => 'Archivmaterial',
+            'content' => 'Dieser Text ist archiviert.',
+            'status' => EncyclopediaEntry::STATUS_ARCHIVED,
+            'position' => 1000,
+            'published_at' => now(),
+        ]);
+
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()
-            ->assertDontSeeText('Verborgene Wahrheit');
+            ->assertDontSeeText('Verborgene Wahrheit')
+            ->assertDontSeeText('Vergessene Chronik');
+
+        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $draft->slug]))
+            ->assertNotFound();
+
+        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $archived->slug]))
+            ->assertNotFound();
+    }
+
+    public function test_game_relevance_box_is_only_visible_when_data_exists(): void
+    {
+        $category = EncyclopediaCategory::query()->firstOrFail();
+
+        $withRelevance = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Archiv der Narben',
+            'slug' => 'archiv-der-narben',
+            'excerpt' => 'Sammlung blutiger Fallberichte.',
+            'content' => '## Akte\n\nAlles ist dokumentiert.',
+            'game_relevance' => [
+                'probe_hint' => 'Inquisitionsszenen nutzen oft Klugheit und Intuition.',
+            ],
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 120,
+            'published_at' => now(),
+        ]);
+
+        $withoutRelevance = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Leere Chronik',
+            'slug' => 'leere-chronik',
+            'excerpt' => 'Nur Lore ohne Spielwerte.',
+            'content' => 'Nur Text.',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 121,
+            'published_at' => now(),
+        ]);
+
+        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $withRelevance->slug]))
+            ->assertOk()
+            ->assertSeeText('Spielrelevanz')
+            ->assertSeeText('Inquisitionsszenen nutzen oft Klugheit und Intuition.');
+
+        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $withoutRelevance->slug]))
+            ->assertOk()
+            ->assertDontSeeText('Spielrelevanz');
     }
 
     public function test_entry_edit_route_returns_404_for_category_mismatch(): void

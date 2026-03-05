@@ -169,3 +169,10 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
+
+Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', [KnowledgeController::class, 'encyclopediaEntry'])
+    ->where([
+        'categorySlug' => '(?!admin$)[a-z0-9\\-]+',
+        'entrySlug' => '[a-z0-9\\-]+',
+    ])
+    ->name('knowledge.encyclopedia.entry');
