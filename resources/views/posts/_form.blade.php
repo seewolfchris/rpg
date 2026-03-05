@@ -9,6 +9,9 @@
     $currentProbeEnabled = (bool) old('probe_enabled', false);
     $currentProbeCharacter = old('probe_character_id');
     $currentProbeMode = old('probe_roll_mode', 'normal');
+    $probeAttributeOptions = (array) config('character_sheet.attributes', []);
+    $currentProbeAttributeKey = (string) old('probe_attribute_key', array_key_first($probeAttributeOptions) ?? '');
+    $currentProbeOutcome = (string) old('probe_outcome', 'success');
     $currentProbeModifier = old('probe_modifier', 0);
     $currentProbeLeDelta = old('probe_le_delta', 0);
     $currentProbeAeDelta = old('probe_ae_delta', 0);
@@ -113,7 +116,7 @@
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror
 
-            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="lg:col-span-2">
                     <label for="probe_explanation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Erklaerung / Anlass</label>
                     <input
@@ -164,6 +167,39 @@
                         <option value="disadvantage" @selected($currentProbeMode === 'disadvantage')>Nachteil</option>
                     </select>
                     @error('probe_roll_mode')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_attribute_key" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Probe auf</label>
+                    <select
+                        id="probe_attribute_key"
+                        name="probe_attribute_key"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                        @foreach ($probeAttributeOptions as $attributeKey => $meta)
+                            <option value="{{ $attributeKey }}" @selected($currentProbeAttributeKey === $attributeKey)>
+                                {{ $meta['label'] ?? strtoupper((string) $attributeKey) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('probe_attribute_key')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="probe_outcome" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ergebnis</label>
+                    <select
+                        id="probe_outcome"
+                        name="probe_outcome"
+                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                    >
+                        <option value="success" @selected($currentProbeOutcome === 'success')>Bestanden</option>
+                        <option value="failure" @selected($currentProbeOutcome === 'failure')>Nicht bestanden</option>
+                    </select>
+                    @error('probe_outcome')
                         <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                     @enderror
                 </div>

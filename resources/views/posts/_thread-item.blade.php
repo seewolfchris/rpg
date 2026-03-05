@@ -107,6 +107,10 @@
 
     @if ($post->diceRoll)
         @php($probeRolls = is_array($post->diceRoll->rolls) ? $post->diceRoll->rolls : [])
+        @php($probeAttributeConfig = (array) config('character_sheet.attributes', []))
+        @php($probeAttributeKey = (string) ($post->diceRoll->probe_attribute_key ?? ''))
+        @php($probeAttributeLabel = $probeAttributeKey !== '' ? (string) data_get($probeAttributeConfig, $probeAttributeKey.'.label', strtoupper($probeAttributeKey)) : null)
+        @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Bestanden' : 'Nicht bestanden'))
         <section class="mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
             <p class="text-xs uppercase tracking-[0.1em] text-amber-300">GM-Probe</p>
             <p class="mt-2 text-sm text-stone-200">{{ $post->diceRoll->label }}</p>
@@ -121,6 +125,19 @@
                 <span class="rounded border border-stone-600/80 bg-black/35 px-2 py-1">
                     Modifikator: {{ $post->diceRoll->modifier >= 0 ? '+' : '' }}{{ $post->diceRoll->modifier }}
                 </span>
+                @if ($probeAttributeLabel)
+                    <span class="rounded border border-stone-600/80 bg-black/35 px-2 py-1">
+                        Probe auf: {{ $probeAttributeLabel }}
+                        @if ($post->diceRoll->probe_target_value !== null)
+                            ({{ $post->diceRoll->probe_target_value }} %)
+                        @endif
+                    </span>
+                @endif
+                @if ($probeOutcomeLabel)
+                    <span class="rounded border border-stone-600/80 bg-black/35 px-2 py-1">
+                        Ergebnis: {{ $probeOutcomeLabel }}
+                    </span>
+                @endif
             </div>
 
             <p class="mt-3 text-sm text-stone-200">

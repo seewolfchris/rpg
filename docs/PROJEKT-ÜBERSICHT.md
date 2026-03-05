@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.07-beta`
+- Aktuelle sichtbare Version: `v0.08-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -30,7 +30,7 @@
 | Charakterbogen (DSA-8, Prozentwerte) | Fertig | Persistenz inkl. LE/AE und Notizen |
 | Charakter-Erstellung 2 Modi | Fertig | Real-World zwingt Spezies `mensch` |
 | Kampagnen/Szenen/Posts | Fertig | IC/OOC getrennt, Moderation, Revisionen |
-| GM-only Proben im Post | Fertig | Anlass/Held/Modifikator, Ergebnis im GM-Post |
+| GM-only Proben im Post | Fertig | Anlass/Held/Probe-Eigenschaft/Modifikator + Ergebnis im GM-Post |
 | Proben-Persistenz auf Zielcharakter | Fertig | LE/AE-Impact wird gespeichert |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
@@ -49,6 +49,7 @@
 - Navigations-Counter im Auth-Layout laufen zentral ueber `NavigationCounters` (aggregierte Count-Query statt mehrerer Einzelqueries).
 - Probe-Persistenz ist transaktionsgesichert mit `lockForUpdate` auf dem Zielcharakter (sauberere LE/AE-Konsistenz bei zeitnahen GM-Proben).
 - Plesk-Deploy-Script prueft auf vorhandenen Frontend-Build (`public/build/manifest.json`) und bricht bei fehlenden Artefakten frueh ab.
+- Proben speichern jetzt zusaetzlich Eigenschaft, Zielwert und Bestanden/Nicht-bestanden-Status in `dice_rolls`.
 
 ## Versionierungs-Regel (verbindlich)
 - Laufende Instanz: `APP_VERSION` in `.env` setzen.

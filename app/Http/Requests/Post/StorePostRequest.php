@@ -31,6 +31,8 @@ class StorePostRequest extends FormRequest
             'probe_character_id' => ['nullable', 'integer', 'required_if:probe_enabled,1', 'exists:characters,id'],
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
             'probe_modifier' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-40,40'],
+            'probe_attribute_key' => ['nullable', 'required_if:probe_enabled,1', Rule::in($this->probeAttributeKeys())],
+            'probe_outcome' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_OUTCOMES)],
             'probe_explanation' => ['nullable', 'required_if:probe_enabled,1', 'string', 'min:3', 'max:180'],
             'probe_le_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
             'probe_ae_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
@@ -49,6 +51,10 @@ class StorePostRequest extends FormRequest
             $normalized['probe_modifier'] = 0;
         }
 
+        if ($probeEnabled && ! $this->filled('probe_outcome')) {
+            $normalized['probe_outcome'] = DiceRoll::OUTCOME_SUCCESS;
+        }
+
         if ($probeEnabled && ! $this->filled('probe_le_delta')) {
             $normalized['probe_le_delta'] = 0;
         }
@@ -58,6 +64,17 @@ class StorePostRequest extends FormRequest
         }
 
         $this->merge($normalized);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function probeAttributeKeys(): array
+    {
+        /** @var list<string> $keys */
+        $keys = array_keys((array) config('character_sheet.attributes', []));
+
+        return $keys;
     }
 
     public function withValidator(Validator $validator): void
@@ -141,5 +158,18 @@ class StorePostRequest extends FormRequest
                 );
             }
         });
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'probe_attribute_key' => 'Probe-Eigenschaft',
+            'probe_outcome' => 'Probe-Ergebnis',
+            'probe_character_id' => 'Ziel-Held',
+            'probe_explanation' => 'Erklaerung / Anlass',
+        ];
     }
 }

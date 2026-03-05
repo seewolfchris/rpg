@@ -22,6 +22,15 @@ class DiceRoll extends Model
         self::MODE_DISADVANTAGE,
     ];
 
+    public const OUTCOME_SUCCESS = 'success';
+
+    public const OUTCOME_FAILURE = 'failure';
+
+    public const ALLOWED_OUTCOMES = [
+        self::OUTCOME_SUCCESS,
+        self::OUTCOME_FAILURE,
+    ];
+
     public $timestamps = false;
 
     /**
@@ -35,6 +44,9 @@ class DiceRoll extends Model
         'roll_mode',
         'modifier',
         'label',
+        'probe_attribute_key',
+        'probe_target_value',
+        'probe_is_success',
         'rolls',
         'kept_roll',
         'total',
@@ -55,6 +67,8 @@ class DiceRoll extends Model
         return [
             'rolls' => 'array',
             'modifier' => 'integer',
+            'probe_target_value' => 'integer',
+            'probe_is_success' => 'boolean',
             'kept_roll' => 'integer',
             'total' => 'integer',
             'applied_le_delta' => 'integer',

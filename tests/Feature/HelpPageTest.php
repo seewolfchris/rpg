@@ -45,7 +45,7 @@ class HelpPageTest extends TestCase
 
         $response->assertOk()
             ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgeloest.')
-            ->assertSeeText('Anlass, Ziel-Held und Modifikator')
+            ->assertSeeText('Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator')
             ->assertDontSeeText('d20');
     }
 }

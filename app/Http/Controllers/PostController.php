@@ -8,6 +8,7 @@ use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
+use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\PostModerationLog;
 use App\Models\Scene;
@@ -384,6 +385,16 @@ class PostController extends Controller
 
         $modifier = (int) ($data['probe_modifier'] ?? 0);
         $rollMode = (string) ($data['probe_roll_mode'] ?? 'normal');
+        $probeAttributeKey = (string) ($data['probe_attribute_key'] ?? '');
+        if ($probeAttributeKey === '') {
+            return false;
+        }
+
+        $probeOutcome = (string) ($data['probe_outcome'] ?? DiceRoll::OUTCOME_SUCCESS);
+        if (! in_array($probeOutcome, DiceRoll::ALLOWED_OUTCOMES, true)) {
+            return false;
+        }
+
         $rolled = $this->probeRoller->roll($rollMode, $modifier);
         $targetCharacterId = (int) ($data['probe_character_id'] ?? 0);
         if ($targetCharacterId <= 0) {
@@ -405,6 +416,8 @@ class PostController extends Controller
             $user,
             $targetCharacterId,
             $participantUserIds,
+            $probeAttributeKey,
+            $probeOutcome,
             $rolled,
             $explanation,
             $requestedLeDelta,
@@ -422,6 +435,11 @@ class PostController extends Controller
                 return false;
             }
 
+            $effectiveAttributes = (array) ($targetCharacter->effective_attributes ?? []);
+            $probeTargetValue = array_key_exists($probeAttributeKey, $effectiveAttributes)
+                ? (int) max(0, min(100, (int) $effectiveAttributes[$probeAttributeKey]))
+                : null;
+
             [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $requestedLeDelta);
             [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
 
@@ -436,6 +454,9 @@ class PostController extends Controller
                 'roll_mode' => $rolled['mode'],
                 'modifier' => $rolled['modifier'],
                 'label' => $explanation,
+                'probe_attribute_key' => $probeAttributeKey,
+                'probe_target_value' => $probeTargetValue,
+                'probe_is_success' => $probeOutcome === DiceRoll::OUTCOME_SUCCESS,
                 'rolls' => $rolled['rolls'],
                 'kept_roll' => $rolled['kept_roll'],
                 'total' => $rolled['total'],

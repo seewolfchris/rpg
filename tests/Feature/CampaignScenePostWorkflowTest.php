@@ -157,6 +157,8 @@ class CampaignScenePostWorkflowTest extends TestCase
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $playerCharacter = Character::factory()->create([
             'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 44,
             'le_max' => 45,
             'le_current' => 45,
             'ae_max' => 30,
@@ -172,6 +174,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_character_id' => $playerCharacter->id,
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => -4,
+            'probe_attribute_key' => 'mu',
+            'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
             'probe_le_delta' => -10,
             'probe_ae_delta' => -3,
             'probe_explanation' => 'Klettern am zerborstenen Ascheturm bei Sturm',
@@ -194,6 +198,9 @@ class CampaignScenePostWorkflowTest extends TestCase
             'roll_mode' => DiceRoll::MODE_NORMAL,
             'modifier' => -4,
             'label' => 'Klettern am zerborstenen Ascheturm bei Sturm',
+            'probe_attribute_key' => 'mu',
+            'probe_target_value' => 44,
+            'probe_is_success' => 0,
             'applied_le_delta' => -10,
             'applied_ae_delta' => -3,
             'resulting_le_current' => 35,
@@ -215,6 +222,9 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->assertSeeText('GM-Probe')
             ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
             ->assertSeeText($playerCharacter->name)
+            ->assertSeeText('Probe auf: Mut')
+            ->assertSeeText('44 %')
+            ->assertSeeText('Ergebnis: Nicht bestanden')
             ->assertSeeText('LE: -10')
             ->assertSeeText('AE: -3');
     }
@@ -250,6 +260,8 @@ class CampaignScenePostWorkflowTest extends TestCase
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $targetCharacter = Character::factory()->create([
             'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 45,
             'le_max' => 45,
             'le_current' => 45,
             'ae_max' => 30,
@@ -265,6 +277,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_character_id' => $targetCharacter->id,
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_outcome' => DiceRoll::OUTCOME_SUCCESS,
             'probe_le_delta' => -10,
             'probe_ae_delta' => -3,
             'probe_explanation' => 'Erster Einschlag',
@@ -279,6 +293,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_character_id' => $targetCharacter->id,
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
             'probe_le_delta' => -8,
             'probe_ae_delta' => -4,
             'probe_explanation' => 'Zweiter Einschlag',
@@ -322,6 +338,8 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_character_id' => $playerCharacter->id,
                 'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                 'probe_modifier' => 2,
+                'probe_attribute_key' => 'in',
+                'probe_outcome' => DiceRoll::OUTCOME_SUCCESS,
                 'probe_explanation' => 'Unerlaubte Probe durch Spieler',
             ]);
 
@@ -374,6 +392,8 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_character_id' => $outsiderCharacter->id,
                 'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                 'probe_modifier' => 0,
+                'probe_attribute_key' => 'ge',
+                'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
                 'probe_le_delta' => -5,
                 'probe_ae_delta' => 0,
                 'probe_explanation' => 'Unzulaessiges Ziel ausserhalb der Kampagne',
