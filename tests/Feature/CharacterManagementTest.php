@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Character;
+use App\Models\CharacterInventoryLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,7 +30,15 @@ class CharacterManagementTest extends TestCase
             'world_connection' => 'Meine Schwester dient den Glutrichtern als Schreiberin.',
             'advantages' => ['Blutpforten-Sinn'],
             'disadvantages' => ['Aschesucht'],
-            'inventory' => ['Seil 10m lang', 'Feuerstein'],
+            'inventory' => [[
+                'name' => 'Seil 10m lang',
+                'quantity' => 1,
+                'equipped' => false,
+            ], [
+                'name' => 'Feuerstein',
+                'quantity' => 3,
+                'equipped' => false,
+            ]],
             'weapons' => [[
                 'name' => 'Kurzschwert',
                 'attack' => 48,
@@ -113,7 +122,15 @@ class CharacterManagementTest extends TestCase
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
         $this->assertSame(['Aschesucht'], $character->disadvantages);
-        $this->assertSame(['Seil 10m lang', 'Feuerstein'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Seil 10m lang',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Feuerstein',
+            'quantity' => 3,
+            'equipped' => false,
+        ]], $character->inventory);
         $this->assertSame([[
             'name' => 'Kurzschwert',
             'attack' => 48,
@@ -214,7 +231,11 @@ class CharacterManagementTest extends TestCase
 
         $character = Character::factory()->create([
             'user_id' => $owner->id,
-            'inventory' => ['Fackel'],
+            'inventory' => [[
+                'name' => 'Fackel',
+                'quantity' => 1,
+                'equipped' => true,
+            ]],
             'weapons' => [[
                 'name' => 'Dolch',
                 'attack' => 40,
@@ -235,7 +256,15 @@ class CharacterManagementTest extends TestCase
         $response = $this->actingAs($gm)->put(route('characters.update', $character), [
             ...$this->characterPayload([
                 'name' => $character->name,
-                'inventory' => ['Fackel', 'Seil 10m lang'],
+                'inventory' => [[
+                    'name' => 'Fackel',
+                    'quantity' => 1,
+                    'equipped' => true,
+                ], [
+                    'name' => 'Seil 10m lang',
+                    'quantity' => 2,
+                    'equipped' => false,
+                ]],
                 'weapons' => [[
                     'name' => 'Dolch',
                     'attack' => 42,
@@ -247,7 +276,15 @@ class CharacterManagementTest extends TestCase
 
         $character->refresh();
 
-        $this->assertSame(['Fackel', 'Seil 10m lang'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Fackel',
+            'quantity' => 1,
+            'equipped' => true,
+        ], [
+            'name' => 'Seil 10m lang',
+            'quantity' => 2,
+            'equipped' => false,
+        ]], $character->inventory);
         $this->assertSame([[
             'name' => 'Dolch',
             'attack' => 42,
@@ -256,6 +293,51 @@ class CharacterManagementTest extends TestCase
         ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
+    }
+
+    public function test_character_inventory_changes_are_written_to_audit_log(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'inventory' => [[
+                'name' => 'Fackel',
+                'quantity' => 1,
+                'equipped' => false,
+            ]],
+        ]);
+
+        $this->actingAs($user)->put(route('characters.update', $character), [
+            ...$this->characterPayload([
+                'name' => $character->name,
+                'inventory' => [[
+                    'name' => 'Fackel',
+                    'quantity' => 1,
+                    'equipped' => false,
+                ], [
+                    'name' => 'Heiltrank',
+                    'quantity' => 3,
+                    'equipped' => false,
+                ]],
+            ]),
+        ])->assertRedirect(route('characters.show', $character));
+
+        $this->assertDatabaseHas('character_inventory_logs', [
+            'character_id' => $character->id,
+            'actor_user_id' => $user->id,
+            'source' => 'character_sheet_update',
+            'action' => 'add',
+            'item_name' => 'Heiltrank',
+            'quantity' => 3,
+        ]);
+
+        $this->assertGreaterThanOrEqual(
+            1,
+            CharacterInventoryLog::query()
+                ->where('character_id', $character->id)
+                ->count()
+        );
     }
 
     public function test_gm_cannot_delete_other_users_character(): void
@@ -288,7 +370,11 @@ class CharacterManagementTest extends TestCase
             'gm_secret' => 'Schwur im schwarzen Archiv.',
             'advantages' => ['Klingenfokus'],
             'disadvantages' => ['Blutschuld'],
-            'inventory' => ['Alte Muenze aus Erest'],
+            'inventory' => [[
+                'name' => 'Alte Muenze aus Erest',
+                'quantity' => 1,
+                'equipped' => false,
+            ]],
             'weapons' => [[
                 'name' => 'Speer',
                 'attack' => 42,
@@ -337,7 +423,15 @@ class CharacterManagementTest extends TestCase
                 'ge' => 37,
                 'ko' => 44,
                 'kk' => 46,
-                'inventory' => ['Wurfhaken', 'Salbe gegen Brandwunden'],
+                'inventory' => [[
+                    'name' => 'Wurfhaken',
+                    'quantity' => 1,
+                    'equipped' => false,
+                ], [
+                    'name' => 'Salbe gegen Brandwunden',
+                    'quantity' => 2,
+                    'equipped' => false,
+                ]],
                 'weapons' => [[
                     'name' => 'Langschwert',
                     'attack' => 53,
@@ -370,7 +464,15 @@ class CharacterManagementTest extends TestCase
 
         $this->assertSame(['Blutpforten-Sinn'], $character->advantages);
         $this->assertSame(['Aschesucht'], $character->disadvantages);
-        $this->assertSame(['Wurfhaken', 'Salbe gegen Brandwunden'], $character->inventory);
+        $this->assertSame([[
+            'name' => 'Wurfhaken',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Salbe gegen Brandwunden',
+            'quantity' => 2,
+            'equipped' => false,
+        ]], $character->inventory);
         $this->assertSame([[
             'name' => 'Langschwert',
             'attack' => 53,

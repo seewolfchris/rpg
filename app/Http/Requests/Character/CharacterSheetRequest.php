@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Character;
 
+use App\Support\CharacterInventoryService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -53,7 +54,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages' => ['required', 'array', 'min:'.$traitMin, 'max:'.$traitMax],
             'disadvantages.*' => ['required', 'string', 'min:2', 'max:120', 'distinct'],
             'inventory' => ['nullable', 'array', 'max:200'],
-            'inventory.*' => ['required', 'string', 'min:2', 'max:180'],
+            'inventory.*.name' => ['required', 'string', 'min:2', 'max:180'],
+            'inventory.*.quantity' => ['required', 'integer', 'between:1,999'],
+            'inventory.*.equipped' => ['nullable', 'boolean'],
             'weapons' => ['nullable', 'array', 'max:20'],
             'weapons.*.name' => ['required', 'string', 'min:2', 'max:120'],
             'weapons.*.attack' => ['required', 'integer', 'between:0,100'],
@@ -125,7 +128,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'origin' => Str::lower(trim((string) $this->input('origin', ''))),
             'advantages' => $this->normalizeTraitInput($this->input('advantages')),
             'disadvantages' => $this->normalizeTraitInput($this->input('disadvantages')),
-            'inventory' => $this->normalizeTraitInput($this->input('inventory')),
+            'inventory' => $this->normalizeInventoryInput($this->input('inventory')),
             'weapons' => $this->normalizeWeaponInput($this->input('weapons')),
             'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
             'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
@@ -221,6 +224,23 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         return [];
+    }
+
+    /**
+     * @param  mixed  $input
+     * @return array<int, array{name: string, quantity: int, equipped: bool}>
+     */
+    protected function normalizeInventoryInput(mixed $input): array
+    {
+        if (is_string($input)) {
+            $input = preg_split('/[\r\n,]+/', $input) ?: [];
+        }
+
+        if (! is_array($input)) {
+            return [];
+        }
+
+        return app(CharacterInventoryService::class)->normalize($input);
     }
 
     /**
@@ -517,7 +537,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'advantages' => 'Vorteile',
             'disadvantages' => 'Nachteile',
             'inventory' => 'Inventar',
-            'inventory.*' => 'Inventar-Eintrag',
+            'inventory.*.name' => 'Inventar-Gegenstand',
+            'inventory.*.quantity' => 'Inventar-Menge',
+            'inventory.*.equipped' => 'Ausgeruestet',
             'weapons' => 'Waffen',
             'weapons.*.name' => 'Waffenname',
             'weapons.*.attack' => 'Angriffswert',
@@ -556,7 +578,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages.min' => 'Bitte mindestens einen Nachteil eintragen.',
             'advantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'disadvantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
-            'inventory.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
+            'inventory.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'weapons.*.name.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'weapons.*.damage.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'min' => 'Bitte mindestens :min eingeben.',

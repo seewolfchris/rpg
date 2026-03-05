@@ -18,6 +18,8 @@
     $currentInventoryAwardEnabled = (bool) old('inventory_award_enabled', false);
     $currentInventoryAwardCharacter = old('inventory_award_character_id');
     $currentInventoryAwardItem = old('inventory_award_item');
+    $currentInventoryAwardQuantity = old('inventory_award_quantity', 1);
+    $currentInventoryAwardEquipped = (bool) old('inventory_award_equipped', false);
 @endphp
 
 <div class="space-y-5">
@@ -271,7 +273,7 @@
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                 @enderror
 
-                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <label for="inventory_award_character_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ziel-Held</label>
                         <select
@@ -293,7 +295,7 @@
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
+                    <div class="lg:col-span-2">
                         <label for="inventory_award_item" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gefundener Gegenstand</label>
                         <input
                             id="inventory_award_item"
@@ -305,6 +307,37 @@
                             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                         >
                         @error('inventory_award_item')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="inventory_award_quantity" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Menge</label>
+                        <input
+                            id="inventory_award_quantity"
+                            type="number"
+                            name="inventory_award_quantity"
+                            value="{{ $currentInventoryAwardQuantity }}"
+                            min="1"
+                            max="999"
+                            step="1"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        >
+                        @error('inventory_award_quantity')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-4">
+                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-300">
+                            <input
+                                type="checkbox"
+                                name="inventory_award_equipped"
+                                value="1"
+                                @checked($currentInventoryAwardEquipped)
+                                class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                            >
+                            Als ausgeruestet eintragen
+                        </label>
+                        @error('inventory_award_equipped')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                         @enderror
                     </div>

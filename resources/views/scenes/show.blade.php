@@ -260,7 +260,7 @@
                     Gegenstaende direkt in der Szene hinzufuegen oder entfernen, ohne den Charakterbogen zu oeffnen.
                 </p>
 
-                <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     @csrf
 
                     <div>
@@ -320,6 +320,23 @@
                     </div>
 
                     <div>
+                        <label for="inventory_action_quantity" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Menge</label>
+                        <input
+                            id="inventory_action_quantity"
+                            type="number"
+                            name="inventory_action_quantity"
+                            value="{{ old('inventory_action_quantity', 1) }}"
+                            min="1"
+                            max="999"
+                            step="1"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                        >
+                        @error('inventory_action_quantity')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
                         <label for="inventory_action_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Notiz (optional)</label>
                         <input
                             id="inventory_action_note"
@@ -335,7 +352,23 @@
                         @enderror
                     </div>
 
-                    <div class="md:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-3">
+                    <div class="md:col-span-2 xl:col-span-5">
+                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-300">
+                            <input
+                                type="checkbox"
+                                name="inventory_action_equipped"
+                                value="1"
+                                @checked((bool) old('inventory_action_equipped', false))
+                                class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-emerald-500 focus:ring-emerald-500/60"
+                            >
+                            Als ausgeruestet eintragen (nur bei "Hinzufuegen")
+                        </label>
+                        @error('inventory_action_equipped')
+                            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="md:col-span-2 xl:col-span-5 flex flex-wrap items-center gap-3">
                         <button
                             type="submit"
                             class="rounded-md border border-emerald-500/70 bg-emerald-500/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100 transition hover:bg-emerald-500/30"

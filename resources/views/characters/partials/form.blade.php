@@ -82,10 +82,38 @@
         $initialInventory = preg_split('/[\r\n,]+/', $initialInventory) ?: [];
     }
     $initialInventory = is_array($initialInventory)
-        ? array_values(array_filter(array_map(static fn ($value): string => trim((string) $value), $initialInventory), static fn (string $value): bool => $value !== ''))
+        ? array_values(array_map(static function ($entry): array {
+            if (is_string($entry)) {
+                return [
+                    'name' => trim($entry),
+                    'quantity' => 1,
+                    'equipped' => false,
+                ];
+            }
+
+            if (! is_array($entry)) {
+                return [
+                    'name' => '',
+                    'quantity' => 1,
+                    'equipped' => false,
+                ];
+            }
+
+            $rawQuantity = $entry['quantity'] ?? $entry['qty'] ?? 1;
+
+            return [
+                'name' => trim((string) ($entry['name'] ?? $entry['item'] ?? '')),
+                'quantity' => is_numeric($rawQuantity) ? max(1, min(999, (int) $rawQuantity)) : 1,
+                'equipped' => (bool) ($entry['equipped'] ?? false),
+            ];
+        }, $initialInventory))
         : [];
     if ($initialInventory === []) {
-        $initialInventory = [''];
+        $initialInventory = [[
+            'name' => '',
+            'quantity' => 1,
+            'equipped' => false,
+        ]];
     }
 
     $initialWeapons = old('weapons', $character?->weapons ?? []);
@@ -592,15 +620,34 @@
 
                 <div class="mt-4 space-y-2">
                     <template x-for="(entry, index) in inventory" :key="'inv-' + index">
-                        <div class="flex items-center gap-2">
+                        <div class="grid gap-2 rounded-lg border border-stone-700/70 bg-black/25 p-3 md:grid-cols-[1fr_6.5rem_auto_auto] md:items-center">
                             <input
-                                :name="`inventory[${index}]`"
-                                x-model="inventory[index]"
+                                :name="`inventory[${index}][name]`"
+                                x-model="inventory[index].name"
                                 type="text"
                                 maxlength="180"
                                 class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
                                 placeholder="z. B. Seil 10m lang"
                             >
+                            <input
+                                :name="`inventory[${index}][quantity]`"
+                                x-model.number="inventory[index].quantity"
+                                type="number"
+                                min="1"
+                                max="999"
+                                step="1"
+                                class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+                                title="Menge"
+                            >
+                            <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
+                                <input
+                                    :name="`inventory[${index}][equipped]`"
+                                    x-model="inventory[index].equipped"
+                                    type="checkbox"
+                                    class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-emerald-500 focus:ring-emerald-500/60"
+                                >
+                                Ausger.
+                            </label>
                             <button
                                 type="button"
                                 class="rounded-md border border-stone-600/80 px-2 py-2 text-xs text-stone-300 hover:border-stone-400"
@@ -612,7 +659,7 @@
                         </div>
                     </template>
                 </div>
-                <p class="mt-2 text-xs text-stone-500">Leere Zeilen werden beim Speichern ignoriert.</p>
+                <p class="mt-2 text-xs text-stone-500">Leere Zeilen werden beim Speichern ignoriert. Gleiche Gegenstaende werden als Stack zusammengefuehrt.</p>
             </article>
 
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">

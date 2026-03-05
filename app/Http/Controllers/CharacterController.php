@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
+use App\Support\CharacterInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,10 @@ use Illuminate\View\View;
 
 class CharacterController extends Controller
 {
+    public function __construct(
+        private readonly CharacterInventoryService $inventoryService,
+    ) {}
+
     public function index(): View
     {
         $user = auth()->user();
@@ -48,6 +53,14 @@ class CharacterController extends Controller
         }
 
         $character->save();
+        $normalizedInventory = $this->inventoryService->normalize($character->inventory ?? []);
+        $this->inventoryService->log(
+            character: $character,
+            actorUserId: (int) auth()->id(),
+            source: 'character_sheet_create',
+            operations: $this->inventoryService->diff([], $normalizedInventory),
+            context: ['character_id' => $character->id],
+        );
 
         return redirect()
             ->route('characters.show', $character)
@@ -57,8 +70,12 @@ class CharacterController extends Controller
     public function show(Character $character): View
     {
         $this->ensureCanManageCharacter($character);
+        $inventoryLogs = $character->inventoryLogs()
+            ->with('actor:id,name')
+            ->limit(25)
+            ->get();
 
-        return view('characters.show', compact('character'));
+        return view('characters.show', compact('character', 'inventoryLogs'));
     }
 
     public function edit(Character $character): View
@@ -71,6 +88,7 @@ class CharacterController extends Controller
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse
     {
         $this->ensureCanManageCharacter($character);
+        $previousInventory = $this->inventoryService->normalize($character->inventory ?? []);
 
         $data = array_merge($request->validated(), $request->derivedPools());
         unset($data['avatar'], $data['remove_avatar']);
@@ -93,6 +111,14 @@ class CharacterController extends Controller
         }
 
         $character->save();
+        $nextInventory = $this->inventoryService->normalize($character->inventory ?? []);
+        $this->inventoryService->log(
+            character: $character,
+            actorUserId: (int) auth()->id(),
+            source: 'character_sheet_update',
+            operations: $this->inventoryService->diff($previousInventory, $nextInventory),
+            context: ['character_id' => $character->id],
+        );
 
         return redirect()
             ->route('characters.show', $character)
@@ -196,9 +222,11 @@ class CharacterController extends Controller
         $data['disadvantages'] = is_array($data['disadvantages'] ?? null)
             ? array_values($data['disadvantages'])
             : ($character?->disadvantages ?? []);
-        $data['inventory'] = is_array($data['inventory'] ?? null)
-            ? $this->sanitizeInventoryEntries($data['inventory'])
-            : $this->sanitizeInventoryEntries($character?->inventory ?? []);
+        $data['inventory'] = $this->inventoryService->normalize(
+            is_array($data['inventory'] ?? null)
+                ? $data['inventory']
+                : ($character?->inventory ?? [])
+        );
         $data['weapons'] = is_array($data['weapons'] ?? null)
             ? $this->sanitizeWeapons($data['weapons'])
             : $this->sanitizeWeapons($character?->weapons ?? []);
@@ -246,30 +274,6 @@ class CharacterController extends Controller
     private function clampInt(int $value, int $min, int $max): int
     {
         return max($min, min($value, $max));
-    }
-
-    /**
-     * @param  mixed  $entries
-     * @return array<int, string>
-     */
-    private function sanitizeInventoryEntries(mixed $entries): array
-    {
-        if (! is_array($entries)) {
-            return [];
-        }
-
-        $normalized = [];
-
-        foreach ($entries as $entry) {
-            $value = trim((string) $entry);
-            if ($value === '') {
-                continue;
-            }
-
-            $normalized[] = $value;
-        }
-
-        return array_values($normalized);
     }
 
     /**

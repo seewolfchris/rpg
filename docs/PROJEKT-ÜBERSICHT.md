@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.12-beta`
+- Aktuelle sichtbare Version: `v0.13-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -28,14 +28,15 @@
 | Auth (Login/Register/Reset) | Fertig | inkl. Mail-Reset |
 | Charaktere (CRUD + Avatar + Ownership) | Fertig | Policy-geschuetzt, validiert |
 | Charakterbogen (DSA-8, Prozentwerte) | Fertig | Persistenz inkl. LE/AE und Notizen |
-| Charakterbogen Inventar/Waffen | Fertig | Inventar + Waffen (AT/PA/SP) persistent im Bogen |
+| Charakterbogen Inventar/Waffen | Fertig | Inventar mit Stacks (`Menge`) + optional `ausgeruestet`, Waffen (AT/PA/SP) persistent im Bogen |
 | Charakter-Erstellung 2 Modi | Fertig | Real-World zwingt Spezies `mensch` |
 | Kampagnen/Szenen/Posts | Fertig | IC/OOC getrennt, Moderation, Revisionen |
 | GM-only Proben im Post | Fertig | Anlass/Held/Probe-Eigenschaft/Modifikator + Ergebnis im GM-Post |
 | Probe-Erfolg automatisch | Fertig | Erfolg/Nicht-Erfolg wird technisch aus (Wurf + Modifikator) <= Zielwert berechnet |
 | Proben-Persistenz auf Zielcharakter | Fertig | LE/AE-Impact wird gespeichert |
-| GM-Inventar-Fund im Post | Fertig | Gegenstand wird direkt in Ziel-Charakterinventar geschrieben |
-| GM-Inventar-Schnellaktion in Szene | Fertig | Add/Remove direkt in Szenenansicht ohne Charakterbogen |
+| GM-Inventar-Fund im Post | Fertig | Ziel-Held, Gegenstand, Menge und optional ausgeruestet werden direkt gebucht |
+| GM-Inventar-Schnellaktion in Szene | Fertig | Add/Remove inkl. Menge direkt in Szenenansicht ohne Charakterbogen |
+| Inventar-Audit-Log | Fertig | Jede Inventar-Aenderung speichert wer/wann/was (inkl. Quelle) |
 | Benachrichtigungen | Fertig | In-App + optional Mail |
 | Gamification (Punkte) | Fertig | post-basierte Punkteevents |
 | Wissenszentrum | Fertig | HowTo, Regeln, Enzyklopaedie |
@@ -55,7 +56,8 @@
 - Plesk-Deploy-Script prueft auf vorhandenen Frontend-Build (`public/build/manifest.json`) und bricht bei fehlenden Artefakten frueh ab.
 - Proben speichern Eigenschaft, Zielwert und Bestanden/Nicht-bestanden-Status in `dice_rolls`; Erfolg wird automatisch aus `(Wurf + Modifikator) <= Zielwert` berechnet.
 - Charaktere speichern zusaetzlich `inventory` und `weapons` als JSON.
-- GM-Posts koennen optional Inventar-Funde auf Kampagnen-Teilnehmer buchen (persistiert im Charakter + sichtbar im Post).
+- Inventar-Eintraege sind stack-basiert (`name`, `quantity`, `equipped`) und werden beim Speichern normalisiert.
+- Alle Inventar-Aenderungen werden in `character_inventory_logs` auditiert (Character-Form, GM-Post-Fund, Szenen-Schnellaktion).
 
 ## Versionierungs-Regel (verbindlich)
 - Laufende Instanz: `APP_VERSION` in `.env` setzen.

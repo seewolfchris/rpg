@@ -430,7 +430,15 @@ class CampaignScenePostWorkflowTest extends TestCase
         $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
 
         $playerCharacter->refresh();
-        $this->assertSame(['Fackel', 'Seil 10m lang'], $playerCharacter->inventory);
+        $this->assertSame([[
+            'name' => 'Fackel',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Seil 10m lang',
+            'quantity' => 1,
+            'equipped' => false,
+        ]], $playerCharacter->inventory);
 
         $meta = is_array($post->meta) ? $post->meta : [];
         $award = is_array($meta['inventory_award'] ?? null) ? $meta['inventory_award'] : [];
@@ -438,6 +446,17 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame($playerCharacter->id, (int) ($award['character_id'] ?? 0));
         $this->assertSame($playerCharacter->name, (string) ($award['character_name'] ?? ''));
         $this->assertSame('Seil 10m lang', (string) ($award['item'] ?? ''));
+        $this->assertSame(1, (int) ($award['quantity'] ?? 0));
+        $this->assertFalse((bool) ($award['equipped'] ?? true));
+
+        $this->assertDatabaseHas('character_inventory_logs', [
+            'character_id' => $playerCharacter->id,
+            'actor_user_id' => $gm->id,
+            'source' => 'post_inventory_award',
+            'action' => 'add',
+            'item_name' => 'Seil 10m lang',
+            'quantity' => 1,
+        ]);
 
         $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
         $sceneResponse->assertOk()
@@ -625,11 +644,25 @@ class CampaignScenePostWorkflowTest extends TestCase
             'inventory_action_character_id' => $targetCharacter->id,
             'inventory_action_type' => 'add',
             'inventory_action_item' => 'Heiltrank',
+            'inventory_action_quantity' => 3,
+            'inventory_action_equipped' => '1',
             'inventory_action_note' => 'Gefunden in der Nebelkammer',
         ]);
 
         $addResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
-        $this->assertSame(['Fackel', 'Seil 10m lang', 'Heiltrank'], $targetCharacter->fresh()->inventory);
+        $this->assertSame([[
+            'name' => 'Fackel',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Seil 10m lang',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Heiltrank',
+            'quantity' => 3,
+            'equipped' => true,
+        ]], $targetCharacter->fresh()->inventory);
 
         $removeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
             'inventory_action_character_id' => $targetCharacter->id,
@@ -638,7 +671,33 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
 
         $removeResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
-        $this->assertSame(['Fackel', 'Heiltrank'], $targetCharacter->fresh()->inventory);
+        $this->assertSame([[
+            'name' => 'Fackel',
+            'quantity' => 1,
+            'equipped' => false,
+        ], [
+            'name' => 'Heiltrank',
+            'quantity' => 3,
+            'equipped' => true,
+        ]], $targetCharacter->fresh()->inventory);
+
+        $this->assertDatabaseHas('character_inventory_logs', [
+            'character_id' => $targetCharacter->id,
+            'actor_user_id' => $gm->id,
+            'source' => 'scene_inventory_quick_action',
+            'action' => 'add',
+            'item_name' => 'Heiltrank',
+            'quantity' => 3,
+            'equipped' => 1,
+        ]);
+        $this->assertDatabaseHas('character_inventory_logs', [
+            'character_id' => $targetCharacter->id,
+            'actor_user_id' => $gm->id,
+            'source' => 'scene_inventory_quick_action',
+            'action' => 'remove',
+            'item_name' => 'Seil 10m lang',
+            'quantity' => 1,
+        ]);
     }
 
     public function test_inventory_quick_action_rejects_unknown_item_removal(): void

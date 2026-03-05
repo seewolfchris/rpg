@@ -117,6 +117,11 @@ class Character extends Model
         return $this->hasMany(DiceRoll::class);
     }
 
+    public function inventoryLogs(): HasMany
+    {
+        return $this->hasMany(CharacterInventoryLog::class)->latest('created_at');
+    }
+
     public function avatarUrl(): string
     {
         if ($this->avatar_path) {

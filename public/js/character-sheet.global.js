@@ -28,6 +28,48 @@
         return list;
     };
 
+    const emptyInventoryEntry = () => ({
+        name: '',
+        quantity: 1,
+        equipped: false,
+    });
+
+    const normalizeInventoryEntries = (values) => {
+        if (!Array.isArray(values)) {
+            return [];
+        }
+
+        return values.map((entry) => {
+            if (typeof entry === 'string') {
+                return {
+                    name: entry.trim(),
+                    quantity: 1,
+                    equipped: false,
+                };
+            }
+
+            if (!entry || typeof entry !== 'object') {
+                return emptyInventoryEntry();
+            }
+
+            return {
+                name: String(entry.name ?? entry.item ?? '').trim(),
+                quantity: clamp(toInt(entry.quantity ?? entry.qty ?? 1, 1), 1, 999),
+                equipped: Boolean(entry.equipped ?? false),
+            };
+        });
+    };
+
+    const withMinimumInventoryRows = (values, minimum) => {
+        const list = normalizeInventoryEntries(values);
+
+        while (list.length < minimum) {
+            list.push(emptyInventoryEntry());
+        }
+
+        return list;
+    };
+
     const emptyWeaponEntry = () => ({
         name: '',
         attack: '',
@@ -94,7 +136,7 @@
             init() {
                 this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
                 this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
-                this.inventory = withMinimumEmptyRows(payload.initial?.inventory ?? [], this.inventoryMin);
+                this.inventory = withMinimumInventoryRows(payload.initial?.inventory ?? [], this.inventoryMin);
                 this.weapons = withMinimumWeaponRows(payload.initial?.weapons ?? [], this.weaponsMin);
 
                 if (!this.species) {
@@ -404,7 +446,7 @@
                     return;
                 }
 
-                this.inventory.push('');
+                this.inventory.push(emptyInventoryEntry());
             },
 
             removeInventoryItem(index) {

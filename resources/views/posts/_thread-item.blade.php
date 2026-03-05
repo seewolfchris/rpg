@@ -184,6 +184,8 @@
 
     @php($inventoryAward = is_array($post->meta) ? ($post->meta['inventory_award'] ?? null) : null)
     @if (is_array($inventoryAward) && trim((string) ($inventoryAward['item'] ?? '')) !== '')
+        @php($inventoryAwardQuantity = max(1, (int) ($inventoryAward['quantity'] ?? 1)))
+        @php($inventoryAwardEquipped = (bool) ($inventoryAward['equipped'] ?? false))
         <section class="mt-4 rounded-lg border border-emerald-700/40 bg-emerald-900/10 p-4">
             <p class="text-xs uppercase tracking-[0.1em] text-emerald-300">Inventar aktualisiert</p>
             <p class="mt-2 text-sm text-stone-200">
@@ -192,7 +194,10 @@
             </p>
             <p class="mt-1 text-sm text-stone-200">
                 Neuer Gegenstand:
-                <span class="font-semibold text-emerald-100">{{ $inventoryAward['item'] }}</span>
+                <span class="font-semibold text-emerald-100">{{ $inventoryAwardQuantity }}x {{ $inventoryAward['item'] }}</span>
+                @if ($inventoryAwardEquipped)
+                    <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                @endif
             </p>
         </section>
     @endif

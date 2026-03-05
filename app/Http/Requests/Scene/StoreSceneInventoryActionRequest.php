@@ -25,6 +25,8 @@ class StoreSceneInventoryActionRequest extends FormRequest
             'inventory_action_character_id' => ['required', 'integer', 'exists:characters,id'],
             'inventory_action_type' => ['required', Rule::in(['add', 'remove'])],
             'inventory_action_item' => ['required', 'string', 'min:2', 'max:180'],
+            'inventory_action_quantity' => ['required', 'integer', 'between:1,999'],
+            'inventory_action_equipped' => ['nullable', 'boolean'],
             'inventory_action_note' => ['nullable', 'string', 'max:180'],
         ];
     }
@@ -33,6 +35,8 @@ class StoreSceneInventoryActionRequest extends FormRequest
     {
         $this->merge([
             'inventory_action_item' => trim((string) $this->input('inventory_action_item', '')),
+            'inventory_action_quantity' => (int) $this->input('inventory_action_quantity', 1),
+            'inventory_action_equipped' => $this->boolean('inventory_action_equipped'),
             'inventory_action_note' => trim((string) $this->input('inventory_action_note', '')),
         ]);
     }
@@ -104,6 +108,8 @@ class StoreSceneInventoryActionRequest extends FormRequest
             'inventory_action_character_id' => 'Ziel-Held',
             'inventory_action_type' => 'Inventar-Aktion',
             'inventory_action_item' => 'Gegenstand',
+            'inventory_action_quantity' => 'Menge',
+            'inventory_action_equipped' => 'Ausgeruestet',
             'inventory_action_note' => 'Notiz',
         ];
     }

@@ -11,6 +11,33 @@
         $originLabel = (string) data_get($sheet, 'origins.'.$character->origin, $character->origin ?: '-');
         $speciesLabel = (string) data_get($sheet, 'species.'.$character->species.'.label', $character->species ?: '-');
         $callingLabel = (string) data_get($sheet, 'callings.'.$character->calling.'.label', $character->calling ?: '-');
+        $inventoryEntries = collect(is_array($character->inventory) ? $character->inventory : [])
+            ->map(static function ($entry): array {
+                if (is_string($entry)) {
+                    return [
+                        'name' => trim($entry),
+                        'quantity' => 1,
+                        'equipped' => false,
+                    ];
+                }
+
+                if (! is_array($entry)) {
+                    return [
+                        'name' => '',
+                        'quantity' => 1,
+                        'equipped' => false,
+                    ];
+                }
+
+                return [
+                    'name' => trim((string) ($entry['name'] ?? $entry['item'] ?? '')),
+                    'quantity' => max(1, min(999, (int) ($entry['quantity'] ?? $entry['qty'] ?? 1))),
+                    'equipped' => (bool) ($entry['equipped'] ?? false),
+                ];
+            })
+            ->filter(static fn (array $entry): bool => $entry['name'] !== '')
+            ->values();
+        $inventoryLogs = isset($inventoryLogs) ? collect($inventoryLogs) : collect();
         $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
             $value = $characterModel->{$attributeKey};
             if ($value !== null) {
@@ -168,10 +195,15 @@
                 <section class="grid gap-3 lg:grid-cols-[1.05fr_1fr]">
                     <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/10 p-3">
                         <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200">Inventar</h4>
-                        @if (is_array($character->inventory) && count($character->inventory) > 0)
+                        @if ($inventoryEntries->isNotEmpty())
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
-                                @foreach ($character->inventory as $inventoryEntry)
-                                    <li>- {{ $inventoryEntry }}</li>
+                                @foreach ($inventoryEntries as $inventoryEntry)
+                                    <li>
+                                        - {{ $inventoryEntry['quantity'] }}x {{ $inventoryEntry['name'] }}
+                                        @if ($inventoryEntry['equipped'])
+                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                                        @endif
+                                    </li>
                                 @endforeach
                             </ul>
                         @else
@@ -208,6 +240,35 @@
                             <p class="mt-2 text-sm text-amber-100/80">Keine Eintraege.</p>
                         @endif
                     </article>
+                </section>
+
+                <section class="rounded-lg border border-stone-700/70 bg-black/30 p-4">
+                    <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-300">Inventar-Audit-Log</h4>
+                    @if ($inventoryLogs->isNotEmpty())
+                        <ul class="mt-3 space-y-2 text-sm text-stone-200">
+                            @foreach ($inventoryLogs as $logEntry)
+                                @php($actionLabel = $logEntry->action === 'remove' ? 'entfernt' : 'hinzugefuegt')
+                                <li class="rounded border border-stone-700/70 bg-neutral-900/50 px-3 py-2">
+                                    <p class="text-xs uppercase tracking-[0.08em] text-stone-400">
+                                        {{ optional($logEntry->created_at)->format('d.m.Y H:i') ?? '-' }}
+                                        • {{ $logEntry->actor->name ?? 'System' }}
+                                    </p>
+                                    <p class="mt-1">
+                                        {{ $logEntry->quantity }}x {{ $logEntry->item_name }}
+                                        @if ($logEntry->equipped)
+                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                                        @endif
+                                        wurde {{ $actionLabel }}.
+                                    </p>
+                                    @if ($logEntry->note)
+                                        <p class="mt-1 text-xs text-stone-400">Notiz: {{ $logEntry->note }}</p>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="mt-2 text-sm text-stone-400">Noch keine Inventar-Aenderungen protokolliert.</p>
+                    @endif
                 </section>
             </article>
         </div>

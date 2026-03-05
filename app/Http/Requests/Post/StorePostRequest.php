@@ -38,6 +38,8 @@ class StorePostRequest extends FormRequest
             'inventory_award_enabled' => ['nullable', 'boolean'],
             'inventory_award_character_id' => ['nullable', 'integer', 'required_if:inventory_award_enabled,1', 'exists:characters,id'],
             'inventory_award_item' => ['nullable', 'required_if:inventory_award_enabled,1', 'string', 'min:2', 'max:180'],
+            'inventory_award_quantity' => ['nullable', 'required_if:inventory_award_enabled,1', 'integer', 'between:1,999'],
+            'inventory_award_equipped' => ['nullable', 'boolean'],
         ];
     }
 
@@ -50,6 +52,8 @@ class StorePostRequest extends FormRequest
             'probe_enabled' => $probeEnabled,
             'inventory_award_enabled' => $inventoryAwardEnabled,
             'inventory_award_item' => trim((string) $this->input('inventory_award_item', '')),
+            'inventory_award_quantity' => (int) $this->input('inventory_award_quantity', 1),
+            'inventory_award_equipped' => $this->boolean('inventory_award_equipped'),
         ];
 
         if ($probeEnabled && ! $this->filled('probe_modifier')) {
@@ -62,6 +66,10 @@ class StorePostRequest extends FormRequest
 
         if ($probeEnabled && ! $this->filled('probe_ae_delta')) {
             $normalized['probe_ae_delta'] = 0;
+        }
+
+        if ($inventoryAwardEnabled && ! $this->filled('inventory_award_quantity')) {
+            $normalized['inventory_award_quantity'] = 1;
         }
 
         $this->merge($normalized);
@@ -197,6 +205,8 @@ class StorePostRequest extends FormRequest
             'probe_explanation' => 'Erklaerung / Anlass',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',
             'inventory_award_item' => 'Inventar-Fund',
+            'inventory_award_quantity' => 'Menge (Inventar-Fund)',
+            'inventory_award_equipped' => 'Ausgeruestet (Inventar-Fund)',
         ];
     }
 }

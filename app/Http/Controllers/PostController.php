@@ -16,6 +16,7 @@ use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Notifications\PostModerationStatusNotification;
 use App\Notifications\SceneNewPostNotification;
+use App\Support\CharacterInventoryService;
 use App\Support\Gamification\PointService;
 use App\Support\ProbeRoller;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,7 @@ class PostController extends Controller
     public function __construct(
         private readonly PointService $pointService,
         private readonly ProbeRoller $probeRoller,
+        private readonly CharacterInventoryService $inventoryService,
     ) {}
 
     public function store(StorePostRequest $request, Campaign $campaign, Scene $scene): RedirectResponse
@@ -65,6 +67,7 @@ class PostController extends Controller
             data: $data,
             scene: $scene,
             isModerator: $isModerator,
+            user: $user,
         );
 
         $this->ensureAuthorSubscription($post, $user);
@@ -495,6 +498,7 @@ class PostController extends Controller
         array $data,
         Scene $scene,
         bool $isModerator,
+        User $user,
     ): ?array {
         $awardEnabled = (bool) ($data['inventory_award_enabled'] ?? false);
         if (! $awardEnabled || ! $isModerator) {
@@ -503,6 +507,8 @@ class PostController extends Controller
 
         $targetCharacterId = (int) ($data['inventory_award_character_id'] ?? 0);
         $item = trim((string) ($data['inventory_award_item'] ?? ''));
+        $quantity = max(1, min(999, (int) ($data['inventory_award_quantity'] ?? 1)));
+        $equipped = (bool) ($data['inventory_award_equipped'] ?? false);
         if ($targetCharacterId <= 0 || $item === '') {
             return null;
         }
@@ -518,6 +524,10 @@ class PostController extends Controller
             $targetCharacterId,
             $participantUserIds,
             $item,
+            $quantity,
+            $equipped,
+            $user,
+            $scene,
         ): ?array {
             $targetCharacter = Character::query()
                 ->lockForUpdate()
@@ -531,21 +541,36 @@ class PostController extends Controller
                 return null;
             }
 
-            $inventory = is_array($targetCharacter->inventory)
-                ? array_values(array_filter(array_map(
-                    static fn ($entry): string => trim((string) $entry),
-                    $targetCharacter->inventory
-                ), static fn (string $entry): bool => $entry !== ''))
-                : [];
+            $beforeInventory = $this->inventoryService->normalize($targetCharacter->inventory ?? []);
+            $afterInventory = $this->inventoryService->add(
+                inventory: $beforeInventory,
+                name: $item,
+                quantity: $quantity,
+                equipped: $equipped,
+            );
 
-            $inventory[] = $item;
-            $targetCharacter->inventory = $inventory;
+            $targetCharacter->inventory = $afterInventory;
             $targetCharacter->save();
+
+            $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
+            $this->inventoryService->log(
+                character: $targetCharacter,
+                actorUserId: $user->id,
+                source: 'post_inventory_award',
+                operations: $operations,
+                context: [
+                    'campaign_id' => $scene->campaign_id,
+                    'scene_id' => $scene->id,
+                    'post_id' => $post->id,
+                ],
+            );
 
             $awardMeta = [
                 'character_id' => (int) $targetCharacter->id,
                 'character_name' => (string) $targetCharacter->name,
                 'item' => $item,
+                'quantity' => $quantity,
+                'equipped' => $equipped,
             ];
 
             $meta = is_array($post->meta) ? $post->meta : [];

@@ -12,6 +12,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
+use App\Support\CharacterInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -21,6 +22,10 @@ use Illuminate\View\View;
 class SceneController extends Controller
 {
     private const THREAD_POSTS_PER_PAGE = 20;
+
+    public function __construct(
+        private readonly CharacterInventoryService $inventoryService,
+    ) {}
 
     public function create(Campaign $campaign): View
     {
@@ -225,9 +230,11 @@ class SceneController extends Controller
         $characterId = (int) $data['inventory_action_character_id'];
         $actionType = (string) $data['inventory_action_type'];
         $item = trim((string) $data['inventory_action_item']);
+        $quantity = max(1, min(999, (int) ($data['inventory_action_quantity'] ?? 1)));
+        $equipped = (bool) ($data['inventory_action_equipped'] ?? false);
         $note = trim((string) ($data['inventory_action_note'] ?? ''));
 
-        $result = DB::transaction(function () use ($characterId, $actionType, $item): array {
+        $result = DB::transaction(function () use ($characterId, $actionType, $item, $quantity, $equipped, $note, $campaign, $scene): array {
             $character = Character::query()
                 ->lockForUpdate()
                 ->find($characterId);
@@ -236,42 +243,66 @@ class SceneController extends Controller
                 return ['status' => 'missing_character'];
             }
 
-            $inventory = is_array($character->inventory)
-                ? array_values(array_filter(array_map(
-                    static fn ($entry): string => trim((string) $entry),
-                    $character->inventory
-                ), static fn (string $entry): bool => $entry !== ''))
-                : [];
+            $beforeInventory = $this->inventoryService->normalize($character->inventory ?? []);
+            $afterInventory = $beforeInventory;
+            $removedQuantity = 0;
+            $removedEquipped = null;
 
             if ($actionType === 'remove') {
-                $removeIndex = null;
+                $removeResult = $this->inventoryService->remove($beforeInventory, $item, $quantity);
+                $afterInventory = $removeResult['inventory'];
+                $removedQuantity = (int) $removeResult['removed'];
+                $removedEquipped = $removeResult['removed_equipped'];
 
-                foreach ($inventory as $index => $entry) {
-                    if (strcasecmp($entry, $item) === 0) {
-                        $removeIndex = $index;
-                        break;
-                    }
-                }
-
-                if ($removeIndex === null) {
+                if ($removedQuantity <= 0) {
                     return [
                         'status' => 'item_not_found',
                         'character_name' => (string) $character->name,
                     ];
                 }
-
-                unset($inventory[$removeIndex]);
-                $inventory = array_values($inventory);
             } else {
-                $inventory[] = $item;
+                $afterInventory = $this->inventoryService->add(
+                    inventory: $beforeInventory,
+                    name: $item,
+                    quantity: $quantity,
+                    equipped: $equipped,
+                );
             }
 
-            $character->inventory = $inventory;
+            $character->inventory = $afterInventory;
             $character->save();
+
+            if ($actionType === 'remove') {
+                $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
+                if ($operations === []) {
+                    $operations = [[
+                        'action' => 'remove',
+                        'item_name' => $item,
+                        'quantity' => $removedQuantity,
+                        'equipped' => (bool) ($removedEquipped ?? false),
+                    ]];
+                }
+            } else {
+                $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
+            }
+
+            $this->inventoryService->log(
+                character: $character,
+                actorUserId: (int) auth()->id(),
+                source: 'scene_inventory_quick_action',
+                operations: $operations,
+                note: $note !== '' ? $note : null,
+                context: [
+                    'campaign_id' => $campaign->id,
+                    'scene_id' => $scene->id,
+                ],
+            );
 
             return [
                 'status' => 'ok',
                 'character_name' => (string) $character->name,
+                'quantity' => $actionType === 'remove' ? $removedQuantity : $quantity,
+                'equipped' => $actionType === 'remove' ? (bool) ($removedEquipped ?? false) : $equipped,
             ];
         });
 
@@ -294,7 +325,9 @@ class SceneController extends Controller
         }
 
         $statusLabel = $actionType === 'remove' ? 'entfernt' : 'hinzugefuegt';
-        $statusMessage = 'Inventar-Schnellaktion: '.$item.' bei '.$result['character_name'].' '.$statusLabel.'.';
+        $displayQuantity = max(1, (int) ($result['quantity'] ?? $quantity));
+        $equippedLabel = (bool) ($result['equipped'] ?? false) ? ' (ausgeruestet)' : '';
+        $statusMessage = 'Inventar-Schnellaktion: '.$displayQuantity.'x '.$item.$equippedLabel.' bei '.$result['character_name'].' '.$statusLabel.'.';
 
         if ($note !== '') {
             $statusMessage .= ' Notiz: '.$note;
