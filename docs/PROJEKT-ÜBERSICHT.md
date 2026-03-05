@@ -11,6 +11,9 @@
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
+## Letzte Aenderungen
+- `d6d9a59` (5. Maerz 2026): Ruestungssektion mit RS und `ausgeruestet` im Charakterbogen, feste Waffenschadenswerte, LE-Schadensminderung durch RS bei GM-Proben, AE nur bei Magiebegabung.
+
 ## Aktueller Tech-Stack
 - Laravel 12/13
 - MySQL / MariaDB
