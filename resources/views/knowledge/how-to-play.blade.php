@@ -39,7 +39,7 @@
                 </li>
                 <li>
                     <strong class="text-stone-100">6. GM-Probe anfragen</strong><br>
-                    Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe im Post aus: mit Anlass, Ziel-Held und Modifikator.
+                    Bei unklaren Aktionen fuehrt der GM/Co-GM die Probe im Post aus: mit Anlass, Ziel-Held und Modifikator; das Ergebnis wird automatisch berechnet.
                 </li>
                 <li>
                     <strong class="text-stone-100">7. Thread weiterfuehren</strong><br>

@@ -7,7 +7,7 @@
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## Release-Stand
-- Aktuelle sichtbare Version: `v0.11-beta`
+- Aktuelle sichtbare Version: `v0.12-beta`
 - Branch-Strategie: `main` lokal <-> `origin/main` (gleiches Ziel, nur lokal vs. remote)
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
@@ -32,6 +32,7 @@
 | Charakter-Erstellung 2 Modi | Fertig | Real-World zwingt Spezies `mensch` |
 | Kampagnen/Szenen/Posts | Fertig | IC/OOC getrennt, Moderation, Revisionen |
 | GM-only Proben im Post | Fertig | Anlass/Held/Probe-Eigenschaft/Modifikator + Ergebnis im GM-Post |
+| Probe-Erfolg automatisch | Fertig | Erfolg/Nicht-Erfolg wird technisch aus (Wurf + Modifikator) <= Zielwert berechnet |
 | Proben-Persistenz auf Zielcharakter | Fertig | LE/AE-Impact wird gespeichert |
 | GM-Inventar-Fund im Post | Fertig | Gegenstand wird direkt in Ziel-Charakterinventar geschrieben |
 | GM-Inventar-Schnellaktion in Szene | Fertig | Add/Remove direkt in Szenenansicht ohne Charakterbogen |
@@ -52,7 +53,7 @@
 - Navigations-Counter im Auth-Layout laufen zentral ueber `NavigationCounters` (aggregierte Count-Query statt mehrerer Einzelqueries).
 - Probe-Persistenz ist transaktionsgesichert mit `lockForUpdate` auf dem Zielcharakter (sauberere LE/AE-Konsistenz bei zeitnahen GM-Proben).
 - Plesk-Deploy-Script prueft auf vorhandenen Frontend-Build (`public/build/manifest.json`) und bricht bei fehlenden Artefakten frueh ab.
-- Proben speichern jetzt zusaetzlich Eigenschaft, Zielwert und Bestanden/Nicht-bestanden-Status in `dice_rolls`.
+- Proben speichern Eigenschaft, Zielwert und Bestanden/Nicht-bestanden-Status in `dice_rolls`; Erfolg wird automatisch aus `(Wurf + Modifikator) <= Zielwert` berechnet.
 - Charaktere speichern zusaetzlich `inventory` und `weapons` als JSON.
 - GM-Posts koennen optional Inventar-Funde auf Kampagnen-Teilnehmer buchen (persistiert im Charakter + sichtbar im Post).
 

@@ -22,15 +22,6 @@ class DiceRoll extends Model
         self::MODE_DISADVANTAGE,
     ];
 
-    public const OUTCOME_SUCCESS = 'success';
-
-    public const OUTCOME_FAILURE = 'failure';
-
-    public const ALLOWED_OUTCOMES = [
-        self::OUTCOME_SUCCESS,
-        self::OUTCOME_FAILURE,
-    ];
-
     public $timestamps = false;
 
     /**

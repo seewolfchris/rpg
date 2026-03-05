@@ -32,7 +32,6 @@ class StorePostRequest extends FormRequest
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
             'probe_modifier' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-40,40'],
             'probe_attribute_key' => ['nullable', 'required_if:probe_enabled,1', Rule::in($this->probeAttributeKeys())],
-            'probe_outcome' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_OUTCOMES)],
             'probe_explanation' => ['nullable', 'required_if:probe_enabled,1', 'string', 'min:3', 'max:180'],
             'probe_le_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
             'probe_ae_delta' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-200,200'],
@@ -55,10 +54,6 @@ class StorePostRequest extends FormRequest
 
         if ($probeEnabled && ! $this->filled('probe_modifier')) {
             $normalized['probe_modifier'] = 0;
-        }
-
-        if ($probeEnabled && ! $this->filled('probe_outcome')) {
-            $normalized['probe_outcome'] = DiceRoll::OUTCOME_SUCCESS;
         }
 
         if ($probeEnabled && ! $this->filled('probe_le_delta')) {
@@ -198,7 +193,6 @@ class StorePostRequest extends FormRequest
     {
         return [
             'probe_attribute_key' => 'Probe-Eigenschaft',
-            'probe_outcome' => 'Probe-Ergebnis',
             'probe_character_id' => 'Ziel-Held',
             'probe_explanation' => 'Erklaerung / Anlass',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',

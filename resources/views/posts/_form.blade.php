@@ -11,7 +11,6 @@
     $currentProbeMode = old('probe_roll_mode', 'normal');
     $probeAttributeOptions = (array) config('character_sheet.attributes', []);
     $currentProbeAttributeKey = (string) old('probe_attribute_key', array_key_first($probeAttributeOptions) ?? '');
-    $currentProbeOutcome = (string) old('probe_outcome', 'success');
     $currentProbeModifier = old('probe_modifier', 0);
     $currentProbeLeDelta = old('probe_le_delta', 0);
     $currentProbeAeDelta = old('probe_ae_delta', 0);
@@ -191,21 +190,6 @@
                         <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                     @enderror
                 </div>
-
-                <div>
-                    <label for="probe_outcome" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ergebnis</label>
-                    <select
-                        id="probe_outcome"
-                        name="probe_outcome"
-                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    >
-                        <option value="success" @selected($currentProbeOutcome === 'success')>Bestanden</option>
-                        <option value="failure" @selected($currentProbeOutcome === 'failure')>Nicht bestanden</option>
-                    </select>
-                    @error('probe_outcome')
-                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
-                    @enderror
-                </div>
             </div>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-3">
@@ -262,6 +246,9 @@
                     @enderror
                 </div>
             </div>
+            <p class="mt-3 text-xs uppercase tracking-[0.08em] text-stone-400">
+                Probe-Ergebnis wird automatisch berechnet: (Wurf + Modifikator) <= Eigenschaftswert.
+            </p>
 
             <div class="mt-5 rounded-md border border-stone-700/80 bg-black/25 p-4">
                 <div class="flex items-start justify-between gap-3">

@@ -176,7 +176,6 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => -4,
             'probe_attribute_key' => 'mu',
-            'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
             'probe_le_delta' => -10,
             'probe_ae_delta' => -3,
             'probe_explanation' => 'Klettern am zerborstenen Ascheturm bei Sturm',
@@ -201,7 +200,6 @@ class CampaignScenePostWorkflowTest extends TestCase
             'label' => 'Klettern am zerborstenen Ascheturm bei Sturm',
             'probe_attribute_key' => 'mu',
             'probe_target_value' => 44,
-            'probe_is_success' => 0,
             'applied_le_delta' => -10,
             'applied_ae_delta' => -3,
             'resulting_le_current' => 35,
@@ -215,17 +213,20 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertNotNull($roll);
         $this->assertGreaterThanOrEqual(1, (int) $roll->kept_roll);
         $this->assertLessThanOrEqual(100, (int) $roll->kept_roll);
+        $expectedSuccess = (int) $roll->total <= (int) $roll->probe_target_value;
+        $this->assertSame($expectedSuccess ? 1 : 0, (int) $roll->probe_is_success);
         $this->assertSame(35, (int) $playerCharacter->fresh()->le_current);
         $this->assertSame(27, (int) $playerCharacter->fresh()->ae_current);
 
         $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $expectedOutcomeLabel = $expectedSuccess ? 'Bestanden' : 'Nicht bestanden';
         $sceneResponse->assertOk()
             ->assertSeeText('GM-Probe')
             ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
             ->assertSeeText($playerCharacter->name)
             ->assertSeeText('Probe auf: Mut')
             ->assertSeeText('44 %')
-            ->assertSeeText('Ergebnis: Nicht bestanden')
+            ->assertSeeText('Ergebnis: '.$expectedOutcomeLabel)
             ->assertSeeText('LE: -10')
             ->assertSeeText('AE: -3');
     }
@@ -279,7 +280,6 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => 0,
             'probe_attribute_key' => 'mu',
-            'probe_outcome' => DiceRoll::OUTCOME_SUCCESS,
             'probe_le_delta' => -10,
             'probe_ae_delta' => -3,
             'probe_explanation' => 'Erster Einschlag',
@@ -295,7 +295,6 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_roll_mode' => DiceRoll::MODE_NORMAL,
             'probe_modifier' => 0,
             'probe_attribute_key' => 'mu',
-            'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
             'probe_le_delta' => -8,
             'probe_ae_delta' => -4,
             'probe_explanation' => 'Zweiter Einschlag',
@@ -306,6 +305,76 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame(27, (int) $targetCharacter->le_current);
         $this->assertSame(23, (int) $targetCharacter->ae_current);
         $this->assertDatabaseCount('dice_rolls', 2);
+    }
+
+    public function test_probe_outcome_is_computed_automatically_and_manual_field_is_ignored(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 30,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Die Probe muss automatisch ausgewertet werden. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $playerCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 40,
+            'probe_attribute_key' => 'mu',
+            // Altes Feld wird absichtlich mitgesendet und muss ignoriert werden.
+            'probe_outcome' => 'success',
+            'probe_explanation' => 'Automatik-Test',
+        ]);
+
+        $post = DB::table('posts')
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($post);
+        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+
+        $roll = DB::table('dice_rolls')
+            ->where('post_id', $post->id)
+            ->first();
+
+        $this->assertNotNull($roll);
+        $this->assertSame(30, (int) $roll->probe_target_value);
+        // Mit MU=30 und Modifikator +40 ist die Probe immer nicht bestanden.
+        $this->assertFalse(((int) $roll->total) <= 30);
+        $this->assertSame(0, (int) $roll->probe_is_success);
     }
 
     public function test_gm_can_add_inventory_item_to_character_from_post(): void
@@ -409,7 +478,6 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                 'probe_modifier' => 2,
                 'probe_attribute_key' => 'in',
-                'probe_outcome' => DiceRoll::OUTCOME_SUCCESS,
                 'probe_explanation' => 'Unerlaubte Probe durch Spieler',
                 'inventory_award_enabled' => '1',
                 'inventory_award_character_id' => $playerCharacter->id,
@@ -467,7 +535,6 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                 'probe_modifier' => 0,
                 'probe_attribute_key' => 'ge',
-                'probe_outcome' => DiceRoll::OUTCOME_FAILURE,
                 'probe_le_delta' => -5,
                 'probe_ae_delta' => 0,
                 'probe_explanation' => 'Unzulaessiges Ziel ausserhalb der Kampagne',

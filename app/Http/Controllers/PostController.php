@@ -406,11 +406,6 @@ class PostController extends Controller
             return false;
         }
 
-        $probeOutcome = (string) ($data['probe_outcome'] ?? DiceRoll::OUTCOME_SUCCESS);
-        if (! in_array($probeOutcome, DiceRoll::ALLOWED_OUTCOMES, true)) {
-            return false;
-        }
-
         $rolled = $this->probeRoller->roll($rollMode, $modifier);
         $targetCharacterId = (int) ($data['probe_character_id'] ?? 0);
         if ($targetCharacterId <= 0) {
@@ -433,7 +428,6 @@ class PostController extends Controller
             $targetCharacterId,
             $participantUserIds,
             $probeAttributeKey,
-            $probeOutcome,
             $rolled,
             $explanation,
             $requestedLeDelta,
@@ -455,6 +449,9 @@ class PostController extends Controller
             $probeTargetValue = array_key_exists($probeAttributeKey, $effectiveAttributes)
                 ? (int) max(0, min(100, (int) $effectiveAttributes[$probeAttributeKey]))
                 : null;
+            $probeSucceeded = $probeTargetValue !== null
+                ? (int) $rolled['total'] <= $probeTargetValue
+                : false;
 
             [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $requestedLeDelta);
             [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
@@ -472,7 +469,7 @@ class PostController extends Controller
                 'label' => $explanation,
                 'probe_attribute_key' => $probeAttributeKey,
                 'probe_target_value' => $probeTargetValue,
-                'probe_is_success' => $probeOutcome === DiceRoll::OUTCOME_SUCCESS,
+                'probe_is_success' => $probeSucceeded,
                 'rolls' => $rolled['rolls'],
                 'kept_roll' => $rolled['kept_roll'],
                 'total' => $rolled['total'],

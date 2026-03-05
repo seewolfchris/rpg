@@ -31,7 +31,7 @@
                     <li>1. Proben werden nur durch GM oder Co-GM ausgeloest.</li>
                     <li>2. Jede Probe braucht Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator (+/-) im selben GM-Post.</li>
                     <li>3. Ausfuehrung: GM wirft 1W100 gegen den Zielwert; optionaler Modus (Vorteil/Nachteil) wird explizit begruendet.</li>
-                    <li>4. Das Ergebnis (bestanden / nicht bestanden) wird als klarer Probe-Block direkt im ausloesenden GM-Post dokumentiert.</li>
+                    <li>4. Das Ergebnis wird automatisch berechnet: (Wurf + Modifikator) <= Zielwert bedeutet bestanden.</li>
                     <li>5. LE/AE-Auswirkungen werden direkt am Charakterbogen persistiert.</li>
                     <li>6. Spieler setzen keine eigenen Wuerfelergebnisse als Fakten in IC/OOC-Posts.</li>
                 </ul>
