@@ -386,9 +386,7 @@ class PostController extends Controller
         $rollMode = (string) ($data['probe_roll_mode'] ?? 'normal');
         $rolled = $this->probeRoller->roll($rollMode, $modifier);
         $targetCharacterId = (int) ($data['probe_character_id'] ?? 0);
-        $targetCharacter = Character::query()->find($targetCharacterId);
-
-        if (! $targetCharacter) {
+        if ($targetCharacterId <= 0) {
             return false;
         }
 
@@ -398,10 +396,6 @@ class PostController extends Controller
             ->push((int) $scene->campaign->owner_id)
             ->unique();
 
-        if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
-            return false;
-        }
-
         $requestedLeDelta = (int) ($data['probe_le_delta'] ?? 0);
         $requestedAeDelta = (int) ($data['probe_ae_delta'] ?? 0);
 
@@ -409,12 +403,25 @@ class PostController extends Controller
             $post,
             $scene,
             $user,
-            $targetCharacter,
+            $targetCharacterId,
+            $participantUserIds,
             $rolled,
             $explanation,
             $requestedLeDelta,
             $requestedAeDelta,
         ): bool {
+            $targetCharacter = Character::query()
+                ->lockForUpdate()
+                ->find($targetCharacterId);
+
+            if (! $targetCharacter) {
+                return false;
+            }
+
+            if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
+                return false;
+            }
+
             [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $requestedLeDelta);
             [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
 

@@ -155,6 +155,30 @@ class CharacterManagementTest extends TestCase
         );
     }
 
+    public function test_character_sheet_shows_specific_required_messages_for_traits(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.create'))
+            ->post(route('characters.store'), $this->characterPayload([
+                'advantages' => [],
+                'disadvantages' => [],
+            ]));
+
+        $response->assertRedirect(route('characters.create'));
+        $response->assertSessionHasErrors(['advantages', 'disadvantages']);
+
+        /** @var \Illuminate\Support\ViewErrorBag|null $errors */
+        $errors = session('errors');
+        $this->assertNotNull($errors);
+
+        $messages = $errors->getBag('default')->all();
+
+        $this->assertContains('Bitte mindestens einen Vorteil eintragen.', $messages);
+        $this->assertContains('Bitte mindestens einen Nachteil eintragen.', $messages);
+    }
+
     public function test_user_cannot_view_other_users_character(): void
     {
         $owner = User::factory()->create();

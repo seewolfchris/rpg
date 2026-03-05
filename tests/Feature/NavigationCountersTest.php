@@ -11,6 +11,7 @@ use App\Support\NavigationCounters;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -114,6 +115,46 @@ class NavigationCountersTest extends TestCase
         $this->assertSame(1, $counts['unreadNotificationsCount']);
         $this->assertSame(1, $counts['pendingCampaignInvitationsCount']);
         $this->assertSame(2, $counts['bookmarkCount']);
+    }
+
+    public function test_navigation_counters_are_cached_within_same_request_instance(): void
+    {
+        $target = User::factory()->create();
+        $owner = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => true,
+            'status' => 'active',
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+        ]);
+
+        SceneBookmark::query()->create([
+            'user_id' => $target->id,
+            'scene_id' => $scene->id,
+            'label' => 'Cache-Test',
+        ]);
+
+        $service = app(NavigationCounters::class);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $service->forUser($target);
+        $queryCountAfterFirstCall = count(DB::getQueryLog());
+
+        $service->forUser($target);
+        $queryCountAfterSecondCall = count(DB::getQueryLog());
+
+        DB::disableQueryLog();
+
+        $this->assertGreaterThan(0, $queryCountAfterFirstCall);
+        $this->assertSame($queryCountAfterFirstCall, $queryCountAfterSecondCall);
     }
 
     private function createDatabaseNotification(User $user): DatabaseNotification

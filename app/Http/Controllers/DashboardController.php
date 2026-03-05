@@ -5,14 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Post;
-use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
 use App\Models\User;
+use App\Support\NavigationCounters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly NavigationCounters $navigationCounters,
+    ) {}
+
     public function __invoke(): View
     {
         $user = auth()->user();
@@ -46,10 +50,7 @@ class DashboardController extends Controller
             })
             ->count();
 
-        $bookmarkCount = (int) SceneBookmark::query()
-            ->where('user_id', auth()->id())
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
-            ->count();
+        $bookmarkCount = $this->navigationCounters->forUser($user)['bookmarkCount'];
 
         $hasCharacter = Character::query()
             ->where('user_id', $user->id)

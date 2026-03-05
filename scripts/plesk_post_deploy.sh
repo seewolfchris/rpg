@@ -53,10 +53,17 @@ else
   "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 fi
 
-echo "[2/7] Dev-Hotfile entfernen (falls vorhanden)..."
+echo "[2/8] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
 
-echo "[3/7] APP_KEY prüfen..."
+echo "[3/8] Frontend-Build pruefen..."
+if [[ ! -f public/build/manifest.json ]]; then
+  echo "ERROR: Frontend-Build fehlt (public/build/manifest.json)."
+  echo "Bitte vor dem Deploy lokal 'npm run build' ausfuehren und Build-Dateien committen."
+  exit 1
+fi
+
+echo "[4/8] APP_KEY prüfen..."
 if ! grep -Eq '^APP_KEY=' .env; then
   echo "APP_KEY=" >> .env
 fi
@@ -64,16 +71,16 @@ if ! grep -Eq '^APP_KEY=base64:' .env; then
   "$PHP_BIN" artisan key:generate --force --no-interaction
 fi
 
-echo "[4/7] Datenbank migrieren..."
+echo "[5/8] Datenbank migrieren..."
 "$PHP_BIN" artisan migrate --force --no-interaction
 
-echo "[5/7] Storage-Link sicherstellen..."
+echo "[6/8] Storage-Link sicherstellen..."
 "$PHP_BIN" artisan storage:link --no-interaction || true
 
-echo "[6/7] Caches bereinigen..."
+echo "[7/8] Caches bereinigen..."
 "$PHP_BIN" artisan optimize:clear --no-interaction
 
-echo "[7/7] Performance-Caches aufbauen..."
+echo "[8/8] Performance-Caches aufbauen..."
 "$PHP_BIN" artisan config:cache --no-interaction
 "$PHP_BIN" artisan route:cache --no-interaction
 "$PHP_BIN" artisan view:cache --no-interaction

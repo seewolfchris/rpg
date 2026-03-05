@@ -219,6 +219,78 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->assertSeeText('AE: -3');
     }
 
+    public function test_multiple_gm_probes_apply_pool_changes_incrementally(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'le_max' => 45,
+            'le_current' => 45,
+            'ae_max' => 30,
+            'ae_current' => 30,
+        ]);
+
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Erste Probe folgt. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_le_delta' => -10,
+            'probe_ae_delta' => -3,
+            'probe_explanation' => 'Erster Einschlag',
+        ])->assertRedirect();
+
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $gmCharacter->id,
+            'content' => str_repeat('Zweite Probe folgt. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_le_delta' => -8,
+            'probe_ae_delta' => -4,
+            'probe_explanation' => 'Zweiter Einschlag',
+        ])->assertRedirect();
+
+        $targetCharacter->refresh();
+
+        $this->assertSame(27, (int) $targetCharacter->le_current);
+        $this->assertSame(23, (int) $targetCharacter->ae_current);
+        $this->assertDatabaseCount('dice_rolls', 2);
+    }
+
     public function test_player_cannot_attach_probe_data_to_post(): void
     {
         $gm = User::factory()->gm()->create();

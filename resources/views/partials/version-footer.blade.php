@@ -1,4 +1,4 @@
-@php($appVersion = (string) config('app.version', 'v0.06-beta'))
+@php($appVersion = (string) config('app.version', 'v0.07-beta'))
 @php($appBuild = (string) config('app.build', ''))
 
 <div class="rounded-lg border border-stone-800/80 bg-black/35 px-4 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">

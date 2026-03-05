@@ -460,6 +460,8 @@ abstract class CharacterSheetRequest extends FormRequest
             'gm_note' => 'GM-Notiz',
             'calling_custom_name' => 'Eigene Berufung (Name)',
             'calling_custom_description' => 'Eigene Berufung (Beschreibung)',
+            'advantages' => 'Vorteile',
+            'disadvantages' => 'Nachteile',
         ];
 
         foreach ((array) data_get($this->sheet(), 'attributes', []) as $key => $meta) {
@@ -477,25 +479,27 @@ abstract class CharacterSheetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            '*.required' => 'Dieses Feld ist erforderlich.',
-            '*.string' => 'Bitte einen gueltigen Text eingeben.',
-            '*.integer' => 'Bitte eine ganze Zahl eingeben.',
-            '*.array' => 'Dieses Feld hat ein ungueltiges Listenformat.',
-            '*.in' => 'Bitte eine gueltige Option auswaehlen.',
-            '*.distinct' => 'Doppelte Eintraege sind nicht erlaubt.',
+            'required' => 'Dieses Feld ist erforderlich.',
+            'advantages.required' => 'Bitte mindestens einen Vorteil eintragen.',
+            'disadvantages.required' => 'Bitte mindestens einen Nachteil eintragen.',
+            'string' => 'Bitte einen gueltigen Text eingeben.',
+            'integer' => 'Bitte eine ganze Zahl eingeben.',
+            'array' => 'Dieses Feld hat ein ungueltiges Listenformat.',
+            'in' => 'Bitte eine gueltige Option auswaehlen.',
+            'distinct' => 'Doppelte Eintraege sind nicht erlaubt.',
             'bio.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'concept.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'gm_secret.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'world_connection.min' => 'Bitte mindestens :min Zeichen eingeben.',
-            'advantages.min' => 'Bitte mindestens :min Eintrag auswaehlen.',
-            'disadvantages.min' => 'Bitte mindestens :min Eintrag auswaehlen.',
+            'advantages.min' => 'Bitte mindestens einen Vorteil eintragen.',
+            'disadvantages.min' => 'Bitte mindestens einen Nachteil eintragen.',
             'advantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'disadvantages.*.min' => 'Bitte mindestens :min Zeichen eingeben.',
-            '*.min' => 'Bitte mindestens :min eingeben.',
-            '*.max' => 'Bitte maximal :max eingeben.',
-            '*.between' => 'Der Wert muss zwischen :min und :max liegen.',
-            '*.mimes' => 'Bitte eine Datei vom Typ :values hochladen.',
-            '*.image' => 'Bitte eine gueltige Bilddatei hochladen.',
+            'min' => 'Bitte mindestens :min eingeben.',
+            'max' => 'Bitte maximal :max eingeben.',
+            'between' => 'Der Wert muss zwischen :min und :max liegen.',
+            'mimes' => 'Bitte eine Datei vom Typ :values hochladen.',
+            'image' => 'Bitte eine gueltige Bilddatei hochladen.',
         ];
     }
 }
