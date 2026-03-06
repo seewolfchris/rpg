@@ -47,6 +47,23 @@
 
         @include('knowledge._nav')
 
+        @if ($crossLinks !== [])
+            <section class="rounded-2xl border border-stone-800 bg-black/35 p-5 shadow-xl shadow-black/25">
+                <h2 class="font-heading text-xl text-stone-100">Querverlinkungen</h2>
+                <p class="mt-1 text-sm text-stone-300">Direkte Verweise aus diesem Eintrag in andere Wissensartikel.</p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    @foreach ($crossLinks as $crossLink)
+                        <a
+                            href="{{ $crossLink['url'] }}"
+                            class="inline-flex rounded-md border border-stone-700/80 bg-black/35 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-stone-200 transition hover:border-amber-500/70 hover:text-amber-100"
+                        >
+                            {{ $crossLink['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         @if (is_array($entry->game_relevance) && $entry->game_relevance !== [])
             <section class="rounded-2xl border border-red-900/60 bg-red-950/20 p-5 shadow-xl shadow-black/30">
                 <h2 class="font-heading text-xl text-red-100">Spielrelevanz</h2>
@@ -88,6 +105,20 @@
                 </div>
             </section>
         @endif
+
+        <section class="rounded-2xl border border-stone-800 bg-black/35 p-5 shadow-xl shadow-black/25">
+            <h2 class="font-heading text-xl text-stone-100">Bild-Prompt-Vorschläge</h2>
+            <p class="mt-1 text-sm text-stone-300">
+                Für Midjourney, SDXL oder ähnliche Tools. Prompts als Ausgangspunkt nutzen und bei Bedarf feinjustieren.
+            </p>
+            <div class="mt-4 space-y-3">
+                @foreach ($imagePrompts as $prompt)
+                    <article class="rounded-lg border border-stone-700/80 bg-black/35 p-3">
+                        <p class="font-mono text-xs leading-relaxed text-stone-200">{{ $prompt }}</p>
+                    </article>
+                @endforeach
+            </div>
+        </section>
 
         <article class="rounded-2xl border border-stone-800 bg-zinc-900 p-6 shadow-2xl">
             <div class="knowledge-content text-[#cccccc]">

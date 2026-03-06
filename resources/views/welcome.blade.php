@@ -104,6 +104,12 @@
                         >
                             Welt entdecken
                         </a>
+                        <a
+                            href="{{ route('knowledge.encyclopedia') }}"
+                            class="inline-flex items-center justify-center rounded-md border border-red-800/70 bg-red-900/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-red-100 transition hover:bg-red-900/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+                        >
+                            Direkt zur Enzyklopädie
+                        </a>
                     </div>
 
                     <div class="mt-10 grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">

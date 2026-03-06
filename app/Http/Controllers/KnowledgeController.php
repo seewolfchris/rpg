@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use App\Support\EncyclopediaContentRenderer;
+use App\Support\EncyclopediaEntryMetaBuilder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -85,7 +86,8 @@ class KnowledgeController extends Controller
         string $categorySlug,
         string $entrySlug,
         Request $request,
-        EncyclopediaContentRenderer $contentRenderer
+        EncyclopediaContentRenderer $contentRenderer,
+        EncyclopediaEntryMetaBuilder $entryMetaBuilder
     ): View {
         $entry = EncyclopediaEntry::query()
             ->published()
@@ -110,12 +112,16 @@ class KnowledgeController extends Controller
             ->get(['id', 'encyclopedia_category_id', 'title', 'slug']);
 
         $renderedContent = $contentRenderer->render($entry->content);
+        $crossLinks = $entryMetaBuilder->extractInternalLinks($entry->content);
+        $imagePrompts = $entryMetaBuilder->buildImagePrompts($entry);
         $canManage = $request->user()?->isGmOrAdmin() ?? false;
 
         return view('knowledge.encyclopedia-entry', compact(
             'entry',
             'relatedEntries',
             'renderedContent',
+            'crossLinks',
+            'imagePrompts',
             'canManage',
         ));
     }

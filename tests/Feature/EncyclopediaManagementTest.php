@@ -48,7 +48,30 @@ class EncyclopediaManagementTest extends TestCase
         $this->get(route('knowledge.encyclopedia.entry', [$entry->category->slug, $entry->slug]))
             ->assertOk()
             ->assertSeeText($entry->title)
-            ->assertSeeText('Alle Einträge');
+            ->assertSeeText('Alle Einträge')
+            ->assertSeeText('Bild-Prompt-Vorschläge');
+    }
+
+    public function test_public_entry_detail_shows_extracted_cross_links_when_markdown_contains_them(): void
+    {
+        $category = EncyclopediaCategory::query()->firstOrFail();
+
+        $entry = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Verweisknoten',
+            'slug' => 'verweisknoten',
+            'excerpt' => 'Testet Querverlinkungen.',
+            'content' => 'Siehe [Aschelande](/wissen/enzyklopaedie/regionen/aschelande) und [Der Aschenfall](/wissen/enzyklopaedie/zeitalter/der-aschenfall).',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 77,
+            'published_at' => now(),
+        ]);
+
+        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $entry->slug]))
+            ->assertOk()
+            ->assertSeeText('Querverlinkungen')
+            ->assertSeeText('Aschelande')
+            ->assertSeeText('Der Aschenfall');
     }
 
     public function test_public_entry_detail_returns_404_for_category_slug_mismatch(): void
