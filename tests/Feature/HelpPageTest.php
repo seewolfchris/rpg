@@ -35,7 +35,7 @@ class HelpPageTest extends TestCase
 
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()
-            ->assertSeeText('Enzyklopaedie von Vhal')
+            ->assertSeeText('Enzyklopädie von Vhal')
             ->assertSeeText('Zeitalter der Sonnenkronen');
     }
 
@@ -44,7 +44,7 @@ class HelpPageTest extends TestCase
         $response = $this->get(route('knowledge.rules'));
 
         $response->assertOk()
-            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgeloest.')
+            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgelöst.')
             ->assertSeeText('Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator')
             ->assertSeeText('Das Ergebnis wird automatisch berechnet')
             ->assertDontSeeText('d20');

@@ -16,7 +16,7 @@ class EncyclopediaManagementTest extends TestCase
     {
         $this->get(route('knowledge.encyclopedia'))
             ->assertOk()
-            ->assertSeeText('Enzyklopaedie von Vhal')
+            ->assertSeeText('Enzyklopädie von Vhal')
             ->assertSeeText('Zeitalter der Sonnenkronen')
             ->assertSeeText('Mehr lesen');
     }
@@ -48,7 +48,7 @@ class EncyclopediaManagementTest extends TestCase
         $this->get(route('knowledge.encyclopedia.entry', [$entry->category->slug, $entry->slug]))
             ->assertOk()
             ->assertSeeText($entry->title)
-            ->assertSeeText('Alle Eintraege');
+            ->assertSeeText('Alle Einträge');
     }
 
     public function test_public_entry_detail_returns_404_for_category_slug_mismatch(): void

@@ -12,6 +12,8 @@
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
 ## Letzte Aenderungen
+- `01c6877` (6. März 2026): Sichtbare Texte auf deutsche Umlaute (ä/ö/ü) umgestellt.
+- `in Arbeit` (6. März 2026): Lore-Pack Schritt 2 „Magie & Liturgie“ mit neuer Kategorie und 5 Enzyklopädie-Einträgen.
 - `in Arbeit` (5. Maerz 2026): Enzyklopaedie-Upgrade mit Kartenlayout, Detailseiten pro Eintrag, sicherem Markdown-Rendering, Spielrelevanz-JSON und Lore-Pack "Voelker & Spezies" (8 Eintraege).
 - `d6d9a59` (5. Maerz 2026): Ruestungssektion mit RS und `ausgeruestet` im Charakterbogen, feste Waffenschadenswerte, LE-Schadensminderung durch RS bei GM-Proben, AE nur bei Magiebegabung.
 
