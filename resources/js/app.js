@@ -92,13 +92,13 @@ function setupPwaInstallPrompt() {
     window.addEventListener('appinstalled', () => {
         deferredInstallPrompt = null;
         hideInstallButtons(installButtons);
-        showSyncNotice('App wurde installiert und ist jetzt als Startbildschirm-App verfuegbar.', 'success');
+        showSyncNotice('App wurde installiert und ist jetzt als Startbildschirm-App verfügbar.', 'success');
     });
 
     installButtons.forEach((button) => {
         button.addEventListener('click', async () => {
             if (!deferredInstallPrompt) {
-                showSyncNotice('Installationsdialog ist auf diesem Geraet aktuell nicht verfuegbar.', 'warning');
+                showSyncNotice('Installationsdialog ist auf diesem Gerät aktuell nicht verfügbar.', 'warning');
                 return;
             }
 
@@ -153,7 +153,7 @@ function setupOfflinePostQueue() {
                 const syncTriggered = await triggerQueuedPostSync();
 
                 if (!syncTriggered) {
-                    showSyncNotice('Background Sync fehlt. Beitraege werden bei naechstem Online-Besuch verarbeitet.', 'warning');
+                    showSyncNotice('Background Sync fehlt. Beiträge werden bei nächstem Online-Besuch verarbeitet.', 'warning');
                 }
             } catch (error) {
                 console.error('Offline post queue failed:', error);
@@ -168,7 +168,7 @@ function setupOnlineSyncTrigger() {
         const syncTriggered = await triggerQueuedPostSync();
 
         if (syncTriggered) {
-            showSyncNotice('Verbindung wiederhergestellt: Offline-Beitraege werden synchronisiert.', 'success');
+            showSyncNotice('Verbindung wiederhergestellt: Offline-Beiträge werden synchronisiert.', 'success');
         }
     });
 }
@@ -194,7 +194,7 @@ function setupServiceWorkerMessageHandling() {
             const remaining = Number(data.payload?.remaining || 0);
 
             if (remaining > 0) {
-                showSyncNotice(`Synchronisierung unvollstaendig. Verbleibende Queue: ${remaining}.`, 'warning');
+                showSyncNotice(`Synchronisierung unvollständig. Verbleibende Queue: ${remaining}.`, 'warning');
                 return;
             }
 
