@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 
 class EncyclopediaEntryMetaBuilder
 {
+    private const IMAGE_PROMPT_CONTEXT_MAX_LENGTH = 280;
+
     /**
      * @return array<int, array{label:string,url:string,slug:string}>
      */
@@ -62,9 +64,15 @@ class EncyclopediaEntryMetaBuilder
             default => 'focus on environmental storytelling and grounded dark-fantasy realism',
         };
 
-        $context = $excerpt !== ''
+        $contextSource = $excerpt !== ''
             ? $excerpt
-            : Str::limit(trim(strip_tags($entry->content)), 160, '…');
+            : trim(strip_tags($entry->content));
+
+        $context = Str::limit(
+            preg_replace('/\s+/u', ' ', $contextSource) ?? '',
+            self::IMAGE_PROMPT_CONTEXT_MAX_LENGTH,
+            '…'
+        );
 
         return [
             "{$title} in Vhal'Tor, grim dark fantasy concept art, {$categoryDirective}, "

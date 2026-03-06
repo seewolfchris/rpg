@@ -51,4 +51,22 @@ MD;
         $this->assertStringContainsString('creature anatomy', $prompts[0]);
         $this->assertStringContainsString('Rudeljäger aus Ruß und Hunger.', $prompts[0]);
     }
+
+    public function test_build_image_prompts_limits_very_long_context(): void
+    {
+        $builder = app(EncyclopediaEntryMetaBuilder::class);
+
+        $entry = new EncyclopediaEntry([
+            'title' => 'Kettenhüter',
+            'excerpt' => str_repeat('Asche und Blut ', 120),
+            'content' => 'Langtext',
+        ]);
+
+        $prompts = $builder->buildImagePrompts($entry);
+
+        $this->assertCount(3, $prompts);
+        $this->assertLessThan(900, mb_strlen($prompts[0]));
+        $this->assertStringContainsString('Context: ', $prompts[0]);
+        $this->assertStringContainsString('…', $prompts[0]);
+    }
 }
