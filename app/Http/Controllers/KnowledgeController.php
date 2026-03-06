@@ -47,6 +47,15 @@ class KnowledgeController extends Controller
                 'entries' => function ($query) use ($search): void {
                     $query
                         ->published()
+                        ->select([
+                            'id',
+                            'encyclopedia_category_id',
+                            'title',
+                            'slug',
+                            'excerpt',
+                            'published_at',
+                            'position',
+                        ])
                         ->orderBy('position')
                         ->orderBy('title')
                         ->when($search !== '', function ($searchQuery) use ($search): void {

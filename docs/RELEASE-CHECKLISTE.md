@@ -6,7 +6,7 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 - `git pull --rebase origin main`
 - Alle geplanten Aenderungen finalisieren.
-- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.15-beta`).
+- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.16-beta`).
 
 ## 2. Qualitaet lokal pruefen
 

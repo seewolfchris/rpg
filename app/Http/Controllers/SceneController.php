@@ -70,7 +70,7 @@ class SceneController extends Controller
         $lastReadPostIdBeforeOpen = (int) ($subscription?->last_read_post_id ?? 0);
 
         if ($request->query('jump') === 'last_read' && $lastReadPostIdBeforeOpen > 0) {
-            $jumpUrl = $this->buildPostAnchorUrl($campaign, $scene, $lastReadPostIdBeforeOpen);
+            $jumpUrl = $this->buildPostAnchorUrls($campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
 
             if ($jumpUrl !== null) {
                 return redirect()->to($jumpUrl);
@@ -127,11 +127,10 @@ class SceneController extends Controller
             ->orderByDesc('pinned_at')
             ->limit(12)
             ->get();
-
-        $pinnedPostJumpUrls = [];
-        foreach ($pinnedPosts as $pinnedPost) {
-            $pinnedPostJumpUrls[$pinnedPost->id] = $this->buildPostAnchorUrl($campaign, $scene, (int) $pinnedPost->id);
-        }
+        $pinnedPostIds = $pinnedPosts
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
 
         $characters = auth()->user()
             ->characters()
@@ -148,21 +147,36 @@ class SceneController extends Controller
             ->where('user_id', $userId)
             ->with('post')
             ->first();
+        $bookmarkPostId = (int) ($userBookmark?->post_id ?? 0);
+
+        $anchorTargetIds = array_values(array_filter(
+            array_merge(
+                $pinnedPostIds,
+                [$lastReadPostIdBeforeOpen, $firstUnreadPostId, $latestPostId, $bookmarkPostId]
+            ),
+            static fn (int $postId): bool => $postId > 0
+        ));
+        $postAnchorUrls = $this->buildPostAnchorUrls($campaign, $scene, $anchorTargetIds);
+
+        $pinnedPostJumpUrls = [];
+        foreach ($pinnedPosts as $pinnedPost) {
+            $pinnedPostJumpUrls[$pinnedPost->id] = $postAnchorUrls[(int) $pinnedPost->id] ?? null;
+        }
 
         $jumpToLastReadUrl = $lastReadPostIdBeforeOpen > 0
-            ? $this->buildPostAnchorUrl($campaign, $scene, $lastReadPostIdBeforeOpen)
+            ? ($postAnchorUrls[$lastReadPostIdBeforeOpen] ?? null)
             : null;
 
         $jumpToFirstUnreadUrl = $firstUnreadPostId > 0
-            ? $this->buildPostAnchorUrl($campaign, $scene, $firstUnreadPostId)
+            ? ($postAnchorUrls[$firstUnreadPostId] ?? null)
             : null;
 
         $jumpToLatestPostUrl = $latestPostId > 0
-            ? $this->buildPostAnchorUrl($campaign, $scene, $latestPostId)
+            ? ($postAnchorUrls[$latestPostId] ?? null)
             : null;
 
-        $bookmarkJumpUrl = $userBookmark?->post_id
-            ? $this->buildPostAnchorUrl($campaign, $scene, (int) $userBookmark->post_id)
+        $bookmarkJumpUrl = $bookmarkPostId > 0
+            ? ($postAnchorUrls[$bookmarkPostId] ?? null)
             : null;
 
         return view('scenes.show', compact(
@@ -362,29 +376,43 @@ class SceneController extends Controller
         }
     }
 
-    private function buildPostAnchorUrl(Campaign $campaign, Scene $scene, int $postId): ?string
+    /**
+     * @param  array<int, int>  $postIds
+     * @return array<int, string>
+     */
+    private function buildPostAnchorUrls(Campaign $campaign, Scene $scene, array $postIds): array
     {
-        $targetPost = Post::query()
-            ->where('scene_id', $scene->id)
-            ->whereKey($postId)
-            ->first(['id']);
+        $normalizedIds = array_values(array_unique(array_map(
+            static fn ($postId): int => (int) $postId,
+            array_filter($postIds, static fn ($postId): bool => (int) $postId > 0)
+        )));
 
-        if (! $targetPost) {
-            return null;
+        if ($normalizedIds === []) {
+            return [];
         }
 
-        $newerPostsCount = (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', $targetPost->id)
-            ->count();
+        $newerPostCounts = Post::query()
+            ->from('posts as current_posts')
+            ->selectRaw('current_posts.id as post_id')
+            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
+            ->where('current_posts.scene_id', $scene->id)
+            ->whereIn('current_posts.id', $normalizedIds)
+            ->pluck('newer_posts_count', 'post_id');
 
-        $page = intdiv($newerPostsCount, self::THREAD_POSTS_PER_PAGE) + 1;
+        $urls = [];
 
-        return route('campaigns.scenes.show', [
-            'campaign' => $campaign,
-            'scene' => $scene,
-            'page' => $page,
-        ]).'#post-'.$targetPost->id;
+        foreach ($newerPostCounts as $postId => $newerPostsCount) {
+            $postId = (int) $postId;
+            $page = intdiv((int) $newerPostsCount, self::THREAD_POSTS_PER_PAGE) + 1;
+
+            $urls[$postId] = route('campaigns.scenes.show', [
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'page' => $page,
+            ]).'#post-'.$postId;
+        }
+
+        return $urls;
     }
 
     /**
