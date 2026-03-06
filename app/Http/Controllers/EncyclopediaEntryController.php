@@ -100,7 +100,7 @@ class EncyclopediaEntryController extends Controller
 
         return redirect()
             ->route('knowledge.admin.kategorien.edit', $encyclopediaCategory)
-            ->with('status', 'Eintrag geloescht.');
+            ->with('status', 'Eintrag gelöscht.');
     }
 
     private function abortIfCategoryMismatch(EncyclopediaCategory $category, EncyclopediaEntry $entry): void

@@ -9,7 +9,7 @@
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM Moderation</p>
                     <h1 class="font-heading text-3xl text-stone-100">Freigabe-Queue</h1>
-                    <p class="mt-2 text-sm text-stone-300">Pruefe Posts, filtere nach Status und setze Moderation mit einem Klick.</p>
+                    <p class="mt-2 text-sm text-stone-300">Prüfe Posts, filtere nach Status und setze Moderation mit einem Klick.</p>
                 </div>
 
                 <a
@@ -93,7 +93,7 @@
                         type="text"
                         name="moderation_note"
                         maxlength="500"
-                        placeholder="Optionaler Hinweis fuer alle betroffenen Posts ..."
+                        placeholder="Optionaler Hinweis für alle betroffenen Posts ..."
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
 
@@ -101,7 +101,7 @@
                         type="submit"
                         class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
                     >
-                        Bulk ausfuehren
+                        Bulk ausführen
                     </button>
                 </div>
             </form>
@@ -109,7 +109,7 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($posts->isEmpty())
-                <p class="text-sm text-stone-400">Keine Posts fuer den gewaehlten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Posts für den gewählten Filter.</p>
             @else
                 <div class="space-y-4">
                     @foreach ($posts as $post)
@@ -183,7 +183,7 @@
                                         name="moderation_note"
                                         rows="2"
                                         maxlength="500"
-                                        placeholder="Optionaler Grund fuer Autor und Audit-Log ..."
+                                        placeholder="Optionaler Grund für Autor und Audit-Log ..."
                                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                                     ></textarea>
 

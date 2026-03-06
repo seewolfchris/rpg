@@ -7,7 +7,7 @@
         <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Riss im Siegel</p>
         <h1 class="font-heading text-3xl text-stone-100">Passwort vergessen?</h1>
         <p class="font-body mt-2 text-stone-300">
-            Gib deine E-Mail ein. Wir senden dir einen Link zum Zuruecksetzen deines Passworts.
+            Gib deine E-Mail ein. Wir senden dir einen Link zum Zurücksetzen deines Passworts.
         </p>
 
         <form method="POST" action="{{ route('password.email') }}" class="mt-8 space-y-5">
@@ -40,7 +40,7 @@
         </form>
 
         <p class="mt-6 text-sm text-stone-300">
-            Zurueck zum
+            Zurück zum
             <a href="{{ route('login') }}" class="font-semibold text-amber-300 hover:text-amber-200">Login</a>
         </p>
     </section>

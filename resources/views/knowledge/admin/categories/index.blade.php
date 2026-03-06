@@ -1,12 +1,12 @@
 @extends('layouts.auth')
 
-@section('title', 'Enzyklopaedie verwalten · Kategorien')
+@section('title', 'Enzyklopädie verwalten · Kategorien')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <header class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum · Admin</p>
-            <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopaedie-Kategorien</h1>
+            <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopädie-Kategorien</h1>
             <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
                 Verwalte Kategorien, Sichtbarkeit und Sortierung des Weltkanons.
             </p>
@@ -16,7 +16,7 @@
                     href="{{ route('knowledge.encyclopedia') }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
-                    Zur Enzyklopaedie
+                    Zur Enzyklopädie
                 </a>
                 <a
                     href="{{ route('knowledge.admin.kategorien.create') }}"
@@ -40,7 +40,7 @@
                                 <th class="px-3 py-3">Kategorie</th>
                                 <th class="px-3 py-3">Slug</th>
                                 <th class="px-3 py-3">Sichtbar</th>
-                                <th class="px-3 py-3">Eintraege</th>
+                                <th class="px-3 py-3">Einträge</th>
                                 <th class="px-3 py-3">Position</th>
                                 <th class="px-3 py-3 text-right">Aktionen</th>
                             </tr>
@@ -75,14 +75,14 @@
                                             >
                                                 Bearbeiten
                                             </a>
-                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', $category) }}" onsubmit="return confirm('Kategorie wirklich loeschen? Alle Eintraege werden entfernt.');">
+                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', $category) }}" onsubmit="return confirm('Kategorie wirklich löschen? Alle Einträge werden entfernt.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button
                                                     type="submit"
                                                     class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-500/20"
                                                 >
-                                                    Loeschen
+                                                    Löschen
                                                 </button>
                                             </form>
                                         </div>

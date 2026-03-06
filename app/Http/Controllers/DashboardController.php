@@ -97,14 +97,14 @@ class DashboardController extends Controller
             ],
             [
                 'title' => 'Erste GM-Probe im Thread',
-                'description' => 'GM/Co-GM fuehrt Proben mit Anlass, Ziel-Held und Modifikator direkt im Post aus.',
+                'description' => 'GM/Co-GM führt Proben mit Anlass, Ziel-Held und Modifikator direkt im Post aus.',
                 'done' => $hasDiceRoll,
                 'url' => route('campaigns.index'),
                 'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe verfolgen',
             ],
             [
                 'title' => 'Erstes Bookmark setzen',
-                'description' => 'Markiere wichtige Szenenstellen fuer schnellen Wiedereinstieg.',
+                'description' => 'Markiere wichtige Szenenstellen für schnellen Wiedereinstieg.',
                 'done' => $bookmarkCount > 0,
                 'url' => route('bookmarks.index'),
                 'cta' => $bookmarkCount > 0 ? 'Bookmarks ansehen' : 'Bookmark setzen',

@@ -1,13 +1,13 @@
 @extends('layouts.auth')
 
-@section('title', $entry->title.' · Enzyklopaedie')
+@section('title', $entry->title.' · Enzyklopädie')
 
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">
         <header class="relative overflow-hidden rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(168,85,39,0.26),transparent_42%),radial-gradient(circle_at_75%_30%,rgba(127,29,29,0.32),transparent_40%),linear-gradient(to_bottom,rgba(17,17,17,0.96),rgba(8,8,8,0.98))]"></div>
 
-            <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum · Enzyklopaedie</p>
+            <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum · Enzyklopädie</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">{{ $entry->title }}</h1>
 
             <div class="mt-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-400">
@@ -32,7 +32,7 @@
                     href="{{ route('knowledge.encyclopedia') }}"
                     class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
                 >
-                    Alle Eintraege
+                    Alle Einträge
                 </a>
                 @if ($canManage)
                     <a
@@ -97,7 +97,7 @@
 
         @if ($relatedEntries->isNotEmpty())
             <section class="rounded-2xl border border-stone-800 bg-black/35 p-5 shadow-xl shadow-black/25">
-                <h2 class="font-heading text-xl text-stone-100">Weitere Eintraege in {{ $entry->category->name }}</h2>
+                <h2 class="font-heading text-xl text-stone-100">Weitere Einträge in {{ $entry->category->name }}</h2>
                 <ul class="mt-4 grid gap-2 sm:grid-cols-2">
                     @foreach ($relatedEntries as $relatedEntry)
                         <li>

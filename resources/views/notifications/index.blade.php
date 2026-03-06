@@ -127,7 +127,7 @@
                                         {{ $data['title'] ?? 'Benachrichtigung' }}
                                     </p>
                                     <p class="mt-1 text-sm text-stone-300">
-                                        {{ $data['message'] ?? 'Neue Aktivitaet.' }}
+                                        {{ $data['message'] ?? 'Neue Aktivität.' }}
                                     </p>
                                     <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
                                         {{ $notification->created_at->format('d.m.Y H:i') }}
@@ -144,7 +144,7 @@
                                         href="{{ $data['action_url'] ?? route('notifications.index') }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
-                                        Oeffnen
+                                        Öffnen
                                     </a>
 
                                     @if ($isUnread)

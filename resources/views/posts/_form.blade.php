@@ -100,9 +100,9 @@
         <section class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h3 class="font-heading text-lg text-amber-100">GM-Probe fuer diesen Beitrag</h3>
+                    <h3 class="font-heading text-lg text-amber-100">GM-Probe für diesen Beitrag</h3>
                     <p class="mt-1 text-xs leading-relaxed text-amber-200/80">
-                        Eine Probe wird beim Speichern direkt ausgefuehrt und als Ergebnisblock im Beitrag angezeigt.
+                        Eine Probe wird beim Speichern direkt ausgeführt und als Ergebnisblock im Beitrag angezeigt.
                     </p>
                 </div>
                 <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
@@ -122,7 +122,7 @@
 
             <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="lg:col-span-2">
-                    <label for="probe_explanation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Erklaerung / Anlass</label>
+                    <label for="probe_explanation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Erklärung / Anlass</label>
                     <input
                         id="probe_explanation"
                         type="text"
@@ -144,7 +144,7 @@
                         name="probe_character_id"
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
-                        <option value="">Held waehlen</option>
+                        <option value="">Held wählen</option>
                         @foreach ($probeCharacters as $probeCharacter)
                             <option value="{{ $probeCharacter->id }}" @selected((string) $currentProbeCharacter === (string) $probeCharacter->id)>
                                 {{ $probeCharacter->name }}
@@ -225,7 +225,7 @@
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                     <p class="mt-1 text-xs text-stone-500">Beispiel: <span class="font-semibold text-stone-300">-10</span> für Schaden.</p>
-                    <p class="mt-1 text-xs text-stone-500">Bei negativem LE-Wert wird ausgeruesteter RS des Ziel-Helds automatisch abgezogen.</p>
+                    <p class="mt-1 text-xs text-stone-500">Bei negativem LE-Wert wird ausgerüsteter RS des Ziel-Helds automatisch abgezogen.</p>
                     @error('probe_le_delta')
                         <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                     @enderror
@@ -257,7 +257,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <h4 class="text-sm font-semibold uppercase tracking-[0.1em] text-amber-200">Inventar-Fund im gleichen Post</h4>
-                        <p class="mt-1 text-xs text-stone-400">Optional: Fuegt dem Ziel-Held direkt einen Gegenstand im Charakterbogen hinzu.</p>
+                        <p class="mt-1 text-xs text-stone-400">Optional: Fügt dem Ziel-Held direkt einen Gegenstand im Charakterbogen hinzu.</p>
                     </div>
                     <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
                         <input
@@ -282,7 +282,7 @@
                             name="inventory_award_character_id"
                             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                         >
-                            <option value="">Held waehlen</option>
+                            <option value="">Held wählen</option>
                             @foreach ($probeCharacters as $probeCharacter)
                                 <option value="{{ $probeCharacter->id }}" @selected((string) $currentInventoryAwardCharacter === (string) $probeCharacter->id)>
                                     {{ $probeCharacter->name }}
@@ -336,7 +336,7 @@
                                 @checked($currentInventoryAwardEquipped)
                                 class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
                             >
-                            Als ausgeruestet eintragen
+                            Als ausgerüstet eintragen
                         </label>
                         @error('inventory_award_equipped')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -372,7 +372,7 @@
                 rows="3"
                 maxlength="500"
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                placeholder="Grund fuer Freigabe/Ablehnung ..."
+                placeholder="Grund für Freigabe/Ablehnung ..."
             >{{ $currentModerationNote }}</textarea>
             @error('moderation_note')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

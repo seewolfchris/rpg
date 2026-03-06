@@ -148,7 +148,7 @@ abstract class CharacterSheetRequest extends FormRequest
             $merged[$key.'_note'] = trim((string) $this->input($key.'_note', ''));
         }
 
-        // Rueckwaertskompatibilitaet: Falls nur alte Werte geliefert werden, in Prozent umrechnen.
+        // Rückwärtskompatibilität: Falls nur alte Werte geliefert werden, in Prozent umrechnen.
         foreach ($this->legacyColumnMap() as $legacyColumn => $attributeKey) {
             $attributeMissing = ! $this->filled($attributeKey);
             $legacyPresent = $this->filled($legacyColumn);
@@ -158,7 +158,7 @@ abstract class CharacterSheetRequest extends FormRequest
             }
         }
 
-        // Persistenz-Mapping fuer alte Spalten.
+        // Persistenz-Mapping für alte Spalten.
         foreach ($this->legacyColumnMap() as $legacyColumn => $attributeKey) {
             if (array_key_exists($attributeKey, $merged)) {
                 $merged[$legacyColumn] = (int) $merged[$attributeKey];
@@ -553,7 +553,7 @@ abstract class CharacterSheetRequest extends FormRequest
                 $label = (string) data_get($this->sheet(), 'attributes.'.$attributeKey.'.label', strtoupper($attributeKey));
                 $validator->errors()->add(
                     $attributeKey,
-                    'Berufungsvoraussetzung nicht erfuellt: '.$label.' muss mindestens '.$minimumValue.' % betragen.'
+                    'Berufungsvoraussetzung nicht erfüllt: '.$label.' muss mindestens '.$minimumValue.' % betragen.'
                 );
             }
         }
@@ -567,7 +567,7 @@ abstract class CharacterSheetRequest extends FormRequest
         if (count($advantages) !== count($disadvantages)) {
             $validator->errors()->add(
                 'advantages',
-                'Vorteile und Nachteile muessen 1:1 gepaart sein (gleiche Anzahl).'
+                'Vorteile und Nachteile müssen 1:1 gepaart sein (gleiche Anzahl).'
             );
         }
     }
@@ -611,7 +611,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
         $validator->errors()->add(
             'species',
-            'Fuer Herkunft "'.$originLabel.'" sind nur folgende Spezies erlaubt: '.$allowedLabels.'.'
+            'Für Herkunft "'.$originLabel.'" sind nur folgende Spezies erlaubt: '.$allowedLabels.'.'
         );
     }
 
@@ -652,22 +652,22 @@ abstract class CharacterSheetRequest extends FormRequest
             'inventory' => 'Inventar',
             'inventory.*.name' => 'Inventar-Gegenstand',
             'inventory.*.quantity' => 'Inventar-Menge',
-            'inventory.*.equipped' => 'Ausgeruestet',
+            'inventory.*.equipped' => 'Ausgerüstet',
             'weapons' => 'Waffen',
             'weapons.*.name' => 'Waffenname',
             'weapons.*.attack' => 'Angriffswert',
             'weapons.*.parry' => 'Paradewert',
             'weapons.*.damage' => 'Schadenspunkte',
-            'armors' => 'Ruestungen',
-            'armors.*.name' => 'Ruestungsname',
-            'armors.*.protection' => 'Ruestungsschutz',
-            'armors.*.equipped' => 'Ausgeruestet',
+            'armors' => 'Rüstungen',
+            'armors.*.name' => 'Rüstungsname',
+            'armors.*.protection' => 'Rüstungsschutz',
+            'armors.*.equipped' => 'Ausgerüstet',
         ];
 
         foreach ((array) data_get($this->sheet(), 'attributes', []) as $key => $meta) {
             $label = (string) ($meta['label'] ?? strtoupper($key));
             $attributes[$key] = $label;
-            $attributes[$key.'_note'] = $label.' (narrative Auspraegung)';
+            $attributes[$key.'_note'] = $label.' (narrative Ausprägung)';
         }
 
         return $attributes;
@@ -682,11 +682,11 @@ abstract class CharacterSheetRequest extends FormRequest
             'required' => 'Dieses Feld ist erforderlich.',
             'advantages.required' => 'Bitte mindestens einen Vorteil eintragen.',
             'disadvantages.required' => 'Bitte mindestens einen Nachteil eintragen.',
-            'string' => 'Bitte einen gueltigen Text eingeben.',
+            'string' => 'Bitte einen gültigen Text eingeben.',
             'integer' => 'Bitte eine ganze Zahl eingeben.',
-            'array' => 'Dieses Feld hat ein ungueltiges Listenformat.',
-            'in' => 'Bitte eine gueltige Option auswaehlen.',
-            'distinct' => 'Doppelte Eintraege sind nicht erlaubt.',
+            'array' => 'Dieses Feld hat ein ungültiges Listenformat.',
+            'in' => 'Bitte eine gültige Option auswählen.',
+            'distinct' => 'Doppelte Einträge sind nicht erlaubt.',
             'bio.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'concept.min' => 'Bitte mindestens :min Zeichen eingeben.',
             'gm_secret.min' => 'Bitte mindestens :min Zeichen eingeben.',
@@ -702,7 +702,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'max' => 'Bitte maximal :max eingeben.',
             'between' => 'Der Wert muss zwischen :min und :max liegen.',
             'mimes' => 'Bitte eine Datei vom Typ :values hochladen.',
-            'image' => 'Bitte eine gueltige Bilddatei hochladen.',
+            'image' => 'Bitte eine gültige Bilddatei hochladen.',
         ];
     }
 }

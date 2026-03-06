@@ -8,7 +8,7 @@
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Sichere Zuflucht</p>
             <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">Willkommen, {{ auth()->user()->name }}</h1>
             <p class="font-body mt-3 text-lg text-stone-300">
-                Dein Konto ist aktiv. Verwalte Charaktere, baue Kampagnen und sammle Ruhmpunkte fuer freigegebene Posts.
+                Dein Konto ist aktiv. Verwalte Charaktere, baue Kampagnen und sammle Ruhmpunkte für freigegebene Posts.
             </p>
             <p class="mt-4 inline-flex rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100">
                 Ruhmpunkte: {{ auth()->user()->points }}
@@ -71,7 +71,7 @@
         <div class="grid gap-4 md:grid-cols-5">
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Charaktere</h2>
-                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro User inkl. Eigenschaften, Biografie und Portraet.</p>
+                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro User inkl. Eigenschaften, Biografie und Porträt.</p>
                 <a
                     href="{{ route('characters.index') }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
@@ -86,12 +86,12 @@
                     href="{{ route('campaigns.index') }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
                 >
-                    Oeffnen
+                    Öffnen
                 </a>
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">GM-Proben</h2>
-                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur ueber GM-Posts: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
+                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur über GM-Posts: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
             </article>
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-4">
                 <h2 class="font-heading text-lg text-stone-100">Rangliste</h2>
@@ -100,18 +100,18 @@
                     href="{{ route('leaderboard.index') }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
                 >
-                    Oeffnen
+                    Öffnen
                 </a>
             </article>
             <article class="rounded-xl border border-amber-700/40 bg-amber-900/10 p-4">
                 <h2 class="font-heading text-lg text-amber-100">Ungelesene Szenen</h2>
-                <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beitraegen.</p>
+                <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beiträgen.</p>
                 <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Bookmarks: {{ $bookmarkCount }}</p>
                 <a
                     href="{{ route('scene-subscriptions.index') }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
                 >
-                    Zur Abo-Uebersicht
+                    Zur Abo-Übersicht
                 </a>
                 <a
                     href="{{ route('bookmarks.index') }}"

@@ -84,14 +84,14 @@
                 >
                     Bearbeiten
                 </a>
-                <form method="POST" action="{{ route('characters.destroy', $character) }}" onsubmit="return confirm('Diesen Charakter wirklich loeschen?');">
+                <form method="POST" action="{{ route('characters.destroy', $character) }}" onsubmit="return confirm('Diesen Charakter wirklich löschen?');">
                     @csrf
                     @method('DELETE')
                     <button
                         type="submit"
                         class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
                     >
-                        Loeschen
+                        Löschen
                     </button>
                 </form>
             </div>
@@ -101,7 +101,7 @@
             <aside class="space-y-4 rounded-xl border border-stone-800 bg-neutral-900/70 p-4">
                 <img
                     src="{{ $character->avatarUrl() }}"
-                    alt="Portraet von {{ $character->name }}"
+                    alt="Porträt von {{ $character->name }}"
                     class="h-72 w-full rounded-lg object-cover"
                 >
 
@@ -179,7 +179,7 @@
                                 @endforeach
                             </ul>
                         @else
-                            <p class="mt-2 text-sm text-emerald-100/80">Keine Eintraege.</p>
+                            <p class="mt-2 text-sm text-emerald-100/80">Keine Einträge.</p>
                         @endif
                     </article>
 
@@ -192,7 +192,7 @@
                                 @endforeach
                             </ul>
                         @else
-                            <p class="mt-2 text-sm text-red-100/80">Keine Eintraege.</p>
+                            <p class="mt-2 text-sm text-red-100/80">Keine Einträge.</p>
                         @endif
                     </article>
                 </section>
@@ -206,13 +206,13 @@
                                     <li>
                                         - {{ $inventoryEntry['quantity'] }}x {{ $inventoryEntry['name'] }}
                                         @if ($inventoryEntry['equipped'])
-                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgerüstet)</span>
                                         @endif
                                     </li>
                                 @endforeach
                             </ul>
                         @else
-                            <p class="mt-2 text-sm text-emerald-100/80">Keine Eintraege.</p>
+                            <p class="mt-2 text-sm text-emerald-100/80">Keine Einträge.</p>
                         @endif
                     </article>
 
@@ -242,19 +242,19 @@
                                 </table>
                             </div>
                         @else
-                            <p class="mt-2 text-sm text-amber-100/80">Keine Eintraege.</p>
+                            <p class="mt-2 text-sm text-amber-100/80">Keine Einträge.</p>
                         @endif
                     </article>
 
                     <article class="rounded-lg border border-sky-700/50 bg-sky-950/10 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-sky-200">Ruestung</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-sky-200">Rüstung</h4>
                         @if ($armorEntries->isNotEmpty())
                             <p class="mt-2 text-xs uppercase tracking-[0.08em] text-sky-300">
                                 Effektiver RS: {{ $totalArmorProtection }}
                                 @if ($equippedArmorEntries->isNotEmpty())
-                                    (nur ausgeruestet)
+                                    (nur ausgerüstet)
                                 @else
-                                    (alle Eintraege)
+                                    (alle Einträge)
                                 @endif
                             </p>
                             <ul class="mt-2 space-y-1 text-sm text-sky-100/90">
@@ -262,13 +262,13 @@
                                     <li>
                                         - {{ data_get($armor, 'name', '-') }} (RS {{ data_get($armor, 'protection', 0) }})
                                         @if ((bool) data_get($armor, 'equipped', false))
-                                            <span class="text-xs uppercase tracking-[0.08em] text-sky-300">(ausgeruestet)</span>
+                                            <span class="text-xs uppercase tracking-[0.08em] text-sky-300">(ausgerüstet)</span>
                                         @endif
                                     </li>
                                 @endforeach
                             </ul>
                         @else
-                            <p class="mt-2 text-sm text-sky-100/80">Keine Eintraege.</p>
+                            <p class="mt-2 text-sm text-sky-100/80">Keine Einträge.</p>
                         @endif
                     </article>
                 </section>
@@ -278,7 +278,7 @@
                     @if ($inventoryLogs->isNotEmpty())
                         <ul class="mt-3 space-y-2 text-sm text-stone-200">
                             @foreach ($inventoryLogs as $logEntry)
-                                @php($actionLabel = $logEntry->action === 'remove' ? 'entfernt' : 'hinzugefuegt')
+                                @php($actionLabel = $logEntry->action === 'remove' ? 'entfernt' : 'hinzugefügt')
                                 <li class="rounded border border-stone-700/70 bg-neutral-900/50 px-3 py-2">
                                     <p class="text-xs uppercase tracking-[0.08em] text-stone-400">
                                         {{ optional($logEntry->created_at)->format('d.m.Y H:i') ?? '-' }}
@@ -287,7 +287,7 @@
                                     <p class="mt-1">
                                         {{ $logEntry->quantity }}x {{ $logEntry->item_name }}
                                         @if ($logEntry->equipped)
-                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                                            <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgerüstet)</span>
                                         @endif
                                         wurde {{ $actionLabel }}.
                                     </p>
@@ -298,7 +298,7 @@
                             @endforeach
                         </ul>
                     @else
-                        <p class="mt-2 text-sm text-stone-400">Noch keine Inventar-Aenderungen protokolliert.</p>
+                        <p class="mt-2 text-sm text-stone-400">Noch keine Inventar-Änderungen protokolliert.</p>
                     @endif
                 </section>
             </article>
@@ -308,7 +308,7 @@
             href="{{ route('characters.index') }}"
             class="inline-flex rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
         >
-            Zurueck zur Uebersicht
+            Zurück zur Übersicht
         </a>
     </section>
 @endsection

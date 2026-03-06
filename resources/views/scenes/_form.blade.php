@@ -112,7 +112,7 @@
 
     <div class="grid gap-4 sm:grid-cols-2">
         <div>
-            <label for="opens_at" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Oeffnet am</label>
+            <label for="opens_at" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Öffnet am</label>
             <input
                 id="opens_at"
                 type="datetime-local"
@@ -156,4 +156,3 @@
         </a>
     </div>
 </div>
-

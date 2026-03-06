@@ -17,7 +17,7 @@ class ProtectAgainstCrawlers
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->shouldBlockUserAgent($request->userAgent())) {
-            return response('Automatisierte Crawler sind fuer diese Anwendung deaktiviert.', 403)
+            return response('Automatisierte Crawler sind für diese Anwendung deaktiviert.', 403)
                 ->header('X-Robots-Tag', config('privacy.x_robots_tag'));
         }
 

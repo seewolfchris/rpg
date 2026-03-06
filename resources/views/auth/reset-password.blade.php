@@ -1,12 +1,12 @@
 @extends('layouts.auth')
 
-@section('title', 'Passwort zuruecksetzen | Chroniken der Asche')
+@section('title', 'Passwort zurücksetzen | Chroniken der Asche')
 
 @section('content')
     <section class="mx-auto w-full max-w-lg rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8">
         <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Wiederherstellung</p>
         <h1 class="font-heading text-3xl text-stone-100">Neues Passwort setzen</h1>
-        <p class="font-body mt-2 text-stone-300">Setze ein neues Passwort fuer dein Konto.</p>
+        <p class="font-body mt-2 text-stone-300">Setze ein neues Passwort für dein Konto.</p>
 
         <form method="POST" action="{{ route('password.update') }}" class="mt-8 space-y-5">
             @csrf
@@ -48,7 +48,7 @@
             </div>
 
             <div>
-                <label for="password_confirmation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Passwort bestaetigen</label>
+                <label for="password_confirmation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Passwort bestätigen</label>
                 <input
                     id="password_confirmation"
                     type="password"

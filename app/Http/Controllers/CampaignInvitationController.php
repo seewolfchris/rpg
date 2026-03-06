@@ -55,7 +55,7 @@ class CampaignInvitationController extends Controller
 
         if ($invitee->id === $campaign->owner_id) {
             return back()->withErrors([
-                'email' => 'Der Kampagnenleiter benoetigt keine Einladung.',
+                'email' => 'Der Kampagnenleiter benötigt keine Einladung.',
             ]);
         }
 

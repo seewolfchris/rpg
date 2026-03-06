@@ -188,7 +188,7 @@ class PostController extends Controller
 
         return redirect()
             ->route('campaigns.scenes.show', [$campaign, $scene])
-            ->with('status', 'Beitrag geloescht.');
+            ->with('status', 'Beitrag gelöscht.');
     }
 
     public function moderate(ModeratePostRequest $request, Post $post): RedirectResponse

@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Enzyklopaedie · Wissenszentrum')
+@section('title', 'Enzyklopädie · Wissenszentrum')
 
 @section('content')
     <section
@@ -16,9 +16,9 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
-                    <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopaedie von Vhal'Tor</h1>
+                    <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopädie von Vhal'Tor</h1>
                     <p class="mt-4 max-w-4xl text-base leading-relaxed text-[#cccccc] sm:text-lg">
-                        Oeffentliches Nachschlagewerk fuer Zeitalter, Machtbloecke, Regionen und Spezies.
+                        Öffentliches Nachschlagewerk für Zeitalter, Machtblöcke, Regionen und Spezies.
                         Immersion zuerst, Rechenwerkzeuge danach.
                     </p>
                 </div>
@@ -28,7 +28,7 @@
                         href="{{ route('knowledge.admin.kategorien.index') }}"
                         class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
                     >
-                        Enzyklopaedie verwalten
+                        Enzyklopädie verwalten
                     </a>
                 @endif
             </div>
@@ -120,7 +120,7 @@
             <section class="space-y-5">
                 <div class="rounded-xl border border-stone-800 bg-black/35 px-4 py-3 text-xs uppercase tracking-[0.12em] text-stone-400">
                     @php($entryCount = $categories->sum(fn ($category) => $category->entries->count()))
-                    <span>{{ $entryCount }} Eintraege sichtbar</span>
+                    <span>{{ $entryCount }} Einträge sichtbar</span>
                     @if ($selectedCategorySlug !== '')
                         <span class="mx-2 text-stone-600">|</span>
                         <span>Kategorie: {{ $selectedCategorySlug }}</span>
@@ -133,7 +133,7 @@
 
                 @if ($categories->isEmpty())
                     <article class="rounded-2xl border border-stone-800 bg-black/35 p-6 text-sm text-stone-300 sm:p-8">
-                        Keine passenden Enzyklopaedie-Eintraege gefunden.
+                        Keine passenden Enzyklopädie-Einträge gefunden.
                     </article>
                 @else
                     <div class="space-y-6">

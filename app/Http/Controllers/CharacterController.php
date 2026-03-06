@@ -137,7 +137,7 @@ class CharacterController extends Controller
 
         return redirect()
             ->route('characters.index')
-            ->with('status', 'Charakter geloescht.');
+            ->with('status', 'Charakter gelöscht.');
     }
 
     private function ensureOwnership(Character $character): void

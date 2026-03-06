@@ -104,11 +104,11 @@ class StorePostRequest extends FormRequest
                 : null;
 
             if ($postType === 'ooc' && ! $scene->allow_ooc) {
-                $validator->errors()->add('post_type', 'OOC-Beitraege sind in dieser Szene deaktiviert.');
+                $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
 
             if ($postType === 'ic' && ! $characterId) {
-                $validator->errors()->add('character_id', 'Fuer IC-Beitraege ist ein Charakter erforderlich.');
+                $validator->errors()->add('character_id', 'Für IC-Beiträge ist ein Charakter erforderlich.');
             }
 
             if ($characterId) {
@@ -137,14 +137,14 @@ class StorePostRequest extends FormRequest
 
             if ($probeEnabled) {
                 if (! $canModerate) {
-                    $validator->errors()->add('probe_enabled', 'Nur GM oder Co-GM duerfen Proben ausfuehren.');
+                    $validator->errors()->add('probe_enabled', 'Nur GM oder Co-GM dürfen Proben ausführen.');
                 } else {
                     $probeCharacterId = $this->filled('probe_character_id')
                         ? (int) $this->input('probe_character_id')
                         : null;
 
                     if (! $probeCharacterId) {
-                        $validator->errors()->add('probe_character_id', 'Fuer die Probe muss ein Ziel-Held gewaehlt werden.');
+                        $validator->errors()->add('probe_character_id', 'Für die Probe muss ein Ziel-Held gewählt werden.');
                     } else {
                         $probeCharacter = Character::query()
                             ->select(['id', 'user_id'])
@@ -164,7 +164,7 @@ class StorePostRequest extends FormRequest
 
             if ($inventoryAwardEnabled) {
                 if (! $canModerate) {
-                    $validator->errors()->add('inventory_award_enabled', 'Nur GM oder Co-GM duerfen Inventar-Funde vergeben.');
+                    $validator->errors()->add('inventory_award_enabled', 'Nur GM oder Co-GM dürfen Inventar-Funde vergeben.');
                 } else {
                     $awardCharacterId = $this->filled('inventory_award_character_id')
                         ? (int) $this->input('inventory_award_character_id')
@@ -173,7 +173,7 @@ class StorePostRequest extends FormRequest
                     if (! $awardCharacterId) {
                         $validator->errors()->add(
                             'inventory_award_character_id',
-                            'Fuer den Inventar-Fund muss ein Ziel-Held gewaehlt werden.'
+                            'Für den Inventar-Fund muss ein Ziel-Held gewählt werden.'
                         );
                     } else {
                         $awardCharacter = Character::query()
@@ -202,11 +202,11 @@ class StorePostRequest extends FormRequest
         return [
             'probe_attribute_key' => 'Probe-Eigenschaft',
             'probe_character_id' => 'Ziel-Held',
-            'probe_explanation' => 'Erklaerung / Anlass',
+            'probe_explanation' => 'Erklärung / Anlass',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',
             'inventory_award_item' => 'Inventar-Fund',
             'inventory_award_quantity' => 'Menge (Inventar-Fund)',
-            'inventory_award_equipped' => 'Ausgeruestet (Inventar-Fund)',
+            'inventory_award_equipped' => 'Ausgerüstet (Inventar-Fund)',
         ];
     }
 }

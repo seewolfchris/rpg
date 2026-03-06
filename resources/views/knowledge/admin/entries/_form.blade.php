@@ -52,7 +52,7 @@
             name="excerpt"
             rows="3"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-            placeholder="Kurzfassung fuer die Kartenansicht"
+            placeholder="Kurzfassung für die Kartenansicht"
         >{{ old('excerpt', $entry->excerpt ?? '') }}</textarea>
         @error('excerpt')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -77,7 +77,7 @@
     <section class="rounded-xl border border-stone-700/70 bg-black/30 p-4">
         <h3 class="font-heading text-lg text-stone-100">Spielrelevanz (optional)</h3>
         <p class="mt-1 text-xs text-stone-400">
-            Strukturierte Hinweise fuer LE/RS/AE/Proben sowie Real-World-Anfaenger.
+            Strukturierte Hinweise für LE/RS/AE/Proben sowie Real-World-Anfänger.
         </p>
 
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -89,7 +89,7 @@
                     rows="3"
                     maxlength="1000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    placeholder="z. B. Frontkaempfer sollten frueh LE-Verluste einkalkulieren."
+                    placeholder="z. B. Frontkämpfer sollten früh LE-Verluste einkalkulieren."
                 >{{ old('game_relevance_le', data_get($gameRelevance, 'le_hint', '')) }}</textarea>
                 @error('game_relevance_le')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -104,7 +104,7 @@
                     rows="3"
                     maxlength="1000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    placeholder="z. B. Leichte Ruestung reicht oft nicht gegen schwere Treffer."
+                    placeholder="z. B. Leichte Rüstung reicht oft nicht gegen schwere Treffer."
                 >{{ old('game_relevance_rs', data_get($gameRelevance, 'rs_hint', '')) }}</textarea>
                 @error('game_relevance_rs')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -134,7 +134,7 @@
                     rows="3"
                     maxlength="1000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    placeholder="z. B. Typische Eigenschaften fuer GM-Proben."
+                    placeholder="z. B. Typische Eigenschaften für GM-Proben."
                 >{{ old('game_relevance_probe', data_get($gameRelevance, 'probe_hint', '')) }}</textarea>
                 @error('game_relevance_probe')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -149,7 +149,7 @@
                     rows="3"
                     maxlength="1000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    placeholder="z. B. Welche Einschraenkungen fuer Real-World-Anfaenger gelten."
+                    placeholder="z. B. Welche Einschränkungen für Real-World-Anfänger gelten."
                 >{{ old('game_relevance_real_world', data_get($gameRelevance, 'real_world_hint', '')) }}</textarea>
                 @error('game_relevance_real_world')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

@@ -6,9 +6,9 @@
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Chroniken und Handlungsboegen</p>
+                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Chroniken und Handlungsbögen</p>
                 <h1 class="font-heading text-3xl text-stone-100">Kampagnen</h1>
-                <p class="mt-2 text-stone-300">Waehle eine laufende Kampagne oder starte einen neuen Storybogen.</p>
+                <p class="mt-2 text-stone-300">Wähle eine laufende Kampagne oder starte einen neuen Storybogen.</p>
             </div>
 
             @can('create', App\Models\Campaign::class)
@@ -59,7 +59,7 @@
                             href="{{ route('campaigns.show', $campaign) }}"
                             class="mt-5 inline-flex rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
-                            Oeffnen
+                            Öffnen
                         </a>
                     </article>
                 @endforeach

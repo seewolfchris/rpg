@@ -121,7 +121,7 @@ class GmModerationController extends Controller
                 'status' => $statusFilter,
                 'q' => $search !== '' ? $search : null,
             ])
-            ->with('status', 'Bulk-Moderation ausgefuehrt. Betroffene Posts: '.$affected.'.');
+            ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Posts: '.$affected.'.');
     }
 
     private function applyFilters(Builder $query, string $status, string $search): void

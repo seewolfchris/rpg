@@ -4,9 +4,9 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-lg rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8">
-        <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Rueckkehr der Chronisten</p>
+        <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Rückkehr der Chronisten</p>
         <h1 class="font-heading text-3xl text-stone-100">Anmelden</h1>
-        <p class="font-body mt-2 text-stone-300">Betritt wieder die Aschelande und fuehre deine Geschichte fort.</p>
+        <p class="font-body mt-2 text-stone-300">Betritt wieder die Aschelande und führe deine Geschichte fort.</p>
 
         <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-5">
             @csrf

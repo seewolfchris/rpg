@@ -101,7 +101,7 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($subscriptions->isEmpty())
-                <p class="text-sm text-stone-400">Keine Abos fuer den gewaehlten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Abos für den gewählten Filter.</p>
             @else
                 <div class="space-y-3">
                     @foreach ($subscriptions as $subscription)
@@ -119,7 +119,7 @@
                                             {{ $subscription->is_muted ? 'Stumm geschaltet' : 'Aktiv benachrichtigt' }}
                                         </p>
                                         <p class="mt-1 text-xs uppercase tracking-[0.08em] {{ $hasUnread ? 'text-amber-300' : 'text-stone-500' }}">
-                                            {{ $hasUnread ? 'Neue Beitraege vorhanden' : 'Alles gelesen' }}
+                                            {{ $hasUnread ? 'Neue Beiträge vorhanden' : 'Alles gelesen' }}
                                         </p>
                                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
                                             Posts: {{ $subscribedScene->posts_count }}

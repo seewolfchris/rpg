@@ -6,7 +6,7 @@
     <section class="mx-auto w-full max-w-4xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Einstellungen</p>
-            <h1 class="font-heading text-3xl text-stone-100">Mitteilungs-Praeferenzen</h1>
+            <h1 class="font-heading text-3xl text-stone-100">Mitteilungs-Präferenzen</h1>
             <p class="mt-3 text-sm text-stone-300">
                 Lege fest, welche Ereignisse in der App und per E-Mail gemeldet werden.
             </p>
@@ -18,7 +18,7 @@
 
             <div class="space-y-5">
                 <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                    <h2 class="font-heading text-lg text-stone-100">Moderationsstatus fuer eigene Posts</h2>
+                    <h2 class="font-heading text-lg text-stone-100">Moderationsstatus für eigene Posts</h2>
                     <p class="mt-1 text-sm text-stone-300">
                         Benachrichtigung bei Freigegeben/Ausstehend/Abgelehnt.
                     </p>
@@ -37,7 +37,7 @@
                 <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                     <h2 class="font-heading text-lg text-stone-100">Neue Posts in Szenen</h2>
                     <p class="mt-1 text-sm text-stone-300">
-                        Benachrichtigung bei neuen Beitraegen von anderen Teilnehmenden.
+                        Benachrichtigung bei neuen Beiträgen von anderen Teilnehmenden.
                     </p>
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">

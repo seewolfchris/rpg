@@ -51,11 +51,11 @@ class UpdatePostRequest extends FormRequest
                 : null;
 
             if ($postType === 'ooc' && ! $scene->allow_ooc && ! $this->user()?->isGmOrAdmin()) {
-                $validator->errors()->add('post_type', 'OOC-Beitraege sind in dieser Szene deaktiviert.');
+                $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
 
             if ($postType === 'ic' && ! $characterId) {
-                $validator->errors()->add('character_id', 'Fuer IC-Beitraege ist ein Charakter erforderlich.');
+                $validator->errors()->add('character_id', 'Für IC-Beiträge ist ein Charakter erforderlich.');
             }
 
             if ($characterId) {

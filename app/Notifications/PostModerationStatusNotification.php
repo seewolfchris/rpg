@@ -47,15 +47,15 @@ class PostModerationStatusNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mailMessage = (new MailMessage)
-            ->subject('Moderationsstatus geaendert')
+            ->subject('Moderationsstatus geändert')
             ->greeting('Hallo '.$notifiable->name.',')
             ->line('Dein Beitrag wurde von '.$this->moderator->name.' moderiert.')
             ->line('Neuer Status: '.$this->newStatus)
             ->action(
-                'Beitrag oeffnen',
+                'Beitrag öffnen',
                 route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id,
             )
-            ->line('Chroniken der Asche informiert dich automatisch ueber relevante Aenderungen.');
+            ->line('Chroniken der Asche informiert dich automatisch über relevante Änderungen.');
 
         if ($this->moderationNote !== null) {
             $mailMessage->line('Hinweis: '.$this->moderationNote);
@@ -73,7 +73,7 @@ class PostModerationStatusNotification extends Notification
     {
         return [
             'kind' => 'post_moderation',
-            'title' => 'Moderationsstatus geaendert',
+            'title' => 'Moderationsstatus geändert',
             'message' => 'Dein Beitrag wurde von '.$this->moderator->name.' auf "'.$this->newStatus.'" gesetzt.'
                 .($this->moderationNote ? ' Grund: '.$this->moderationNote : ''),
             'action_url' => route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id,

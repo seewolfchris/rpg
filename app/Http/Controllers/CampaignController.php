@@ -143,6 +143,6 @@ class CampaignController extends Controller
 
         return redirect()
             ->route('campaigns.index')
-            ->with('status', 'Kampagne geloescht.');
+            ->with('status', 'Kampagne gelöscht.');
     }
 }

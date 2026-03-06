@@ -68,7 +68,7 @@
                     <article class="overflow-hidden rounded-xl border border-stone-800 bg-neutral-900/65 shadow-lg shadow-black/30">
                         <img
                             src="{{ $character->avatarUrl() }}"
-                            alt="Portraet von {{ $character->name }}"
+                            alt="Porträt von {{ $character->name }}"
                             class="h-48 w-full object-cover"
                             loading="lazy"
                         >

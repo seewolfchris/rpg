@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Kategorie bearbeiten · Enzyklopaedie Admin')
+@section('title', 'Kategorie bearbeiten · Enzyklopädie Admin')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -13,7 +13,7 @@
                 @csrf
                 @method('PUT')
                 @include('knowledge.admin.categories._form', [
-                    'submitLabel' => 'Aenderungen speichern',
+                    'submitLabel' => 'Änderungen speichern',
                     'category' => $category,
                 ])
             </form>
@@ -22,8 +22,8 @@
         <article class="rounded-2xl border border-stone-800 bg-black/40 p-6 shadow-xl shadow-black/30 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 class="font-heading text-2xl text-stone-100">Eintraege in {{ $category->name }}</h2>
-                    <p class="mt-1 text-sm text-stone-300">Sortierung ueber Position, Sichtbarkeit ueber Status steuern.</p>
+                    <h2 class="font-heading text-2xl text-stone-100">Einträge in {{ $category->name }}</h2>
+                    <p class="mt-1 text-sm text-stone-300">Sortierung über Position, Sichtbarkeit über Status steuern.</p>
                 </div>
                 <a
                     href="{{ route('knowledge.admin.kategorien.eintraege.create', $category) }}"
@@ -60,14 +60,14 @@
                                 >
                                     Bearbeiten
                                 </a>
-                                <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.destroy', [$category, $entry]) }}" onsubmit="return confirm('Eintrag wirklich loeschen?');">
+                                <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.destroy', [$category, $entry]) }}" onsubmit="return confirm('Eintrag wirklich löschen?');">
                                     @csrf
                                     @method('DELETE')
                                     <button
                                         type="submit"
                                         class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-500/20"
                                     >
-                                        Loeschen
+                                        Löschen
                                     </button>
                                 </form>
                             </div>
@@ -75,7 +75,7 @@
                     </article>
                 @empty
                     <p class="rounded-lg border border-stone-700/80 bg-neutral-900/70 p-4 text-sm text-stone-300">
-                        Noch keine Eintraege in dieser Kategorie.
+                        Noch keine Einträge in dieser Kategorie.
                     </p>
                 @endforelse
             </div>

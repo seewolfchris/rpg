@@ -52,7 +52,7 @@ class SceneNewPostNotification extends Notification
             ->line($this->author->name.' hat einen neuen Beitrag in der Szene "'.$this->post->scene->title.'" verfasst.')
             ->line(Str::limit(trim($this->post->content), 180))
             ->action('Zur Szene', $actionUrl)
-            ->line('Du kannst deine Benachrichtigungspraeferenzen jederzeit in deinem Profil anpassen.');
+            ->line('Du kannst deine Benachrichtigungspräferenzen jederzeit in deinem Profil anpassen.');
     }
 
     /**

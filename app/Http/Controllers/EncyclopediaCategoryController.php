@@ -86,6 +86,6 @@ class EncyclopediaCategoryController extends Controller
 
         return redirect()
             ->route('knowledge.admin.kategorien.index')
-            ->with('status', 'Kategorie geloescht.');
+            ->with('status', 'Kategorie gelöscht.');
     }
 }

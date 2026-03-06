@@ -9,7 +9,7 @@
             required
             maxlength="150"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-            placeholder="z. B. Die Schwaerze von Morhaven"
+            placeholder="z. B. Die Schwärze von Morhaven"
         >
         @error('title')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -26,7 +26,7 @@
             required
             maxlength="170"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-            placeholder="die-schwaerze-von-morhaven"
+            placeholder="die-finsternis-von-morhaven"
         >
         @error('slug')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -54,7 +54,7 @@
             name="lore"
             rows="8"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-            placeholder="Ausfuehrlicher Hintergrund zur Kampagne ..."
+            placeholder="Ausführlicher Hintergrund zur Kampagne ..."
         >{{ old('lore', $campaign->lore ?? '') }}</textarea>
         @error('lore')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -89,7 +89,7 @@
                     @checked(old('is_public', $campaign->is_public ?? false))
                     class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
                 >
-                Oeffentlich sichtbar
+                Öffentlich sichtbar
             </label>
         </div>
     </div>
@@ -140,4 +140,3 @@
         </a>
     </div>
 </div>
-

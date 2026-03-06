@@ -48,7 +48,7 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($invitations->isEmpty())
-                <p class="text-sm text-stone-400">Keine Einladungen fuer den gewaehlten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Einladungen für den gewählten Filter.</p>
             @else
                 <div class="space-y-3">
                     @foreach ($invitations as $invitation)
@@ -111,7 +111,7 @@
                                         href="{{ route('campaigns.show', $invitation->campaign) }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
-                                        Kampagne oeffnen
+                                        Kampagne öffnen
                                     </a>
                                 @endif
                             </div>

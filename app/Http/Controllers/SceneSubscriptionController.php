@@ -95,7 +95,7 @@ class SceneSubscriptionController extends Controller
             'mute_all_active' => 'Alle aktiven Abos stummgeschaltet.',
             'unmute_all_muted' => 'Alle stummen Abos aktiviert.',
             'unfollow_all_muted' => 'Alle stummen Abos entfernt.',
-            default => 'Bulk-Aktion ausgefuehrt.',
+            default => 'Bulk-Aktion ausgeführt.',
         };
 
         return redirect()
@@ -190,7 +190,7 @@ class SceneSubscriptionController extends Controller
         $subscription->last_read_at = now();
         $subscription->save();
 
-        return back()->with('status', 'Szene enthaelt noch keine Beitraege.');
+        return back()->with('status', 'Szene enthält noch keine Beiträge.');
     }
 
     public function markUnread(Campaign $campaign, Scene $scene): RedirectResponse

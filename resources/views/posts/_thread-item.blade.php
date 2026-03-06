@@ -87,14 +87,14 @@
             @endcan
 
             @can('delete', $post)
-                <form method="POST" action="{{ route('posts.destroy', $post) }}" onsubmit="return confirm('Beitrag wirklich loeschen?');">
+                <form method="POST" action="{{ route('posts.destroy', $post) }}" onsubmit="return confirm('Beitrag wirklich löschen?');">
                     @csrf
                     @method('DELETE')
                     <button
                         type="submit"
                         class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
                     >
-                        Loeschen
+                        Löschen
                     </button>
                 </form>
             @endcan
@@ -204,7 +204,7 @@
                 Neuer Gegenstand:
                 <span class="font-semibold text-emerald-100">{{ $inventoryAwardQuantity }}x {{ $inventoryAward['item'] }}</span>
                 @if ($inventoryAwardEquipped)
-                    <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgeruestet)</span>
+                    <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgerüstet)</span>
                 @endif
             </p>
         </section>

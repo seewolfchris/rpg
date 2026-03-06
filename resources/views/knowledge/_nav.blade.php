@@ -1,9 +1,9 @@
 @php
     $knowledgeTabs = [
-        ['route' => 'knowledge.index', 'label' => 'Uebersicht'],
+        ['route' => 'knowledge.index', 'label' => 'Übersicht'],
         ['route' => 'knowledge.how-to-play', 'label' => 'Wie spielt man?'],
         ['route' => 'knowledge.rules', 'label' => 'Regelwerk'],
-        ['route' => 'knowledge.encyclopedia', 'pattern' => 'knowledge.encyclopedia*', 'label' => 'Enzyklopaedie'],
+        ['route' => 'knowledge.encyclopedia', 'pattern' => 'knowledge.encyclopedia*', 'label' => 'Enzyklopädie'],
     ];
 @endphp
 

@@ -246,8 +246,8 @@
             {{ $isEdit ? 'Charakter neu schmieden' : 'Neuen Charakter in die Chronik schreiben' }}
         </h1>
         <p class="mt-3 max-w-4xl text-sm leading-relaxed text-stone-300 sm:text-base">
-            Erzeuge eine glaubhafte Figur zwischen Blutpforten, Aschefluch und bruechigen Schwueren.
-            Werte stuetzen die Geschichte, sie ersetzen sie nicht.
+            Erzeuge eine glaubhafte Figur zwischen Blutpforten, Aschefluch und brüchigen Schwüren.
+            Werte stützen die Geschichte, sie ersetzen sie nicht.
         </p>
     </header>
 
@@ -270,7 +270,7 @@
 
         <section class="grid gap-6 lg:grid-cols-2">
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
-                <h2 class="font-heading text-2xl text-stone-100">Identitaet</h2>
+                <h2 class="font-heading text-2xl text-stone-100">Identität</h2>
 
                 <div class="mt-4 space-y-4">
                     <div>
@@ -378,7 +378,7 @@
             <h2 class="font-heading text-2xl text-stone-100">Spezies</h2>
             <p class="mt-2 text-sm text-stone-300">Spezies-Boni werden sofort auf effektive Mindestwerte und LE/AE angewendet.</p>
             <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500" x-show="origin === 'real_world_beginner'" x-cloak>
-                Herkunft "Real-World Anfaenger": Nur Mensch ist verfuegbar.
+                Herkunft "Real-World Anfänger": Nur Mensch ist verfügbar.
             </p>
 
             <div class="mt-4 grid gap-3 lg:grid-cols-3">
@@ -415,7 +415,7 @@
 
             <p class="mt-2 text-sm" :class="averageValid ? 'text-emerald-200' : 'text-red-300'">
                 <span x-show="averageValid">Die Verteilung bleibt im erlaubten Bereich.</span>
-                <span x-show="!averageValid">Warnung: Der Durchschnitt liegt ueber {{ data_get($sheet, 'average_max', 50) }} %.</span>
+                <span x-show="!averageValid">Warnung: Der Durchschnitt liegt über {{ data_get($sheet, 'average_max', 50) }} %.</span>
             </p>
 
             <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -444,7 +444,7 @@
                             class="mt-3 w-full rounded-md border border-stone-600/80 bg-stone-900/70 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                         >
 
-                        <label for="attr-note-{{ $key }}" class="mt-3 block text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-stone-400">Narrative Auspraegung</label>
+                        <label for="attr-note-{{ $key }}" class="mt-3 block text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-stone-400">Narrative Ausprägung</label>
                         <textarea
                             id="attr-note-{{ $key }}"
                             name="{{ $key }}_note"
@@ -462,7 +462,7 @@
         <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <h2 class="font-heading text-2xl text-stone-100">Berufung</h2>
-                <p class="mt-2 text-sm text-stone-300">Mindestwerte werden gegen deine effektiven Attribute (inkl. Spezies) geprueft.</p>
+                <p class="mt-2 text-sm text-stone-300">Mindestwerte werden gegen deine effektiven Attribute (inkl. Spezies) geprüft.</p>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($callingOptions as $callingKey => $calling)
@@ -477,7 +477,7 @@
                 </div>
 
                 <div class="mt-5 rounded-xl border border-stone-700/80 bg-black/45 p-4">
-                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gewaehlte Berufung</h3>
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gewählte Berufung</h3>
                     <p class="mt-2 font-heading text-xl text-red-200" x-text="selectedCallingLabel"></p>
                     <p class="mt-2 text-sm leading-relaxed text-stone-300" x-text="selectedCallingDescription"></p>
 
@@ -496,8 +496,8 @@
                             </template>
                         </ul>
                         <p class="mt-3 text-sm" :class="callingRequirementsValid ? 'text-emerald-200' : 'text-red-300'">
-                            <span x-show="callingRequirementsValid">Mindestwerte sind erfuellt.</span>
-                            <span x-show="!callingRequirementsValid">Warnung: Berufungsvoraussetzungen sind nicht vollstaendig erfuellt.</span>
+                            <span x-show="callingRequirementsValid">Mindestwerte sind erfüllt.</span>
+                            <span x-show="!callingRequirementsValid">Warnung: Berufungsvoraussetzungen sind nicht vollständig erfüllt.</span>
                         </p>
                     </div>
 
@@ -526,7 +526,7 @@
                         </div>
                         <p class="md:col-span-2 text-sm" :class="customCallingValid ? 'text-emerald-200' : 'text-red-300'">
                             <span x-show="customCallingValid">Eigene Berufung ist ausreichend beschrieben.</span>
-                            <span x-show="!customCallingValid">Warnung: Fuer "Eigene" muessen Name und Beschreibung gesetzt sein.</span>
+                            <span x-show="!customCallingValid">Warnung: Für "Eigene" müssen Name und Beschreibung gesetzt sein.</span>
                         </p>
                     </div>
                 </div>
@@ -566,7 +566,7 @@
         <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
             <h2 class="font-heading text-2xl text-stone-100">Vorteile und Nachteile (1:1)</h2>
             <p class="mt-2 text-sm text-stone-300">
-                Waehle {{ $traitsMin }} bis {{ $traitsMax }} Vorteile und exakt gleich viele Nachteile.
+                Wähle {{ $traitsMin }} bis {{ $traitsMax }} Vorteile und exakt gleich viele Nachteile.
             </p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -652,8 +652,8 @@
                     Vorteile: <span class="font-semibold" x-text="advantages.length"></span>
                     | Nachteile: <span class="font-semibold" x-text="disadvantages.length"></span>
                 </p>
-                <p class="mt-1 text-sm" x-show="!traitsValid">Warnung: Vorteile und Nachteile muessen 1:1 und im erlaubten Bereich liegen.</p>
-                <p class="mt-1 text-sm" x-show="traitsValid">Paarung ist gueltig.</p>
+                <p class="mt-1 text-sm" x-show="!traitsValid">Warnung: Vorteile und Nachteile müssen 1:1 und im erlaubten Bereich liegen.</p>
+                <p class="mt-1 text-sm" x-show="traitsValid">Paarung ist gültig.</p>
             </div>
 
             <div class="mt-4">
@@ -675,7 +675,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h2 class="font-heading text-2xl text-stone-100">Inventar</h2>
-                        <p class="mt-1 text-sm text-stone-300">Gegenstaende, die dein Held besitzt oder findet.</p>
+                        <p class="mt-1 text-sm text-stone-300">Gegenstände, die dein Held besitzt oder findet.</p>
                     </div>
                     <button
                         type="button"
@@ -728,7 +728,7 @@
                         </div>
                     </template>
                 </div>
-                <p class="mt-2 text-xs text-stone-500">Leere Zeilen werden beim Speichern ignoriert. Gleiche Gegenstaende werden als Stack zusammengefuehrt.</p>
+                <p class="mt-2 text-xs text-stone-500">Leere Zeilen werden beim Speichern ignoriert. Gleiche Gegenstände werden als Stack zusammengeführt.</p>
             </article>
 
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
@@ -812,14 +812,14 @@
                         </div>
                     </template>
                 </div>
-                <p class="mt-2 text-xs text-stone-500">Schaden als feste Schadenspunkte (kein Wuerfelcode). Leere Waffenzeilen werden beim Speichern ignoriert.</p>
+                <p class="mt-2 text-xs text-stone-500">Schaden als feste Schadenspunkte (kein Würfelcode). Leere Waffenzeilen werden beim Speichern ignoriert.</p>
             </article>
 
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <h2 class="font-heading text-2xl text-stone-100">Ruestung</h2>
-                        <p class="mt-1 text-sm text-stone-300">Ruestungsschutz (RS) wird bei Angriffsschaden von LE-Verlusten abgezogen.</p>
+                        <h2 class="font-heading text-2xl text-stone-100">Rüstung</h2>
+                        <p class="mt-1 text-sm text-stone-300">Rüstungsschutz (RS) wird bei Angriffsschaden von LE-Verlusten abgezogen.</p>
                     </div>
                     <button
                         type="button"
@@ -827,7 +827,7 @@
                         @click="addArmor()"
                         :disabled="armors.length >= armorsMax"
                     >
-                        Ruestung +
+                        Rüstung +
                     </button>
                 </div>
 
@@ -843,7 +843,7 @@
                                         type="text"
                                         maxlength="120"
                                         class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30"
-                                        placeholder="z. B. Lederruestung"
+                                        placeholder="z. B. Lederrüstung"
                                     >
                                 </div>
                                 <div>
@@ -876,20 +876,20 @@
                                 @click="removeArmor(index)"
                                 :disabled="armors.length <= armorsMin"
                             >
-                                Ruestung entfernen
+                                Rüstung entfernen
                             </button>
                         </div>
                     </template>
                 </div>
                 <p class="mt-2 text-xs text-stone-500">
-                    Wenn keine Ruestung explizit als ausgeruestet markiert ist, wird die Summe aller RS-Eintraege verwendet.
+                    Wenn keine Rüstung explizit als ausgerüstet markiert ist, wird die Summe aller RS-Einträge verwendet.
                 </p>
             </article>
         </section>
 
         <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
             <h2 class="font-heading text-2xl text-stone-100">Avatar</h2>
-            <p class="mt-2 text-sm text-stone-300">Portraet deiner Figur fuer Szenenansicht und Steckbrief.</p>
+            <p class="mt-2 text-sm text-stone-300">Porträt deiner Figur für Szenenansicht und Steckbrief.</p>
 
             <div class="mt-4 space-y-3">
                 <input

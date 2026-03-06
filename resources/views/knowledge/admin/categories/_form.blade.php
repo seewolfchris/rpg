@@ -39,7 +39,7 @@
             name="summary"
             rows="3"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-            placeholder="Kurztext fuer Uebersicht und Kontext"
+            placeholder="Kurztext für Übersicht und Kontext"
         >{{ old('summary', $category->summary ?? '') }}</textarea>
         @error('summary')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -72,7 +72,7 @@
                     @checked(old('is_public', $category->is_public ?? true))
                     class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
                 >
-                Kategorie oeffentlich sichtbar
+                Kategorie öffentlich sichtbar
             </label>
             @error('is_public')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

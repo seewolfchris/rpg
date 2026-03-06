@@ -215,7 +215,7 @@ class SceneController extends Controller
 
         return redirect()
             ->route('campaigns.show', $campaign)
-            ->with('status', 'Szene geloescht.');
+            ->with('status', 'Szene gelöscht.');
     }
 
     public function inventoryQuickAction(
@@ -324,9 +324,9 @@ class SceneController extends Controller
                 ]);
         }
 
-        $statusLabel = $actionType === 'remove' ? 'entfernt' : 'hinzugefuegt';
+        $statusLabel = $actionType === 'remove' ? 'entfernt' : 'hinzugefügt';
         $displayQuantity = max(1, (int) ($result['quantity'] ?? $quantity));
-        $equippedLabel = (bool) ($result['equipped'] ?? false) ? ' (ausgeruestet)' : '';
+        $equippedLabel = (bool) ($result['equipped'] ?? false) ? ' (ausgerüstet)' : '';
         $statusMessage = 'Inventar-Schnellaktion: '.$displayQuantity.'x '.$item.$equippedLabel.' bei '.$result['character_name'].' '.$statusLabel.'.';
 
         if ($note !== '') {

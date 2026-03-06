@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Enzyklopaedie-Eintrag bearbeiten')
+@section('title', 'Enzyklopädie-Eintrag bearbeiten')
 
 @section('content')
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
@@ -12,7 +12,7 @@
             @csrf
             @method('PUT')
             @include('knowledge.admin.entries._form', [
-                'submitLabel' => 'Aenderungen speichern',
+                'submitLabel' => 'Änderungen speichern',
                 'category' => $category,
                 'entry' => $entry,
             ])

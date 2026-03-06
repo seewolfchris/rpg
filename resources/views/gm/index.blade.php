@@ -8,14 +8,14 @@
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Game Master Bereich</p>
             <h1 class="font-heading text-3xl text-stone-100">GM Hub</h1>
             <p class="font-body mt-3 text-stone-300">
-                Zentrale Werkzeuge fuer Moderation und Verwaltung.
+                Zentrale Werkzeuge für Moderation und Verwaltung.
             </p>
         </div>
 
         <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <h2 class="font-heading text-2xl text-stone-100">Moderations-Queue</h2>
             <p class="mt-3 text-sm text-stone-300">
-                Pruefe pending/approved/rejected Posts, filtere die Liste und setze Status direkt mit Quick-Buttons.
+                Prüfe pending/approved/rejected Posts, filtere die Liste und setze Status direkt mit Quick-Buttons.
             </p>
             <a
                 href="{{ route('gm.moderation.index') }}"

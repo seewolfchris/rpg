@@ -63,7 +63,7 @@
             </div>
 
             <div>
-                <label for="password_confirmation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Passwort bestaetigen</label>
+                <label for="password_confirmation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Passwort bestätigen</label>
                 <input
                     id="password_confirmation"
                     type="password"

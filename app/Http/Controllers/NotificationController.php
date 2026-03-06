@@ -26,7 +26,7 @@ class NotificationController extends Controller
 
         return redirect()
             ->route('notifications.preferences')
-            ->with('status', 'Benachrichtigungspraeferenzen gespeichert.');
+            ->with('status', 'Benachrichtigungspräferenzen gespeichert.');
     }
 
     public function index(Request $request): View

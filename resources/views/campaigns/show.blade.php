@@ -48,14 +48,14 @@
                 @endcan
 
                 @can('delete', $campaign)
-                    <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" onsubmit="return confirm('Kampagne wirklich loeschen?');">
+                    <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" onsubmit="return confirm('Kampagne wirklich löschen?');">
                         @csrf
                         @method('DELETE')
                         <button
                             type="submit"
                             class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
                         >
-                            Loeschen
+                            Löschen
                         </button>
                     </form>
                 @endcan
@@ -66,7 +66,7 @@
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Szenen</p>
-                    <h2 class="font-heading text-2xl text-stone-100">Thread-Uebersicht</h2>
+                    <h2 class="font-heading text-2xl text-stone-100">Thread-Übersicht</h2>
                 </div>
 
                 @can('create', [App\Models\Scene::class, $campaign])
@@ -109,7 +109,7 @@
             </form>
 
             @if ($scenes->isEmpty())
-                <p class="mt-4 text-sm text-stone-400">Keine Szenen fuer den gewaehlten Filter.</p>
+                <p class="mt-4 text-sm text-stone-400">Keine Szenen für den gewählten Filter.</p>
             @else
                 <div class="mt-5 space-y-3">
                     @foreach ($scenes as $scene)
@@ -170,7 +170,7 @@
                                         href="{{ route('campaigns.scenes.show', [$campaign, $scene]) }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
-                                        Oeffnen
+                                        Öffnen
                                     </a>
                                 </div>
                             </div>

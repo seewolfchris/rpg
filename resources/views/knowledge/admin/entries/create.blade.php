@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Enzyklopaedie-Eintrag erstellen')
+@section('title', 'Enzyklopädie-Eintrag erstellen')
 
 @section('content')
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">

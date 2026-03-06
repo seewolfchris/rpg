@@ -208,7 +208,7 @@
                             type="submit"
                             class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
                         >
-                            Bookmark loeschen
+                            Bookmark löschen
                         </button>
                     </form>
                 @endif
@@ -223,14 +223,14 @@
                 @endcan
 
                 @can('delete', $scene)
-                    <form method="POST" action="{{ route('campaigns.scenes.destroy', [$campaign, $scene]) }}" onsubmit="return confirm('Szene wirklich loeschen?');">
+                    <form method="POST" action="{{ route('campaigns.scenes.destroy', [$campaign, $scene]) }}" onsubmit="return confirm('Szene wirklich löschen?');">
                         @csrf
                         @method('DELETE')
                         <button
                             type="submit"
                             class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
                         >
-                            Szene loeschen
+                            Szene löschen
                         </button>
                     </form>
                 @endcan
@@ -238,7 +238,7 @@
 
             @if ($newPostsSinceLastRead > 0)
                 <p class="mt-4 rounded-md border border-amber-600/50 bg-amber-900/20 px-3 py-2 text-xs uppercase tracking-[0.08em] text-amber-200">
-                    {{ $newPostsSinceLastRead }} neue Beitraege wurden beim Oeffnen als gelesen markiert.
+                    {{ $newPostsSinceLastRead }} neue Beiträge wurden beim Öffnen als gelesen markiert.
                 </p>
             @elseif ($subscription && $subscription->last_read_at)
                 <p class="mt-4 text-xs uppercase tracking-[0.08em] text-stone-500">
@@ -257,7 +257,7 @@
             <section id="inventory-quick-action" class="rounded-2xl border border-emerald-800/40 bg-emerald-950/15 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
                 <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
                 <p class="mt-2 text-sm text-emerald-200/90">
-                    Gegenstaende direkt in der Szene hinzufuegen oder entfernen, ohne den Charakterbogen zu oeffnen.
+                    Gegenstände direkt in der Szene hinzufügen oder entfernen, ohne den Charakterbogen zu öffnen.
                 </p>
 
                 <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -271,7 +271,7 @@
                             required
                             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
                         >
-                            <option value="">Held waehlen</option>
+                            <option value="">Held wählen</option>
                             @foreach ($probeCharacters as $probeCharacter)
                                 <option value="{{ $probeCharacter->id }}" @selected((string) old('inventory_action_character_id') === (string) $probeCharacter->id)>
                                     {{ $probeCharacter->name }}
@@ -294,7 +294,7 @@
                             required
                             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
                         >
-                            <option value="add" @selected((string) old('inventory_action_type', 'add') === 'add')>Hinzufuegen</option>
+                            <option value="add" @selected((string) old('inventory_action_type', 'add') === 'add')>Hinzufügen</option>
                             <option value="remove" @selected((string) old('inventory_action_type') === 'remove')>Entfernen</option>
                         </select>
                         @error('inventory_action_type')
@@ -344,7 +344,7 @@
                             name="inventory_action_note"
                             value="{{ old('inventory_action_note') }}"
                             maxlength="180"
-                            placeholder="Kontext fuer den Log"
+                            placeholder="Kontext für den Log"
                             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
                         >
                         @error('inventory_action_note')
@@ -361,7 +361,7 @@
                                 @checked((bool) old('inventory_action_equipped', false))
                                 class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-emerald-500 focus:ring-emerald-500/60"
                             >
-                            Als ausgeruestet eintragen (nur bei "Hinzufuegen")
+                            Als ausgerüstet eintragen (nur bei "Hinzufügen")
                         </label>
                         @error('inventory_action_equipped')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -387,7 +387,7 @@
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
 
             @if ($posts->isEmpty())
-                <p class="mt-4 text-sm text-stone-400">Noch keine Beitraege in dieser Szene.</p>
+                <p class="mt-4 text-sm text-stone-400">Noch keine Beiträge in dieser Szene.</p>
             @else
                 @php
                     $pagePosts = $posts->getCollection();
@@ -399,11 +399,11 @@
                     <section class="rounded-xl border border-amber-700/30 bg-black/20 p-4">
                         <h3 class="font-heading text-xl text-amber-100">Abenteuerfluss (IC)</h3>
                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">
-                            Fokus auf In-Character-Posts fuer ungestoerten Lesefluss.
+                            Fokus auf In-Character-Posts für ungestörten Lesefluss.
                         </p>
 
                         @if ($icPosts->isEmpty())
-                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine IC-Beitraege vorhanden.</p>
+                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine IC-Beiträge vorhanden.</p>
                         @else
                             <div class="mt-4 space-y-4">
                                 @foreach ($icPosts as $post)
@@ -420,7 +420,7 @@
                         </p>
 
                         @if ($oocPosts->isEmpty())
-                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beitraege vorhanden.</p>
+                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
                         @else
                             <div class="mt-4 space-y-4">
                                 @foreach ($oocPosts as $post)
@@ -441,7 +441,7 @@
             <section id="new-post-form" class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
                 <h2 class="font-heading text-2xl text-stone-100">Neuer Beitrag</h2>
                 <p class="mt-2 text-xs text-stone-500">
-                    Offline-Modus: Beitraege werden lokal gequeued und bei wiederhergestellter Verbindung automatisch synchronisiert.
+                    Offline-Modus: Beiträge werden lokal gequeued und bei wiederhergestellter Verbindung automatisch synchronisiert.
                 </p>
                 <form
                     method="POST"
@@ -462,7 +462,7 @@
             </section>
         @else
             <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 text-sm text-stone-300 shadow-xl shadow-black/40 backdrop-blur-sm">
-                In dieser Szene sind aktuell keine neuen Beitraege moeglich.
+                In dieser Szene sind aktuell keine neuen Beiträge möglich.
             </section>
         @endcan
     </section>

@@ -78,7 +78,7 @@ class SceneBookmarkController extends Controller
 
             if (! $postBelongsToScene) {
                 throw ValidationException::withMessages([
-                    'post_id' => 'Der gewaehlte Post gehoert nicht zu dieser Szene.',
+                    'post_id' => 'Der gewählte Post gehört nicht zu dieser Szene.',
                 ]);
             }
         } else {

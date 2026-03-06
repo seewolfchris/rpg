@@ -7,7 +7,7 @@
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Persoenliche Navigation</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Persönliche Navigation</p>
                     <h1 class="font-heading text-3xl text-stone-100">Szenen-Bookmarks</h1>
                     <p class="mt-3 text-sm text-stone-300">Gespeicherte Marker: <span class="font-semibold text-amber-200">{{ $totalCount }}</span></p>
                 </div>
@@ -42,7 +42,7 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($bookmarks->isEmpty())
-                <p class="text-sm text-stone-400">Keine Bookmarks fuer den gewaehlten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Bookmarks für den gewählten Filter.</p>
             @else
                 <div class="space-y-3">
                     @foreach ($bookmarks as $bookmark)
@@ -71,7 +71,7 @@
                                             href="{{ $bookmarkJumpUrls[$bookmark->id] ?? route('campaigns.scenes.show', [$bookmarkScene->campaign, $bookmarkScene]) }}"
                                             class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
                                         >
-                                            Oeffnen
+                                            Öffnen
                                         </a>
 
                                         <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', [$bookmarkScene->campaign, $bookmarkScene]) }}">
