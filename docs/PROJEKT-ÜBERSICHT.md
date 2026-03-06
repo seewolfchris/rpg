@@ -12,6 +12,7 @@
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
 ## Letzte Aenderungen
+- `in Arbeit` (6. März 2026): Lore-Pack Schritt 6 „Heldenarchetypen & Berufungen“ mit 10 Enzyklopädie-Einträgen.
 - `in Arbeit` (6. März 2026): Lore-Pack Schritt 5 „Waffen, Rüstungen & Relikte“ mit 10 Enzyklopädie-Einträgen.
 - `in Arbeit` (6. März 2026): Lore-Pack Schritt 4 „Regionen & Städte“ mit 5 neuen Enzyklopädie-Einträgen.
 - `in Arbeit` (6. März 2026): Lore-Pack Schritt 3 „Monster & Bestiarium“ mit 12 Einträgen inkl. LE/RS/Angriff-Richtwerten.
