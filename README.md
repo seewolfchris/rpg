@@ -161,6 +161,17 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 
 Hinweis: Das ist Best-Effort. Vollstaendiger Schutz gegen Scraping erfordert zusaetzliche Webserver-/WAF-Regeln.
 
+
+## Rate Limiting fuer mutierende Routen
+
+Folgende zentrale Limiter sind fuer schreibende Endpunkte aktiv:
+
+- `writes`: **30 Requests/Minute je Nutzer/IP** fuer allgemeine Schreibaktionen (POST/PATCH/DELETE), z. B. Kampagnen/Szenen/Posts/Einladungen/Bookmarks/Subscriptions/Logout.
+- `moderation`: **15 Requests/Minute je Nutzer/IP** fuer Moderationsaktionen, z. B. Post-Freigabe/Ablehnung, Pin/Unpin, GM-Bulk-Moderation und Enzyklopaedie-Admin-CRUD.
+- `notifications`: **20 Requests/Minute je Nutzer/IP** fuer mutierende Benachrichtigungs-Routen (`read`, `read-all`, Preferences-Update).
+
+Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests`.
+
 ## Wichtige Routen
 
 - Landing: `/`

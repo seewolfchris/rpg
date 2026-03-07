@@ -13,7 +13,7 @@ fi
 # Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
 PHP_BIN="${PHP_BIN:-}"
 if [[ -z "$PHP_BIN" ]]; then
-  for candidate in /opt/plesk/php/8.5/bin/php /opt/plesk/php/8.4/bin/php /opt/plesk/php/8.3/bin/php; do
+  for candidate in /opt/plesk/php/8.5/bin/php; do
     if [[ -x "$candidate" ]]; then
       PHP_BIN="$candidate"
       break

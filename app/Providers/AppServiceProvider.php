@@ -41,13 +41,28 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by('password-update|'.$email.'|'.$request->ip());
         });
-
-        RateLimiter::for('posts', function (Request $request): Limit {
+        RateLimiter::for('writes', function (Request $request): Limit {
             $key = $request->user()
                 ? 'user:'.$request->user()->id
                 : 'ip:'.$request->ip();
 
-            return Limit::perMinute(20)->by($key);
+            return Limit::perMinute(30)->by('writes|'.$key);
+        });
+
+        RateLimiter::for('moderation', function (Request $request): Limit {
+            $key = $request->user()
+                ? 'user:'.$request->user()->id
+                : 'ip:'.$request->ip();
+
+            return Limit::perMinute(15)->by('moderation|'.$key);
+        });
+
+        RateLimiter::for('notifications', function (Request $request): Limit {
+            $key = $request->user()
+                ? 'user:'.$request->user()->id
+                : 'ip:'.$request->ip();
+
+            return Limit::perMinute(20)->by('notifications|'.$key);
         });
 
         View::composer('layouts.auth', function ($view): void {

@@ -72,78 +72,102 @@ Route::middleware('auth')->scopeBindings()->group(function () {
     Route::get('/leaderboard', [LeaderboardController::class, 'index'])
         ->name('leaderboard.index');
 
-    Route::resource('characters', CharacterController::class);
-    Route::resource('campaigns', CampaignController::class);
+    Route::resource('characters', CharacterController::class)
+        ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+    Route::resource('campaigns', CampaignController::class)
+        ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
     Route::get('/campaign-invitations', [CampaignInvitationController::class, 'index'])
         ->name('campaign-invitations.index');
     Route::patch('/campaign-invitations/{invitation}/accept', [CampaignInvitationController::class, 'accept'])
+        ->middleware('throttle:writes')
         ->name('campaign-invitations.accept');
     Route::patch('/campaign-invitations/{invitation}/decline', [CampaignInvitationController::class, 'decline'])
+        ->middleware('throttle:writes')
         ->name('campaign-invitations.decline');
     Route::post('/campaigns/{campaign}/invitations', [CampaignInvitationController::class, 'store'])
+        ->middleware('throttle:writes')
         ->name('campaigns.invitations.store');
     Route::delete('/campaigns/{campaign}/invitations/{invitation}', [CampaignInvitationController::class, 'destroy'])
+        ->middleware('throttle:writes')
         ->name('campaigns.invitations.destroy');
-    Route::resource('campaigns.scenes', SceneController::class)->except('index');
+    Route::resource('campaigns.scenes', SceneController::class)
+        ->except('index')
+        ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
     Route::get('/scene-subscriptions', [SceneSubscriptionController::class, 'index'])
         ->name('scene-subscriptions.index');
     Route::get('/bookmarks', [SceneBookmarkController::class, 'index'])
         ->name('bookmarks.index');
     Route::patch('/scene-subscriptions/bulk', [SceneSubscriptionController::class, 'bulkUpdate'])
+        ->middleware('throttle:writes')
         ->name('scene-subscriptions.bulk-update');
     Route::post('/campaigns/{campaign}/scenes/{scene}/subscribe', [SceneSubscriptionController::class, 'subscribe'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.subscribe');
     Route::delete('/campaigns/{campaign}/scenes/{scene}/subscribe', [SceneSubscriptionController::class, 'unsubscribe'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.unsubscribe');
     Route::patch('/campaigns/{campaign}/scenes/{scene}/subscription/mute', [SceneSubscriptionController::class, 'toggleMute'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.subscription.mute');
     Route::patch('/campaigns/{campaign}/scenes/{scene}/subscription/read', [SceneSubscriptionController::class, 'markRead'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.subscription.read');
     Route::patch('/campaigns/{campaign}/scenes/{scene}/subscription/unread', [SceneSubscriptionController::class, 'markUnread'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.subscription.unread');
     Route::post('/campaigns/{campaign}/scenes/{scene}/bookmark', [SceneBookmarkController::class, 'store'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.bookmark.store');
     Route::delete('/campaigns/{campaign}/scenes/{scene}/bookmark', [SceneBookmarkController::class, 'destroy'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.bookmark.destroy');
     Route::get('/notifications/preferences', [NotificationController::class, 'preferences'])
         ->name('notifications.preferences');
     Route::patch('/notifications/preferences', [NotificationController::class, 'updatePreferences'])
+        ->middleware('throttle:notifications')
         ->name('notifications.preferences.update');
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])
+        ->middleware('throttle:notifications')
         ->name('notifications.read-all');
     Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'read'])
+        ->middleware('throttle:notifications')
         ->name('notifications.read');
 
     Route::post('/campaigns/{campaign}/scenes/{scene}/posts', [PostController::class, 'store'])
-        ->middleware('throttle:posts')
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.posts.store');
     Route::post('/campaigns/{campaign}/scenes/{scene}/inventory-quick-action', [SceneController::class, 'inventoryQuickAction'])
+        ->middleware('throttle:writes')
         ->name('campaigns.scenes.inventory-quick-action');
 
     Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
         ->name('posts.edit');
 
     Route::patch('/posts/{post}', [PostController::class, 'update'])
-        ->middleware('throttle:posts')
+        ->middleware('throttle:writes')
         ->name('posts.update');
 
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])
+        ->middleware('throttle:writes')
         ->name('posts.destroy');
 
     Route::patch('/posts/{post}/moderate', [PostController::class, 'moderate'])
+        ->middleware('throttle:moderation')
         ->name('posts.moderate');
     Route::patch('/posts/{post}/pin', [PostController::class, 'pin'])
+        ->middleware('throttle:moderation')
         ->name('posts.pin');
     Route::patch('/posts/{post}/unpin', [PostController::class, 'unpin'])
+        ->middleware('throttle:moderation')
         ->name('posts.unpin');
 
     Route::get('/gm/moderation', [GmModerationController::class, 'index'])
         ->middleware('role:gm,admin')
         ->name('gm.moderation.index');
     Route::patch('/gm/moderation/bulk', [GmModerationController::class, 'bulkUpdate'])
-        ->middleware('role:gm,admin')
+        ->middleware(['role:gm,admin', 'throttle:moderation'])
         ->name('gm.moderation.bulk-update');
 
     Route::view('/gm', 'gm.index')
@@ -156,17 +180,20 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         ->group(function (): void {
             Route::resource('kategorien', EncyclopediaCategoryController::class)
                 ->parameters(['kategorien' => 'encyclopediaCategory'])
-                ->except(['show']);
+                ->except(['show'])
+                ->middlewareFor(['store', 'update', 'destroy'], 'throttle:moderation');
 
             Route::resource('kategorien.eintraege', EncyclopediaEntryController::class)
                 ->parameters([
                     'kategorien' => 'encyclopediaCategory',
                     'eintraege' => 'encyclopediaEntry',
                 ])
-                ->except(['show', 'index']);
+                ->except(['show', 'index'])
+                ->middlewareFor(['store', 'update', 'destroy'], 'throttle:moderation');
         });
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->middleware('throttle:writes')
         ->name('logout');
 });
 
