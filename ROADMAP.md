@@ -28,7 +28,7 @@ Stand: 2026-03-08
 | 9 | UI-Foundation I (Design-Tokens + UI-Komponenten) | Erledigt |
 | 10 | UI-Foundation II (Konsistenz-Pass Kernviews) | Erledigt |
 | 11 | GM-Flow-Polish (Jump/Pin/Quick-Action UX) | Erledigt |
-| 12 | Release-Kandidat (Doku-Konsolidierung + Bugburn) | In Arbeit |
+| 12 | Release-Kandidat (Doku-Konsolidierung + Bugburn) | Erledigt |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -42,6 +42,13 @@ Stand: 2026-03-08
   - `scripts/release_smoke.sh`
 - DB-Performance:
   - `database/migrations/2026_03_08_120000_add_hot_path_indexes_for_post_scene_and_invitation_queries.php`
+
+## Sprint-12 Abschluss (2026-03-08)
+- Release-Kandidat ist abgeschlossen.
+- Verifikation:
+  - `php artisan test --without-tty --do-not-cache-result` -> **125 passed, 632 assertions**
+  - `npm run build` -> **grün**
+  - `scripts/release_smoke.sh` -> **grün** (artisan fallback mode in restriktiver Local-Sandbox)
 
 ## Parking Lot (weiterhin bewusst nicht jetzt)
 - Push Notifications finalisieren.
