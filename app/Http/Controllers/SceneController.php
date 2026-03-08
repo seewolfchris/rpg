@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Scene\StoreSceneRequest;
+use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Domain\Scene\SceneInventoryQuickActionService;
+use App\Domain\Scene\ScenePostAnchorUrlService;
+use App\Domain\Scene\SceneReadTrackingService;
 use App\Http\Requests\Scene\StoreSceneInventoryActionRequest;
+use App\Http\Requests\Scene\StoreSceneRequest;
 use App\Http\Requests\Scene\UpdateSceneRequest;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
-use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
-use App\Support\CharacterInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SceneController extends Controller
@@ -24,7 +23,10 @@ class SceneController extends Controller
     private const THREAD_POSTS_PER_PAGE = 20;
 
     public function __construct(
-        private readonly CharacterInventoryService $inventoryService,
+        private readonly SceneReadTrackingService $sceneReadTrackingService,
+        private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
+        private readonly SceneInventoryQuickActionService $sceneInventoryQuickActionService,
+        private readonly CampaignParticipantResolver $campaignParticipantResolver,
     ) {}
 
     public function create(Campaign $campaign): View
@@ -70,48 +72,23 @@ class SceneController extends Controller
         $lastReadPostIdBeforeOpen = (int) ($subscription?->last_read_post_id ?? 0);
 
         if ($request->query('jump') === 'last_read' && $lastReadPostIdBeforeOpen > 0) {
-            $jumpUrl = $this->buildPostAnchorUrls($campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
+            $jumpUrl = $this->scenePostAnchorUrlService->build($campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
 
             if ($jumpUrl !== null) {
                 return redirect()->to($jumpUrl);
             }
         }
 
-        $latestPostId = (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->max('id');
+        $readTracking = $this->sceneReadTrackingService->synchronize(
+            scene: $scene,
+            subscription: $subscription,
+            lastReadPostIdBeforeOpen: $lastReadPostIdBeforeOpen,
+        );
 
-        $newPostsSinceLastRead = 0;
-        $hasUnreadPosts = false;
-        $firstUnreadPostId = 0;
-
-        if ($subscription) {
-            $hasUnreadPosts = $subscription->hasUnread($latestPostId);
-
-            if ($hasUnreadPosts) {
-                $newPostsSinceLastRead = $lastReadPostIdBeforeOpen > 0
-                    ? Post::query()
-                        ->where('scene_id', $scene->id)
-                        ->where('id', '>', $lastReadPostIdBeforeOpen)
-                        ->count()
-                    : Post::query()
-                        ->where('scene_id', $scene->id)
-                        ->count();
-
-                $firstUnreadPostId = (int) Post::query()
-                    ->where('scene_id', $scene->id)
-                    ->when(
-                        $lastReadPostIdBeforeOpen > 0,
-                        fn ($query) => $query->where('id', '>', $lastReadPostIdBeforeOpen),
-                    )
-                    ->orderBy('id')
-                    ->value('id');
-
-                $subscription->markRead($latestPostId);
-                $subscription->refresh();
-                $hasUnreadPosts = false;
-            }
-        }
+        $latestPostId = $readTracking->latestPostId;
+        $newPostsSinceLastRead = $readTracking->newPostsSinceLastRead;
+        $hasUnreadPosts = $readTracking->hasUnreadPosts;
+        $firstUnreadPostId = $readTracking->firstUnreadPostId;
 
         $posts = Post::query()
             ->where('scene_id', $scene->id)
@@ -139,7 +116,7 @@ class SceneController extends Controller
 
         $canModerateScene = auth()->user()->isGmOrAdmin() || $scene->campaign->isCoGm(auth()->user());
         $probeCharacters = $canModerateScene
-            ? $this->resolveProbeCharacters($campaign)
+            ? $this->campaignParticipantResolver->probeCharacters($campaign)
             : collect();
 
         $userBookmark = SceneBookmark::query()
@@ -156,7 +133,7 @@ class SceneController extends Controller
             ),
             static fn (int $postId): bool => $postId > 0
         ));
-        $postAnchorUrls = $this->buildPostAnchorUrls($campaign, $scene, $anchorTargetIds);
+        $postAnchorUrls = $this->scenePostAnchorUrlService->build($campaign, $scene, $anchorTargetIds);
 
         $pinnedPostJumpUrls = [];
         foreach ($pinnedPosts as $pinnedPost) {
@@ -240,85 +217,12 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToCampaign($campaign, $scene);
         $this->authorize('view', $scene);
 
-        $data = $request->validated();
-        $characterId = (int) $data['inventory_action_character_id'];
-        $actionType = (string) $data['inventory_action_type'];
-        $item = trim((string) $data['inventory_action_item']);
-        $quantity = max(1, min(999, (int) ($data['inventory_action_quantity'] ?? 1)));
-        $equipped = (bool) ($data['inventory_action_equipped'] ?? false);
-        $note = trim((string) ($data['inventory_action_note'] ?? ''));
-
-        $result = DB::transaction(function () use ($characterId, $actionType, $item, $quantity, $equipped, $note, $campaign, $scene): array {
-            $character = Character::query()
-                ->lockForUpdate()
-                ->find($characterId);
-
-            if (! $character) {
-                return ['status' => 'missing_character'];
-            }
-
-            $beforeInventory = $this->inventoryService->normalize($character->inventory ?? []);
-            $afterInventory = $beforeInventory;
-            $removedQuantity = 0;
-            $removedEquipped = null;
-
-            if ($actionType === 'remove') {
-                $removeResult = $this->inventoryService->remove($beforeInventory, $item, $quantity);
-                $afterInventory = $removeResult['inventory'];
-                $removedQuantity = (int) $removeResult['removed'];
-                $removedEquipped = $removeResult['removed_equipped'];
-
-                if ($removedQuantity <= 0) {
-                    return [
-                        'status' => 'item_not_found',
-                        'character_name' => (string) $character->name,
-                    ];
-                }
-            } else {
-                $afterInventory = $this->inventoryService->add(
-                    inventory: $beforeInventory,
-                    name: $item,
-                    quantity: $quantity,
-                    equipped: $equipped,
-                );
-            }
-
-            $character->inventory = $afterInventory;
-            $character->save();
-
-            if ($actionType === 'remove') {
-                $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
-                if ($operations === []) {
-                    $operations = [[
-                        'action' => 'remove',
-                        'item_name' => $item,
-                        'quantity' => $removedQuantity,
-                        'equipped' => (bool) ($removedEquipped ?? false),
-                    ]];
-                }
-            } else {
-                $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
-            }
-
-            $this->inventoryService->log(
-                character: $character,
-                actorUserId: (int) auth()->id(),
-                source: 'scene_inventory_quick_action',
-                operations: $operations,
-                note: $note !== '' ? $note : null,
-                context: [
-                    'campaign_id' => $campaign->id,
-                    'scene_id' => $scene->id,
-                ],
-            );
-
-            return [
-                'status' => 'ok',
-                'character_name' => (string) $character->name,
-                'quantity' => $actionType === 'remove' ? $removedQuantity : $quantity,
-                'equipped' => $actionType === 'remove' ? (bool) ($removedEquipped ?? false) : $equipped,
-            ];
-        });
+        $result = $this->sceneInventoryQuickActionService->execute(
+            campaign: $campaign,
+            scene: $scene,
+            actorUserId: (int) auth()->id(),
+            data: $request->validated(),
+        );
 
         if (($result['status'] ?? '') === 'item_not_found') {
             return redirect()
@@ -338,18 +242,9 @@ class SceneController extends Controller
                 ]);
         }
 
-        $statusLabel = $actionType === 'remove' ? 'entfernt' : 'hinzugefügt';
-        $displayQuantity = max(1, (int) ($result['quantity'] ?? $quantity));
-        $equippedLabel = (bool) ($result['equipped'] ?? false) ? ' (ausgerüstet)' : '';
-        $statusMessage = 'Inventar-Schnellaktion: '.$displayQuantity.'x '.$item.$equippedLabel.' bei '.$result['character_name'].' '.$statusLabel.'.';
-
-        if ($note !== '') {
-            $statusMessage .= ' Notiz: '.$note;
-        }
-
         return redirect()
             ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
-            ->with('status', $statusMessage);
+            ->with('status', (string) ($result['message'] ?? 'Inventar-Schnellaktion gespeichert.'));
     }
 
     private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void
@@ -374,69 +269,5 @@ class SceneController extends Controller
                 'last_read_at' => now(),
             ]);
         }
-    }
-
-    /**
-     * @param  array<int, int>  $postIds
-     * @return array<int, string>
-     */
-    private function buildPostAnchorUrls(Campaign $campaign, Scene $scene, array $postIds): array
-    {
-        $normalizedIds = array_values(array_unique(array_map(
-            static fn ($postId): int => (int) $postId,
-            array_filter($postIds, static fn ($postId): bool => (int) $postId > 0)
-        )));
-
-        if ($normalizedIds === []) {
-            return [];
-        }
-
-        $newerPostCounts = Post::query()
-            ->from('posts as current_posts')
-            ->selectRaw('current_posts.id as post_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
-            ->where('current_posts.scene_id', $scene->id)
-            ->whereIn('current_posts.id', $normalizedIds)
-            ->pluck('newer_posts_count', 'post_id');
-
-        $urls = [];
-
-        foreach ($newerPostCounts as $postId => $newerPostsCount) {
-            $postId = (int) $postId;
-            $page = intdiv((int) $newerPostsCount, self::THREAD_POSTS_PER_PAGE) + 1;
-
-            $urls[$postId] = route('campaigns.scenes.show', [
-                'campaign' => $campaign,
-                'scene' => $scene,
-                'page' => $page,
-            ]).'#post-'.$postId;
-        }
-
-        return $urls;
-    }
-
-    /**
-     * @return Collection<int, Character>
-     */
-    private function resolveProbeCharacters(Campaign $campaign): Collection
-    {
-        $participantUserIds = $campaign->invitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->pluck('user_id');
-
-        $participantUserIds = $participantUserIds
-            ->merge([(int) $campaign->owner_id])
-            ->unique()
-            ->values();
-
-        if ($participantUserIds->isEmpty()) {
-            return collect();
-        }
-
-        return Character::query()
-            ->whereIn('user_id', $participantUserIds)
-            ->with('user:id,name')
-            ->orderBy('name')
-            ->get(['id', 'user_id', 'name']);
     }
 }

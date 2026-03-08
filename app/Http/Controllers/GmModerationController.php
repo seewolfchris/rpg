@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Post\PostModerationService;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Post;
-use App\Models\PostModerationLog;
-use App\Models\User;
-use App\Notifications\PostModerationStatusNotification;
-use App\Support\Gamification\PointService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +13,7 @@ use Illuminate\View\View;
 class GmModerationController extends Controller
 {
     public function __construct(
-        private readonly PointService $pointService,
+        private readonly PostModerationService $postModerationService,
     ) {}
 
     public function index(Request $request): View
@@ -95,21 +92,10 @@ class GmModerationController extends Controller
 
             $post->save();
 
-            PostModerationLog::query()->create([
-                'post_id' => $post->id,
-                'moderator_id' => $moderator->id,
-                'previous_status' => $previousStatus,
-                'new_status' => $targetStatus,
-                'reason' => $moderationNote,
-                'created_at' => now(),
-            ]);
-
-            $this->pointService->syncApprovedPost($post);
-            $this->notifyAuthorAboutBulkModeration(
+            $this->postModerationService->synchronize(
                 post: $post,
                 moderator: $moderator,
                 previousStatus: $previousStatus,
-                newStatus: $targetStatus,
                 moderationNote: $moderationNote,
             );
 
@@ -159,29 +145,5 @@ class GmModerationController extends Controller
         $normalized = trim($note);
 
         return $normalized !== '' ? $normalized : null;
-    }
-
-    private function notifyAuthorAboutBulkModeration(
-        Post $post,
-        User $moderator,
-        string $previousStatus,
-        string $newStatus,
-        ?string $moderationNote,
-    ): void {
-        if ($post->user_id === $moderator->id) {
-            return;
-        }
-
-        if ($previousStatus === $newStatus && ! $moderationNote) {
-            return;
-        }
-
-        $post->user->notify(new PostModerationStatusNotification(
-            post: $post,
-            moderator: $moderator,
-            previousStatus: $previousStatus,
-            newStatus: $newStatus,
-            moderationNote: $moderationNote,
-        ));
     }
 }

@@ -38,26 +38,26 @@
                     @include('partials.pwa-install-button')
                     <a
                         href="{{ route('knowledge.index') }}"
-                        class="inline-flex items-center justify-center rounded-full border border-stone-600/70 bg-black/35 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100 sm:tracking-[0.14em]"
+                        class="ui-btn inline-flex !rounded-full sm:tracking-[0.14em]"
                     >
                         Wissen
                     </a>
                     @auth
                         <a
                             href="{{ route('dashboard') }}"
-                            class="inline-flex items-center justify-center rounded-full border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35 sm:tracking-[0.14em]"
+                            class="ui-btn ui-btn-success inline-flex !rounded-full sm:tracking-[0.14em]"
                         >
                             Dashboard
                         </a>
                     @else
                         <a
                             href="{{ $loginUrl }}"
-                            class="inline-flex items-center justify-center rounded-full border border-amber-500/70 bg-amber-500/15 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30 sm:tracking-[0.14em]"
+                            class="ui-btn ui-btn-accent inline-flex !rounded-full sm:tracking-[0.14em]"
                         >
                             Login
                         </a>
                     @endauth
-                    <div class="inline-flex items-center justify-center rounded-full border border-amber-500/40 bg-black/40 px-4 py-2 text-center text-xs uppercase tracking-[0.1em] text-amber-200/80 sm:tracking-[0.14em]">
+                    <div class="ui-badge inline-flex !rounded-full sm:tracking-[0.14em]">
                         PbP RPG Beta
                     </div>
                 </div>
@@ -80,44 +80,44 @@
                         @guest
                             <a
                                 href="{{ $registerUrl }}"
-                                class="inline-flex items-center justify-center rounded-md border border-amber-400/70 bg-amber-500/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                                class="ui-btn ui-btn-accent inline-flex px-6 py-3 text-sm"
                             >
                                 Jetzt mitspielen
                             </a>
                             <a
                                 href="{{ $loginUrl }}"
-                                class="inline-flex items-center justify-center rounded-md border border-stone-500/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-300 hover:text-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200"
+                                class="ui-btn inline-flex px-6 py-3 text-sm"
                             >
                                 Zum Login
                             </a>
                         @else
                             <a
                                 href="{{ route('dashboard') }}"
-                                class="inline-flex items-center justify-center rounded-md border border-emerald-600/70 bg-emerald-900/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-200 transition hover:bg-emerald-900/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                                class="ui-btn ui-btn-success inline-flex px-6 py-3 text-sm"
                             >
                                 Zum Dashboard
                             </a>
                         @endguest
                         <a
                             href="#welt"
-                            class="inline-flex items-center justify-center rounded-md border border-stone-500/60 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-300 hover:text-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-200"
+                            class="ui-btn inline-flex px-6 py-3 text-sm"
                         >
                             Welt entdecken
                         </a>
                         <a
                             href="{{ route('knowledge.encyclopedia') }}"
-                            class="inline-flex items-center justify-center rounded-md border border-red-800/70 bg-red-900/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-red-100 transition hover:bg-red-900/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+                            class="ui-btn ui-btn-danger inline-flex px-6 py-3 text-sm"
                         >
                             Direkt zur Enzyklopädie
                         </a>
                     </div>
 
                     <div class="mt-10 grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">
-                        <article class="rounded-lg border border-stone-700/70 bg-black/35 p-4 backdrop-blur-sm">
+                        <article class="ui-card-soft p-4">
                             <h2 class="text-xs uppercase tracking-[0.14em] text-stone-400">Kampagnenstil</h2>
                             <p class="mt-2 text-sm text-stone-200">Asynchrone Story-Threads mit IC/OOC-Tiefe.</p>
                         </article>
-                        <article class="rounded-lg border border-stone-700/70 bg-black/35 p-4 backdrop-blur-sm">
+                        <article class="ui-card-soft p-4">
                             <h2 class="text-xs uppercase tracking-[0.14em] text-stone-400">System</h2>
                             <p class="mt-2 text-sm text-stone-200">d100-Proben, Logbuch und narrative Konsequenzen.</p>
                         </article>
@@ -138,7 +138,7 @@
             </main>
 
             <section id="welt" class="mx-auto w-full max-w-6xl px-5 pb-20 sm:px-8">
-                <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+                <div class="ui-card p-6 sm:p-8">
                     <h2 class="font-heading text-3xl text-stone-100">Welt der letzten Schwüre</h2>
                     <p class="font-body mt-4 max-w-4xl text-lg leading-relaxed text-stone-300">
                         Nach dem Fall der Sonnenkronen regieren Splitterreiche mit kaltem Stahl und verbotener Liturgie. 

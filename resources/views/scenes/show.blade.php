@@ -4,7 +4,7 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <div class="ui-card p-6 sm:p-8">
             <a href="{{ route('campaigns.show', $campaign) }}" class="break-words text-xs uppercase tracking-[0.1em] text-amber-300 hover:text-amber-200">
                 Zur Kampagne: {{ $campaign->title }}
             </a>
@@ -22,28 +22,28 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
+                    <span class="ui-badge !rounded">
                         {{ $scene->status }}
                     </span>
                     @if ($scene->allow_ooc)
-                        <span class="rounded border border-emerald-600/60 bg-emerald-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-emerald-300">OOC ON</span>
+                        <span class="ui-badge !rounded !border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300">OOC ON</span>
                     @else
-                        <span class="rounded border border-red-700/60 bg-red-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-red-300">OOC OFF</span>
+                        <span class="ui-badge !rounded !border-red-700/60 !bg-red-900/20 !text-red-300">OOC OFF</span>
                     @endif
-                    <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
+                    <span class="ui-badge !rounded">
                         Follower: {{ $scene->subscriptions_count }}
                     </span>
                     @if ($subscription)
-                        <span class="rounded border {{ $subscription->is_muted ? 'border-red-700/60 bg-red-900/20 text-red-300' : 'border-emerald-600/60 bg-emerald-900/20 text-emerald-300' }} px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em]">
+                        <span class="ui-badge !rounded {{ $subscription->is_muted ? '!border-red-700/60 !bg-red-900/20 !text-red-300' : '!border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300' }}">
                             {{ $subscription->is_muted ? 'Abo stumm' : 'Abo aktiv' }}
                         </span>
                         @if ($latestPostId > 0)
-                            <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
+                            <span class="ui-badge !rounded">
                                 {{ $hasUnreadPosts ? 'Neu im Thread' : 'Thread gelesen' }}
                             </span>
                         @endif
                     @else
-                        <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
+                        <span class="ui-badge !rounded">
                             Nicht abonniert
                         </span>
                     @endif
@@ -51,18 +51,21 @@
             </div>
 
             @if ($scene->description)
-                <article class="mt-6 rounded-xl border border-stone-800 bg-neutral-900/50 p-5">
+                <article class="ui-card-soft mt-6 p-5">
                     <h2 class="font-heading text-xl text-stone-100">Szenenbeschreibung</h2>
                     <div class="mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $scene->description }}</div>
                 </article>
             @endif
 
             @if ($pinnedPosts->isNotEmpty())
-                <section class="mt-6 rounded-xl border border-amber-700/40 bg-amber-900/10 p-5">
-                    <h2 class="font-heading text-lg text-amber-100">Wichtige Pins</h2>
+                <section class="ui-card-soft mt-6 border-amber-700/40 bg-amber-900/10 p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="font-heading text-lg text-amber-100">Wichtige Pins</h2>
+                        <span class="ui-badge !border-amber-700/60 !bg-amber-950/30 !text-amber-100">{{ $pinnedPosts->count() }} aktiv</span>
+                    </div>
                     <ul class="mt-3 space-y-2">
                         @foreach ($pinnedPosts as $pinnedPost)
-                            <li class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-800/40 bg-black/30 px-3 py-2">
+                            <li class="ui-card-soft flex flex-wrap items-center justify-between gap-2 border-amber-800/40 bg-black/30 px-3 py-2">
                                 <p class="text-xs uppercase tracking-[0.08em] text-amber-200">
                                     #{{ $pinnedPost->id }} • {{ $pinnedPost->user->name }}
                                     @if ($pinnedPost->character)
@@ -75,7 +78,7 @@
                                 @if (! empty($pinnedPostJumpUrls[$pinnedPost->id]))
                                     <a
                                         href="{{ $pinnedPostJumpUrls[$pinnedPost->id] }}"
-                                        class="rounded-md border border-amber-500/70 bg-amber-500/20 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-amber-100 transition hover:bg-amber-500/30"
+                                        class="ui-btn ui-btn-accent !px-2.5 !py-1 !text-[0.65rem]"
                                     >
                                         Zum Pin
                                     </a>
@@ -86,11 +89,13 @@
                 </section>
             @endif
 
-            <div class="mt-6 flex flex-wrap items-center gap-3">
+            <div class="ui-card-soft mt-6 space-y-3 p-4">
+                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Schnellnavigation und Thread-Aktionen</p>
+                <div class="flex flex-wrap items-center gap-3">
                 @if ($jumpToLatestPostUrl)
                     <a
                         href="{{ $jumpToLatestPostUrl }}"
-                        class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="ui-btn"
                     >
                         Zum neuesten Post
                     </a>
@@ -98,7 +103,7 @@
                 @if ($jumpToLastReadUrl)
                     <a
                         href="{{ $jumpToLastReadUrl }}"
-                        class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="ui-btn"
                     >
                         Zum letzten Read
                     </a>
@@ -106,7 +111,7 @@
                 @if ($jumpToFirstUnreadUrl)
                     <a
                         href="{{ $jumpToFirstUnreadUrl }}"
-                        class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                        class="ui-btn ui-btn-accent"
                     >
                         Zum ersten neuen
                     </a>
@@ -114,7 +119,7 @@
                 @if ($bookmarkJumpUrl)
                     <a
                         href="{{ $bookmarkJumpUrl }}"
-                        class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
+                        class="ui-btn ui-btn-success"
                     >
                         Zum Bookmark
                     </a>
@@ -122,7 +127,7 @@
                 @can('create', [App\Models\Post::class, $scene])
                     <a
                         href="#new-post-form"
-                        class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="ui-btn"
                     >
                         Zum Schreibfeld
                     </a>
@@ -130,11 +135,12 @@
                 @if ($canModerateScene)
                     <a
                         href="#inventory-quick-action"
-                        class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
+                        class="ui-btn ui-btn-success"
                     >
                         Inventar-Schnellaktion
                     </a>
                 @endif
+                </div>
 
                 @if ($subscription)
                     <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', [$campaign, $scene]) }}">
@@ -142,7 +148,7 @@
                         @method('PATCH')
                         <button
                             type="submit"
-                            class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="ui-btn"
                         >
                             {{ $subscription->is_muted ? 'Stumm aus' : 'Stumm schalten' }}
                         </button>
@@ -153,7 +159,7 @@
                         @method('DELETE')
                         <button
                             type="submit"
-                            class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="ui-btn"
                         >
                             Entfolgen
                         </button>
@@ -164,7 +170,7 @@
                         @method('PATCH')
                         <button
                             type="submit"
-                            class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="ui-btn"
                         >
                             Als ungelesen
                         </button>
@@ -174,7 +180,7 @@
                         @csrf
                         <button
                             type="submit"
-                            class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                            class="ui-btn ui-btn-accent"
                         >
                             Folgen
                         </button>
@@ -194,7 +200,7 @@
                     >
                     <button
                         type="submit"
-                        class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
+                        class="ui-btn ui-btn-success"
                     >
                         {{ $userBookmark ? 'Bookmark aktualisieren' : 'Bookmark setzen' }}
                     </button>
@@ -206,7 +212,7 @@
                         @method('DELETE')
                         <button
                             type="submit"
-                            class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
+                            class="ui-btn ui-btn-danger"
                         >
                             Bookmark löschen
                         </button>
@@ -216,7 +222,7 @@
                 @can('update', $scene)
                     <a
                         href="{{ route('campaigns.scenes.edit', [$campaign, $scene]) }}"
-                        class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="ui-btn"
                     >
                         Szene bearbeiten
                     </a>
@@ -228,7 +234,7 @@
                         @method('DELETE')
                         <button
                             type="submit"
-                            class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
+                            class="ui-btn ui-btn-danger"
                         >
                             Szene löschen
                         </button>
@@ -237,7 +243,7 @@
             </div>
 
             @if ($newPostsSinceLastRead > 0)
-                <p class="mt-4 rounded-md border border-amber-600/50 bg-amber-900/20 px-3 py-2 text-xs uppercase tracking-[0.08em] text-amber-200">
+                <p class="ui-alert mt-4 !border-amber-600/50 !bg-amber-900/20 !px-3 !py-2 !text-xs uppercase tracking-[0.08em] !text-amber-200">
                     {{ $newPostsSinceLastRead }} neue Beiträge wurden beim Öffnen als gelesen markiert.
                 </p>
             @elseif ($subscription && $subscription->last_read_at)
@@ -254,7 +260,7 @@
         </div>
 
         @if ($canModerateScene)
-            <section id="inventory-quick-action" class="rounded-2xl border border-emerald-800/40 bg-emerald-950/15 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8">
                 <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
                 <p class="mt-2 text-sm text-emerald-200/90">
                     Gegenstände direkt in der Szene hinzufügen oder entfernen, ohne den Charakterbogen zu öffnen.
@@ -269,7 +275,7 @@
                             id="inventory_action_character_id"
                             name="inventory_action_character_id"
                             required
-                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                            class="w-full px-4 py-2.5 text-sm text-stone-100 sm:w-auto"
                         >
                             <option value="">Held wählen</option>
                             @foreach ($probeCharacters as $probeCharacter)
@@ -292,7 +298,7 @@
                             id="inventory_action_type"
                             name="inventory_action_type"
                             required
-                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                            class="w-full px-4 py-2.5 text-sm text-stone-100 sm:w-auto"
                         >
                             <option value="add" @selected((string) old('inventory_action_type', 'add') === 'add')>Hinzufügen</option>
                             <option value="remove" @selected((string) old('inventory_action_type') === 'remove')>Entfernen</option>
@@ -312,7 +318,7 @@
                             maxlength="180"
                             required
                             placeholder="z. B. Seil 10m lang"
-                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                            class="w-full px-4 py-2.5 text-sm text-stone-100 placeholder:text-stone-500"
                         >
                         @error('inventory_action_item')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -329,7 +335,7 @@
                             min="1"
                             max="999"
                             step="1"
-                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                            class="w-full px-4 py-2.5 text-sm text-stone-100"
                         >
                         @error('inventory_action_quantity')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -345,7 +351,7 @@
                             value="{{ old('inventory_action_note') }}"
                             maxlength="180"
                             placeholder="Kontext für den Log"
-                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/40"
+                            class="w-full px-4 py-2.5 text-sm text-stone-100 placeholder:text-stone-500"
                         >
                         @error('inventory_action_note')
                             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
@@ -371,7 +377,7 @@
                     <div class="md:col-span-2 xl:col-span-5 flex flex-wrap items-center gap-3">
                         <button
                             type="submit"
-                            class="rounded-md border border-emerald-500/70 bg-emerald-500/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100 transition hover:bg-emerald-500/30"
+                            class="ui-btn ui-btn-success"
                         >
                             Inventar aktualisieren
                         </button>
@@ -383,7 +389,7 @@
             </section>
         @endif
 
-        <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <section class="ui-card p-6 sm:p-8">
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
 
             @if ($posts->isEmpty())
@@ -396,7 +402,7 @@
                 @endphp
 
                 <div class="mt-5 space-y-6">
-                    <section class="rounded-xl border border-amber-700/30 bg-black/20 p-4">
+                    <section class="ui-card-soft border-amber-700/30 bg-black/20 p-4">
                         <h3 class="font-heading text-xl text-amber-100">Abenteuerfluss (IC)</h3>
                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">
                             Fokus auf In-Character-Posts für ungestörten Lesefluss.
@@ -413,7 +419,7 @@
                         @endif
                     </section>
 
-                    <section class="rounded-xl border border-stone-700/70 bg-neutral-900/35 p-4">
+                    <section class="ui-card-soft border-stone-700/70 bg-neutral-900/35 p-4">
                         <h3 class="font-heading text-xl text-stone-100">OOC-Kanal</h3>
                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">
                             Absprachen und Meta-Kommentare getrennt vom Abenteuerfluss.
@@ -438,7 +444,7 @@
         </section>
 
         @can('create', [App\Models\Post::class, $scene])
-            <section id="new-post-form" class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <section id="new-post-form" class="ui-card p-6 sm:p-8">
                 <h2 class="font-heading text-2xl text-stone-100">Neuer Beitrag</h2>
                 <p class="mt-2 text-xs text-stone-500">
                     Offline-Modus: Beiträge werden lokal gequeued und bei wiederhergestellter Verbindung automatisch synchronisiert.
@@ -461,7 +467,7 @@
                 </form>
             </section>
         @else
-            <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 text-sm text-stone-300 shadow-xl shadow-black/40 backdrop-blur-sm">
+            <section class="ui-card p-6 text-sm text-stone-300">
                 In dieser Szene sind aktuell keine neuen Beiträge möglich.
             </section>
         @endcan

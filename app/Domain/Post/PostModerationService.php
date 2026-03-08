@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Domain\Post;
+
+use App\Models\Post;
+use App\Models\PostModerationLog;
+use App\Models\User;
+use App\Notifications\PostModerationStatusNotification;
+use App\Support\Gamification\PointService;
+use App\Support\Observability\StructuredLogger;
+
+class PostModerationService
+{
+    public function __construct(
+        private readonly PointService $pointService,
+        private readonly StructuredLogger $logger,
+    ) {}
+
+    public function synchronize(
+        Post $post,
+        ?User $moderator,
+        string $previousStatus,
+        ?string $moderationNote = null,
+    ): void {
+        $newStatus = (string) $post->moderation_status;
+        $hasModerationChange = $previousStatus !== $newStatus || $moderationNote !== null;
+
+        if ($hasModerationChange) {
+            PostModerationLog::query()->create([
+                'post_id' => $post->id,
+                'moderator_id' => $moderator?->id,
+                'previous_status' => $previousStatus,
+                'new_status' => $newStatus,
+                'reason' => $moderationNote,
+                'created_at' => now(),
+            ]);
+
+            if ($moderator && $post->user_id !== $moderator->id) {
+                $post->loadMissing(['scene.campaign', 'user']);
+                $post->user->notify(new PostModerationStatusNotification(
+                    post: $post,
+                    moderator: $moderator,
+                    previousStatus: $previousStatus,
+                    newStatus: $newStatus,
+                    moderationNote: $moderationNote,
+                ));
+            }
+
+            $this->logger->info('moderation.post_status_changed', [
+                'user_id' => $moderator?->id,
+                'scene_id' => $post->scene_id,
+                'post_id' => $post->id,
+                'previous_status' => $previousStatus,
+                'new_status' => $newStatus,
+                'has_reason' => $moderationNote !== null,
+            ]);
+        }
+
+        $this->pointService->syncApprovedPost($post);
+    }
+}

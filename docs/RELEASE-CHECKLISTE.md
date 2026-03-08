@@ -10,8 +10,10 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 ## 2. Qualitaet lokal pruefen
 
+- Composer-Validierung:
+  - `composer validate --strict`
 - Tests:
-  - `php artisan test`
+  - `php artisan test --without-tty --do-not-cache-result`
 - Frontend-Build:
   - `npm run build`
 
@@ -55,6 +57,8 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 
 ## 6. Smoke-Test nach Deploy (5 Minuten)
 
+- Automatisierter Basissmoke:
+  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" scripts/release_smoke.sh`
 - Login/Logout funktioniert.
 - Dashboard laedt.
 - Charakter-Erstellung laedt ohne JS-Fehler.
