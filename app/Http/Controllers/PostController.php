@@ -2,35 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Post\PostModerationService;
+use App\Domain\Post\StorePostService;
 use App\Http\Requests\Post\ModeratePostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
-use App\Models\Character;
-use App\Models\DiceRoll;
 use App\Models\Post;
-use App\Models\PostModerationLog;
 use App\Models\Scene;
-use App\Models\SceneSubscription;
 use App\Models\User;
-use App\Notifications\PostModerationStatusNotification;
-use App\Notifications\SceneNewPostNotification;
-use App\Support\CharacterInventoryService;
 use App\Support\Gamification\PointService;
-use App\Support\ProbeRoller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class PostController extends Controller
 {
     public function __construct(
         private readonly PointService $pointService,
-        private readonly ProbeRoller $probeRoller,
-        private readonly CharacterInventoryService $inventoryService,
+        private readonly StorePostService $storePostService,
+        private readonly PostModerationService $postModerationService,
     ) {}
 
     public function store(StorePostRequest $request, Campaign $campaign, Scene $scene): RedirectResponse
@@ -42,49 +33,25 @@ class PostController extends Controller
         $user = $request->user();
         $isModerator = $this->canModerateScene($user, $scene);
 
-        $post = Post::query()->create([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-            'character_id' => $data['post_type'] === 'ic' ? $data['character_id'] : null,
-            'post_type' => $data['post_type'],
-            'content_format' => $data['content_format'],
-            'content' => $data['content'],
-            'meta' => null,
-            'moderation_status' => $isModerator ? 'approved' : 'pending',
-            'approved_at' => $isModerator ? now() : null,
-            'approved_by' => $isModerator ? $user->id : null,
-        ]);
-
-        $probeCreated = $this->createProbeRollForPostIfRequested(
-            post: $post,
-            data: $data,
-            user: $user,
+        $storedPost = $this->storePostService->store(
             scene: $scene,
+            user: $user,
+            data: $data,
             isModerator: $isModerator,
         );
-        $inventoryAwardApplied = $this->applyInventoryAwardForPostIfRequested(
-            post: $post,
-            data: $data,
-            scene: $scene,
-            isModerator: $isModerator,
-            user: $user,
-        );
-
-        $this->ensureAuthorSubscription($post, $user);
-        $this->pointService->syncApprovedPost($post);
-        $this->notifySceneParticipantsAboutNewPost($post, $user);
 
         $statusMessage = 'Beitrag gespeichert.';
-        if ($probeCreated && $inventoryAwardApplied !== null) {
+
+        if ($storedPost->probeCreated && $storedPost->inventoryAwardApplied) {
             $statusMessage = 'Beitrag, Probe und Inventar-Fund gespeichert.';
-        } elseif ($probeCreated) {
+        } elseif ($storedPost->probeCreated) {
             $statusMessage = 'Beitrag und Probe gespeichert.';
-        } elseif ($inventoryAwardApplied !== null) {
+        } elseif ($storedPost->inventoryAwardApplied) {
             $statusMessage = 'Beitrag und Inventar-Fund gespeichert.';
         }
 
         return redirect()
-            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id)
+            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$storedPost->post->id)
             ->with('status', $statusMessage);
     }
 
@@ -158,15 +125,12 @@ class PostController extends Controller
             'edited_at' => $hasContentChange ? now() : $post->edited_at,
         ]);
 
-        $this->createModerationAuditEntry(
+        $this->postModerationService->synchronize(
             post: $post,
             moderator: $isModerator ? $user : null,
             previousStatus: $previousModerationStatus,
-            newStatus: $moderationStatus,
-            reason: $moderationNote,
+            moderationNote: $moderationNote,
         );
-        $this->pointService->syncApprovedPost($post);
-        $this->notifyAuthorAboutModerationChange($post, $previousModerationStatus, $user, $moderationNote);
 
         $post->load('scene.campaign', 'scene');
 
@@ -211,15 +175,13 @@ class PostController extends Controller
         }
 
         $post->save();
-        $this->createModerationAuditEntry(
+
+        $this->postModerationService->synchronize(
             post: $post,
             moderator: $user,
             previousStatus: $previousModerationStatus,
-            newStatus: (string) $post->moderation_status,
-            reason: $moderationNote,
+            moderationNote: $moderationNote,
         );
-        $this->pointService->syncApprovedPost($post);
-        $this->notifyAuthorAboutModerationChange($post, $previousModerationStatus, $user, $moderationNote);
 
         return back()->with('status', 'Moderationsstatus aktualisiert.');
     }
@@ -284,59 +246,6 @@ class PostController extends Controller
         ]);
     }
 
-    private function notifyAuthorAboutModerationChange(
-        Post $post,
-        string $previousStatus,
-        User $moderator,
-        ?string $moderationNote = null,
-    ): void {
-        if ($post->moderation_status === $previousStatus && ! $moderationNote) {
-            return;
-        }
-
-        if ($post->user_id === $moderator->id) {
-            return;
-        }
-
-        $post->loadMissing(['scene.campaign', 'user']);
-
-        $post->user->notify(new PostModerationStatusNotification(
-            post: $post,
-            moderator: $moderator,
-            previousStatus: $previousStatus,
-            newStatus: (string) $post->moderation_status,
-            moderationNote: $moderationNote,
-        ));
-    }
-
-    private function notifySceneParticipantsAboutNewPost(Post $post, User $author): void
-    {
-        $post->loadMissing(['scene.campaign']);
-
-        $recipientIds = SceneSubscription::query()
-            ->where('scene_id', $post->scene_id)
-            ->where('user_id', '!=', $author->id)
-            ->where('is_muted', false)
-            ->pluck('user_id')
-            ->unique()
-            ->values();
-
-        if ($recipientIds->isEmpty()) {
-            return;
-        }
-
-        $recipients = User::query()->whereIn('id', $recipientIds)->get();
-
-        if ($recipients->isEmpty()) {
-            return;
-        }
-
-        Notification::send($recipients, new SceneNewPostNotification(
-            post: $post,
-            author: $author,
-        ));
-    }
-
     private function canModerateScene(User $user, Scene $scene): bool
     {
         return $user->isGmOrAdmin() || $scene->campaign->isCoGm($user);
@@ -347,294 +256,5 @@ class PostController extends Controller
         $normalized = trim($note);
 
         return $normalized !== '' ? $normalized : null;
-    }
-
-    private function createModerationAuditEntry(
-        Post $post,
-        ?User $moderator,
-        string $previousStatus,
-        string $newStatus,
-        ?string $reason,
-    ): void {
-        if ($previousStatus === $newStatus && ! $reason) {
-            return;
-        }
-
-        PostModerationLog::query()->create([
-            'post_id' => $post->id,
-            'moderator_id' => $moderator?->id,
-            'previous_status' => $previousStatus,
-            'new_status' => $newStatus,
-            'reason' => $reason,
-            'created_at' => now(),
-        ]);
-    }
-
-    private function ensureAuthorSubscription(Post $post, User $author): void
-    {
-        SceneSubscription::query()->firstOrCreate([
-            'scene_id' => $post->scene_id,
-            'user_id' => $author->id,
-        ], [
-            'is_muted' => false,
-            'last_read_post_id' => $post->id,
-            'last_read_at' => now(),
-        ]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    private function createProbeRollForPostIfRequested(
-        Post $post,
-        array $data,
-        User $user,
-        Scene $scene,
-        bool $isModerator,
-    ): bool {
-        $probeEnabled = (bool) ($data['probe_enabled'] ?? false);
-        if (! $probeEnabled || ! $isModerator) {
-            return false;
-        }
-
-        $explanation = trim((string) ($data['probe_explanation'] ?? ''));
-        if ($explanation === '') {
-            return false;
-        }
-
-        $modifier = (int) ($data['probe_modifier'] ?? 0);
-        $rollMode = (string) ($data['probe_roll_mode'] ?? 'normal');
-        $probeAttributeKey = (string) ($data['probe_attribute_key'] ?? '');
-        if ($probeAttributeKey === '') {
-            return false;
-        }
-
-        $rolled = $this->probeRoller->roll($rollMode, $modifier);
-        $targetCharacterId = (int) ($data['probe_character_id'] ?? 0);
-        if ($targetCharacterId <= 0) {
-            return false;
-        }
-
-        $participantUserIds = $scene->campaign->invitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->pluck('user_id')
-            ->push((int) $scene->campaign->owner_id)
-            ->unique();
-
-        $requestedLeDelta = (int) ($data['probe_le_delta'] ?? 0);
-        $requestedAeDelta = (int) ($data['probe_ae_delta'] ?? 0);
-
-        return DB::transaction(function () use (
-            $post,
-            $scene,
-            $user,
-            $targetCharacterId,
-            $participantUserIds,
-            $probeAttributeKey,
-            $rolled,
-            $explanation,
-            $requestedLeDelta,
-            $requestedAeDelta,
-        ): bool {
-            $targetCharacter = Character::query()
-                ->lockForUpdate()
-                ->find($targetCharacterId);
-
-            if (! $targetCharacter) {
-                return false;
-            }
-
-            if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
-                return false;
-            }
-
-            $effectiveAttributes = (array) ($targetCharacter->effective_attributes ?? []);
-            $probeTargetValue = array_key_exists($probeAttributeKey, $effectiveAttributes)
-                ? (int) max(0, min(100, (int) $effectiveAttributes[$probeAttributeKey]))
-                : null;
-            $probeSucceeded = $probeTargetValue !== null
-                ? (int) $rolled['total'] <= $probeTargetValue
-                : false;
-
-            $incomingDamage = 0;
-            $armorProtection = 0;
-            $damageAfterArmor = 0;
-            $effectiveLeDelta = $requestedLeDelta;
-
-            if ($requestedLeDelta < 0) {
-                $incomingDamage = abs($requestedLeDelta);
-                $armorProtection = max(0, $targetCharacter->armorProtectionValue());
-                $damageAfterArmor = max(0, $incomingDamage - $armorProtection);
-                $effectiveLeDelta = -$damageAfterArmor;
-            }
-
-            [$appliedLeDelta, $resultingLeCurrent] = $this->applyPoolDelta($targetCharacter, 'le', $effectiveLeDelta);
-            [$appliedAeDelta, $resultingAeCurrent] = $this->applyPoolDelta($targetCharacter, 'ae', $requestedAeDelta);
-
-            if ($targetCharacter->isDirty(['le_current', 'ae_current'])) {
-                $targetCharacter->save();
-            }
-
-            $post->diceRoll()->create([
-                'scene_id' => $scene->id,
-                'user_id' => $user->id,
-                'character_id' => $targetCharacter->id,
-                'roll_mode' => $rolled['mode'],
-                'modifier' => $rolled['modifier'],
-                'label' => $explanation,
-                'probe_attribute_key' => $probeAttributeKey,
-                'probe_target_value' => $probeTargetValue,
-                'probe_is_success' => $probeSucceeded,
-                'rolls' => $rolled['rolls'],
-                'kept_roll' => $rolled['kept_roll'],
-                'total' => $rolled['total'],
-                'applied_le_delta' => $appliedLeDelta,
-                'applied_ae_delta' => $appliedAeDelta,
-                'resulting_le_current' => $resultingLeCurrent,
-                'resulting_ae_current' => $resultingAeCurrent,
-                'is_critical_success' => $rolled['critical_success'],
-                'is_critical_failure' => $rolled['critical_failure'],
-                'created_at' => now(),
-            ]);
-
-            if ($incomingDamage > 0) {
-                $meta = is_array($post->meta) ? $post->meta : [];
-                $meta['probe_damage'] = [
-                    'requested_damage' => $incomingDamage,
-                    'armor_rs' => $armorProtection,
-                    'effective_damage' => $damageAfterArmor,
-                    'effective_le_delta' => $appliedLeDelta,
-                ];
-                $post->meta = $meta;
-                $post->save();
-            }
-
-            return true;
-        });
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array{character_id: int, character_name: string, item: string, quantity: int, equipped: bool}|null
-     */
-    private function applyInventoryAwardForPostIfRequested(
-        Post $post,
-        array $data,
-        Scene $scene,
-        bool $isModerator,
-        User $user,
-    ): ?array {
-        $awardEnabled = (bool) ($data['inventory_award_enabled'] ?? false);
-        if (! $awardEnabled || ! $isModerator) {
-            return null;
-        }
-
-        $targetCharacterId = (int) ($data['inventory_award_character_id'] ?? 0);
-        $item = trim((string) ($data['inventory_award_item'] ?? ''));
-        $quantity = max(1, min(999, (int) ($data['inventory_award_quantity'] ?? 1)));
-        $equipped = (bool) ($data['inventory_award_equipped'] ?? false);
-        if ($targetCharacterId <= 0 || $item === '') {
-            return null;
-        }
-
-        $participantUserIds = $scene->campaign->invitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->pluck('user_id')
-            ->push((int) $scene->campaign->owner_id)
-            ->unique();
-
-        return DB::transaction(function () use (
-            $post,
-            $targetCharacterId,
-            $participantUserIds,
-            $item,
-            $quantity,
-            $equipped,
-            $user,
-            $scene,
-        ): ?array {
-            $targetCharacter = Character::query()
-                ->lockForUpdate()
-                ->find($targetCharacterId);
-
-            if (! $targetCharacter) {
-                return null;
-            }
-
-            if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
-                return null;
-            }
-
-            $beforeInventory = $this->inventoryService->normalize($targetCharacter->inventory ?? []);
-            $afterInventory = $this->inventoryService->add(
-                inventory: $beforeInventory,
-                name: $item,
-                quantity: $quantity,
-                equipped: $equipped,
-            );
-
-            $targetCharacter->inventory = $afterInventory;
-            $targetCharacter->save();
-
-            $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
-            $this->inventoryService->log(
-                character: $targetCharacter,
-                actorUserId: $user->id,
-                source: 'post_inventory_award',
-                operations: $operations,
-                context: [
-                    'campaign_id' => $scene->campaign_id,
-                    'scene_id' => $scene->id,
-                    'post_id' => $post->id,
-                ],
-            );
-
-            $awardMeta = [
-                'character_id' => (int) $targetCharacter->id,
-                'character_name' => (string) $targetCharacter->name,
-                'item' => $item,
-                'quantity' => $quantity,
-                'equipped' => $equipped,
-            ];
-
-            $meta = is_array($post->meta) ? $post->meta : [];
-            $meta['inventory_award'] = $awardMeta;
-            $post->meta = $meta;
-            $post->save();
-
-            return $awardMeta;
-        });
-    }
-
-    /**
-     * @return array{0: int, 1: int|null}
-     */
-    private function applyPoolDelta(Character $character, string $poolPrefix, int $requestedDelta): array
-    {
-        $maxColumn = $poolPrefix.'_max';
-        $currentColumn = $poolPrefix.'_current';
-
-        $rawMax = $character->{$maxColumn};
-        $rawCurrent = $character->{$currentColumn};
-
-        if ($rawMax === null && $rawCurrent === null) {
-            return [0, null];
-        }
-
-        $maxValue = max((int) ($rawMax ?? $rawCurrent ?? 0), 0);
-        $currentValue = $this->clampInt((int) ($rawCurrent ?? $maxValue), 0, $maxValue);
-        $resultingValue = $this->clampInt($currentValue + $requestedDelta, 0, $maxValue);
-        $appliedDelta = $resultingValue - $currentValue;
-
-        if ($rawCurrent !== $resultingValue) {
-            $character->{$currentColumn} = $resultingValue;
-        }
-
-        return [$appliedDelta, $resultingValue];
-    }
-
-    private function clampInt(int $value, int $min, int $max): int
-    {
-        return max($min, min($value, $max));
     }
 }

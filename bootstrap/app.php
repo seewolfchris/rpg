@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ProtectAgainstCrawlers;
 use Illuminate\Foundation\Application;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            AttachRequestId::class,
             ProtectAgainstCrawlers::class,
         ]);
         $middleware->redirectGuestsTo(fn (Request $request) => route('login'));
