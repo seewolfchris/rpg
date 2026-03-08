@@ -39,15 +39,6 @@ Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia']
 Route::redirect('/hilfe', '/wissen', 301)
     ->name('help.index');
 
-Route::view('/impressum', 'legal.imprint')
-    ->name('legal.imprint');
-Route::view('/datenschutz', 'legal.privacy')
-    ->name('legal.privacy');
-Route::view('/copyright', 'legal.copyright')
-    ->name('legal.copyright');
-Route::redirect('/urheberrecht', '/copyright', 301)
-    ->name('legal.copyright.de');
-
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])
         ->name('register');
