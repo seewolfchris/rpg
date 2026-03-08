@@ -20,6 +20,7 @@ const STATIC_ASSETS = [
     '/fonts/DMSerifText-Regular.woff2',
     '/fonts/DMMono-Regular.woff2',
     '/js/character-sheet.global.js',
+    '/js/alpinejs-3.14.8.min.js',
 ];
 
 self.addEventListener('install', (event) => {

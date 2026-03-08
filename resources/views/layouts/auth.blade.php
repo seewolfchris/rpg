@@ -22,7 +22,10 @@
                 window.__startAlpine = startAlpine;
             };
         </script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+        @php($alpineScriptPath = public_path('js/alpinejs-3.14.8.min.js'))
+        @if (file_exists($alpineScriptPath))
+            <script defer src="{{ asset('js/alpinejs-3.14.8.min.js') }}?v={{ filemtime($alpineScriptPath) }}"></script>
+        @endif
 
         <title>@yield('title', config('app.name', 'Chroniken der Asche'))</title>
 
@@ -181,6 +184,9 @@
 
             <footer class="mx-auto w-full max-w-6xl px-5 pb-8 sm:px-8">
                 @include('partials.version-footer')
+                <div class="mt-3">
+                    @include('partials.legal-links')
+                </div>
             </footer>
         </div>
     </body>

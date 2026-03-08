@@ -207,6 +207,9 @@ Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests
 - Bookmarks: `/bookmarks`
 - Mitteilungen: `/notifications`
 - GM Hub: `/gm`
+- Impressum: `/impressum`
+- Datenschutz: `/datenschutz`
+- Urheberrecht: `/copyright` (Alias: `/urheberrecht`)
 
 ## Bekannte Grenzen (Beta)
 

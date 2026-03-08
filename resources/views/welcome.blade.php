@@ -153,6 +153,9 @@
                 <div class="mt-3">
                     @include('partials.version-footer')
                 </div>
+                <div class="mt-3">
+                    @include('partials.legal-links')
+                </div>
             </footer>
         </div>
     </body>
