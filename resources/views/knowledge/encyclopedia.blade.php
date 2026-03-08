@@ -10,7 +10,7 @@
             category: {{ \Illuminate\Support\Js::from($initialFilters['category'] ?? '') }},
         })"
     >
-        <header class="relative overflow-hidden rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <header class="ui-card relative overflow-hidden p-6 sm:p-8">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(168,85,39,0.26),transparent_42%),radial-gradient(circle_at_75%_30%,rgba(127,29,29,0.32),transparent_40%),linear-gradient(to_bottom,rgba(17,17,17,0.96),rgba(8,8,8,0.98))]"></div>
 
             <div class="flex flex-wrap items-start justify-between gap-4">
@@ -26,7 +26,7 @@
                 @if ($canManage)
                     <a
                         href="{{ route('knowledge.admin.kategorien.index') }}"
-                        class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                        class="ui-btn ui-btn-accent"
                     >
                         Enzyklopädie verwalten
                     </a>
@@ -40,7 +40,7 @@
             x-ref="filterForm"
             method="GET"
             action="{{ route('knowledge.encyclopedia') }}"
-            class="rounded-2xl border border-stone-800 bg-black/35 p-4 shadow-xl shadow-black/25 sm:p-6"
+            class="ui-card p-4 sm:p-6"
         >
             <div class="grid gap-3 sm:grid-cols-[2fr_auto_auto] sm:items-end">
                 <div>
@@ -76,14 +76,14 @@
                 <div class="flex flex-wrap gap-2 sm:justify-end">
                     <button
                         type="submit"
-                        class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                        class="ui-btn ui-btn-accent"
                     >
                         Filtern
                     </button>
                     <button
                         type="button"
                         @click="resetFilters"
-                        class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="ui-btn"
                     >
                         Reset
                     </button>
@@ -92,7 +92,7 @@
         </form>
 
         <div class="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
-            <aside class="hidden rounded-2xl border border-stone-800 bg-black/35 p-4 shadow-xl shadow-black/25 lg:block">
+            <aside class="ui-card hidden p-4 lg:block">
                 <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-400">Kategorien</p>
                 <div class="mt-3 space-y-2">
                     <button
@@ -118,7 +118,7 @@
             </aside>
 
             <section class="space-y-5">
-                <div class="rounded-xl border border-stone-800 bg-black/35 px-4 py-3 text-xs uppercase tracking-[0.12em] text-stone-400">
+                <div class="ui-card-soft px-4 py-3 text-xs uppercase tracking-[0.12em] text-stone-400">
                     @php($entryCount = $categories->sum(fn ($category) => $category->entries->count()))
                     <span>{{ $entryCount }} Einträge sichtbar</span>
                     @if ($selectedCategorySlug !== '')
@@ -132,7 +132,7 @@
                 </div>
 
                 @if ($categories->isEmpty())
-                    <article class="rounded-2xl border border-stone-800 bg-black/35 p-6 text-sm text-stone-300 sm:p-8">
+                    <article class="ui-card p-6 text-sm text-stone-300 sm:p-8">
                         Keine passenden Enzyklopädie-Einträge gefunden.
                     </article>
                 @else
@@ -148,7 +148,7 @@
 
                                 <div class="grid gap-4 md:grid-cols-2">
                                     @foreach ($category->entries as $entry)
-                                        <section class="group rounded-xl bg-zinc-900 border border-amber-950 p-5 shadow-2xl transition-all hover:scale-[1.02] hover:shadow-red-950/50">
+                                        <section class="ui-card-soft group border-amber-950 bg-zinc-900 p-5 shadow-2xl transition-all hover:scale-[1.02] hover:shadow-red-950/50">
                                             <div class="flex flex-wrap items-start justify-between gap-3">
                                                 <h3 class="font-heading text-xl text-stone-100">{{ $entry->title }}</h3>
                                                 <span class="rounded-full border border-stone-700/80 bg-black/45 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-stone-300">
@@ -169,7 +169,7 @@
                                             <div class="mt-4 text-right">
                                                 <a
                                                     href="{{ route('knowledge.encyclopedia.entry', [$category->slug, $entry->slug]) }}"
-                                                    class="inline-flex rounded-md border border-red-700/60 bg-red-900/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-100 transition hover:bg-red-900/35"
+                                                    class="ui-btn ui-btn-danger"
                                                 >
                                                     Mehr lesen
                                                 </a>

@@ -4,7 +4,7 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM Moderation</p>
@@ -14,33 +14,33 @@
 
                 <a
                     href="{{ route('gm.index') }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="ui-btn"
                 >
                     Zum GM Hub
                 </a>
             </div>
 
             <div class="mt-6 grid gap-3 sm:grid-cols-4">
-                <article class="rounded-lg border border-stone-800 bg-neutral-900/60 p-4">
+                <article class="ui-card-soft p-4">
                     <p class="text-xs uppercase tracking-[0.08em] text-stone-500">Gesamt</p>
                     <p class="mt-2 text-2xl font-semibold text-stone-100">{{ $totalCount }}</p>
                 </article>
-                <article class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
+                <article class="ui-card-soft border-amber-700/40 bg-amber-900/10 p-4">
                     <p class="text-xs uppercase tracking-[0.08em] text-amber-300">Ausstehend</p>
                     <p class="mt-2 text-2xl font-semibold text-amber-200">{{ $pendingCount }}</p>
                 </article>
-                <article class="rounded-lg border border-emerald-700/40 bg-emerald-900/10 p-4">
+                <article class="ui-card-soft border-emerald-700/40 bg-emerald-900/10 p-4">
                     <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">Freigegeben</p>
                     <p class="mt-2 text-2xl font-semibold text-emerald-200">{{ $approvedCount }}</p>
                 </article>
-                <article class="rounded-lg border border-red-700/40 bg-red-900/10 p-4">
+                <article class="ui-card-soft border-red-700/40 bg-red-900/10 p-4">
                     <p class="text-xs uppercase tracking-[0.08em] text-red-300">Abgelehnt</p>
                     <p class="mt-2 text-2xl font-semibold text-red-200">{{ $rejectedCount }}</p>
                 </article>
             </div>
         </div>
 
-        <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <section class="ui-card p-6 sm:p-8">
             <form method="GET" action="{{ route('gm.moderation.index') }}" class="grid gap-3 md:grid-cols-[1fr_auto_auto]">
                 <input
                     type="text"
@@ -62,13 +62,13 @@
 
                 <button
                     type="submit"
-                    class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="ui-btn ui-btn-accent"
                 >
                     Filtern
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('gm.moderation.bulk-update') }}" class="mt-4 space-y-3 rounded-lg border border-stone-800 bg-black/30 p-4">
+            <form method="POST" action="{{ route('gm.moderation.bulk-update') }}" class="ui-card-soft mt-4 space-y-3 p-4">
                 @csrf
                 @method('PATCH')
                 <input type="hidden" name="status" value="{{ $status }}">
@@ -99,7 +99,7 @@
 
                     <button
                         type="submit"
-                        class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                        class="ui-btn ui-btn-accent"
                     >
                         Bulk ausführen
                     </button>
@@ -107,13 +107,13 @@
             </form>
         </section>
 
-        <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <section class="ui-card p-6 sm:p-8">
             @if ($posts->isEmpty())
                 <p class="text-sm text-stone-400">Keine Posts für den gewählten Filter.</p>
             @else
                 <div class="space-y-4">
                     @foreach ($posts as $post)
-                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-5">
+                        <article class="ui-card-soft p-5">
                             <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <p class="text-sm text-stone-100">
@@ -147,12 +147,12 @@
                                 </span>
                             </div>
 
-                            <div class="mt-4 whitespace-pre-line rounded-lg border border-stone-800/70 bg-black/35 p-4 text-sm leading-relaxed text-stone-300">
+                            <div class="ui-card-soft mt-4 whitespace-pre-line p-4 text-sm leading-relaxed text-stone-300">
                                 {{ \Illuminate\Support\Str::limit($post->content, 420) }}
                             </div>
 
                             @if ($post->latestModerationLog && $post->latestModerationLog->reason)
-                                <div class="mt-4 rounded-lg border border-stone-800/70 bg-black/35 p-3">
+                                <div class="ui-card-soft mt-4 p-3">
                                     <p class="text-xs uppercase tracking-[0.08em] text-stone-500">
                                         Letzter Moderationshinweis
                                         @if ($post->latestModerationLog->moderator)
@@ -169,12 +169,12 @@
                             <div class="mt-4 space-y-3">
                                 <a
                                     href="{{ route('campaigns.scenes.show', [$post->scene->campaign, $post->scene]) }}#post-{{ $post->id }}"
-                                    class="inline-flex rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                    class="ui-btn"
                                 >
                                     In Szene ansehen
                                 </a>
 
-                                <form method="POST" action="{{ route('posts.moderate', $post) }}" class="space-y-3 rounded-lg border border-stone-800/80 bg-black/30 p-3">
+                                <form method="POST" action="{{ route('posts.moderate', $post) }}" class="ui-card-soft space-y-3 p-3">
                                     @csrf
                                     @method('PATCH')
                                     <label for="moderation_note_{{ $post->id }}" class="block text-xs uppercase tracking-[0.08em] text-stone-500">Moderationshinweis</label>
@@ -193,7 +193,7 @@
                                             name="moderation_status"
                                             value="approved"
                                             @disabled($post->moderation_status === 'approved')
-                                            class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35 disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="ui-btn ui-btn-success disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Freigeben
                                         </button>
@@ -202,7 +202,7 @@
                                             name="moderation_status"
                                             value="rejected"
                                             @disabled($post->moderation_status === 'rejected')
-                                            class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="ui-btn ui-btn-danger disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Ablehnen
                                         </button>
@@ -211,7 +211,7 @@
                                             name="moderation_status"
                                             value="pending"
                                             @disabled($post->moderation_status === 'pending')
-                                            class="rounded-md border border-amber-700/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-200 transition hover:bg-amber-900/35 disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="ui-btn ui-btn-accent disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Ausstehend
                                         </button>
