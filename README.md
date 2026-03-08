@@ -5,8 +5,11 @@ Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchro
 ## Dokumentations-Uebersicht
 
 - Projekt-Quickstart und Betrieb: `README.md`
+- Umsetzungsplan in klaren Sprints: `ROADMAP.md`
 - Master-Handbuch (fachliche Gesamtuebersicht): `docs/PROJEKT-ÜBERSICHT.md`
 - Release-Ablauf (Version + Deploy): `docs/RELEASE-CHECKLISTE.md`
+- Operations-Runbook (Incident + Logs): `docs/OPERATIONS_RUNBOOK.md`
+- Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment fuer Einsteiger: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
@@ -119,6 +122,14 @@ Gesamtsuite ausführen:
 php artisan test
 ```
 
+CI lokal spiegeln:
+
+```bash
+composer validate --strict
+php artisan test --without-tty --do-not-cache-result
+npm run build
+```
+
 Code-Style:
 
 ```bash
@@ -132,6 +143,18 @@ npm run build
 ```
 
 Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.global.js` aus `resources/js/character-sheet.js` (keine manuelle Doppelpflege mehr).
+
+Release-Smoke automatisiert:
+
+```bash
+scripts/release_smoke.sh
+```
+
+Optional gegen laufende Staging/Prod-Instanz:
+
+```bash
+SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" scripts/release_smoke.sh
+```
 
 ## Rollenmodell
 
@@ -192,3 +215,4 @@ Hinweis: Das ist Best-Effort. Vollstaendiger Schutz gegen Scraping erfordert zus
 - Anfänger-Guide: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub->Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 - Post-Deploy Script (für Plesk Git Actions): `scripts/plesk_post_deploy.sh`
+- CI Workflow: `.github/workflows/ci.yml`

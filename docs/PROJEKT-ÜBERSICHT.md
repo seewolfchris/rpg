@@ -1,8 +1,10 @@
-# Chroniken der Asche - Projekt-Uebersicht (Stand 5. Maerz 2026)
+# Chroniken der Asche - Projekt-Uebersicht (Stand 8. Maerz 2026)
 
 > Quicklinks:
 > - Technischer Einstieg: `README.md`
 > - Release-Checkliste: `docs/RELEASE-CHECKLISTE.md`
+> - Operations Runbook: `docs/OPERATIONS_RUNBOOK.md`
+> - Architekturentscheidungen: `docs/adr/`
 > - Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 > - GitHub/Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
@@ -12,6 +14,8 @@
 - PHP-Basis: `8.5.x` (Plesk + CLI)
 
 ## Letzte Aenderungen
+- `in Arbeit` (8. März 2026): 6-Monats-Fahrplan umgesetzt: Domain-Service-Entkopplung für Post/Scene, CI-Workflow, Release-Smoke-Skript, Hot-Path-Indizes und strukturiertes Logging mit `X-Request-Id`.
+- `in Arbeit` (8. März 2026): UI-Foundation auf Kernseiten (Landing, Dashboard, Szene, Enzyklopädie, GM-Moderation) mit konsolidierten `ui-*` Komponenten.
 - `in Arbeit` (6. März 2026): Schritt 7 Feinschliff – automatische Querverlinkungen, Bild-Prompt-Vorschläge und direkter Enzyklopädie-Link auf der Startseite.
 - `in Arbeit` (6. März 2026): Lore-Pack Schritt 6 „Heldenarchetypen & Berufungen“ mit 10 Enzyklopädie-Einträgen.
 - `in Arbeit` (6. März 2026): Lore-Pack Schritt 5 „Waffen, Rüstungen & Relikte“ mit 10 Enzyklopädie-Einträgen.
@@ -56,6 +60,11 @@
 | Push Notifications | Geplant | nach Beta-Phase |
 
 ## Wichtige technische Entscheidungen
+- Post-/Scene-Domänenlogik läuft über Services (`app/Domain/Post`, `app/Domain/Scene`), Controller orchestrieren nur noch Flows.
+- Es existiert ein verbindlicher CI-Workflow unter `.github/workflows/ci.yml` (`composer validate`, Tests, Frontend-Build).
+- Release-Smoke ist als Skript verfügbar: `scripts/release_smoke.sh`.
+- Requests erhalten eine `X-Request-Id`; strukturierte Domänenlogs enthalten `request_id`, `user_id`, `scene_id` und `post_id` für Incident-Korrelation.
+- Hot-Path-Indizes für `posts`, `scene_subscriptions`, `campaign_invitations` wurden ergänzt (Migration vom 8. März 2026).
 - Alle Tooling- und Deploy-Kommandos auf Server mit Plesk-PHP 8.5 ausfuehren:
   `/opt/plesk/php/8.5/bin/php artisan ...`
 - Charakterformular hat einen robusten globalen Bootstrap-Fallback (`public/js/character-sheet.global.js`), der automatisch aus `resources/js/character-sheet.js` synchronisiert wird.
