@@ -27,12 +27,12 @@ class LegalPagesTest extends TestCase
             ->assertOk()
             ->assertSee(route('legal.imprint'))
             ->assertSee(route('legal.privacy'))
-            ->assertSee(route('legal.copyright'));
+            ->assertSeeText('©2026 copyright by C. Sieber | all rights reserved');
 
         $this->get(route('login'))
             ->assertOk()
             ->assertSee(route('legal.imprint'))
             ->assertSee(route('legal.privacy'))
-            ->assertSee(route('legal.copyright'));
+            ->assertSeeText('©2026 copyright by C. Sieber | all rights reserved');
     }
 }
