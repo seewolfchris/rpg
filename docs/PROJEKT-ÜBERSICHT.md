@@ -1,7 +1,7 @@
 # Chroniken der Asche - Projekt-Uebersicht
 
 Stand: 2026-03-08  
-Repository-Referenz: `0940cb8` (main)
+Repository-Referenz: `f61ea18` (main)
 
 ## Quicklinks
 - Einstieg und Setup: `README.md`
@@ -16,12 +16,16 @@ Repository-Referenz: `0940cb8` (main)
 - Produktstatus: **Release-Beta in stabilisiertem Zustand**.
 - Roadmap-Status: **12/12 Sprints abgeschlossen** (siehe `ROADMAP.md`).
 - Laufende Versionslinie: **`v0.17-beta`**.
-- Aktuelle Qualitaetslage (lokal verifiziert auf `0940cb8`):
-  - `php artisan test --without-tty --do-not-cache-result` -> **129 passed, 651 assertions**
+- Aktuelle Qualitaetslage (lokal verifiziert auf `f61ea18`):
+  - `php artisan test --without-tty --do-not-cache-result` -> **131 passed, 665 assertions**
   - `npm run build` -> **gruen**
 - Delivery-Basis ist etabliert:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`)
+- Compliance-Basis ist umgesetzt:
+  - Rechtliche Seiten (`/impressum`, `/datenschutz`, `/copyright`)
+  - Footer-Links auf allen sichtbaren Seiten
+  - Repo-Lizenz klar als proprietär (`LICENSE`, Composer-Metadaten)
 
 ## 2) Produktstatus nach Domainen
 
@@ -34,6 +38,7 @@ Repository-Referenz: `0940cb8` (main)
 | GM-Inventar-Operationen | Stabil | Post-Award + Szenen-Quick-Action + Audit-Log |
 | Benachrichtigungen (Inbox/Mail) | Stabil | Praeferenzgesteuert pro Kanal |
 | Browser-Benachrichtigungen | Aktiv | Permission + Polling + Service-Worker Notification Click |
+| Rechtliche Seiten | Aktiv | Impressum, Datenschutz und Copyright-Seite integriert |
 | Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation vorhanden |
 | Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
 | Wissenszentrum / Enzyklopaedie | Stabil | Oeffentliche Seiten + GM/Admin-Redaktion |
@@ -68,6 +73,9 @@ Hinweis zu "Push":
   - Anzeige per Service Worker `showNotification` (Fallback: `new Notification()`)
 - Service Worker:
   - `notificationclick` fuehrt auf `action_url` und fokussiert vorhandene Tabs
+- Frontend-Auslieferung:
+  - Alpine wird lokal gehostet (`public/js/alpinejs-3.14.8.min.js`)
+  - keine Laufzeit-Abhängigkeit zu externem Script-CDN für Alpine
 
 ### 3.3 Datenbank / Performance
 - Hot-Path-Indizes sind vorhanden:
@@ -98,6 +106,8 @@ Hinweis zu "Push":
   - `scripts/release_smoke.sh`
 - Plesk Post-Deploy:
   - `scripts/plesk_post_deploy.sh`
+- Rechtliche Mindestsichtbarkeit:
+  - Footer enthält auf allen sichtbaren Seiten Links zu Impressum und Datenschutz.
 
 ### 4.3 Versionierung
 - Sichtbare Version ueber `APP_VERSION`.
@@ -107,13 +117,15 @@ Hinweis zu "Push":
   - `php artisan config:cache`
 
 ## 5) Qualitaetsstatus und Testabdeckung
-- Test-Suite ist gruener Referenzstand auf `0940cb8`:
-  - **129 Tests passed**
-  - **651 Assertions**
+- Test-Suite ist gruener Referenzstand auf `f61ea18`:
+  - **131 Tests passed**
+  - **665 Assertions**
 - Notification-Erweiterung ist testseitig abgedeckt durch:
   - Praeferenz-Tests (inkl. Browser-Kanal-Regeln)
   - Poll-Endpunkt-Tests (`tests/Feature/NotificationPollTest.php`)
   - bestehende Workflow- und Subscription-Tests
+- Rechtliche Seiten sind testseitig abgedeckt durch:
+  - `tests/Feature/LegalPagesTest.php`
 
 ## 6) Offene Risiken und technische Restthemen
 - Kein Realtime/WebSocket-Backbone (bewusste Produktentscheidung fuer asynchrones PbP).
@@ -127,11 +139,11 @@ Hinweis zu "Push":
 4. Doku-Disziplin beibehalten: nach jedem Release mindestens `README`, `ROADMAP`, `docs/PROJEKT-ÜBERSICHT.md`, `docs/RELEASE-CHECKLISTE.md` abgleichen.
 
 ## 8) Letzte relevante Commits
+- `f61ea18` - Proprietäre Lizenzdatei ergänzt und Composer-Lizenzmetadaten ausgerichtet.
+- `6237c3d` - Footer-Rechtsstruktur auf Impressum/Datenschutz + Rights-Notice umgestellt.
+- `15f6b22` - Rechtliche Seiten ergänzt und Alpine lokal gehostet (CDN entfernt).
 - `0940cb8` - Browser notification polling + permission flow + Poll-Tests.
 - `f00cfd6` - Sprint-12/Roadmap-Dokumentation auf abgeschlossen gesetzt.
-- `f1eceea` - sichtbare Version auf `v0.17-beta` angehoben.
-- `d01bffa` - CI + Release-Smoke + Operations-Runbook eingebracht.
-- `2b30f31` - Post-/Scene-Domain-Services eingefuehrt.
 
 ---
 Diese Datei ist der operative Master-Status fuer Produkt, Technik und Delivery.

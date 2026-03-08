@@ -11,7 +11,7 @@ return [
         'responsible_name' => env('LEGAL_RESPONSIBLE_NAME', 'Christoph Sieber'),
         'responsible_address' => env('LEGAL_RESPONSIBLE_ADDRESS', "Bachstraße 3\n27570 Bremerhaven\nDeutschland"),
         'contact_email' => env('LEGAL_CONTACT_EMAIL', 'admin@c76.org'),
-        'contact_phone' => env('LEGAL_CONTACT_PHONE', 'Bitte Telefonnummer ergänzen (falls gewünscht).'),
+        'contact_phone' => env('LEGAL_CONTACT_PHONE', 'auf Anfrage per E-Mail'),
         'content_responsible' => env('LEGAL_CONTENT_RESPONSIBLE', 'Christoph Sieber, Bachstraße 3, 27570 Bremerhaven'),
     ],
 

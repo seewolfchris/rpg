@@ -5,14 +5,15 @@
 @section('content')
     @php($imprint = config('legal.imprint', []))
     @php($sourceImprintUrl = (string) data_get(config('legal.source', []), 'imprint_url', ''))
+    @php($phone = trim((string) data_get($imprint, 'contact_phone', '')))
+    @php($phone = $phone !== '' ? $phone : 'auf Anfrage per E-Mail')
 
     <section class="mx-auto w-full max-w-4xl space-y-6">
         <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Rechtliches</p>
             <h1 class="font-heading text-3xl text-stone-100">Impressum</h1>
             <p class="mt-3 text-sm text-stone-300">
-                Diese Seite enthält ausfüllbare Pflichtangaben für den Anbieter nach deutschem Recht.
-                Bitte alle Platzhalter vor dem produktiven Betrieb vervollständigen.
+                Diese Seite enthält Pflichtangaben für den Anbieter nach deutschem Recht.
             </p>
             <p class="mt-2 text-sm text-stone-400">
                 {{ data_get($imprint, 'scope_note', 'Dieses Impressum gilt für c76.org und zugehörige Subdomains, inklusive rpg.c76.org.') }}
@@ -52,7 +53,7 @@
                 </div>
                 <div>
                     <dt class="font-semibold text-stone-200">Telefon</dt>
-                    <dd>{{ data_get($imprint, 'contact_phone', 'Bitte Telefonnummer eintragen') }}</dd>
+                    <dd>{{ $phone }}</dd>
                 </div>
             </dl>
         </article>

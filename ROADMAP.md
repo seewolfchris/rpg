@@ -1,6 +1,6 @@
 # ROADMAP - Chroniken der Asche (6 Monate)
 
-Status: aktiv  
+Status: 6-Monats-Plan abgeschlossen, Betrieb in Stabilisierung  
 Stand: 2026-03-08
 
 ## Zielbild
@@ -45,12 +45,27 @@ Stand: 2026-03-08
 
 ## Sprint-12 Abschluss (2026-03-08)
 - Release-Kandidat ist abgeschlossen.
-- Verifikation:
-  - `php artisan test --without-tty --do-not-cache-result` -> **125 passed, 632 assertions**
+- Verifikation (aktualisiert):
+  - `php artisan test --without-tty --do-not-cache-result` -> **131 passed, 665 assertions**
   - `npm run build` -> **grün**
   - `scripts/release_smoke.sh` -> **grün** (artisan fallback mode in restriktiver Local-Sandbox)
 
+## Nach Sprint-12 umgesetzt (Stabilisierung/Compliance)
+- Browser-Benachrichtigungen finalisiert (Permission-Flow, Polling-Endpunkt, Service-Worker-Klickverhalten, Feature-Tests).
+- Rechtliche Seiten ergänzt und verlinkt:
+  - `/impressum`
+  - `/datenschutz`
+  - `/copyright` (Alias `/urheberrecht`)
+- Footer auf allen sichtbaren Seiten vereinheitlicht:
+  - Links zu Impressum + Datenschutz
+  - Rights-Hinweis: `©2026 copyright by C. Sieber | all rights reserved`
+- Externe Frontend-CDN-Abhängigkeit entfernt:
+  - Alpine wird lokal ausgeliefert (`public/js/alpinejs-3.14.8.min.js`).
+- Lizenzlage im Repo klargestellt:
+  - `LICENSE` (proprietär / all rights reserved)
+  - `composer.json` Lizenzmetadaten auf `proprietary`.
+
 ## Parking Lot (weiterhin bewusst nicht jetzt)
-- Push Notifications finalisieren.
+- Echten Web-Push (VAPID/Subscription-Management) nur bei Bedarf als separates Folgeprojekt.
 - Realtime/WebSockets.
 - Externe Media/CDN-Optimierung.
