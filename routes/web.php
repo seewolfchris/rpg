@@ -128,6 +128,9 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         ->name('notifications.preferences.update');
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
+    Route::get('/notifications/poll', [NotificationController::class, 'poll'])
+        ->middleware('throttle:notifications')
+        ->name('notifications.poll');
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])
         ->middleware('throttle:notifications')
         ->name('notifications.read-all');

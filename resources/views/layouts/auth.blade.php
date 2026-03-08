@@ -161,6 +161,24 @@
                 @yield('content')
             </main>
 
+            @auth
+                @php(
+                    $browserNotificationKinds = collect(auth()->user()->resolvedNotificationPreferences())
+                        ->filter(fn (array $channels): bool => (bool) ($channels['browser'] ?? false))
+                        ->keys()
+                        ->values()
+                        ->all()
+                )
+                <div
+                    data-browser-notifications
+                    data-poll-url="{{ route('notifications.poll') }}"
+                    data-enabled-kinds='@json($browserNotificationKinds)'
+                    data-app-name="{{ config('app.name', 'Chroniken der Asche') }}"
+                    class="hidden"
+                    aria-hidden="true"
+                ></div>
+            @endauth
+
             <footer class="mx-auto w-full max-w-6xl px-5 pb-8 sm:px-8">
                 @include('partials.version-footer')
             </footer>

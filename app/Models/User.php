@@ -23,14 +23,17 @@ class User extends Authenticatable
         'post_moderation' => [
             'database' => true,
             'mail' => false,
+            'browser' => false,
         ],
         'scene_new_post' => [
             'database' => true,
             'mail' => false,
+            'browser' => false,
         ],
         'campaign_invitation' => [
             'database' => true,
             'mail' => false,
+            'browser' => false,
         ],
     ];
 

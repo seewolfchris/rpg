@@ -12,6 +12,21 @@
                     <p class="mt-2 text-sm text-stone-300">
                         Ungelesen: <span class="font-semibold text-amber-200">{{ $unreadCount }}</span>
                     </p>
+                    <div class="mt-4 rounded-xl border border-stone-700/80 bg-neutral-900/60 px-4 py-3">
+                        <p class="text-xs uppercase tracking-[0.08em] text-stone-400">Browser-Push</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                            <p class="text-sm text-stone-300" data-browser-notifications-status>
+                                Browser-Benachrichtigungen werden geprüft.
+                            </p>
+                            <button
+                                type="button"
+                                data-browser-notifications-enable
+                                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                            >
+                                Browser-Permission aktivieren
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">

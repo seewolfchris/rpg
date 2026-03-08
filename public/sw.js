@@ -100,6 +100,58 @@ self.addEventListener('sync', (event) => {
     }
 });
 
+self.addEventListener('notificationclick', (event) => {
+    event.notification?.close();
+
+    const rawActionUrl = event.notification?.data?.actionUrl;
+
+    if (typeof rawActionUrl !== 'string' || rawActionUrl.trim() === '') {
+        return;
+    }
+
+    event.waitUntil(
+        (async () => {
+            let targetUrl;
+
+            try {
+                targetUrl = new URL(rawActionUrl, self.location.origin).toString();
+            } catch {
+                return;
+            }
+
+            const clients = await self.clients.matchAll({
+                type: 'window',
+                includeUncontrolled: true,
+            });
+
+            for (const client of clients) {
+                if (!('url' in client) || !('focus' in client)) {
+                    continue;
+                }
+
+                if (client.url === targetUrl) {
+                    await client.focus();
+                    return;
+                }
+            }
+
+            for (const client of clients) {
+                if (!('url' in client) || !('focus' in client) || !('navigate' in client)) {
+                    continue;
+                }
+
+                if (client.url.startsWith(self.location.origin)) {
+                    await client.focus();
+                    await client.navigate(targetUrl);
+                    return;
+                }
+            }
+
+            await self.clients.openWindow(targetUrl);
+        })(),
+    );
+});
+
 function isOfflineReadablePath(pathname) {
     return (
         /^\/campaigns\/[^/]+\/scenes\/[^/]+\/?$/.test(pathname) ||

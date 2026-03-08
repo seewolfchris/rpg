@@ -25,10 +25,13 @@ class UpdateNotificationPreferencesRequest extends FormRequest
         return [
             'post_moderation_database' => ['required', 'boolean'],
             'post_moderation_mail' => ['required', 'boolean'],
+            'post_moderation_browser' => ['required', 'boolean'],
             'scene_new_post_database' => ['required', 'boolean'],
             'scene_new_post_mail' => ['required', 'boolean'],
+            'scene_new_post_browser' => ['required', 'boolean'],
             'campaign_invitation_database' => ['required', 'boolean'],
             'campaign_invitation_mail' => ['required', 'boolean'],
+            'campaign_invitation_browser' => ['required', 'boolean'],
         ];
     }
 
@@ -37,10 +40,13 @@ class UpdateNotificationPreferencesRequest extends FormRequest
         $this->merge([
             'post_moderation_database' => $this->boolean('post_moderation_database'),
             'post_moderation_mail' => $this->boolean('post_moderation_mail'),
+            'post_moderation_browser' => $this->boolean('post_moderation_browser'),
             'scene_new_post_database' => $this->boolean('scene_new_post_database'),
             'scene_new_post_mail' => $this->boolean('scene_new_post_mail'),
+            'scene_new_post_browser' => $this->boolean('scene_new_post_browser'),
             'campaign_invitation_database' => $this->boolean('campaign_invitation_database'),
             'campaign_invitation_mail' => $this->boolean('campaign_invitation_mail'),
+            'campaign_invitation_browser' => $this->boolean('campaign_invitation_browser'),
         ]);
     }
 
@@ -53,16 +59,28 @@ class UpdateNotificationPreferencesRequest extends FormRequest
 
         return [
             'post_moderation' => [
-                'database' => (bool) $this->validated('post_moderation_database', data_get($defaults, 'post_moderation.database', true)),
+                'database' => (bool) (
+                    $this->validated('post_moderation_database', data_get($defaults, 'post_moderation.database', true))
+                    || $this->validated('post_moderation_browser', data_get($defaults, 'post_moderation.browser', false))
+                ),
                 'mail' => (bool) $this->validated('post_moderation_mail', data_get($defaults, 'post_moderation.mail', false)),
+                'browser' => (bool) $this->validated('post_moderation_browser', data_get($defaults, 'post_moderation.browser', false)),
             ],
             'scene_new_post' => [
-                'database' => (bool) $this->validated('scene_new_post_database', data_get($defaults, 'scene_new_post.database', true)),
+                'database' => (bool) (
+                    $this->validated('scene_new_post_database', data_get($defaults, 'scene_new_post.database', true))
+                    || $this->validated('scene_new_post_browser', data_get($defaults, 'scene_new_post.browser', false))
+                ),
                 'mail' => (bool) $this->validated('scene_new_post_mail', data_get($defaults, 'scene_new_post.mail', false)),
+                'browser' => (bool) $this->validated('scene_new_post_browser', data_get($defaults, 'scene_new_post.browser', false)),
             ],
             'campaign_invitation' => [
-                'database' => (bool) $this->validated('campaign_invitation_database', data_get($defaults, 'campaign_invitation.database', true)),
+                'database' => (bool) (
+                    $this->validated('campaign_invitation_database', data_get($defaults, 'campaign_invitation.database', true))
+                    || $this->validated('campaign_invitation_browser', data_get($defaults, 'campaign_invitation.browser', false))
+                ),
                 'mail' => (bool) $this->validated('campaign_invitation_mail', data_get($defaults, 'campaign_invitation.mail', false)),
+                'browser' => (bool) $this->validated('campaign_invitation_browser', data_get($defaults, 'campaign_invitation.browser', false)),
             ],
         ];
     }

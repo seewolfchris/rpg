@@ -23,10 +23,13 @@ class NotificationPreferenceTest extends TestCase
         $response = $this->actingAs($user)->patch(route('notifications.preferences.update'), [
             'post_moderation_database' => '1',
             'post_moderation_mail' => '1',
+            'post_moderation_browser' => '0',
             'scene_new_post_database' => '0',
             'scene_new_post_mail' => '0',
+            'scene_new_post_browser' => '1',
             'campaign_invitation_database' => '1',
             'campaign_invitation_mail' => '0',
+            'campaign_invitation_browser' => '0',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -34,10 +37,38 @@ class NotificationPreferenceTest extends TestCase
         $preferences = $user->fresh()->resolvedNotificationPreferences();
         $this->assertTrue((bool) data_get($preferences, 'post_moderation.database'));
         $this->assertTrue((bool) data_get($preferences, 'post_moderation.mail'));
-        $this->assertFalse((bool) data_get($preferences, 'scene_new_post.database'));
+        $this->assertFalse((bool) data_get($preferences, 'post_moderation.browser'));
+        $this->assertTrue((bool) data_get($preferences, 'scene_new_post.database'));
         $this->assertFalse((bool) data_get($preferences, 'scene_new_post.mail'));
+        $this->assertTrue((bool) data_get($preferences, 'scene_new_post.browser'));
         $this->assertTrue((bool) data_get($preferences, 'campaign_invitation.database'));
         $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.mail'));
+        $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.browser'));
+    }
+
+    public function test_enabling_browser_channel_keeps_database_channel_enabled_for_storage(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->patch(route('notifications.preferences.update'), [
+            'post_moderation_database' => '0',
+            'post_moderation_mail' => '0',
+            'post_moderation_browser' => '1',
+            'scene_new_post_database' => '0',
+            'scene_new_post_mail' => '0',
+            'scene_new_post_browser' => '0',
+            'campaign_invitation_database' => '0',
+            'campaign_invitation_mail' => '0',
+            'campaign_invitation_browser' => '0',
+        ]);
+
+        $response->assertRedirect(route('notifications.preferences'));
+
+        $preferences = $user->fresh()->resolvedNotificationPreferences();
+
+        $this->assertTrue((bool) data_get($preferences, 'post_moderation.database'));
+        $this->assertTrue((bool) data_get($preferences, 'post_moderation.browser'));
+        $this->assertFalse((bool) data_get($preferences, 'post_moderation.mail'));
     }
 
     public function test_disabled_in_app_preference_prevents_database_notification(): void

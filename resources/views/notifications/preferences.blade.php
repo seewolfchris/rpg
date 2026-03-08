@@ -10,6 +10,9 @@
             <p class="mt-3 text-sm text-stone-300">
                 Lege fest, welche Ereignisse in der App und per E-Mail gemeldet werden.
             </p>
+            <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
+                Browser-Push nutzt lokale Browser-Benachrichtigungen und benötigt eine erlaubte Notification-Permission.
+            </p>
         </div>
 
         <form method="POST" action="{{ route('notifications.preferences.update') }}" class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
@@ -31,6 +34,10 @@
                             <input type="checkbox" name="post_moderation_mail" value="1" @checked(data_get($preferences, 'post_moderation.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
                             E-Mail
                         </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                            <input type="checkbox" name="post_moderation_browser" value="1" @checked(data_get($preferences, 'post_moderation.browser')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
+                            Browser-Push
+                        </label>
                     </div>
                 </article>
 
@@ -48,6 +55,10 @@
                             <input type="checkbox" name="scene_new_post_mail" value="1" @checked(data_get($preferences, 'scene_new_post.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
                             E-Mail
                         </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                            <input type="checkbox" name="scene_new_post_browser" value="1" @checked(data_get($preferences, 'scene_new_post.browser')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
+                            Browser-Push
+                        </label>
                     </div>
                 </article>
 
@@ -64,6 +75,10 @@
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="campaign_invitation_mail" value="1" @checked(data_get($preferences, 'campaign_invitation.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
                             E-Mail
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                            <input type="checkbox" name="campaign_invitation_browser" value="1" @checked(data_get($preferences, 'campaign_invitation.browser')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
+                            Browser-Push
                         </label>
                     </div>
                 </article>
