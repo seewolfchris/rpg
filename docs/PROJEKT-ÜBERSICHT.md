@@ -11,7 +11,9 @@ Repository-Branch: `main`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Benchmark `posts.latest_by_id`: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
+- Benchmark `posts.latest_by_id` Staging/Prod: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 - Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
+- Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
@@ -99,6 +101,8 @@ Repository-Branch: `main`
 - `posts.latest_by_id` Benchmark-Runner vorhanden:
   - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
   - Lokale Baseline: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
+  - Prod-Benchmark dokumentiert: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+  - Ergebnis Prod: `FORCE INDEX posts_scene_id_id_idx` im Sample schneller als Default (avg/p95), beide Pfade aber bereits im Sub-Millisekundenbereich
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:
@@ -116,8 +120,8 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. Nach naechstem Deploy echten Prod-Smoke reporten (`docs/SMOKE-PASS-STAGING-PROD.md`).
-2. `posts.latest_by_id` auf Staging/Prod benchmarken und gegen lokale Baseline vergleichen.
+1. Optional: `posts.latest_by_id` bei steigender Datenmenge erneut benchmarken und Delta dokumentieren.
+2. Optional: Query-Hint (`FORCE INDEX`) nur bei real messbarem Lastnutzen einfuehren.
 3. Doku bei jedem Release synchron halten (`README`, `ROADMAP`, Projekt-Uebersicht, Release-Checkliste).
 
 ---

@@ -47,3 +47,11 @@ $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERF
 ## Naechste technische Optimierung (optional)
 1. `posts.latest_by_id` bei steigender Datenmenge erneut beobachten (MySQL waehlt aktuell `PRIMARY` statt `posts_scene_id_id_idx`).
 2. Bei Lastanstieg optional Query-Varianten fuer `latest_by_id` benchmarken und dokumentieren.
+
+## Zusatzlauf: `posts.latest_by_id` Benchmark (Prod, 2026-03-09)
+- Separater Benchmark-Report:
+  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+- Kurzfazit:
+  - `default`: avg `0.179 ms`, p95 `0.241 ms`
+  - `FORCE INDEX posts_scene_id_id_idx`: avg `0.157 ms`, p95 `0.195 ms`
+  - `FORCE INDEX` ist im Sample messbar schneller, aber beide Varianten sind bereits sehr schnell.
