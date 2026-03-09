@@ -21,7 +21,7 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.19-beta`**.
+- Laufende Versionslinie: **`v0.20-beta`**.
 - Verifikation lokal (letzter Lauf):
   - `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
   - `npm run build` -> **gruen**

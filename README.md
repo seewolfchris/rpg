@@ -16,7 +16,7 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.19-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.20-beta`** (funktional, getestet, build-faehig)
 
 Letzte lokale Verifikation:
 - `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
