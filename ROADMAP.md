@@ -50,7 +50,7 @@ Stand: 2026-03-09
   - `app/Http/Middleware/ApplyWorldContext.php`
 - Delivery:
   - `.github/workflows/ci.yml`
-  - `scripts/release_smoke.sh`
+  - `scripts/release_smoke.sh` (inkl. Weltkontext- und Legacy-Redirect-Checks)
 - Observability:
   - `app/Http/Middleware/AttachRequestId.php`
   - `app/Support/Observability/StructuredLogger.php`
@@ -75,6 +75,6 @@ Stand: 2026-03-09
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. Staging/Prod-Smoke fuer Multi-Welt-Flows (`/welten`, `/w/{world}/campaigns`, Legacy-Redirects) vollstaendig protokollieren.
+1. Staging/Prod-Smoke fuer Multi-Welt-Flows (`/welten`, `/w/{world}/campaigns`, Legacy-Redirects) mit erweitertem Smoke-Skript vollstaendig protokollieren.
 2. Performance-Pass auf Weltkontext-Queries (Index-Nutzung und Explain-Checks) fuer reale Lastdaten.
 3. Optional: Admin-UX fuer Welt-Sortierung/Deaktivierung weiter scharfziehen.

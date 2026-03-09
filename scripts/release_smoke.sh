@@ -6,8 +6,12 @@ cd "$PROJECT_ROOT"
 
 PHP_BIN="${PHP_BIN:-php}"
 BASE_URL="${SMOKE_BASE_URL:-http://127.0.0.1:8000}"
+WORLD_SLUG="${SMOKE_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-chroniken-der-asche}}"
 START_SERVER="${SMOKE_START_SERVER:-1}"
+SMOKE_MODE="${SMOKE_MODE:-http}"
 ALLOW_ARTISAN_FALLBACK="${SMOKE_ALLOW_ARTISAN_FALLBACK:-1}"
+TMP_BODY_FILE="${SMOKE_TMP_BODY_FILE:-/tmp/release_smoke_body.txt}"
+TMP_HEADER_FILE="${SMOKE_TMP_HEADER_FILE:-/tmp/release_smoke_header.txt}"
 SERVER_PID=""
 
 cleanup() {
@@ -31,16 +35,40 @@ check_status() {
   local url="${BASE_URL}${path}"
   local code
 
-  code="$(curl -sS -o /tmp/release_smoke_body.txt -w '%{http_code}' "$url")"
+  code="$(curl -sS -o "$TMP_BODY_FILE" -w '%{http_code}' "$url")"
 
   if [[ "$code" != "$expected" ]]; then
     echo "ERROR: $url returned HTTP $code (expected $expected)"
     echo "Body preview:"
-    head -n 20 /tmp/release_smoke_body.txt || true
+    head -n 20 "$TMP_BODY_FILE" || true
     exit 1
   fi
 
   echo "OK   $path -> $code"
+}
+
+check_redirect() {
+  local path="$1"
+  local expected_status="$2"
+  local expected_location_fragment="$3"
+  local url="${BASE_URL}${path}"
+  local code
+  local location
+
+  code="$(curl -sS -o "$TMP_BODY_FILE" -D "$TMP_HEADER_FILE" -w '%{http_code}' "$url")"
+  location="$(awk -F': ' 'BEGIN {IGNORECASE=1} /^Location:/ {gsub(/\r/, "", $2); print $2}' "$TMP_HEADER_FILE" | tail -n 1)"
+
+  if [[ "$code" != "$expected_status" ]]; then
+    echo "ERROR: $url returned HTTP $code (expected redirect status $expected_status)"
+    exit 1
+  fi
+
+  if [[ -z "$location" || "$location" != *"$expected_location_fragment"* ]]; then
+    echo "ERROR: $url redirect location '$location' does not contain '$expected_location_fragment'"
+    exit 1
+  fi
+
+  echo "OK   $path -> $code (${location})"
 }
 
 check_header_contains() {
@@ -61,7 +89,9 @@ run_artisan_fallback() {
   echo "Running artisan fallback smoke checks..."
 
   "$PHP_BIN" artisan route:list --path=up >/dev/null
+  "$PHP_BIN" artisan route:list --path=welten >/dev/null
   "$PHP_BIN" artisan route:list --path=wissen >/dev/null
+  "$PHP_BIN" artisan route:list --path='w/{world:slug}' >/dev/null
   "$PHP_BIN" artisan route:list --path=login >/dev/null
   "$PHP_BIN" artisan route:list --path=hilfe >/dev/null
   "$PHP_BIN" artisan about --only=environment >/dev/null
@@ -71,6 +101,17 @@ run_artisan_fallback() {
 
 require_cmd curl
 require_cmd "$PHP_BIN"
+
+if [[ "$SMOKE_MODE" == "artisan" ]]; then
+  run_artisan_fallback
+  echo "Smoke checks passed (artisan mode)."
+  exit 0
+fi
+
+if [[ "$SMOKE_MODE" != "http" ]]; then
+  echo "ERROR: unsupported SMOKE_MODE='$SMOKE_MODE' (expected 'http' or 'artisan')"
+  exit 1
+fi
 
 if [[ "$START_SERVER" == "1" ]]; then
   echo "Starting local Laravel server for smoke checks..."
@@ -96,14 +137,18 @@ if ! curl -sS "$BASE_URL/up" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Running release smoke checks against $BASE_URL"
+echo "Running release smoke checks against $BASE_URL (world: $WORLD_SLUG)"
 
 check_status "/up" "200"
 check_status "/" "200"
-check_status "/wissen" "200"
-check_status "/wissen/enzyklopaedie" "200"
+check_status "/welten" "200"
+check_status "/w/${WORLD_SLUG}" "200"
+check_status "/w/${WORLD_SLUG}/wissen" "200"
+check_status "/w/${WORLD_SLUG}/wissen/enzyklopaedie" "200"
 check_status "/login" "200"
-check_status "/hilfe" "301"
+check_redirect "/wissen" "301" "/w/${WORLD_SLUG}/wissen"
+check_redirect "/wissen/enzyklopaedie" "301" "/w/${WORLD_SLUG}/wissen/enzyklopaedie"
+check_redirect "/hilfe" "301" "/w/${WORLD_SLUG}/wissen"
 
 check_header_contains "/" "X-Request-Id" ""
 check_header_contains "/" "X-Robots-Tag" "noindex"

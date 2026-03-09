@@ -171,7 +171,13 @@ scripts/release_smoke.sh
 Optional gegen laufende Staging/Prod-Instanz:
 
 ```bash
-SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" scripts/release_smoke.sh
+SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="chroniken-der-asche" scripts/release_smoke.sh
+```
+
+Optional ohne HTTP-Checks (nur Route-/Environment-Basischeck):
+
+```bash
+SMOKE_MODE=artisan scripts/release_smoke.sh
 ```
 
 ## Rollenmodell

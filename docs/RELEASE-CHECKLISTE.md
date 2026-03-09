@@ -58,10 +58,12 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 ## 6. Smoke-Test nach Deploy (5 Minuten)
 
 - Automatisierter Basissmoke:
-  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" scripts/release_smoke.sh`
+  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="chroniken-der-asche" scripts/release_smoke.sh`
+  - Alternativ rein lokal/ohne HTTP-Server: `SMOKE_MODE=artisan scripts/release_smoke.sh`
 - Login/Logout funktioniert.
 - Dashboard laedt.
 - Weltkatalog und Weltkontext-Routing funktionieren (`/welten`, `/w/{world}/...`).
+- Legacy-URLs liefern `301` auf Weltkontext (`/wissen`, `/wissen/enzyklopaedie`, `/hilfe`).
 - Charakter-Erstellung laedt ohne JS-Fehler.
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).

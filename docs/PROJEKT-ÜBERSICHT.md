@@ -21,7 +21,7 @@ Repository-Branch: `main`
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
-  - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`)
+  - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Legacy-Redirect-Checks)
 
 ## 2) Produktstatus nach Bereichen
 
