@@ -5,6 +5,7 @@
         @php($appBuild = (string) config('app.build', ''))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#0f0f14">
         <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
         <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
@@ -204,11 +205,20 @@
                         ->values()
                         ->all()
                 )
+                @php($activeWorldContext = request()->route('world'))
+                @php(
+                    $activeWorldSlug = $activeWorldContext instanceof \App\Models\World
+                        ? $activeWorldContext->slug
+                        : (session('world_slug') ?: \App\Models\World::defaultSlug())
+                )
                 <div
                     data-browser-notifications
-                    data-poll-url="{{ route('notifications.poll') }}"
+                    data-subscribe-url="{{ route('api.webpush.subscribe') }}"
+                    data-unsubscribe-url="{{ route('api.webpush.unsubscribe') }}"
                     data-enabled-kinds='@json($browserNotificationKinds)'
                     data-app-name="{{ config('app.name', 'C76-RPG') }}"
+                    data-world-slug="{{ $activeWorldSlug }}"
+                    data-vapid-public-key="{{ config('webpush.vapid.public_key') }}"
                     class="hidden"
                     aria-hidden="true"
                 ></div>

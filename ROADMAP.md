@@ -53,6 +53,10 @@ Stand: 2026-03-09
   - `scripts/release_smoke.sh` (inkl. Weltkontext-/Legacy-Redirect-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
   - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
   - `docs/SMOKE-PASS-STAGING-PROD.md` (echter HTTP-Prod-Smoke)
+- Web Push:
+  - `laravel-notification-channels/webpush` (VAPID, echte Push-Zustellung)
+  - `app/Http/Controllers/Api/WebPushSubscriptionController.php` (`/api/webpush/subscribe`, `/api/webpush/unsubscribe`)
+  - `database/migrations/2026_03_09_230000_create_push_subscriptions_table.php`
 - Performance:
   - `php artisan perf:posts-latest-by-id-benchmark` (neuer Benchmark-Command)
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md` (lokale Baseline)
@@ -63,7 +67,7 @@ Stand: 2026-03-09
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-09)
-- `php artisan test --without-tty --do-not-cache-result` -> **138 passed, 686 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
 - `npm run build` -> **gruen**
 - `composer analyse` -> im CI-Gate enthalten
 
@@ -76,7 +80,6 @@ Stand: 2026-03-09
 - Alpine/Frontend ohne externe CDN-Abhaengigkeit (lokal gehostet).
 
 ## Parking Lot (bewusst nicht jetzt)
-- Echten Web-Push-Stack (VAPID/Subscription-Management) nur bei Bedarf als Folgeprojekt.
 - Realtime/WebSockets.
 - Externe Media/CDN-Optimierung.
 

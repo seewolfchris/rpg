@@ -55,7 +55,7 @@ class StorePostService
 
         $this->ensureAuthorSubscription($post, $user);
         $this->pointService->syncApprovedPost($post);
-        $recipientCount = $this->scenePostNotificationService->notifySceneParticipants($post, $user);
+        $notificationResult = $this->scenePostNotificationService->notifySceneParticipants($post, $user);
 
         $this->logger->info('post.created', [
             'user_id' => $user->id,
@@ -65,7 +65,8 @@ class StorePostService
             'moderation_status' => $post->moderation_status,
             'probe_created' => $probeCreated,
             'inventory_award_applied' => $inventoryAwardApplied,
-            'notification_recipients' => $recipientCount,
+            'notification_recipients' => $notificationResult['in_app_recipients'],
+            'webpush_recipients' => $notificationResult['webpush_recipients'],
         ]);
 
         return new StorePostResult(

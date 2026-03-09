@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\WebPushSubscriptionController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
@@ -293,10 +294,6 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
 
-    Route::get('/notifications/poll', [NotificationController::class, 'poll'])
-        ->middleware('throttle:notifications')
-        ->name('notifications.poll');
-
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])
         ->middleware('throttle:notifications')
         ->name('notifications.read-all');
@@ -304,6 +301,14 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'read'])
         ->middleware('throttle:notifications')
         ->name('notifications.read');
+
+    Route::post('/api/webpush/subscribe', [WebPushSubscriptionController::class, 'subscribe'])
+        ->middleware('throttle:webpush-subscriptions')
+        ->name('api.webpush.subscribe');
+
+    Route::post('/api/webpush/unsubscribe', [WebPushSubscriptionController::class, 'unsubscribe'])
+        ->middleware('throttle:webpush-subscriptions')
+        ->name('api.webpush.unsubscribe');
 
     Route::view('/gm', 'gm.index')
         ->middleware('role:gm,admin')

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
 use App\Models\SceneSubscription;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -82,52 +81,5 @@ class NotificationController extends Controller
             ->update(['read_at' => now()]);
 
         return back()->with('status', 'Alle Benachrichtigungen als gelesen markiert.');
-    }
-
-    public function poll(Request $request): JsonResponse
-    {
-        $user = $request->user();
-        $preferences = $user->resolvedNotificationPreferences();
-
-        $browserEnabledKinds = collect($preferences)
-            ->filter(static fn (array $channels): bool => (bool) ($channels['browser'] ?? false))
-            ->keys()
-            ->values();
-
-        if ($browserEnabledKinds->isEmpty()) {
-            return response()->json([
-                'browser_enabled_kinds' => [],
-                'unread_count' => 0,
-                'notifications' => [],
-            ]);
-        }
-
-        $unreadCount = (int) $user->unreadNotifications()->count();
-
-        $notifications = $user->unreadNotifications()
-            ->latest()
-            ->limit(20)
-            ->get()
-            ->filter(fn ($notification): bool => $browserEnabledKinds->contains((string) data_get($notification->data, 'kind', '')))
-            ->sortBy('created_at')
-            ->take(8)
-            ->values()
-            ->map(function ($notification): array {
-                return [
-                    'id' => (string) $notification->id,
-                    'kind' => (string) data_get($notification->data, 'kind', ''),
-                    'title' => (string) data_get($notification->data, 'title', 'Benachrichtigung'),
-                    'message' => (string) data_get($notification->data, 'message', 'Neue Aktivität.'),
-                    'action_url' => (string) data_get($notification->data, 'action_url', route('notifications.index')),
-                    'created_at' => optional($notification->created_at)?->toIso8601String(),
-                ];
-            })
-            ->all();
-
-        return response()->json([
-            'browser_enabled_kinds' => $browserEnabledKinds->all(),
-            'unread_count' => $unreadCount,
-            'notifications' => $notifications,
-        ]);
     }
 }

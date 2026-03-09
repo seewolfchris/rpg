@@ -105,10 +105,49 @@ self.addEventListener('sync', (event) => {
     }
 });
 
+self.addEventListener('push', (event) => {
+    if (!event.data) {
+        return;
+    }
+
+    event.waitUntil(
+        (async () => {
+            const payload = parsePushPayload(event.data);
+
+            if (!payload) {
+                return;
+            }
+
+            const title =
+                typeof payload.title === 'string' && payload.title.trim() !== ''
+                    ? payload.title.trim()
+                    : 'C76-RPG';
+
+            const data = normalizeNotificationData(payload.data);
+            const options = {
+                body: typeof payload.body === 'string' ? payload.body : '',
+                icon: typeof payload.icon === 'string' ? payload.icon : '/images/icons/icon-192.png',
+                badge: typeof payload.badge === 'string' ? payload.badge : '/images/icons/icon-96.png',
+                image: typeof payload.image === 'string' ? payload.image : undefined,
+                tag: typeof payload.tag === 'string' ? payload.tag : undefined,
+                renotify: typeof payload.renotify === 'boolean' ? payload.renotify : undefined,
+                requireInteraction: typeof payload.requireInteraction === 'boolean' ? payload.requireInteraction : undefined,
+                actions: Array.isArray(payload.actions) ? payload.actions : [],
+                data,
+            };
+
+            await self.registration.showNotification(title, options);
+        })(),
+    );
+});
+
 self.addEventListener('notificationclick', (event) => {
     event.notification?.close();
 
-    const rawActionUrl = event.notification?.data?.actionUrl;
+    const rawActionUrl =
+        event.notification?.data?.actionUrl ||
+        event.notification?.data?.canonicalUrl ||
+        event.notification?.data?.canonical_url;
 
     if (typeof rawActionUrl !== 'string' || rawActionUrl.trim() === '') {
         return;
@@ -156,6 +195,37 @@ self.addEventListener('notificationclick', (event) => {
         })(),
     );
 });
+
+function parsePushPayload(data) {
+    try {
+        return data.json();
+    } catch {
+        try {
+            const text = data.text();
+            return JSON.parse(text);
+        } catch {
+            return null;
+        }
+    }
+}
+
+function normalizeNotificationData(rawData) {
+    if (!rawData || typeof rawData !== 'object') {
+        return {
+            actionUrl: '/notifications',
+        };
+    }
+
+    const actionUrl =
+        typeof rawData.actionUrl === 'string'
+            ? rawData.actionUrl
+            : (typeof rawData.canonicalUrl === 'string' ? rawData.canonicalUrl : '/notifications');
+
+    return {
+        ...rawData,
+        actionUrl,
+    };
+}
 
 function isOfflineReadablePath(pathname) {
     return (

@@ -11,7 +11,7 @@
                 Lege fest, welche Ereignisse in der App und per E-Mail gemeldet werden.
             </p>
             <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
-                Browser-Push nutzt lokale Browser-Benachrichtigungen und benötigt eine erlaubte Notification-Permission.
+                Browser-Push nutzt Web Push (VAPID) und benoetigt eine erlaubte Notification-Permission.
             </p>
         </div>
 

@@ -10,15 +10,10 @@ const PWA_INSTALL_BUTTON_SELECTOR = '[data-pwa-install-button]';
 const BROWSER_NOTIFICATION_ROOT_SELECTOR = '[data-browser-notifications]';
 const BROWSER_NOTIFICATION_STATUS_SELECTOR = '[data-browser-notifications-status]';
 const BROWSER_NOTIFICATION_ENABLE_SELECTOR = '[data-browser-notifications-enable]';
-const BROWSER_NOTIFICATION_POLL_INTERVAL_MS = 45000;
-const BROWSER_NOTIFICATION_SEEN_STORAGE_KEY = 'chroniken-browser-notification-seen-ids';
-const BROWSER_NOTIFICATION_SEEN_LIMIT = 250;
 
 let swRegistration = null;
 let deferredInstallPrompt = null;
 let browserNotificationConfig = null;
-let browserNotificationSeenIds = new Set();
-let browserNotificationPollTimer = null;
 
 window.characterSheetForm = characterSheetForm;
 
@@ -220,21 +215,25 @@ function setupBrowserNotifications() {
         return;
     }
 
-    const pollUrl = root.dataset.pollUrl || '';
+    const subscribeUrl = root.dataset.subscribeUrl || '';
+    const unsubscribeUrl = root.dataset.unsubscribeUrl || '';
+    const vapidPublicKey = root.dataset.vapidPublicKey || '';
 
-    if (!pollUrl) {
+    if (!subscribeUrl || !unsubscribeUrl) {
         return;
     }
 
     browserNotificationConfig = {
-        pollUrl,
+        subscribeUrl,
+        unsubscribeUrl,
+        vapidPublicKey,
+        worldSlug: root.dataset.worldSlug || 'chroniken-der-asche',
         appName: root.dataset.appName || 'C76-RPG',
         enabledKinds: normalizeBrowserNotificationKinds(root.dataset.enabledKinds),
+        csrfToken: getCsrfToken(),
         statusNode: document.querySelector(BROWSER_NOTIFICATION_STATUS_SELECTOR),
         enableButton: document.querySelector(BROWSER_NOTIFICATION_ENABLE_SELECTOR),
     };
-
-    browserNotificationSeenIds = loadSeenBrowserNotificationIds();
 
     if (browserNotificationConfig.enableButton instanceof HTMLButtonElement) {
         browserNotificationConfig.enableButton.addEventListener('click', async () => {
@@ -243,16 +242,13 @@ function setupBrowserNotifications() {
     }
 
     window.addEventListener('online', () => {
-        if (isBrowserNotificationPollingEnabled()) {
-            void pollBrowserNotifications();
+        if (isBrowserPushReady()) {
+            void syncBrowserNotificationSubscriptionState();
         }
     });
 
     updateBrowserNotificationStatus();
-
-    if (isBrowserNotificationPollingEnabled()) {
-        startBrowserNotificationPolling();
-    }
+    void syncBrowserNotificationSubscriptionState();
 }
 
 function normalizeBrowserNotificationKinds(rawKinds) {
@@ -288,25 +284,28 @@ function updateBrowserNotificationStatus() {
     const statusNode = browserNotificationConfig.statusNode;
     const enableButton = browserNotificationConfig.enableButton;
     const hasBrowserKinds = browserNotificationConfig.enabledKinds.length > 0;
-    const supportsNotifications = 'Notification' in window;
+    const supportsNotifications = supportsWebPush();
     let statusMessage = 'Browser-Benachrichtigungen werden geprüft.';
     let disableEnableButton = false;
-    let enableButtonLabel = 'Browser-Permission aktivieren';
+    let enableButtonLabel = 'Browser-Push aktivieren';
 
     if (!hasBrowserKinds) {
         statusMessage = 'Browser-Push ist in den Mitteilungs-Präferenzen aktuell deaktiviert.';
         disableEnableButton = true;
     } else if (!supportsNotifications) {
-        statusMessage = 'Dieser Browser unterstützt keine Notification-API.';
+        statusMessage = 'Dieser Browser unterstützt Web Push nicht vollständig.';
+        disableEnableButton = true;
+    } else if (!browserNotificationConfig.vapidPublicKey.trim()) {
+        statusMessage = 'Web-Push ist serverseitig nicht konfiguriert (VAPID-Key fehlt).';
         disableEnableButton = true;
     } else if (Notification.permission === 'granted') {
-        statusMessage = 'Browser-Push ist aktiv. Neue Mitteilungen werden automatisch geprüft.';
+        statusMessage = 'Browser-Push ist aktiv und mit diesem Geraet verknuepft.';
         disableEnableButton = true;
-        enableButtonLabel = 'Browser-Permission aktiv';
+        enableButtonLabel = 'Browser-Push aktiv';
     } else if (Notification.permission === 'denied') {
         statusMessage = 'Browser-Push wurde blockiert. Erlaube Notifications in deinen Browser-Einstellungen.';
         disableEnableButton = true;
-        enableButtonLabel = 'Browser-Permission blockiert';
+        enableButtonLabel = 'Browser-Push blockiert';
     } else {
         statusMessage = 'Browser-Push wartet auf Freigabe.';
     }
@@ -334,8 +333,8 @@ async function requestBrowserNotificationPermission() {
         return;
     }
 
-    if (!('Notification' in window)) {
-        showSyncNotice('Browser-Benachrichtigungen werden auf diesem Gerät nicht unterstützt.', 'warning');
+    if (!supportsWebPush()) {
+        showSyncNotice('Browser-Benachrichtigungen werden auf diesem Geraet nicht unterstuetzt.', 'warning');
         updateBrowserNotificationStatus();
         return;
     }
@@ -353,7 +352,7 @@ async function requestBrowserNotificationPermission() {
     }
 
     if (Notification.permission === 'granted') {
-        startBrowserNotificationPolling();
+        await syncBrowserNotificationSubscriptionState();
         updateBrowserNotificationStatus();
         return;
     }
@@ -363,7 +362,7 @@ async function requestBrowserNotificationPermission() {
 
         if (permission === 'granted') {
             showSyncNotice('Browser-Push wurde aktiviert.', 'success');
-            startBrowserNotificationPolling();
+            await syncBrowserNotificationSubscriptionState();
         } else {
             showSyncNotice('Browser-Push wurde nicht freigegeben.', 'warning');
         }
@@ -375,181 +374,201 @@ async function requestBrowserNotificationPermission() {
     updateBrowserNotificationStatus();
 }
 
-function isBrowserNotificationPollingEnabled() {
+function supportsWebPush() {
+    return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+function isBrowserPushReady() {
     return (
         Boolean(browserNotificationConfig) &&
         browserNotificationConfig.enabledKinds.length > 0 &&
-        'Notification' in window &&
+        supportsWebPush() &&
+        browserNotificationConfig.vapidPublicKey.trim() !== '' &&
         Notification.permission === 'granted'
     );
 }
 
-function startBrowserNotificationPolling() {
-    if (!isBrowserNotificationPollingEnabled()) {
-        stopBrowserNotificationPolling();
+async function syncBrowserNotificationSubscriptionState() {
+    if (!browserNotificationConfig || !supportsWebPush()) {
+        return;
+    }
+
+    const registration = await getActiveServiceWorkerRegistration();
+
+    if (!registration || !registration.pushManager) {
+        return;
+    }
+
+    const currentSubscription = await registration.pushManager.getSubscription().catch(() => null);
+
+    if (!isBrowserPushReady()) {
+        if (currentSubscription) {
+            await unsubscribeBrowserPush(currentSubscription, true);
+        }
         updateBrowserNotificationStatus();
         return;
     }
 
-    stopBrowserNotificationPolling();
+    if (currentSubscription) {
+        await syncBrowserPushSubscriptionWithServer(currentSubscription);
+        updateBrowserNotificationStatus();
+        return;
+    }
 
-    void pollBrowserNotifications();
-    browserNotificationPollTimer = window.setInterval(() => {
-        void pollBrowserNotifications();
-    }, BROWSER_NOTIFICATION_POLL_INTERVAL_MS);
+    try {
+        const newSubscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(browserNotificationConfig.vapidPublicKey),
+        });
+
+        await syncBrowserPushSubscriptionWithServer(newSubscription);
+        showSyncNotice('Browser-Push wurde aktiviert.', 'success');
+    } catch (error) {
+        console.error('Browser push subscribe failed:', error);
+        showSyncNotice('Browser-Push konnte nicht aktiviert werden.', 'error');
+    }
 
     updateBrowserNotificationStatus();
 }
 
-function stopBrowserNotificationPolling() {
-    if (browserNotificationPollTimer === null) {
+async function unsubscribeBrowserPush(subscription, silent = false) {
+    if (!browserNotificationConfig) {
         return;
     }
 
-    window.clearInterval(browserNotificationPollTimer);
-    browserNotificationPollTimer = null;
-}
-
-async function pollBrowserNotifications() {
-    if (!browserNotificationConfig || !navigator.onLine) {
-        return;
-    }
-
-    if (!isBrowserNotificationPollingEnabled()) {
-        stopBrowserNotificationPolling();
-        updateBrowserNotificationStatus();
-        return;
-    }
+    const endpoint = typeof subscription?.endpoint === 'string' ? subscription.endpoint : '';
 
     try {
-        const response = await fetch(browserNotificationConfig.pollUrl, {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        });
-
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                stopBrowserNotificationPolling();
-            }
-
-            return;
-        }
-
-        const payload = await response.json();
-        const enabledKinds = normalizeBrowserNotificationKinds(payload?.browser_enabled_kinds ?? []);
-
-        browserNotificationConfig.enabledKinds = enabledKinds;
-
-        if (!enabledKinds.length) {
-            stopBrowserNotificationPolling();
-            updateBrowserNotificationStatus();
-            return;
-        }
-
-        const notifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
-
-        for (const item of notifications) {
-            const notificationId = typeof item?.id === 'string' ? item.id : '';
-
-            if (!notificationId || browserNotificationSeenIds.has(notificationId)) {
-                continue;
-            }
-
-            await showBrowserNotification(item);
-            rememberSeenBrowserNotificationId(notificationId);
-        }
-
-        persistSeenBrowserNotificationIds();
+        await subscription.unsubscribe();
     } catch (error) {
-        console.error('Browser notification poll failed:', error);
+        console.error('Browser push unsubscribe failed:', error);
+    }
+
+    if (endpoint !== '') {
+        try {
+            await postJson(browserNotificationConfig.unsubscribeUrl, {
+                world_slug: resolveBrowserNotificationWorldSlug(),
+                endpoint,
+            });
+        } catch (error) {
+            console.error('Browser push unsubscribe sync failed:', error);
+        }
+    }
+
+    if (!silent) {
+        showSyncNotice('Browser-Push wurde deaktiviert.', 'warning');
     }
 }
 
-async function showBrowserNotification(item) {
-    if (!browserNotificationConfig || !('Notification' in window) || Notification.permission !== 'granted') {
+async function syncBrowserPushSubscriptionWithServer(subscription) {
+    if (!browserNotificationConfig) {
         return;
     }
 
-    const title = typeof item?.title === 'string' && item.title.trim() !== '' ? item.title.trim() : browserNotificationConfig.appName;
-    const message = typeof item?.message === 'string' ? item.message : '';
-    const actionUrl =
-        typeof item?.action_url === 'string' && item.action_url.trim() !== ''
-            ? item.action_url
-            : '/notifications';
-    const createdAtTimestamp = typeof item?.created_at === 'string' ? Date.parse(item.created_at) : Number.NaN;
-    const options = {
-        body: message,
-        tag: typeof item?.id === 'string' ? `chroniken-notification-${item.id}` : undefined,
-        icon: '/images/icons/icon-192.svg',
-        badge: '/images/icons/icon-192.svg',
-        data: {
-            actionUrl,
-        },
-        timestamp: Number.isNaN(createdAtTimestamp) ? Date.now() : createdAtTimestamp,
+    const payload = normalizePushSubscriptionPayload(subscription);
+
+    if (!payload) {
+        throw new Error('Push subscription payload is invalid.');
+    }
+
+    await postJson(browserNotificationConfig.subscribeUrl, {
+        world_slug: resolveBrowserNotificationWorldSlug(),
+        endpoint: payload.endpoint,
+        public_key: payload.publicKey,
+        auth_token: payload.authToken,
+        content_encoding: payload.contentEncoding,
+    });
+}
+
+function normalizePushSubscriptionPayload(subscription) {
+    if (!subscription || typeof subscription.toJSON !== 'function') {
+        return null;
+    }
+
+    const json = subscription.toJSON();
+    const endpoint = typeof json?.endpoint === 'string' ? json.endpoint : '';
+    const publicKey = typeof json?.keys?.p256dh === 'string' ? json.keys.p256dh : '';
+    const authToken = typeof json?.keys?.auth === 'string' ? json.keys.auth : '';
+    const contentEncoding =
+        typeof json?.contentEncoding === 'string' && json.contentEncoding.trim() !== ''
+            ? json.contentEncoding.trim()
+            : 'aes128gcm';
+
+    if (!endpoint || !publicKey || !authToken) {
+        return null;
+    }
+
+    return {
+        endpoint,
+        publicKey,
+        authToken,
+        contentEncoding,
+    };
+}
+
+function resolveBrowserNotificationWorldSlug() {
+    if (!browserNotificationConfig) {
+        return 'chroniken-der-asche';
+    }
+
+    const fromPath = window.location.pathname.match(/^\/w\/([^/]+)/);
+    if (fromPath && fromPath[1]) {
+        return decodeURIComponent(fromPath[1]);
+    }
+
+    if (typeof browserNotificationConfig.worldSlug === 'string' && browserNotificationConfig.worldSlug.trim() !== '') {
+        return browserNotificationConfig.worldSlug.trim();
+    }
+
+    return 'chroniken-der-asche';
+}
+
+function getCsrfToken() {
+    const tokenNode = document.querySelector('meta[name="csrf-token"]');
+
+    if (!(tokenNode instanceof HTMLMetaElement)) {
+        return '';
+    }
+
+    return tokenNode.content || '';
+}
+
+async function postJson(url, payload) {
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
     };
 
-    const registration = await getActiveServiceWorkerRegistration();
-
-    if (registration && typeof registration.showNotification === 'function') {
-        await registration.showNotification(title, options);
-        return;
+    if (browserNotificationConfig?.csrfToken) {
+        headers['X-CSRF-TOKEN'] = browserNotificationConfig.csrfToken;
     }
 
-    const notification = new Notification(title, options);
-    notification.onclick = () => {
-        notification.close();
-        window.focus();
-        window.location.assign(actionUrl);
-    };
+    const response = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers,
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`);
+    }
+
+    return response;
 }
 
-function loadSeenBrowserNotificationIds() {
-    try {
-        const raw = window.localStorage.getItem(BROWSER_NOTIFICATION_SEEN_STORAGE_KEY);
+function urlBase64ToUint8Array(base64String) {
+    const normalizedBase64 = base64String.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (normalizedBase64.length % 4)) % 4);
+    const decoded = window.atob(normalizedBase64 + padding);
+    const output = new Uint8Array(decoded.length);
 
-        if (!raw) {
-            return new Set();
-        }
-
-        const parsed = JSON.parse(raw);
-
-        if (!Array.isArray(parsed)) {
-            return new Set();
-        }
-
-        return new Set(
-            parsed
-                .filter((value) => typeof value === 'string')
-                .slice(-BROWSER_NOTIFICATION_SEEN_LIMIT),
-        );
-    } catch {
-        return new Set();
-    }
-}
-
-function rememberSeenBrowserNotificationId(notificationId) {
-    browserNotificationSeenIds.add(notificationId);
-
-    if (browserNotificationSeenIds.size <= BROWSER_NOTIFICATION_SEEN_LIMIT) {
-        return;
+    for (let index = 0; index < decoded.length; index += 1) {
+        output[index] = decoded.charCodeAt(index);
     }
 
-    browserNotificationSeenIds = new Set(Array.from(browserNotificationSeenIds).slice(-BROWSER_NOTIFICATION_SEEN_LIMIT));
-}
-
-function persistSeenBrowserNotificationIds() {
-    try {
-        window.localStorage.setItem(
-            BROWSER_NOTIFICATION_SEEN_STORAGE_KEY,
-            JSON.stringify(Array.from(browserNotificationSeenIds).slice(-BROWSER_NOTIFICATION_SEEN_LIMIT)),
-        );
-    } catch {
-        // Ignore storage errors, notifications still work for current session.
-    }
+    return output;
 }
 
 async function warmOfflineReadingCache() {

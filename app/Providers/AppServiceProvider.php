@@ -4,14 +4,17 @@ namespace App\Providers;
 
 use App\Models\World;
 use App\Support\NavigationCounters;
+use App\Support\Observability\StructuredLogger;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use NotificationChannels\WebPush\Events\NotificationFailed;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -69,6 +72,32 @@ class AppServiceProvider extends ServiceProvider
                 : 'ip:'.$request->ip();
 
             return Limit::perMinute(20)->by('notifications|'.$key);
+        });
+
+        RateLimiter::for('webpush-subscriptions', function (Request $request): Limit {
+            $key = $request->user()
+                ? 'user:'.$request->user()->id
+                : 'ip:'.$request->ip();
+            $worldSlug = (string) $request->input('world_slug', 'unknown-world');
+
+            return Limit::perMinute(20)->by('webpush-subscriptions|'.$key.'|'.$worldSlug);
+        });
+
+        Event::listen(NotificationFailed::class, function (NotificationFailed $event): void {
+            $statusCode = $event->report->getResponse()?->getStatusCode();
+
+            if (in_array($statusCode, [404, 410], true)) {
+                $event->subscription->delete();
+            }
+
+            app(StructuredLogger::class)->info('webpush.delivery_failed', [
+                'user_id' => data_get($event->subscription, 'user_id'),
+                'world_id' => data_get($event->subscription, 'world_id'),
+                'endpoint_hash' => sha1((string) $event->subscription->endpoint),
+                'status_code' => $statusCode,
+                'reason' => $event->report->getReason(),
+                'expired' => $event->report->isSubscriptionExpired(),
+            ]);
         });
 
         View::composer('layouts.auth', function ($view): void {

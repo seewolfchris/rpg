@@ -34,6 +34,15 @@ Beispiel fuer `APP_BUILD`:
 git rev-parse --short HEAD
 ```
 
+## 3b. Web Push (falls aktiv)
+
+- VAPID-Keys muessen gesetzt sein:
+  - `VAPID_PUBLIC_KEY`
+  - `VAPID_PRIVATE_KEY`
+  - optional `VAPID_SUBJECT`
+- Optional neu generieren:
+  - `php artisan webpush:vapid`
+
 ## 4. Commit und Push
 
 ```bash

@@ -10,6 +10,8 @@ use App\Models\World;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class PostModerationStatusNotification extends Notification
 {
@@ -44,6 +46,10 @@ class PostModerationStatusNotification extends Notification
             $channels[] = 'mail';
         }
 
+        if ($notifiable->wantsNotificationChannel('post_moderation', 'browser')) {
+            $channels[] = WebPushChannel::class;
+        }
+
         return $channels;
     }
 
@@ -71,6 +77,37 @@ class PostModerationStatusNotification extends Notification
         }
 
         return $mailMessage;
+    }
+
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
+    {
+        [$world, $campaign, $scene] = $this->resolveContext();
+        $actionUrl = route('campaigns.scenes.show', [
+            'world' => $world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$this->post->id;
+
+        return (new WebPushMessage)
+            ->title('Moderationsstatus geaendert')
+            ->body('Dein Beitrag wurde auf "'.$this->newStatus.'" gesetzt.')
+            ->icon((string) config('webpush.defaults.icon', '/images/icons/icon-192.png'))
+            ->badge((string) config('webpush.defaults.badge', '/images/icons/icon-96.png'))
+            ->tag('post-moderation-'.$this->post->id)
+            ->action('Beitrag oeffnen', 'open_post')
+            ->data([
+                'kind' => 'post_moderation',
+                'postId' => (int) $this->post->id,
+                'sceneId' => (int) $scene->id,
+                'campaignId' => (int) $campaign->id,
+                'worldId' => (int) $world->id,
+                'worldSlug' => (string) $world->slug,
+                'canonicalUrl' => $actionUrl,
+                'actionUrl' => $actionUrl,
+            ])
+            ->options([
+                'TTL' => (int) config('webpush.defaults.ttl', 300),
+            ]);
     }
 
     /**
@@ -115,5 +152,12 @@ class PostModerationStatusNotification extends Notification
         $world = $campaign->world;
 
         return [$world, $campaign, $scene];
+    }
+
+    public function worldId(): int
+    {
+        [, $campaign] = $this->resolveContext();
+
+        return (int) $campaign->world_id;
     }
 }

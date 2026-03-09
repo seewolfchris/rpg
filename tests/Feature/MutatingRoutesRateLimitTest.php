@@ -7,6 +7,7 @@ use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -61,6 +62,30 @@ class MutatingRoutesRateLimitTest extends TestCase
 
         $this->actingAs($user)->post(route('notifications.read-all'))
             ->assertStatus(429);
+    }
+
+    public function test_webpush_subscription_routes_are_rate_limited(): void
+    {
+        $user = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+
+        for ($attempt = 0; $attempt < 20; $attempt++) {
+            $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+                'world_slug' => $world->slug,
+                'endpoint' => 'https://example.push.local/subscription/rate-limit-'.$attempt,
+                'public_key' => 'public-key-'.$attempt,
+                'auth_token' => 'auth-token-'.$attempt,
+                'content_encoding' => 'aes128gcm',
+            ])->assertStatus(200);
+        }
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => 'https://example.push.local/subscription/rate-limit-blocked',
+            'public_key' => 'public-key-blocked',
+            'auth_token' => 'auth-token-blocked',
+            'content_encoding' => 'aes128gcm',
+        ])->assertStatus(429);
     }
 
     /**

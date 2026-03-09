@@ -12,6 +12,10 @@ Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden B
   - `inventory.post_award_applied`
   - `inventory.scene_quick_action_applied`
   - `post.created`
+  - `webpush.subscription_upserted`
+  - `webpush.subscription_deleted`
+  - `webpush.scene_post_sent`
+  - `webpush.delivery_failed`
 
 ### Empfohlene Suchschlüssel
 - `request_id`

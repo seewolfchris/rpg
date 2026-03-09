@@ -5,16 +5,19 @@ namespace App\Models;
 use App\Enums\UserRole;
 use App\Notifications\Auth\ResetPasswordNotification;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasPushSubscriptions, Notifiable;
 
     /**
      * @var array<string, array<string, bool>>
@@ -140,6 +143,36 @@ class User extends Authenticatable
         return $this->belongsToMany(Scene::class, 'scene_subscriptions')
             ->withPivot(['is_muted', 'last_read_post_id', 'last_read_at'])
             ->withTimestamps();
+    }
+
+    public function pushSubscriptionsForWorld(World|int $world): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        $worldId = $world instanceof World ? (int) $world->id : (int) $world;
+
+        return $this->pushSubscriptions()->where('world_id', $worldId);
+    }
+
+    /**
+     * @return Collection<int, PushSubscription>
+     */
+    public function routeNotificationForWebPush(?Notification $notification = null): Collection
+    {
+        $query = $this->pushSubscriptions();
+
+        if ($notification && method_exists($notification, 'worldId')) {
+            /** @var mixed $resolvedWorldId */
+            $resolvedWorldId = $notification->worldId();
+            $worldId = (int) $resolvedWorldId;
+
+            if ($worldId > 0) {
+                $query->where('world_id', $worldId);
+            }
+        }
+
+        /** @var Collection<int, PushSubscription> $subscriptions */
+        $subscriptions = $query->get();
+
+        return $subscriptions;
     }
 
     public function hasRole(UserRole|string $role): bool

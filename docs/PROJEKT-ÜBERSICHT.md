@@ -23,7 +23,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.19-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **138 passed, 686 assertions**
+  - `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
@@ -40,7 +40,7 @@ Repository-Branch: `main`
 | Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation |
 | Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
 | Wissenszentrum / Enzyklopaedie | Stabil | Oeffentliche Seiten + GM/Admin-Redaktion |
-| Browser-Benachrichtigungen | Aktiv | Permission + Polling + Service-Worker Click |
+| Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
 | PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 
@@ -93,6 +93,12 @@ Repository-Branch: `main`
 - Request-Korrelation aktiv (`X-Request-Id`).
 - Strukturierte Logs via `app/Support/Observability/StructuredLogger.php`.
 - Incident-Ablauf im Runbook dokumentiert.
+- Web Push:
+  - Zustellung und Subscription-Lifecycle mit strukturierten Events:
+    - `webpush.subscription_upserted`
+    - `webpush.subscription_deleted`
+    - `webpush.scene_post_sent`
+    - `webpush.delivery_failed`
 - Hotpath-Performance initial dokumentiert:
   - `docs/PERFORMANCE-PASS-2026-03-09.md`
   - Reproduzierbarer EXPLAIN-Runner: `php artisan perf:world-hotpaths`
@@ -116,7 +122,6 @@ Repository-Branch: `main`
 
 ## 6) Offene Risiken und Restthemen
 - Kein WebSocket-/Realtime-Backbone (bewusste Entscheidung fuer asynchrones PbP).
-- Browser-Benachrichtigungen aktuell pollingbasiert (kein VAPID/Web-Push).
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte

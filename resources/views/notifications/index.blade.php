@@ -23,7 +23,7 @@
                                 data-browser-notifications-enable
                                 class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                             >
-                                Browser-Permission aktivieren
+                                Browser-Push aktivieren
                             </button>
                         </div>
                     </div>
