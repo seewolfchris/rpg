@@ -10,6 +10,7 @@ Repository-Branch: `main`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
+- Benchmark `posts.latest_by_id`: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
 - Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
@@ -95,6 +96,9 @@ Repository-Branch: `main`
   - Reproduzierbarer EXPLAIN-Runner: `php artisan perf:world-hotpaths`
   - Staging/Prod-Lauf protokolliert: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
   - `scene_subscriptions.unread_count` auf `EXISTS` umgestellt und auf Prod erfolgreich validiert
+- `posts.latest_by_id` Benchmark-Runner vorhanden:
+  - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+  - Lokale Baseline: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:
@@ -112,8 +116,8 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. Staging/Prod-Smoke pro Deploy als Report aktualisieren (`docs/SMOKE-PASS-STAGING-PROD.md`).
-2. Optional: `posts.latest_by_id`-Plan bei steigender Datenmenge benchmarken.
+1. Nach naechstem Deploy echten Prod-Smoke reporten (`docs/SMOKE-PASS-STAGING-PROD.md`).
+2. `posts.latest_by_id` auf Staging/Prod benchmarken und gegen lokale Baseline vergleichen.
 3. Doku bei jedem Release synchron halten (`README`, `ROADMAP`, Projekt-Uebersicht, Release-Checkliste).
 
 ---

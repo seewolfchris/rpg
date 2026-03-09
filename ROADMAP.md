@@ -52,6 +52,9 @@ Stand: 2026-03-09
   - `.github/workflows/ci.yml`
   - `scripts/release_smoke.sh` (inkl. Weltkontext-/Legacy-Redirect-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
   - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
+- Performance:
+  - `php artisan perf:posts-latest-by-id-benchmark` (neuer Benchmark-Command)
+  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md` (lokale Baseline)
 - Observability:
   - `app/Http/Middleware/AttachRequestId.php`
   - `app/Support/Observability/StructuredLogger.php`
@@ -76,6 +79,6 @@ Stand: 2026-03-09
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. Staging/Prod-Smoke fuer Multi-Welt-Flows als Report protokollieren (`SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md`).
-2. Optional: `posts.latest_by_id`-Plan auf MySQL bei steigender Datenmenge beobachten/benchmarken.
+1. Nach naechstem Plesk-Deploy echten Prod-Smoke reporten (`SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md`), nicht nur Fallback.
+2. `posts.latest_by_id` auf Staging/Prod mit `perf:posts-latest-by-id-benchmark` fahren und mit lokaler Baseline vergleichen.
 3. Doku bei jedem Release auf Test-/Build-Stand synchron halten.
