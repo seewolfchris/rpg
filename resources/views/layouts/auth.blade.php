@@ -13,6 +13,10 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        @php($appName = config('app.name', 'Chroniken der Asche'))
+        @php($metaDescription = trim((string) $__env->yieldContent('meta_description', 'Chroniken der Asche ist ein asynchrones Dark-Fantasy Play-by-Post RPG mit Kampagnen, Szenen und Charakterverwaltung.')))
+        @php($ogImage = asset('images/og/chroniken-der-asche-og.png'))
+        @php($pageUrl = url()->current())
         @php($characterSheetGlobalPath = public_path('js/character-sheet.global.js'))
         @if (file_exists($characterSheetGlobalPath))
             <script defer src="{{ asset('js/character-sheet.global.js') }}?v={{ filemtime($characterSheetGlobalPath) }}"></script>
@@ -28,9 +32,25 @@
         @endif
 
         <title>@yield('title', config('app.name', 'Chroniken der Asche'))</title>
+        <meta name="description" content="{{ $metaDescription }}">
+        <meta property="og:site_name" content="{{ $appName }}">
+        <meta property="og:title" content="@yield('title', $appName)">
+        <meta property="og:description" content="{{ $metaDescription }}">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ $pageUrl }}">
+        <meta property="og:image" content="{{ $ogImage }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="@yield('title', $appName)">
+        <meta name="twitter:description" content="{{ $metaDescription }}">
+        <meta name="twitter:image" content="{{ $ogImage }}">
 
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192.svg') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+        <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/icons/apple-touch-icon.png') }}">
 
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])

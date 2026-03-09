@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'chroniken-static-v6';
+const STATIC_CACHE = 'chroniken-static-v7';
 const PAGE_CACHE = 'chroniken-pages-v6';
 const CONTENT_CACHE = 'chroniken-content-v6';
 const QUEUE_DB_NAME = 'chroniken-pbp';
@@ -11,10 +11,14 @@ const STATIC_ASSETS = [
     OFFLINE_URL,
     '/manifest.webmanifest',
     '/favicon.ico',
+    '/favicon-16x16.png',
+    '/favicon-32x32.png',
     '/images/hero-placeholder.svg',
     '/images/character-placeholder.svg',
-    '/images/icons/icon-192.svg',
-    '/images/icons/icon-512.svg',
+    '/images/icons/apple-touch-icon.png',
+    '/images/icons/icon-96.png',
+    '/images/icons/icon-192.png',
+    '/images/icons/icon-512.png',
     '/fonts/Goldman-Bold.woff2',
     '/fonts/Goldman-Regular.woff2',
     '/fonts/DMSerifText-Regular.woff2',

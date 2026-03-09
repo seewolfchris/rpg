@@ -1,0 +1,19 @@
+<svg width="750" height="1334" viewBox="0 0 750 1334" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a0f"/>
+      <stop offset="1" stop-color="#1a141f"/>
+    </linearGradient>
+  </defs>
+  <rect width="750" height="1334" fill="url(#bg)"/>
+  <circle cx="620" cy="180" r="150" fill="#a86a30" fill-opacity="0.2"/>
+  <rect x="54" y="72" width="642" height="1190" rx="42" fill="#0f1017" stroke="#a86a30" stroke-opacity="0.5"/>
+  <text x="98" y="162" fill="#e7c7a2" font-size="34" font-family="Arial, sans-serif" font-weight="700">Chroniken der Asche</text>
+  <text x="98" y="204" fill="#bcb7c9" font-size="20" font-family="Arial, sans-serif">Szenen · Beiträge · Charaktere</text>
+  <rect x="98" y="250" width="554" height="150" rx="20" fill="#1b1e2a" stroke="#44495f"/>
+  <rect x="98" y="424" width="554" height="150" rx="20" fill="#1b1e2a" stroke="#44495f"/>
+  <rect x="98" y="598" width="554" height="150" rx="20" fill="#1b1e2a" stroke="#44495f"/>
+  <rect x="98" y="772" width="554" height="150" rx="20" fill="#1b1e2a" stroke="#44495f"/>
+  <rect x="98" y="962" width="300" height="56" rx="14" fill="#a86a30"/>
+  <text x="142" y="998" fill="#101016" font-size="22" font-family="Arial, sans-serif" font-weight="700">KAMPAGNEN</text>
+</svg>

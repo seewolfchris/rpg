@@ -17,6 +17,17 @@ class PrivacyProtectionTest extends TestCase
         $response->assertSee('name="bingbot"', false);
     }
 
+    public function test_home_response_includes_pwa_and_social_meta_tags(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('manifest.webmanifest', false);
+        $response->assertSee('rel="icon"', false);
+        $response->assertSee('property="og:title"', false);
+        $response->assertSee('name="twitter:card"', false);
+    }
+
     public function test_known_bot_user_agent_is_blocked(): void
     {
         $response = $this
@@ -24,5 +35,15 @@ class PrivacyProtectionTest extends TestCase
             ->get(route('home'));
 
         $response->assertForbidden();
+    }
+
+    public function test_link_preview_bot_user_agent_is_allowed(): void
+    {
+        $response = $this
+            ->withHeader('User-Agent', 'Twitterbot/1.0')
+            ->get(route('home'));
+
+        $response->assertOk();
+        $response->assertHeader('X-Robots-Tag');
     }
 }

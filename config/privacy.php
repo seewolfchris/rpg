@@ -20,6 +20,29 @@ return [
 
     'block_known_bots' => (bool) env('PRIVACY_BLOCK_KNOWN_BOTS', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Link-Preview-Bots erlauben
+    |--------------------------------------------------------------------------
+    |
+    | Fuer OG/Twitter-Vorschauen in Messengern oder Social-Apps koennen
+    | bestimmte Vorschau-Crawler zugelassen werden, waehrend Such-/KI-Bots
+    | weiterhin geblockt bleiben.
+    |
+    */
+    'allow_link_preview_bots' => (bool) env('PRIVACY_ALLOW_LINK_PREVIEW_BOTS', true),
+    'allowed_user_agents' => [
+        'facebookexternalhit',
+        'facebot',
+        'twitterbot',
+        'linkedinbot',
+        'slackbot',
+        'discordbot',
+        'telegrambot',
+        'whatsapp',
+        'applebot',
+    ],
+
     'blocked_user_agents' => [
         'gptbot',
         'oai-searchbot',
