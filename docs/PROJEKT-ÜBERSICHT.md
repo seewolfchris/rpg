@@ -91,6 +91,7 @@ Repository-Branch: `main`
   - `docs/PERFORMANCE-PASS-2026-03-09.md`
   - Reproduzierbarer EXPLAIN-Runner: `php artisan perf:world-hotpaths`
   - Staging/Prod-Lauf protokolliert: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
+  - `scene_subscriptions.unread_count` auf `EXISTS` umgestellt und auf Prod erfolgreich validiert
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:

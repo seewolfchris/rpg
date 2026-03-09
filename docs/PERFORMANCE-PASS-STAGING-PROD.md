@@ -2,7 +2,7 @@
 
 Status: abgeschlossen  
 Datum: 2026-03-09  
-Generated at (report): `2026-03-09T17:53:39+00:00`
+Generated at (report): `2026-03-09T18:20:30+00:00`
 
 ## Laufkontext
 - Umgebung: `rpg.c76.org` (Prod)
@@ -27,18 +27,23 @@ $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERF
 - `scene_subscriptions.dashboard`
   - nutzt `scene_sub_user_updated_idx` (`type=ref`, `Using index`)
 - `scene_subscriptions.unread_count`
-  - Hauptteil nutzt relevante Indizes
-  - Derived-Subquery auf `posts` zeigt `Using temporary; Using filesort`
+  - laeuft jetzt mit `EXISTS`-Strategie
+  - `posts`-Teil nutzt Indexzugriff (`FirstMatch(c)`)
+  - kein `Using temporary; Using filesort` im Plan sichtbar
 - `campaign_invitations.inbox_status_specific`
   - nutzt `camp_inv_user_status_created_idx` (`type=ref`, `Using index`)
 - `campaign_invitations.by_campaign_status`
   - nutzt `camp_inv_campaign_status_user_idx` (`type=ref`, `Using index`)
 
+## Delta zum vorherigen Prod-Lauf
+- Vorher (`17:53:39`): `scene_subscriptions.unread_count` mit Derived-Subquery (`MAX(id) GROUP BY`) und `Using temporary; Using filesort`.
+- Nachher (`18:20:30`): `scene_subscriptions.unread_count` mit `EXISTS`-Plan und Indexzugriff auf `posts`, ohne `temporary/filesort`.
+
 ## Fazit
 - Hotpath-Indexabdeckung auf Prod ist insgesamt gut.
 - Kein kritischer Full-Scan in den geprueften Hauptpfaden sichtbar.
-- Optimierungspotenzial bleibt bei `scene_subscriptions.unread_count` (derived/temp/filesort).
+- Die zuvor offene `unread_count`-Optimierung ist erfolgreich abgeschlossen.
 
 ## Naechste technische Optimierung (optional)
-1. `unread_count`-Abfrage auf `EXISTS`-Strategie umstellen (statt `MAX(id) GROUP BY`-Derived-Table).
-2. Danach `perf:world-hotpaths` erneut auf Prod ausfuehren und Delta dokumentieren.
+1. `posts.latest_by_id` bei steigender Datenmenge erneut beobachten (MySQL waehlt aktuell `PRIMARY` statt `posts_scene_id_id_idx`).
+2. Bei Lastanstieg optional Query-Varianten fuer `latest_by_id` benchmarken und dokumentieren.
