@@ -280,7 +280,6 @@ class CharacterController extends Controller
     }
 
     /**
-     * @param  mixed  $weapons
      * @return array<int, array{name: string, attack: int, parry: int, damage: int}>
      */
     private function sanitizeWeapons(mixed $weapons): array
@@ -317,7 +316,6 @@ class CharacterController extends Controller
     }
 
     /**
-     * @param  mixed  $armors
      * @return array<int, array{name: string, protection: int, equipped: bool}>
      */
     private function sanitizeArmors(mixed $armors): array
@@ -357,9 +355,6 @@ class CharacterController extends Controller
         return array_values($normalized);
     }
 
-    /**
-     * @param  mixed  $value
-     */
     private function normalizeWeaponDamageValue(mixed $value): int
     {
         if ($value === null || $value === '') {

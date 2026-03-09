@@ -34,7 +34,7 @@ class EncyclopediaEntryMetaBuilder
 
             $seenUrls[$url] = true;
             $links[] = [
-                'label' => trim((string) ($match['label'] ?? '')), 
+                'label' => trim((string) ($match['label'] ?? '')),
                 'url' => $url,
                 'slug' => trim((string) ($match['slug'] ?? '')),
             ];
@@ -78,9 +78,9 @@ class EncyclopediaEntryMetaBuilder
             "{$title} in Vhal'Tor, grim dark fantasy concept art, {$categoryDirective}, "
                 ."ashen fog, blood-red accents, cinematic lighting, ultra detailed, no modern objects. Context: {$context}",
             "Cinematic mid-shot of {$title}, category {$category}, weathered textures, "
-                ."obsidian shadows, bleak atmosphere, realistic materials, dramatic composition, 35mm lens look",
+                .'obsidian shadows, bleak atmosphere, realistic materials, dramatic composition, 35mm lens look',
             "Wide establishing shot inspired by {$title}, devastated architecture, "
-                ."ash storms, broken banners, morally grey tone, immersive dark-fantasy matte painting, high detail",
+                .'ash storms, broken banners, morally grey tone, immersive dark-fantasy matte painting, high detail',
         ];
     }
 }

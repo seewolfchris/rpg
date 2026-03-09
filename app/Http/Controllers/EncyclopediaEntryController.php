@@ -18,7 +18,7 @@ class EncyclopediaEntryController extends Controller
     public function create(EncyclopediaCategory $encyclopediaCategory): View
     {
         $category = $encyclopediaCategory;
-        $entry = new EncyclopediaEntry();
+        $entry = new EncyclopediaEntry;
 
         return view('knowledge.admin.entries.create', compact('category', 'entry'));
     }

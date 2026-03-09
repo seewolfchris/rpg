@@ -11,7 +11,7 @@ class EncyclopediaContentRendererTest extends TestCase
     {
         $renderer = app(EncyclopediaContentRenderer::class);
 
-        $html = $renderer->render("**Asche** <script>alert(1)</script>")->toHtml();
+        $html = $renderer->render('**Asche** <script>alert(1)</script>')->toHtml();
 
         $this->assertStringContainsString('<strong>Asche</strong>', $html);
         $this->assertStringNotContainsString('<script>', $html);

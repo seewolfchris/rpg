@@ -207,7 +207,6 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $input
      * @return array<int, string>
      */
     protected function normalizeTraitInput(mixed $input): array
@@ -232,7 +231,6 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $input
      * @return array<int, array{name: string, quantity: int, equipped: bool}>
      */
     protected function normalizeInventoryInput(mixed $input): array
@@ -249,7 +247,6 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $input
      * @return array<int, array{name: string, attack: int|string, parry: int|string, damage: int|string}>
      */
     protected function normalizeWeaponInput(mixed $input): array
@@ -296,7 +293,6 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $input
      * @return array<int, array{name: string, protection: int, equipped: bool}>
      */
     protected function normalizeArmorInput(mixed $input): array
@@ -334,9 +330,6 @@ abstract class CharacterSheetRequest extends FormRequest
         return array_values($normalized);
     }
 
-    /**
-     * @param  mixed  $value
-     */
     protected function normalizeWeaponDamageValue(mixed $value): int|string
     {
         if ($value === null || $value === '') {

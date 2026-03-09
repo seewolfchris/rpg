@@ -34,7 +34,7 @@ class EncyclopediaCategoryController extends Controller
      */
     public function create(): View
     {
-        $category = new EncyclopediaCategory();
+        $category = new EncyclopediaCategory;
 
         return view('knowledge.admin.categories.create', compact('category'));
     }

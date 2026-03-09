@@ -162,7 +162,6 @@ class Character extends Model
     }
 
     /**
-     * @param  mixed  $value
      * @param  array<string, mixed>  $attributes
      * @return array<string, int>
      */

@@ -8,7 +8,6 @@ use App\Models\CharacterInventoryLog;
 class CharacterInventoryService
 {
     /**
-     * @param  mixed  $entries
      * @return array<int, array{name: string, quantity: int, equipped: bool}>
      */
     public function normalize(mixed $entries): array
@@ -48,6 +47,7 @@ class CharacterInventoryService
                     'equipped' => $equipped,
                 ];
                 $order[] = $key;
+
                 continue;
             }
 

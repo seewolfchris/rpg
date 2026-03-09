@@ -24,4 +24,3 @@ class EncyclopediaContentRenderer
         return new HtmlString($html);
     }
 }
-
