@@ -47,7 +47,7 @@ class PostModerationAuditTest extends TestCase
         ]);
 
         $this->actingAs($gm)
-            ->patch(route('posts.moderate', $post), [
+            ->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'moderation_status' => 'rejected',
                 'moderation_note' => 'Bitte mehr Kontext fuer die Szene liefern.',
             ])
@@ -68,7 +68,7 @@ class PostModerationAuditTest extends TestCase
         $this->assertSame('rejected', $notification->data['new_status'] ?? null);
         $this->assertSame('Bitte mehr Kontext fuer die Szene liefern.', $notification->data['moderation_note'] ?? null);
 
-        $sceneResponse = $this->actingAs($gm)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse = $this->actingAs($gm)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $sceneResponse->assertOk();
         $sceneResponse->assertSee('Moderationsverlauf');
         $sceneResponse->assertSee('Bitte mehr Kontext fuer die Szene liefern.');
@@ -101,7 +101,7 @@ class PostModerationAuditTest extends TestCase
         ]);
 
         $this->actingAs($gm)
-            ->patch(route('posts.moderate', $post), [
+            ->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'moderation_status' => 'pending',
                 'moderation_note' => 'Noch in Abstimmung, bitte warten.',
             ])

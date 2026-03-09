@@ -10,12 +10,12 @@ class EncyclopediaEntryMetaBuilder
     private const IMAGE_PROMPT_CONTEXT_MAX_LENGTH = 280;
 
     /**
-     * @return array<int, array{label:string,url:string,slug:string}>
+     * @return array<int, array{label:string,url:string,category:string,slug:string}>
      */
     public function extractInternalLinks(string $content, int $limit = 12): array
     {
         $matches = [];
-        $pattern = '/\[(?<label>[^\]]+)\]\((?<url>\/wissen\/enzyklopaedie\/(?<category>[a-z0-9\-]+)\/(?<slug>[a-z0-9\-]+))\)/iu';
+        $pattern = '/\[(?<label>[^\]]+)\]\((?<url>(?:\/w\/[a-z0-9\-]+)?\/wissen\/enzyklopaedie\/(?<category>[a-z0-9\-]+)\/(?<slug>[a-z0-9\-]+))\)/iu';
         preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
 
         if ($matches === []) {
@@ -36,6 +36,7 @@ class EncyclopediaEntryMetaBuilder
             $links[] = [
                 'label' => trim((string) ($match['label'] ?? '')),
                 'url' => $url,
+                'category' => trim((string) ($match['category'] ?? '')),
                 'slug' => trim((string) ($match['slug'] ?? '')),
             ];
 
@@ -55,6 +56,7 @@ class EncyclopediaEntryMetaBuilder
         $title = trim(str_replace('"', '', $entry->title));
         $excerpt = trim((string) ($entry->excerpt ?? ''));
         $category = trim((string) ($entry->category?->name ?? 'Enzyklopädie'));
+        $worldName = trim((string) ($entry->category?->world?->name ?? 'C76-RPG'));
 
         $categoryDirective = match ($entry->category?->slug) {
             'monster-bestiarium' => 'focus on creature anatomy, scarred hide, predatory stance, field-guide realism',
@@ -75,12 +77,12 @@ class EncyclopediaEntryMetaBuilder
         );
 
         return [
-            "{$title} in Vhal'Tor, grim dark fantasy concept art, {$categoryDirective}, "
-                ."ashen fog, blood-red accents, cinematic lighting, ultra detailed, no modern objects. Context: {$context}",
+            "{$title} in {$worldName}, atmospheric concept art, {$categoryDirective}, "
+                ."cinematic lighting, immersive detail, no copyrighted references. Context: {$context}",
             "Cinematic mid-shot of {$title}, category {$category}, weathered textures, "
-                .'obsidian shadows, bleak atmosphere, realistic materials, dramatic composition, 35mm lens look',
+                ."distinct mood for world {$worldName}, realistic materials, dramatic composition, 35mm lens look",
             "Wide establishing shot inspired by {$title}, devastated architecture, "
-                .'ash storms, broken banners, morally grey tone, immersive dark-fantasy matte painting, high detail',
+                ."world-specific landmarks from {$worldName}, immersive matte painting style, high detail",
         ];
     }
 }

@@ -44,7 +44,7 @@ class NotificationSubscriptionCenterTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patch(route('campaigns.scenes.subscription.mute', [$campaign, $scene]))
+            ->patch(route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -54,7 +54,7 @@ class NotificationSubscriptionCenterTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->delete(route('campaigns.scenes.unsubscribe', [$campaign, $scene]))
+            ->delete(route('campaigns.scenes.unsubscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('scene_subscriptions', [

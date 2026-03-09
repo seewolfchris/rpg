@@ -12,7 +12,7 @@
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#121217;border:1px solid #2a2a30;border-radius:14px;overflow:hidden;">
                         <tr>
                             <td style="padding:24px 28px;background:linear-gradient(180deg,#1a130f 0%,#121217 100%);border-bottom:1px solid #2a2a30;">
-                                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#f59e0b;">Chroniken der Asche</p>
+                                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#f59e0b;">C76-RPG</p>
                                 <h1 style="margin:0;font-size:28px;line-height:1.2;color:#f5f5f4;font-family:'Trebuchet MS',sans-serif;">Passwort zurücksetzen</h1>
                             </td>
                         </tr>

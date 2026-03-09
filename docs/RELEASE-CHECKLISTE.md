@@ -1,4 +1,4 @@
-# Release-Checkliste (Chroniken der Asche)
+# Release-Checkliste (C76-RPG)
 
 Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
@@ -6,7 +6,7 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 - `git pull --rebase origin main`
 - Alle geplanten Aenderungen finalisieren.
-- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.17-beta`).
+- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.19-beta`).
 
 ## 2. Qualitaet lokal pruefen
 
@@ -61,6 +61,7 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
   - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" scripts/release_smoke.sh`
 - Login/Logout funktioniert.
 - Dashboard laedt.
+- Weltkatalog und Weltkontext-Routing funktionieren (`/welten`, `/w/{world}/...`).
 - Charakter-Erstellung laedt ohne JS-Fehler.
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).

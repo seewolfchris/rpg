@@ -40,7 +40,7 @@
             <div class="mt-6 flex flex-wrap items-center gap-3">
                 @can('update', $campaign)
                     <a
-                        href="{{ route('campaigns.edit', $campaign) }}"
+                        href="{{ route('campaigns.edit', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
                         class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Bearbeiten
@@ -48,7 +48,7 @@
                 @endcan
 
                 @can('delete', $campaign)
-                    <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}" onsubmit="return confirm('Kampagne wirklich löschen?');">
+                    <form method="POST" action="{{ route('campaigns.destroy', ['world' => $campaign->world, 'campaign' => $campaign]) }}" onsubmit="return confirm('Kampagne wirklich löschen?');">
                         @csrf
                         @method('DELETE')
                         <button
@@ -71,7 +71,7 @@
 
                 @can('create', [App\Models\Scene::class, $campaign])
                     <a
-                        href="{{ route('campaigns.scenes.create', $campaign) }}"
+                        href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
                         class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                     >
                         Szene anlegen
@@ -79,7 +79,7 @@
                 @endcan
             </div>
 
-            <form method="GET" action="{{ route('campaigns.show', $campaign) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+            <form method="GET" action="{{ route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
                 <input
                     type="text"
                     name="q"
@@ -143,7 +143,7 @@
                                     @endif
                                     @if ($sceneSubscription)
                                         @if ($sceneHasUnread)
-                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.read', [$campaign, $scene]) }}">
+                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.read', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button
@@ -154,7 +154,7 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', [$campaign, $scene]) }}">
+                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button
@@ -167,7 +167,7 @@
                                         @endif
                                     @endif
                                     <a
-                                        href="{{ route('campaigns.scenes.show', [$campaign, $scene]) }}"
+                                        href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
                                         Öffnen
@@ -191,7 +191,7 @@
                     Lade bestehende Benutzer per E-Mail ein und definiere ihre Kampagnenrolle.
                 </p>
 
-                <form method="POST" action="{{ route('campaigns.invitations.store', $campaign) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+                <form method="POST" action="{{ route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
                     @csrf
                     <input
                         type="email"
@@ -241,7 +241,7 @@
                                     </p>
                                 </div>
 
-                                <form method="POST" action="{{ route('campaigns.invitations.destroy', [$campaign, $invitation]) }}">
+                                <form method="POST" action="{{ route('campaigns.invitations.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'invitation' => $invitation]) }}">
                                     @csrf
                                     @method('DELETE')
                                     <button

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
 use App\Models\User;
+use App\Models\World;
 use App\Notifications\CampaignInvitationNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +17,8 @@ use Illuminate\View\View;
 
 class CampaignInvitationController extends Controller
 {
+    use EnsuresWorldContext;
+
     public function index(Request $request): View
     {
         $status = in_array((string) $request->query('status', CampaignInvitation::STATUS_PENDING), [
@@ -28,7 +32,7 @@ class CampaignInvitationController extends Controller
 
         $invitations = CampaignInvitation::query()
             ->where('user_id', $request->user()->id)
-            ->with(['campaign.owner', 'inviter'])
+            ->with(['campaign.owner', 'campaign.world', 'inviter'])
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
             ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'accepted' THEN 1 ELSE 2 END")
             ->latest('created_at')
@@ -43,8 +47,10 @@ class CampaignInvitationController extends Controller
         return view('campaign-invitations.index', compact('invitations', 'status', 'pendingCount'));
     }
 
-    public function store(StoreCampaignInvitationRequest $request, Campaign $campaign): RedirectResponse
+    public function store(StoreCampaignInvitationRequest $request, World $world, Campaign $campaign): RedirectResponse
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
+
         if (! $this->canManageInvitations($request->user(), $campaign)) {
             abort(403);
         }
@@ -96,7 +102,7 @@ class CampaignInvitationController extends Controller
                 : 'Einladung erneut vorgemerkt: '.$invitee->name);
 
         return redirect()
-            ->route('campaigns.show', $campaign)
+            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', $status);
     }
 
@@ -116,7 +122,10 @@ class CampaignInvitationController extends Controller
         $invitation->save();
 
         return redirect()
-            ->route('campaigns.show', $invitation->campaign)
+            ->route('campaigns.show', [
+                'world' => $invitation->campaign->world,
+                'campaign' => $invitation->campaign,
+            ])
             ->with('status', 'Einladung angenommen.');
     }
 
@@ -140,8 +149,10 @@ class CampaignInvitationController extends Controller
             ->with('status', 'Einladung abgelehnt.');
     }
 
-    public function destroy(Request $request, Campaign $campaign, CampaignInvitation $invitation): RedirectResponse
+    public function destroy(Request $request, World $world, Campaign $campaign, CampaignInvitation $invitation): RedirectResponse
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
+
         if (! $this->canManageInvitations($request->user(), $campaign)) {
             abort(403);
         }
@@ -170,7 +181,7 @@ class CampaignInvitationController extends Controller
         }
 
         return redirect()
-            ->route('campaigns.show', $campaign)
+            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', 'Einladung entfernt.');
     }
 

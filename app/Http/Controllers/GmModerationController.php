@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Post\PostModerationService;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Post;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,14 +17,14 @@ class GmModerationController extends Controller
         private readonly PostModerationService $postModerationService,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request, World $world): View
     {
         $status = in_array((string) $request->query('status', 'pending'), ['all', 'pending', 'approved', 'rejected'], true)
             ? (string) $request->query('status', 'pending')
             : 'pending';
         $search = trim((string) $request->query('q', ''));
 
-        $baseQuery = Post::query()->whereHas('scene.campaign');
+        $baseQuery = Post::query()->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->forWorld($world));
 
         $postsQuery = (clone $baseQuery)
             ->with(['scene.campaign', 'scene', 'user', 'character', 'approvedBy', 'latestModerationLog.moderator'])
@@ -46,6 +47,7 @@ class GmModerationController extends Controller
         $rejectedCount = (clone $baseQuery)->where('moderation_status', 'rejected')->count();
 
         return view('gm.moderation', compact(
+            'world',
             'posts',
             'status',
             'search',
@@ -56,7 +58,7 @@ class GmModerationController extends Controller
         ));
     }
 
-    public function bulkUpdate(BulkModerationRequest $request): RedirectResponse
+    public function bulkUpdate(BulkModerationRequest $request, World $world): RedirectResponse
     {
         $statusFilter = (string) $request->validated('status', 'pending');
         $search = trim((string) $request->validated('q', ''));
@@ -65,7 +67,7 @@ class GmModerationController extends Controller
         $moderator = $request->user();
 
         $postsQuery = Post::query()
-            ->whereHas('scene.campaign')
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->forWorld($world))
             ->with(['scene.campaign', 'user']);
 
         $this->applyFilters($postsQuery, $statusFilter, $search);
@@ -104,6 +106,7 @@ class GmModerationController extends Controller
 
         return redirect()
             ->route('gm.moderation.index', [
+                'world' => $world,
                 'status' => $statusFilter,
                 'q' => $search !== '' ? $search : null,
             ])

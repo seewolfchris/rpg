@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,18 +13,30 @@ class EncyclopediaManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function defaultWorld(): World
+    {
+        return World::query()
+            ->where('slug', (string) config('worlds.default_slug'))
+            ->firstOrFail();
+    }
+
     public function test_public_encyclopedia_shows_seeded_content(): void
     {
-        $this->get(route('knowledge.encyclopedia'))
+        $world = $this->defaultWorld();
+
+        $this->get(route('knowledge.encyclopedia', ['world' => $world]))
             ->assertOk()
-            ->assertSeeText('Enzyklopädie von Vhal')
+            ->assertSeeText('Enzyklopädie · '.$world->name)
             ->assertSeeText('Zeitalter der Sonnenkronen')
             ->assertSeeText('Mehr lesen');
     }
 
     public function test_public_encyclopedia_filters_by_query_and_category(): void
     {
+        $world = $this->defaultWorld();
+
         $this->get(route('knowledge.encyclopedia', [
+            'world' => $world,
             'q' => 'Schattenhaeuser',
         ]))
             ->assertOk()
@@ -31,6 +44,7 @@ class EncyclopediaManagementTest extends TestCase
             ->assertDontSeeText('Zeitalter der Sonnenkronen');
 
         $this->get(route('knowledge.encyclopedia', [
+            'world' => $world,
             'k' => 'regionen',
         ]))
             ->assertOk()
@@ -45,7 +59,11 @@ class EncyclopediaManagementTest extends TestCase
             ->with('category')
             ->firstOrFail();
 
-        $this->get(route('knowledge.encyclopedia.entry', [$entry->category->slug, $entry->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $entry->category->world,
+            'categorySlug' => $entry->category->slug,
+            'entrySlug' => $entry->slug,
+        ]))
             ->assertOk()
             ->assertSeeText($entry->title)
             ->assertSeeText('Alle Einträge')
@@ -67,7 +85,11 @@ class EncyclopediaManagementTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $entry->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $entry->slug,
+        ]))
             ->assertOk()
             ->assertSeeText('Querverlinkungen')
             ->assertSeeText('Aschelande')
@@ -85,39 +107,48 @@ class EncyclopediaManagementTest extends TestCase
             ->where('id', '!=', $entry->encyclopedia_category_id)
             ->firstOrFail();
 
-        $this->get(route('knowledge.encyclopedia.entry', [$mismatchingCategory->slug, $entry->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $mismatchingCategory->world,
+            'categorySlug' => $mismatchingCategory->slug,
+            'entrySlug' => $entry->slug,
+        ]))
             ->assertNotFound();
     }
 
     public function test_player_cannot_access_encyclopedia_admin(): void
     {
         $player = User::factory()->create();
+        $world = $this->defaultWorld();
 
         $this->actingAs($player)
-            ->get(route('knowledge.admin.kategorien.index'))
-            ->assertForbidden();
+            ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
+            ->assertNotFound();
     }
 
     public function test_gm_can_create_category_and_entry_with_game_relevance(): void
     {
         $gm = User::factory()->gm()->create();
+        $world = $this->defaultWorld();
 
         $this->actingAs($gm)
-            ->post(route('knowledge.admin.kategorien.store'), [
+            ->post(route('knowledge.admin.kategorien.store', ['world' => $world]), [
                 'name' => 'Mythen',
                 'slug' => 'mythen',
                 'summary' => 'Ueberlieferte Geschichten und Verzeichnungen.',
                 'position' => 60,
                 'is_public' => '1',
             ])
-            ->assertRedirect(route('knowledge.admin.kategorien.index'));
+            ->assertRedirect(route('knowledge.admin.kategorien.index', ['world' => $world]));
 
         $category = EncyclopediaCategory::query()->where('slug', 'mythen')->first();
 
         $this->assertNotNull($category);
 
         $this->actingAs($gm)
-            ->post(route('knowledge.admin.kategorien.eintraege.store', $category), [
+            ->post(route('knowledge.admin.kategorien.eintraege.store', [
+                'world' => $category->world,
+                'encyclopediaCategory' => $category,
+            ]), [
                 'title' => 'Schwurhort von Carron',
                 'slug' => 'schwurhort-von-carron',
                 'excerpt' => 'Zentraler Ort fuer Eide der alten Haeuser.',
@@ -127,7 +158,10 @@ class EncyclopediaManagementTest extends TestCase
                 'game_relevance_le' => 'Frontlastige Szenen koennen schnelle LE-Verluste erzeugen.',
                 'game_relevance_probe' => 'Mut und Charisma sind hier haeufige GM-Proben.',
             ])
-            ->assertRedirect(route('knowledge.admin.kategorien.edit', $category));
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $category->world,
+                'encyclopediaCategory' => $category,
+            ]));
 
         $entry = EncyclopediaEntry::query()
             ->where('encyclopedia_category_id', $category->id)
@@ -139,7 +173,11 @@ class EncyclopediaManagementTest extends TestCase
         $this->assertSame('Mut und Charisma sind hier haeufige GM-Proben.', data_get($entry->game_relevance, 'probe_hint'));
 
         $this->actingAs($gm)
-            ->put(route('knowledge.admin.kategorien.eintraege.update', [$category, $entry]), [
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [
+                'world' => $category->world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $entry,
+            ]), [
                 'title' => 'Schwurhort von Carron',
                 'slug' => 'schwurhort-von-carron',
                 'excerpt' => 'Zentraler Ort fuer Eide der alten Haeuser.',
@@ -150,7 +188,10 @@ class EncyclopediaManagementTest extends TestCase
                 'game_relevance_ae' => 'Keine AE ohne magische Veranlagung.',
                 'game_relevance_real_world' => 'Real-World-Anfaenger bleiben in der Regel Mensch.',
             ])
-            ->assertRedirect(route('knowledge.admin.kategorien.edit', $category));
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $category->world,
+                'encyclopediaCategory' => $category,
+            ]));
 
         $entry->refresh();
 
@@ -185,15 +226,23 @@ class EncyclopediaManagementTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $this->get(route('knowledge.encyclopedia'))
+        $this->get(route('knowledge.encyclopedia', ['world' => $category->world]))
             ->assertOk()
             ->assertDontSeeText('Verborgene Wahrheit')
             ->assertDontSeeText('Vergessene Chronik');
 
-        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $draft->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $draft->slug,
+        ]))
             ->assertNotFound();
 
-        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $archived->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $archived->slug,
+        ]))
             ->assertNotFound();
     }
 
@@ -226,12 +275,20 @@ class EncyclopediaManagementTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $withRelevance->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $withRelevance->slug,
+        ]))
             ->assertOk()
             ->assertSeeText('Spielrelevanz')
             ->assertSeeText('Inquisitionsszenen nutzen oft Klugheit und Intuition.');
 
-        $this->get(route('knowledge.encyclopedia.entry', [$category->slug, $withoutRelevance->slug]))
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $withoutRelevance->slug,
+        ]))
             ->assertOk()
             ->assertDontSeeText('Spielrelevanz');
     }
@@ -261,7 +318,11 @@ class EncyclopediaManagementTest extends TestCase
         ]);
 
         $this->actingAs($gm)
-            ->get(route('knowledge.admin.kategorien.eintraege.edit', [$categoryB, $entry]))
+            ->get(route('knowledge.admin.kategorien.eintraege.edit', [
+                'world' => $categoryB->world,
+                'encyclopediaCategory' => $categoryB,
+                'encyclopediaEntry' => $entry,
+            ]))
             ->assertNotFound();
     }
 }

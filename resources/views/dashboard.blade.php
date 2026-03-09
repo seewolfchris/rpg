@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Dashboard | Chroniken der Asche')
+@section('title', 'Dashboard | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-4xl space-y-6">
@@ -20,6 +20,17 @@
             @endif
         </div>
 
+        <section class="ui-card p-6 sm:p-8">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Weltenkontext</p>
+                    <h2 class="mt-1 font-heading text-2xl text-stone-100">Aktive Welt</h2>
+                    <p class="mt-2 text-sm text-stone-300">{{ $selectedWorld?->name ?? 'Keine Welt ausgewählt' }}</p>
+                </div>
+                <a href="{{ route('worlds.index') }}" class="ui-btn ui-btn-accent">Welten wechseln</a>
+            </div>
+        </section>
+
         @php($tutorialTotal = max(count($tutorialSteps), 1))
         @php($tutorialProgress = (int) round(($tutorialCompletedCount / $tutorialTotal) * 100))
         <section class="ui-card p-6 sm:p-8">
@@ -32,7 +43,7 @@
                     </p>
                 </div>
                 <a
-                    href="{{ route('knowledge.index') }}"
+                    href="{{ route('knowledge.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn"
                 >
                     Wissenszentrum
@@ -83,7 +94,7 @@
                 <h2 class="font-heading text-lg text-stone-100">Kampagnen</h2>
                 <p class="mt-2 text-sm text-stone-300">Asynchrone IC/OOC-Szenen mit Edit-History.</p>
                 <a
-                    href="{{ route('campaigns.index') }}"
+                    href="{{ route('campaigns.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-accent mt-4"
                 >
                     Öffnen
@@ -108,13 +119,13 @@
                 <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beiträgen.</p>
                 <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Bookmarks: {{ $bookmarkCount }}</p>
                 <a
-                    href="{{ route('scene-subscriptions.index') }}"
+                    href="{{ route('scene-subscriptions.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-accent mt-4"
                 >
                     Zur Abo-Übersicht
                 </a>
                 <a
-                    href="{{ route('bookmarks.index') }}"
+                    href="{{ route('bookmarks.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-success mt-2"
                 >
                     Zu Bookmarks

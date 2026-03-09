@@ -19,7 +19,7 @@ class GamificationPointsTest extends TestCase
     {
         [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext();
 
-        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,
@@ -31,7 +31,7 @@ class GamificationPointsTest extends TestCase
         $player->refresh();
         $this->assertSame(0, $player->points);
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
@@ -61,11 +61,11 @@ class GamificationPointsTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
@@ -99,11 +99,11 @@ class GamificationPointsTest extends TestCase
         ]);
 
         // Punktevergabe via Moderations-Endpoint ausloesen.
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'rejected',
         ])->assertRedirect();
 
@@ -122,7 +122,7 @@ class GamificationPointsTest extends TestCase
     {
         [$gm, $player, $campaign, $scene] = $this->seedSceneContext();
 
-        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ooc',
             'content_format' => 'markdown',
             'content' => 'GM postet im Namen der Ordnung.',
@@ -132,7 +132,7 @@ class GamificationPointsTest extends TestCase
         $gm->refresh();
         $this->assertSame(10, $gm->points);
 
-        $this->actingAs($gm)->delete(route('posts.destroy', $post))->assertRedirect();
+        $this->actingAs($gm)->delete(route('posts.destroy', ['world' => $post->scene->campaign->world, 'post' => $post]))->assertRedirect();
 
         $gm->refresh();
         $this->assertSame(0, $gm->points);

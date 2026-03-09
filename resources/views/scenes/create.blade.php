@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Szene erstellen | Chroniken der Asche')
+@section('title', 'Szene erstellen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
@@ -8,7 +8,7 @@
         <h1 class="font-heading text-3xl text-stone-100">Szene erstellen</h1>
         <p class="mt-2 text-stone-300">Kampagne: {{ $campaign->title }}</p>
 
-        <form method="POST" action="{{ route('campaigns.scenes.store', $campaign) }}" class="mt-8">
+        <form method="POST" action="{{ route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-8">
             @csrf
             @include('scenes._form', ['campaign' => $campaign, 'submitLabel' => 'Szene erstellen'])
         </form>

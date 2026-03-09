@@ -7,8 +7,10 @@ use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\SceneSubscription;
 use App\Models\User;
+use App\Models\World;
 use App\Support\NavigationCounters;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -17,9 +19,20 @@ class DashboardController extends Controller
         private readonly NavigationCounters $navigationCounters,
     ) {}
 
-    public function __invoke(): View
+    public function __invoke(Request $request): View
     {
         $user = auth()->user();
+        $worlds = World::query()
+            ->active()
+            ->ordered()
+            ->get(['id', 'name', 'slug']);
+
+        $selectedWorldSlug = trim((string) $request->session()->get('world_slug', World::defaultSlug()));
+        $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
+
+        if ($selectedWorld) {
+            $request->session()->put('world_slug', $selectedWorld->slug);
+        }
 
         $topPlayers = User::query()
             ->select(['id', 'name', 'points'])
@@ -78,35 +91,35 @@ class DashboardController extends Controller
                 'title' => 'Charakter anlegen',
                 'description' => 'Erstelle deine Figur mit Eigenschaften, Biografie und Bild.',
                 'done' => $hasCharacter,
-                'url' => route('characters.create'),
+                'url' => route('characters.create', ['world' => $selectedWorld?->slug]),
                 'cta' => $hasCharacter ? 'Bearbeiten' : 'Jetzt erstellen',
             ],
             [
                 'title' => 'Szene abonnieren',
                 'description' => 'Abonniere eine Szene, um Updates und ungelesene Posts zu sehen.',
                 'done' => $hasSceneSubscription,
-                'url' => route('scene-subscriptions.index'),
+                'url' => route('scene-subscriptions.index', ['world' => $selectedWorld]),
                 'cta' => $hasSceneSubscription ? 'Abos ansehen' : 'Abo setzen',
             ],
             [
                 'title' => 'Ersten IC/OOC-Post schreiben',
                 'description' => 'IC bitte in Ich-Perspektive verfassen, als spricht dein Held selbst.',
                 'done' => $hasPost,
-                'url' => route('campaigns.index'),
+                'url' => route('campaigns.index', ['world' => $selectedWorld]),
                 'cta' => $hasPost ? 'Weiter schreiben' : 'Jetzt posten',
             ],
             [
                 'title' => 'Erste GM-Probe im Thread',
                 'description' => 'GM/Co-GM führt Proben mit Anlass, Ziel-Held und Modifikator direkt im Post aus.',
                 'done' => $hasDiceRoll,
-                'url' => route('campaigns.index'),
+                'url' => route('campaigns.index', ['world' => $selectedWorld]),
                 'cta' => $hasDiceRoll ? 'Probe im Thread ansehen' : 'GM-Probe verfolgen',
             ],
             [
                 'title' => 'Erstes Bookmark setzen',
                 'description' => 'Markiere wichtige Szenenstellen für schnellen Wiedereinstieg.',
                 'done' => $bookmarkCount > 0,
-                'url' => route('bookmarks.index'),
+                'url' => route('bookmarks.index', ['world' => $selectedWorld]),
                 'cta' => $bookmarkCount > 0 ? 'Bookmarks ansehen' : 'Bookmark setzen',
             ],
         ];
@@ -122,6 +135,8 @@ class DashboardController extends Controller
             'bookmarkCount' => $bookmarkCount,
             'tutorialSteps' => $tutorialSteps,
             'tutorialCompletedCount' => $tutorialCompletedCount,
+            'worlds' => $worlds,
+            'selectedWorld' => $selectedWorld,
         ]);
     }
 }

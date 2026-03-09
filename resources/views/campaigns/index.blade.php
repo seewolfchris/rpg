@@ -1,24 +1,32 @@
 @extends('layouts.auth')
 
-@section('title', 'Kampagnen | Chroniken der Asche')
+@section('title', 'Kampagnen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Chroniken und Handlungsbögen</p>
+                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Chroniken und Handlungsbögen · {{ $world->name }}</p>
                 <h1 class="font-heading text-3xl text-stone-100">Kampagnen</h1>
                 <p class="mt-2 text-stone-300">Wähle eine laufende Kampagne oder starte einen neuen Storybogen.</p>
             </div>
 
-            @can('create', App\Models\Campaign::class)
+            <div class="flex flex-wrap items-center gap-2">
                 <a
-                    href="{{ route('campaigns.create') }}"
-                    class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
+                    href="{{ route('worlds.index') }}"
+                    class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
-                    Neue Kampagne
+                    Welt wechseln
                 </a>
-            @endcan
+                @can('create', App\Models\Campaign::class)
+                    <a
+                        href="{{ route('campaigns.create', ['world' => $world]) }}"
+                        class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
+                    >
+                        Neue Kampagne
+                    </a>
+                @endcan
+            </div>
         </div>
 
         @if ($campaigns->isEmpty())
@@ -56,7 +64,7 @@
                         </div>
 
                         <a
-                            href="{{ route('campaigns.show', $campaign) }}"
+                            href="{{ route('campaigns.show', ['world' => $world, 'campaign' => $campaign]) }}"
                             class="mt-5 inline-flex rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Öffnen

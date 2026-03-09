@@ -40,7 +40,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', [$campaign, $scene]) }}">
+            <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                 @csrf
                 <input type="hidden" name="post_id" value="{{ $post->id }}">
                 <button
@@ -53,7 +53,7 @@
 
             @can('moderate', $post)
                 @if ($post->is_pinned)
-                    <form method="POST" action="{{ route('posts.unpin', $post) }}">
+                    <form method="POST" action="{{ route('posts.unpin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
                         @csrf
                         @method('PATCH')
                         <button
@@ -64,7 +64,7 @@
                         </button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('posts.pin', $post) }}">
+                    <form method="POST" action="{{ route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
                         @csrf
                         @method('PATCH')
                         <button
@@ -79,7 +79,7 @@
 
             @can('update', $post)
                 <a
-                    href="{{ route('posts.edit', $post) }}"
+                    href="{{ route('posts.edit', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
                     class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Bearbeiten
@@ -87,7 +87,7 @@
             @endcan
 
             @can('delete', $post)
-                <form method="POST" action="{{ route('posts.destroy', $post) }}" onsubmit="return confirm('Beitrag wirklich löschen?');">
+                <form method="POST" action="{{ route('posts.destroy', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" onsubmit="return confirm('Beitrag wirklich löschen?');">
                     @csrf
                     @method('DELETE')
                     <button
@@ -283,7 +283,7 @@
     @endif
 
     @can('moderate', $post)
-        <form method="POST" action="{{ route('posts.moderate', $post) }}" class="mt-4 flex flex-wrap items-start gap-2 sm:items-center">
+        <form method="POST" action="{{ route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" class="mt-4 flex flex-wrap items-start gap-2 sm:items-center">
             @csrf
             @method('PATCH')
             <label for="moderation_status_{{ $post->id }}" class="text-xs uppercase tracking-[0.08em] text-stone-400">Moderation</label>

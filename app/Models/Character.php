@@ -18,6 +18,7 @@ class Character extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'world_id',
         'name',
         'epithet',
         'bio',
@@ -70,6 +71,7 @@ class Character extends Model
     protected function casts(): array
     {
         return [
+            'world_id' => 'integer',
             'mu' => 'integer',
             'kl' => 'integer',
             'in' => 'integer',
@@ -102,6 +104,20 @@ class Character extends Model
             'wisdom' => 'integer',
             'charisma' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Character $character): void {
+            if (! $character->world_id) {
+                $character->world_id = World::resolveDefaultId();
+            }
+        });
+    }
+
+    public function world(): BelongsTo
+    {
+        return $this->belongsTo(World::class);
     }
 
     public function user(): BelongsTo

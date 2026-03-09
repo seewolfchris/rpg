@@ -2,27 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Campaign\StoreCampaignRequest;
 use App\Http\Requests\Campaign\UpdateCampaignRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CampaignController extends Controller
 {
+    use EnsuresWorldContext;
+
     public function __construct()
     {
         $this->authorizeResource(Campaign::class, 'campaign');
     }
 
-    public function index(Request $request): View
+    public function index(Request $request, World $world): View
     {
         $user = $request->user();
 
         $campaigns = Campaign::query()
-            ->with('owner')
+            ->forWorld($world)
+            ->with(['owner', 'world'])
             ->withExists([
                 'invitations as is_invited' => fn ($query) => $query
                     ->where('user_id', $user->id)
@@ -33,28 +38,31 @@ class CampaignController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('campaigns.index', compact('campaigns'));
+        return view('campaigns.index', compact('campaigns', 'world'));
     }
 
-    public function create(): View
+    public function create(World $world): View
     {
-        return view('campaigns.create');
+        return view('campaigns.create', compact('world'));
     }
 
-    public function store(StoreCampaignRequest $request): RedirectResponse
+    public function store(StoreCampaignRequest $request, World $world): RedirectResponse
     {
         $data = $request->validated();
         $data['owner_id'] = auth()->id();
+        $data['world_id'] = $world->id;
 
         $campaign = Campaign::query()->create($data);
 
         return redirect()
-            ->route('campaigns.show', $campaign)
+            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', 'Kampagne erstellt.');
     }
 
-    public function show(Request $request, Campaign $campaign): View
+    public function show(Request $request, World $world, Campaign $campaign): View
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
+
         $user = $request->user();
 
         $sceneStatus = in_array((string) $request->query('scene_status', 'all'), ['all', 'open', 'closed', 'archived'], true)
@@ -113,6 +121,7 @@ class CampaignController extends Controller
         }
 
         return view('campaigns.show', compact(
+            'world',
             'campaign',
             'scenes',
             'sceneStatus',
@@ -123,26 +132,30 @@ class CampaignController extends Controller
         ));
     }
 
-    public function edit(Campaign $campaign): View
+    public function edit(World $world, Campaign $campaign): View
     {
-        return view('campaigns.edit', compact('campaign'));
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
+
+        return view('campaigns.edit', compact('campaign', 'world'));
     }
 
-    public function update(UpdateCampaignRequest $request, Campaign $campaign): RedirectResponse
+    public function update(UpdateCampaignRequest $request, World $world, Campaign $campaign): RedirectResponse
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
         $campaign->update($request->validated());
 
         return redirect()
-            ->route('campaigns.show', $campaign)
+            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', 'Kampagne aktualisiert.');
     }
 
-    public function destroy(Campaign $campaign): RedirectResponse
+    public function destroy(World $world, Campaign $campaign): RedirectResponse
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
         $campaign->delete();
 
         return redirect()
-            ->route('campaigns.index')
+            ->route('campaigns.index', ['world' => $world])
             ->with('status', 'Kampagne gelöscht.');
     }
 }

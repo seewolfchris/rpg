@@ -50,10 +50,10 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $campaign = Campaign::query()->where('slug', 'die-fahlmond-chronik')->firstOrFail();
 
-        $campaignResponse->assertRedirect(route('campaigns.show', $campaign));
+        $campaignResponse->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
         $this->assertSame($gm->id, $campaign->owner_id);
 
-        $sceneResponse = $this->actingAs($gm)->post(route('campaigns.scenes.store', $campaign), [
+        $sceneResponse = $this->actingAs($gm)->post(route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'title' => 'Ankunft am Bluttor',
             'slug' => 'ankunft-am-bluttor',
             'summary' => 'Der Nebel oeffnet den ersten Pfad.',
@@ -92,7 +92,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'user_id' => $player->id,
         ]);
 
-        $postResponse = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $postResponse = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,
@@ -115,7 +115,10 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->latest('id')
             ->value('id');
 
-        $approveResponse = $this->actingAs($gm)->patch(route('posts.moderate', $postId), [
+        $approveResponse = $this->actingAs($gm)->patch(route('posts.moderate', [
+            'world' => $campaign->world,
+            'post' => $postId,
+        ]), [
             'moderation_status' => 'approved',
         ]);
 
@@ -166,7 +169,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'ae_current' => 30,
         ]);
 
-        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -188,7 +191,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->first();
 
         $this->assertNotNull($post);
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id);
 
         $this->assertDatabaseHas('dice_rolls', [
             'scene_id' => $scene->id,
@@ -218,7 +221,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame(35, (int) $playerCharacter->fresh()->le_current);
         $this->assertSame(27, (int) $playerCharacter->fresh()->ae_current);
 
-        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $expectedOutcomeLabel = $expectedSuccess ? 'Bestanden' : 'Nicht bestanden';
         $sceneResponse->assertOk()
             ->assertSeeText('GM-Probe')
@@ -270,7 +273,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'ae_current' => 30,
         ]);
 
-        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -285,7 +288,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'probe_explanation' => 'Erster Einschlag',
         ])->assertRedirect();
 
-        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -351,7 +354,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             ]],
         ]);
 
-        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -372,7 +375,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->latest('id')
             ->firstOrFail();
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id);
 
         $this->assertDatabaseHas('dice_rolls', [
             'post_id' => $post->id,
@@ -391,7 +394,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame(5, (int) ($probeDamage['armor_rs'] ?? 0));
         $this->assertSame(7, (int) ($probeDamage['effective_damage'] ?? 0));
 
-        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $sceneResponse->assertOk()
             ->assertSeeText('Schaden:')
             ->assertSeeText('RS 5')
@@ -433,7 +436,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'mu' => 30,
         ]);
 
-        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -455,7 +458,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->first();
 
         $this->assertNotNull($post);
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id);
 
         $roll = DB::table('dice_rolls')
             ->where('post_id', $post->id)
@@ -502,7 +505,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'inventory' => ['Fackel'],
         ]);
 
-        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
@@ -518,7 +521,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->latest('id')
             ->firstOrFail();
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id);
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id);
 
         $playerCharacter->refresh();
         $this->assertSame([[
@@ -549,7 +552,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'quantity' => 1,
         ]);
 
-        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $sceneResponse->assertOk()
             ->assertSeeText('Inventar aktualisiert')
             ->assertSeeText($playerCharacter->name)
@@ -577,8 +580,8 @@ class CampaignScenePostWorkflowTest extends TestCase
         $playerCharacter = Character::factory()->create(['user_id' => $player->id]);
 
         $response = $this->actingAs($player)
-            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
-            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'post_type' => 'ic',
                 'content_format' => 'markdown',
                 'character_id' => $playerCharacter->id,
@@ -594,7 +597,7 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'inventory_award_item' => 'Verbotener Eintrag',
             ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $response->assertSessionHasErrors('probe_enabled');
         $response->assertSessionHasErrors('inventory_award_enabled');
         $this->assertDatabaseCount('posts', 0);
@@ -634,8 +637,8 @@ class CampaignScenePostWorkflowTest extends TestCase
         $outsiderCharacter = Character::factory()->create(['user_id' => $outsider->id]);
 
         $response = $this->actingAs($gm)
-            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
-            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'post_type' => 'ic',
                 'content_format' => 'markdown',
                 'character_id' => $gmCharacter->id,
@@ -650,7 +653,7 @@ class CampaignScenePostWorkflowTest extends TestCase
                 'probe_explanation' => 'Unzulaessiges Ziel ausserhalb der Kampagne',
             ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $response->assertSessionHasErrors('probe_character_id');
         $this->assertDatabaseCount('posts', 0);
         $this->assertDatabaseCount('dice_rolls', 0);
@@ -676,20 +679,20 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $character = Character::factory()->create(['user_id' => $player->id]);
 
-        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
             'content_format' => 'plain',
             'character_id' => $character->id,
             'content' => 'IC-Text am roten Tor mit Blutmondschein.',
         ]);
 
-        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ooc',
             'content_format' => 'plain',
             'content' => 'OOC-Abstimmung fuer die naechste Runde.',
         ]);
 
-        $response = $this->actingAs($player)->get(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
 
         $response->assertOk()
             ->assertSeeText('Abenteuerfluss (IC)')
@@ -731,7 +734,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'inventory' => ['Fackel', 'Seil 10m lang'],
         ]);
 
-        $addResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+        $addResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'inventory_action_character_id' => $targetCharacter->id,
             'inventory_action_type' => 'add',
             'inventory_action_item' => 'Heiltrank',
@@ -740,7 +743,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'inventory_action_note' => 'Gefunden in der Nebelkammer',
         ]);
 
-        $addResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $addResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action');
         $this->assertSame([[
             'name' => 'Fackel',
             'quantity' => 1,
@@ -755,13 +758,13 @@ class CampaignScenePostWorkflowTest extends TestCase
             'equipped' => true,
         ]], $targetCharacter->fresh()->inventory);
 
-        $removeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+        $removeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.inventory-quick-action', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'inventory_action_character_id' => $targetCharacter->id,
             'inventory_action_type' => 'remove',
             'inventory_action_item' => 'seil 10m lang',
         ]);
 
-        $removeResponse->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $removeResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action');
         $this->assertSame([[
             'name' => 'Fackel',
             'quantity' => 1,
@@ -825,14 +828,14 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($gm)
-            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
-            ->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'inventory_action_character_id' => $targetCharacter->id,
                 'inventory_action_type' => 'remove',
                 'inventory_action_item' => 'Unbekannter Gegenstand',
             ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action');
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action');
         $response->assertSessionHasErrors('inventory_action_item');
         $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
     }
@@ -871,14 +874,14 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
 
         $response = $this->actingAs($player)
-            ->from(route('campaigns.scenes.show', [$campaign, $scene]))
-            ->post(route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]), [
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'inventory_action_character_id' => $targetCharacter->id,
                 'inventory_action_type' => 'add',
                 'inventory_action_item' => 'Heiltrank',
             ]);
 
-        $response->assertRedirect(route('campaigns.scenes.show', [$campaign, $scene]));
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $response->assertSessionHasErrors('inventory_action_character_id');
         $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
     }

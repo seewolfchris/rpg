@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Kampagnen-Einladungen | Chroniken der Asche')
+@section('title', 'Kampagnen-Einladungen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">
@@ -15,10 +15,10 @@
                 </div>
 
                 <a
-                    href="{{ route('campaigns.index') }}"
+                    href="{{ route('worlds.index') }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
-                    Zu Kampagnen
+                    Zu Welten
                 </a>
             </div>
         </div>
@@ -108,7 +108,7 @@
 
                                 @if ($invitation->status === 'accepted')
                                     <a
-                                        href="{{ route('campaigns.show', $invitation->campaign) }}"
+                                        href="{{ route('campaigns.show', ['world' => $invitation->campaign->world, 'campaign' => $invitation->campaign]) }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
                                         Kampagne öffnen

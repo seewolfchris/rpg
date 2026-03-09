@@ -1,6 +1,7 @@
-# Chroniken der Asche (Laravel Beta)
+# C76-RPG (Laravel Multi-World Beta)
 
-Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchronen Kampagnen/Szenen, Post-Moderation, GM-Proben, Benachrichtigungen, Gamification und PWA-Basis.
+Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampagnen/Szenen, Post-Moderation, GM-Proben, Benachrichtigungen, Gamification und PWA-Basis.  
+`Chroniken der Asche` bleibt als Startwelt erhalten, ist jetzt aber nur eine von mehreren Welten.
 
 ## Dokumentations-Uebersicht
 
@@ -15,7 +16,11 @@ Dark-Fantasy Play-by-Post (PbP) RPG auf Laravel mit lokalem Font-Setup, asynchro
 
 ## Beta-Status
 
-Stand: **Beta 1** (funktional, getestet, build-fähig)
+Stand: **Release-Beta `v0.19-beta`** (funktional, getestet, build-faehig)
+
+Letzte lokale Verifikation:
+- `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
+- `npm run build` -> **gruen**
 
 Enthalten:
 - Auth: Registrierung/Login/Logout (Breeze-Style, Blade)
@@ -32,6 +37,11 @@ Enthalten:
 - Gamification: Punkte für freigegebene Posts
 - Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie
 - Enzyklopaedie-Admin: Kategorien/Eintraege CRUD fuer GM/Admin
+- Multi-Welt-Plattform:
+  - Weltmodell + Admin-CRUD (`worlds`)
+  - Weltkontext-Routing unter `/w/{world}/...`
+  - Legacy-URLs ohne Weltsegment mit `301`-Redirect
+  - Weltbindung auf Kampagnen, Charaktere und Enzyklopaedie-Kategorien
 - PWA-Basis: Manifest, Service Worker, Offline-Lesen (Szenen/Charaktere), Offline-Post-Queue
 - Security-Basis: Validation, Policies, CSRF, Auth-Middleware, Rate Limiting
 
@@ -44,12 +54,11 @@ Enthalten:
 
 ## Produkt-Entscheidungen (Maerz 2026)
 
-- Regelwerk, Weltwissen und Spielanleitung bleiben getrennte Wissensbereiche
-- Wissenszentrum ist zentrale Einstiegsseite (`/wissen`)
-- Enzyklopaedie wird redaktionell durch GM/Admin gepflegt
-- Charakter-Erstellung mit zwei Modi:
-  - `Real-World Anfaenger` (aktiv, Spezies-Zwang: Mensch)
-  - `Native aus Vhal'Tor` (aktiv)
+- Plattform-Branding: **C76-RPG** (nicht mehr weltgebundenes Branding auf der Landingpage)
+- Welten sind kampagnengebunden (eine Kampagne gehoert genau zu einer Welt)
+- Charaktere und Enzyklopaedie-Kategorien sind ebenfalls weltgebunden
+- Wissenszentrum bleibt zentrale Einstiegsseite, jedoch immer im Weltkontext
+- Enzyklopaedie wird redaktionell durch GM/Admin gepflegt (pro Welt getrennt)
 
 ## Tech Stack
 
@@ -86,7 +95,7 @@ Empfohlen (wie Produktion):
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=chroniken_der_asche
+DB_DATABASE=c76_rpg
 DB_USERNAME=root
 DB_PASSWORD=
 ```
@@ -207,16 +216,21 @@ Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests
 ## Wichtige Routen
 
 - Landing: `/`
-- Wissenszentrum: `/wissen`
-- Enzyklopaedie: `/wissen/enzyklopaedie`
-- Enzyklopaedie Admin (nur GM/Admin): `/wissen/enzyklopaedie/admin/kategorien`
+- Weltkatalog: `/welten`
+- Canonical Weltkontext: `/w/{world}/...`
+- Wissenszentrum (canonical): `/w/{world}/wissen`
+- Enzyklopaedie (canonical): `/w/{world}/wissen/enzyklopaedie`
+- Enzyklopaedie Admin (nur GM/Admin): `/w/{world}/wissen/enzyklopaedie/admin/kategorien`
 - Dashboard: `/dashboard`
-- Kampagnen: `/campaigns`
-- Szenen-Abos: `/scene-subscriptions`
-- Bookmarks: `/bookmarks`
+- Kampagnen (canonical): `/w/{world}/campaigns`
+- Szenen-Abos (canonical): `/w/{world}/scene-subscriptions`
+- Bookmarks (canonical): `/w/{world}/bookmarks`
 - Mitteilungen: `/notifications`
-- GM Hub: `/gm`
+- GM Hub (global): `/gm`
+- GM Moderation (canonical): `/w/{world}/gm/moderation`
 - Rechtliche Seiten: zentral unter `https://c76.org/impressum/` und `https://c76.org/datenschutz/` (Footer-Links)
+
+Hinweis: Legacy-Routen ohne Weltsegment bleiben erreichbar und leiten per `301` auf die passende Welt-URL um.
 
 ## Bekannte Grenzen (Beta)
 

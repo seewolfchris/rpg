@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Moderationszentrale | Chroniken der Asche')
+@section('title', 'GM Moderationszentrale | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -168,13 +168,13 @@
 
                             <div class="mt-4 space-y-3">
                                 <a
-                                    href="{{ route('campaigns.scenes.show', [$post->scene->campaign, $post->scene]) }}#post-{{ $post->id }}"
+                                    href="{{ route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) }}#post-{{ $post->id }}"
                                     class="ui-btn"
                                 >
                                     In Szene ansehen
                                 </a>
 
-                                <form method="POST" action="{{ route('posts.moderate', $post) }}" class="ui-card-soft space-y-3 p-3">
+                                <form method="POST" action="{{ route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" class="ui-card-soft space-y-3 p-3">
                                     @csrf
                                     @method('PATCH')
                                     <label for="moderation_note_{{ $post->id }}" class="block text-xs uppercase tracking-[0.08em] text-stone-500">Moderationshinweis</label>

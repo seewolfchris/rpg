@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
     <head>
-        @php($appVersion = (string) config('app.version', 'v0.16-beta'))
+        @php($appVersion = (string) config('app.version', 'v0.19-beta'))
         @php($appBuild = (string) config('app.build', ''))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,8 +13,8 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        @php($appName = config('app.name', 'Chroniken der Asche'))
-        @php($metaDescription = trim((string) $__env->yieldContent('meta_description', 'Chroniken der Asche ist ein asynchrones Dark-Fantasy Play-by-Post RPG mit Kampagnen, Szenen und Charakterverwaltung.')))
+        @php($appName = config('app.name', 'C76-RPG'))
+        @php($metaDescription = trim((string) $__env->yieldContent('meta_description', 'C76-RPG ist eine asynchrone Play-by-Post Plattform mit Kampagnen, Szenen und Charakterverwaltung in mehreren Welten.')))
         @php($ogImage = asset('images/og/chroniken-der-asche-og.png'))
         @php($pageUrl = url()->current())
         @php($characterSheetGlobalPath = public_path('js/character-sheet.global.js'))
@@ -31,7 +31,7 @@
             <script defer src="{{ asset('js/alpinejs-3.14.8.min.js') }}?v={{ filemtime($alpineScriptPath) }}"></script>
         @endif
 
-        <title>@yield('title', config('app.name', 'Chroniken der Asche'))</title>
+        <title>@yield('title', config('app.name', 'C76-RPG'))</title>
         <meta name="description" content="{{ $metaDescription }}">
         <meta property="og:site_name" content="{{ $appName }}">
         <meta property="og:title" content="@yield('title', $appName)">
@@ -62,11 +62,17 @@
 
             <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <a href="{{ route('home') }}" class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]">
-                    CHRONIKEN DER ASCHE
+                    C76-RPG
                 </a>
 
                 <nav class="app-nav" aria-label="Hauptnavigation">
                     @include('partials.pwa-install-button')
+                    <a
+                        href="{{ route('worlds.index') }}"
+                        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    >
+                        Welten
+                    </a>
                     <a
                         href="{{ route('knowledge.index') }}"
                         class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
@@ -74,6 +80,12 @@
                         Wissen
                     </a>
                     @auth
+                        @php($activeWorld = request()->route('world'))
+                        @if ($activeWorld instanceof \App\Models\World)
+                            <span class="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100">
+                                Welt: {{ $activeWorld->name }}
+                            </span>
+                        @endif
                         <span class="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100">
                             {{ auth()->user()->points }} Punkte
                         </span>
@@ -196,7 +208,7 @@
                     data-browser-notifications
                     data-poll-url="{{ route('notifications.poll') }}"
                     data-enabled-kinds='@json($browserNotificationKinds)'
-                    data-app-name="{{ config('app.name', 'Chroniken der Asche') }}"
+                    data-app-name="{{ config('app.name', 'C76-RPG') }}"
                     class="hidden"
                     aria-hidden="true"
                 ></div>

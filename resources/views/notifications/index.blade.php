@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Benachrichtigungen | Chroniken der Asche')
+@section('title', 'Benachrichtigungen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">
@@ -91,13 +91,13 @@
 
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a
-                                            href="{{ route('campaigns.scenes.show', [$subscribedScene->campaign, $subscribedScene]) }}"
+                                            href="{{ route('campaigns.scenes.show', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}"
                                             class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                         >
                                             Szene
                                         </a>
 
-                                        <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                        <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                             @csrf
                                             @method('PATCH')
                                             <button
@@ -108,7 +108,7 @@
                                             </button>
                                         </form>
 
-                                        <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                        <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button

@@ -17,6 +17,7 @@ class Campaign extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'world_id',
         'owner_id',
         'title',
         'slug',
@@ -38,6 +39,20 @@ class Campaign extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Campaign $campaign): void {
+            if (! $campaign->world_id) {
+                $campaign->world_id = World::resolveDefaultId();
+            }
+        });
+    }
+
+    public function world(): BelongsTo
+    {
+        return $this->belongsTo(World::class);
     }
 
     public function owner(): BelongsTo
@@ -77,6 +92,13 @@ class Campaign extends Model
                         ->where('status', CampaignInvitation::STATUS_ACCEPTED);
                 });
         });
+    }
+
+    public function scopeForWorld(Builder $query, World|int $world): Builder
+    {
+        $worldId = $world instanceof World ? (int) $world->id : (int) $world;
+
+        return $query->where('world_id', $worldId);
     }
 
     public function isVisibleTo(User $user): bool

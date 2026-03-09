@@ -6,6 +6,7 @@ use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Domain\Scene\SceneInventoryQuickActionService;
 use App\Domain\Scene\ScenePostAnchorUrlService;
 use App\Domain\Scene\SceneReadTrackingService;
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Scene\StoreSceneInventoryActionRequest;
 use App\Http\Requests\Scene\StoreSceneRequest;
 use App\Http\Requests\Scene\UpdateSceneRequest;
@@ -14,12 +15,15 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
+use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SceneController extends Controller
 {
+    use EnsuresWorldContext;
+
     private const THREAD_POSTS_PER_PAGE = 20;
 
     public function __construct(
@@ -29,15 +33,17 @@ class SceneController extends Controller
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
     ) {}
 
-    public function create(Campaign $campaign): View
+    public function create(World $world, Campaign $campaign): View
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Scene::class, $campaign]);
 
-        return view('scenes.create', compact('campaign'));
+        return view('scenes.create', compact('world', 'campaign'));
     }
 
-    public function store(StoreSceneRequest $request, Campaign $campaign): RedirectResponse
+    public function store(StoreSceneRequest $request, World $world, Campaign $campaign): RedirectResponse
     {
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Scene::class, $campaign]);
 
         $data = $request->validated();
@@ -50,13 +56,13 @@ class SceneController extends Controller
         $this->ensureDefaultSubscriptions($scene, (int) auth()->id(), (int) $campaign->owner_id);
 
         return redirect()
-            ->route('campaigns.scenes.show', [$campaign, $scene])
+            ->route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene])
             ->with('status', 'Szene erstellt.');
     }
 
-    public function show(Request $request, Campaign $campaign, Scene $scene): View|RedirectResponse
+    public function show(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
         $scene->load(['campaign.owner', 'creator']);
@@ -72,7 +78,7 @@ class SceneController extends Controller
         $lastReadPostIdBeforeOpen = (int) ($subscription?->last_read_post_id ?? 0);
 
         if ($request->query('jump') === 'last_read' && $lastReadPostIdBeforeOpen > 0) {
-            $jumpUrl = $this->scenePostAnchorUrlService->build($campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
+            $jumpUrl = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
 
             if ($jumpUrl !== null) {
                 return redirect()->to($jumpUrl);
@@ -111,6 +117,7 @@ class SceneController extends Controller
 
         $characters = auth()->user()
             ->characters()
+            ->where('world_id', $campaign->world_id)
             ->orderBy('name')
             ->get();
 
@@ -133,7 +140,7 @@ class SceneController extends Controller
             ),
             static fn (int $postId): bool => $postId > 0
         ));
-        $postAnchorUrls = $this->scenePostAnchorUrlService->build($campaign, $scene, $anchorTargetIds);
+        $postAnchorUrls = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, $anchorTargetIds);
 
         $pinnedPostJumpUrls = [];
         foreach ($pinnedPosts as $pinnedPost) {
@@ -157,6 +164,7 @@ class SceneController extends Controller
             : null;
 
         return view('scenes.show', compact(
+            'world',
             'campaign',
             'scene',
             'posts',
@@ -177,44 +185,45 @@ class SceneController extends Controller
         ));
     }
 
-    public function edit(Campaign $campaign, Scene $scene): View
+    public function edit(World $world, Campaign $campaign, Scene $scene): View
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
-        return view('scenes.edit', compact('campaign', 'scene'));
+        return view('scenes.edit', compact('world', 'campaign', 'scene'));
     }
 
-    public function update(UpdateSceneRequest $request, Campaign $campaign, Scene $scene): RedirectResponse
+    public function update(UpdateSceneRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
         $scene->update($request->validated());
 
         return redirect()
-            ->route('campaigns.scenes.show', [$campaign, $scene])
+            ->route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene])
             ->with('status', 'Szene aktualisiert.');
     }
 
-    public function destroy(Campaign $campaign, Scene $scene): RedirectResponse
+    public function destroy(World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('delete', $scene);
 
         $scene->delete();
 
         return redirect()
-            ->route('campaigns.show', $campaign)
+            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', 'Szene gelöscht.');
     }
 
     public function inventoryQuickAction(
         StoreSceneInventoryActionRequest $request,
+        World $world,
         Campaign $campaign,
         Scene $scene
     ): RedirectResponse {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
         $result = $this->sceneInventoryQuickActionService->execute(
@@ -226,7 +235,7 @@ class SceneController extends Controller
 
         if (($result['status'] ?? '') === 'item_not_found') {
             return redirect()
-                ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+                ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action')
                 ->withInput()
                 ->withErrors([
                     'inventory_action_item' => 'Dieser Gegenstand wurde im Inventar des Ziel-Helden nicht gefunden.',
@@ -235,7 +244,7 @@ class SceneController extends Controller
 
         if (($result['status'] ?? '') !== 'ok') {
             return redirect()
-                ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+                ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action')
                 ->withInput()
                 ->withErrors([
                     'inventory_action_character_id' => 'Der Ziel-Held konnte nicht aktualisiert werden.',
@@ -243,13 +252,8 @@ class SceneController extends Controller
         }
 
         return redirect()
-            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#inventory-quick-action')
+            ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action')
             ->with('status', (string) ($result['message'] ?? 'Inventar-Schnellaktion gespeichert.'));
-    }
-
-    private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void
-    {
-        abort_unless($scene->campaign_id === $campaign->id, 404);
     }
 
     private function ensureDefaultSubscriptions(Scene $scene, int $creatorId, int $ownerId): void

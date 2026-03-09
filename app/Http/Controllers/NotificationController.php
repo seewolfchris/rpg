@@ -43,7 +43,7 @@ class NotificationController extends Controller
         $subscriptions = SceneSubscription::query()
             ->where('user_id', $user->id)
             ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
-            ->with(['scene.campaign'])
+            ->with(['scene.campaign.world'])
             ->latest('updated_at')
             ->get();
 

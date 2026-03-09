@@ -30,7 +30,7 @@ class NotificationWorkflowTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
@@ -78,7 +78,7 @@ class NotificationWorkflowTest extends TestCase
             'is_muted' => true,
         ]);
 
-        $this->actingAs($author)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($author)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ooc',
             'content_format' => 'markdown',
             'content' => 'Neuer Beitrag aus den Schatten.',
@@ -121,7 +121,7 @@ class NotificationWorkflowTest extends TestCase
         $index->assertSee('Benachrichtigungen');
 
         $first = $player->fresh()->unreadNotifications()->firstOrFail();
-        $expectedRedirect = route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$post->id;
+        $expectedRedirect = route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id;
 
         $this->actingAs($player)->post(route('notifications.read', $first->id))
             ->assertRedirect($expectedRedirect);

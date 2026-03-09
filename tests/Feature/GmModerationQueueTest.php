@@ -141,7 +141,7 @@ class GmModerationQueueTest extends TestCase
 
         $response = $this->actingAs($gm)
             ->from(route('gm.moderation.index', ['status' => 'pending']))
-            ->patch(route('posts.moderate', $post), [
+            ->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'moderation_status' => 'approved',
                 'moderation_note' => 'Kanonisch und regelkonform.',
             ]);
@@ -215,10 +215,10 @@ class GmModerationQueueTest extends TestCase
                 'moderation_note' => 'Bulk-Freigabe nach Sammelpruefung.',
             ]);
 
-        $response->assertRedirect(route('gm.moderation.index', [
-            'status' => 'pending',
-            'q' => 'BULK-ZIEL',
-        ]));
+        $response->assertRedirectContains('/gm/moderation');
+        $location = (string) $response->headers->get('Location');
+        $this->assertStringContainsString('status=pending', $location);
+        $this->assertStringContainsString('q=BULK-ZIEL', $location);
 
         $this->assertDatabaseHas('posts', [
             'id' => $firstPending->id,

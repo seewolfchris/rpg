@@ -19,7 +19,7 @@ class SceneSubscriptionFlowTest extends TestCase
         [$campaign, $scene] = $this->seedCampaignAndScene();
 
         $this->actingAs($user)
-            ->post(route('campaigns.scenes.subscribe', [$campaign, $scene]))
+            ->post(route('campaigns.scenes.subscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -29,7 +29,7 @@ class SceneSubscriptionFlowTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->delete(route('campaigns.scenes.unsubscribe', [$campaign, $scene]))
+            ->delete(route('campaigns.scenes.unsubscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('scene_subscriptions', [
@@ -50,7 +50,7 @@ class SceneSubscriptionFlowTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patch(route('campaigns.scenes.subscription.mute', [$campaign, $scene]))
+            ->patch(route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -60,7 +60,7 @@ class SceneSubscriptionFlowTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patch(route('campaigns.scenes.subscription.mute', [$campaign, $scene]))
+            ->patch(route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -75,7 +75,7 @@ class SceneSubscriptionFlowTest extends TestCase
         $author = User::factory()->create();
         [$campaign, $scene] = $this->seedCampaignAndScene();
 
-        $this->actingAs($author)->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+        $this->actingAs($author)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ooc',
             'content_format' => 'markdown',
             'content' => 'Ein Ruf durch die Hallen.',

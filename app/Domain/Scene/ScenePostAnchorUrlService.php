@@ -5,6 +5,7 @@ namespace App\Domain\Scene;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\World;
 
 class ScenePostAnchorUrlService
 {
@@ -16,7 +17,7 @@ class ScenePostAnchorUrlService
      * @param  array<int, int>  $postIds
      * @return array<int, string>
      */
-    public function build(Campaign $campaign, Scene $scene, array $postIds): array
+    public function build(World $world, Campaign $campaign, Scene $scene, array $postIds): array
     {
         $normalizedIds = array_values(array_unique(array_map(
             static fn ($postId): int => (int) $postId,
@@ -42,6 +43,7 @@ class ScenePostAnchorUrlService
             $page = intdiv((int) $newerPostsCount, $this->threadPostsPerPage) + 1;
 
             $urls[$postId] = route('campaigns.scenes.show', [
+                'world' => $world,
                 'campaign' => $campaign,
                 'scene' => $scene,
                 'page' => $page,

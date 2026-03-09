@@ -97,7 +97,7 @@ class NotificationPreferenceTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 
@@ -132,7 +132,7 @@ class NotificationPreferenceTest extends TestCase
 
         Notification::fake();
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertRedirect();
 

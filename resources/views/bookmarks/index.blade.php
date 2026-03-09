@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Bookmarks | Chroniken der Asche')
+@section('title', 'Bookmarks | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -68,13 +68,13 @@
 
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a
-                                            href="{{ $bookmarkJumpUrls[$bookmark->id] ?? route('campaigns.scenes.show', [$bookmarkScene->campaign, $bookmarkScene]) }}"
+                                            href="{{ $bookmarkJumpUrls[$bookmark->id] ?? route('campaigns.scenes.show', ['world' => $bookmarkScene->campaign->world, 'campaign' => $bookmarkScene->campaign, 'scene' => $bookmarkScene]) }}"
                                             class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-900/35"
                                         >
                                             Öffnen
                                         </a>
 
-                                        <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', [$bookmarkScene->campaign, $bookmarkScene]) }}">
+                                        <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', ['world' => $bookmarkScene->campaign->world, 'campaign' => $bookmarkScene->campaign, 'scene' => $bookmarkScene]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button

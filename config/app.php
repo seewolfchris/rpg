@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'C76-RPG'),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,7 +64,7 @@ return [
     |
     */
 
-    'version' => env('APP_VERSION', 'v0.18-beta'),
+    'version' => env('APP_VERSION', 'v0.19-beta'),
 
     'build' => env('APP_BUILD'),
 

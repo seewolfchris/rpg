@@ -44,7 +44,11 @@ class SceneNewPostNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $actionUrl = route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id;
+        $actionUrl = route('campaigns.scenes.show', [
+            'world' => $this->post->scene->campaign->world,
+            'campaign' => $this->post->scene->campaign,
+            'scene' => $this->post->scene,
+        ]).'#post-'.$this->post->id;
 
         return (new MailMessage)
             ->subject('Neuer Szenenbeitrag')
@@ -67,7 +71,11 @@ class SceneNewPostNotification extends Notification
             'title' => 'Neuer Beitrag in einer Szene',
             'message' => $this->author->name.' hat in "'.$this->post->scene->title.'" gepostet: '
                 .Str::limit(trim($this->post->content), 110),
-            'action_url' => route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id,
+            'action_url' => route('campaigns.scenes.show', [
+                'world' => $this->post->scene->campaign->world,
+                'campaign' => $this->post->scene->campaign,
+                'scene' => $this->post->scene,
+            ]).'#post-'.$this->post->id,
             'post_id' => $this->post->id,
             'scene_id' => $this->post->scene_id,
             'campaign_id' => $this->post->scene->campaign_id,

@@ -8,12 +8,13 @@
         <h1 class="font-heading text-3xl text-stone-100">Eintrag erstellen</h1>
         <p class="mt-2 text-stone-300">Kategorie: {{ $category->name }}</p>
 
-        <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.store', $category) }}" class="mt-8">
+        <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.store', ['world' => $world, 'encyclopediaCategory' => $category]) }}" class="mt-8">
             @csrf
             @include('knowledge.admin.entries._form', [
                 'submitLabel' => 'Eintrag speichern',
                 'category' => $category,
                 'entry' => $entry,
+                'world' => $world,
             ])
         </form>
     </section>

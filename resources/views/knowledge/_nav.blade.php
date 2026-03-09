@@ -12,7 +12,7 @@
         @foreach ($knowledgeTabs as $tab)
             @php($isCurrent = request()->routeIs($tab['pattern'] ?? $tab['route']))
             <a
-                href="{{ route($tab['route']) }}"
+                href="{{ route($tab['route'], ['world' => $world]) }}"
                 class="{{ $isCurrent ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-200 hover:border-stone-500/80 hover:text-stone-100' }} rounded-md border px-3 py-2 text-center text-xs font-semibold uppercase tracking-widest transition"
                 @if ($isCurrent) aria-current="page" @endif
             >

@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Szenen-Abos | Chroniken der Asche')
+@section('title', 'Szenen-Abos | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -131,13 +131,13 @@
 
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a
-                                            href="{{ route('campaigns.scenes.show', [$subscribedScene->campaign, $subscribedScene]) }}"
+                                            href="{{ route('campaigns.scenes.show', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}"
                                             class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                         >
                                             Szene
                                         </a>
 
-                                        <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                        <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                             @csrf
                                             @method('PATCH')
                                             <button
@@ -149,7 +149,7 @@
                                         </form>
 
                                         @if ($hasUnread)
-                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.read', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.read', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button
@@ -160,7 +160,7 @@
                                                 </button>
                                             </form>
                                         @else
-                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                            <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button
@@ -172,7 +172,7 @@
                                             </form>
                                         @endif
 
-                                        <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', [$subscribedScene->campaign, $subscribedScene]) }}">
+                                        <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button

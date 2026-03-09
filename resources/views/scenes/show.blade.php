@@ -5,7 +5,7 @@
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="ui-card p-6 sm:p-8">
-            <a href="{{ route('campaigns.show', $campaign) }}" class="break-words text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
+            <a href="{{ route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="break-words text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
                 Zur Kampagne: {{ $campaign->title }}
             </a>
 
@@ -143,7 +143,7 @@
                 </div>
 
                 @if ($subscription)
-                    <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', [$campaign, $scene]) }}">
+                    <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                         @csrf
                         @method('PATCH')
                         <button
@@ -154,7 +154,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', [$campaign, $scene]) }}">
+                    <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                         @csrf
                         @method('DELETE')
                         <button
@@ -165,7 +165,7 @@
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', [$campaign, $scene]) }}">
+                    <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                         @csrf
                         @method('PATCH')
                         <button
@@ -176,7 +176,7 @@
                         </button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('campaigns.scenes.subscribe', [$campaign, $scene]) }}">
+                    <form method="POST" action="{{ route('campaigns.scenes.subscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                         @csrf
                         <button
                             type="submit"
@@ -187,7 +187,7 @@
                     </form>
                 @endif
 
-                <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', [$campaign, $scene]) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                     @csrf
                     <input type="hidden" name="post_id" value="{{ $latestPostId > 0 ? $latestPostId : '' }}">
                     <input
@@ -207,7 +207,7 @@
                 </form>
 
                 @if ($userBookmark)
-                    <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', [$campaign, $scene]) }}">
+                    <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
                         @csrf
                         @method('DELETE')
                         <button
@@ -221,7 +221,7 @@
 
                 @can('update', $scene)
                     <a
-                        href="{{ route('campaigns.scenes.edit', [$campaign, $scene]) }}"
+                        href="{{ route('campaigns.scenes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
                         class="ui-btn"
                     >
                         Szene bearbeiten
@@ -229,7 +229,7 @@
                 @endcan
 
                 @can('delete', $scene)
-                    <form method="POST" action="{{ route('campaigns.scenes.destroy', [$campaign, $scene]) }}" onsubmit="return confirm('Szene wirklich löschen?');">
+                    <form method="POST" action="{{ route('campaigns.scenes.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" onsubmit="return confirm('Szene wirklich löschen?');">
                         @csrf
                         @method('DELETE')
                         <button
@@ -266,7 +266,7 @@
                     Gegenstände direkt in der Szene hinzufügen oder entfernen, ohne den Charakterbogen zu öffnen.
                 </p>
 
-                <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', [$campaign, $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <form method="POST" action="{{ route('campaigns.scenes.inventory-quick-action', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     @csrf
 
                     <div>
@@ -451,7 +451,7 @@
                 </p>
                 <form
                     method="POST"
-                    action="{{ route('campaigns.scenes.posts.store', [$campaign, $scene]) }}"
+                    action="{{ route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
                     class="mt-6"
                     data-offline-post-form
                 >

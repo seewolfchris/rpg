@@ -9,12 +9,13 @@
             <h1 class="font-heading text-3xl text-stone-100">Kategorie bearbeiten</h1>
             <p class="mt-2 text-stone-300">{{ $category->name }} konfigurieren und Inhalte verwalten.</p>
 
-            <form method="POST" action="{{ route('knowledge.admin.kategorien.update', $category) }}" class="mt-8">
+            <form method="POST" action="{{ route('knowledge.admin.kategorien.update', ['world' => $world, 'encyclopediaCategory' => $category]) }}" class="mt-8">
                 @csrf
                 @method('PUT')
                 @include('knowledge.admin.categories._form', [
                     'submitLabel' => 'Änderungen speichern',
                     'category' => $category,
+                    'cancelUrl' => route('knowledge.admin.kategorien.index', ['world' => $world]),
                 ])
             </form>
         </article>
@@ -26,7 +27,7 @@
                     <p class="mt-1 text-sm text-stone-300">Sortierung über Position, Sichtbarkeit über Status steuern.</p>
                 </div>
                 <a
-                    href="{{ route('knowledge.admin.kategorien.eintraege.create', $category) }}"
+                    href="{{ route('knowledge.admin.kategorien.eintraege.create', ['world' => $world, 'encyclopediaCategory' => $category]) }}"
                     class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Eintrag erstellen
@@ -55,12 +56,12 @@
 
                             <div class="flex flex-wrap gap-2">
                                 <a
-                                    href="{{ route('knowledge.admin.kategorien.eintraege.edit', [$category, $entry]) }}"
+                                    href="{{ route('knowledge.admin.kategorien.eintraege.edit', ['world' => $world, 'encyclopediaCategory' => $category, 'encyclopediaEntry' => $entry]) }}"
                                     class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                 >
                                     Bearbeiten
                                 </a>
-                                <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.destroy', [$category, $entry]) }}" onsubmit="return confirm('Eintrag wirklich löschen?');">
+                                <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.destroy', ['world' => $world, 'encyclopediaCategory' => $category, 'encyclopediaEntry' => $entry]) }}" onsubmit="return confirm('Eintrag wirklich löschen?');">
                                     @csrf
                                     @method('DELETE')
                                     <button

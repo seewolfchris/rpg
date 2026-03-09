@@ -42,7 +42,7 @@ class SceneBookmarkTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('campaigns.scenes.bookmark.store', [$campaign, $scene]), [
+            ->post(route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'label' => 'Wichtiger Einstieg',
             ])
             ->assertRedirect();
@@ -55,7 +55,7 @@ class SceneBookmarkTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('campaigns.scenes.bookmark.store', [$campaign, $scene]), [
+            ->post(route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'post_id' => $firstPost->id,
                 'label' => 'Ruecksprungpunkt',
             ])
@@ -70,7 +70,7 @@ class SceneBookmarkTest extends TestCase
         $this->assertSame('Ruecksprungpunkt', $bookmark->label);
 
         $this->actingAs($user)
-            ->delete(route('campaigns.scenes.bookmark.destroy', [$campaign, $scene]))
+            ->delete(route('campaigns.scenes.bookmark.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseMissing('scene_bookmarks', [
@@ -109,11 +109,11 @@ class SceneBookmarkTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->from(route('campaigns.scenes.show', [$campaign, $sceneA]))
-            ->post(route('campaigns.scenes.bookmark.store', [$campaign, $sceneA]), [
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $sceneA]))
+            ->post(route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $sceneA]), [
                 'post_id' => $foreignPost->id,
             ])
-            ->assertRedirect(route('campaigns.scenes.show', [$campaign, $sceneA]));
+            ->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $sceneA]));
 
         $this->assertDatabaseMissing('scene_bookmarks', [
             'user_id' => $user->id,

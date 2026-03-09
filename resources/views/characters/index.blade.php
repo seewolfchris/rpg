@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Charaktere | Chroniken der Asche')
+@section('title', 'Charaktere | C76-RPG')
 
 @section('content')
     @php
@@ -36,22 +36,45 @@
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Chroniken (GM-Ansicht)' : 'Deine Chroniken' }}</p>
+                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Charakterverwaltung (GM-Ansicht)' : 'Deine Charaktere' }}</p>
                 <h1 class="font-heading text-3xl text-stone-100">Charaktere</h1>
                 <p class="mt-2 text-stone-300">
                     {{ $isGmView
-                        ? 'Verwalte Charaktere aller Spieler sowie Herkunft, Spezies, Berufung und d100-Eigenschaften.'
-                        : 'Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren.' }}
+                        ? 'Verwalte Charaktere aller Spieler im gewählten Weltenkontext.'
+                        : 'Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren in der gewählten Welt.' }}
                 </p>
             </div>
 
             <a
-                href="{{ route('characters.create') }}"
+                href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null]) }}"
                 class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
             >
                 Neuer Charakter
             </a>
         </div>
+
+        <form method="GET" action="{{ route('characters.index') }}" class="flex flex-wrap items-end gap-3 rounded-xl border border-stone-800 bg-neutral-900/45 p-4">
+            <div>
+                <label for="world" class="mb-2 block text-xs uppercase tracking-widest text-stone-400">Weltfilter</label>
+                <select
+                    id="world"
+                    name="world"
+                    class="rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-100 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/35"
+                >
+                    @foreach ($worlds as $worldOption)
+                        <option value="{{ $worldOption->slug }}" @selected(($selectedWorld->slug ?? '') === $worldOption->slug)>
+                            {{ $worldOption->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="ui-btn inline-flex">Anwenden</button>
+            @if ($selectedWorld)
+                <span class="rounded-full border border-amber-500/60 px-3 py-2 text-xs uppercase tracking-widest text-amber-200">
+                    Aktiv: {{ $selectedWorld->name }}
+                </span>
+            @endif
+        </form>
 
         @if ($characters->isEmpty())
             <div class="rounded-xl border border-stone-800 bg-black/45 p-8 text-center text-stone-300">
@@ -85,6 +108,7 @@
                             </div>
 
                             <div class="space-y-1 text-xs uppercase tracking-[0.08em] text-stone-400">
+                                <p>Welt: <span class="text-stone-200">{{ $character->world?->name ?? '-' }}</span></p>
                                 <p>Herkunft: <span class="text-stone-200">{{ $originLabel }}</span></p>
                                 <p>Spezies: <span class="text-stone-200">{{ $speciesLabel }}</span></p>
                                 <p>Berufung: <span class="text-stone-200">{{ $callingLabel }}</span></p>

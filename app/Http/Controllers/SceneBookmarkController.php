@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\SceneBookmark\StoreSceneBookmarkRequest;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,16 +17,20 @@ use Illuminate\View\View;
 
 class SceneBookmarkController extends Controller
 {
+    use EnsuresWorldContext;
+
     private const THREAD_POSTS_PER_PAGE = 20;
 
-    public function index(Request $request): View
+    public function index(Request $request, World $world): View
     {
         $user = $request->user();
         $search = trim((string) $request->query('q', ''));
 
         $bookmarksQuery = SceneBookmark::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
+                ->visibleTo($user)
+                ->forWorld($world))
             ->with(['scene.campaign', 'post'])
             ->latest('updated_at');
 
@@ -52,18 +58,21 @@ class SceneBookmarkController extends Controller
 
         $totalCount = SceneBookmark::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
+                ->visibleTo($user)
+                ->forWorld($world))
             ->count();
 
-        return view('bookmarks.index', compact('bookmarks', 'bookmarkJumpUrls', 'search', 'totalCount'));
+        return view('bookmarks.index', compact('world', 'bookmarks', 'bookmarkJumpUrls', 'search', 'totalCount'));
     }
 
     public function store(
         StoreSceneBookmarkRequest $request,
+        World $world,
         Campaign $campaign,
         Scene $scene,
     ): RedirectResponse {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
         $data = $request->validated();
@@ -99,9 +108,9 @@ class SceneBookmarkController extends Controller
         return back()->with('status', 'Bookmark gespeichert.');
     }
 
-    public function destroy(Request $request, Campaign $campaign, Scene $scene): RedirectResponse
+    public function destroy(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
         SceneBookmark::query()
@@ -110,11 +119,6 @@ class SceneBookmarkController extends Controller
             ->delete();
 
         return back()->with('status', 'Bookmark entfernt.');
-    }
-
-    private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void
-    {
-        abort_unless($scene->campaign_id === $campaign->id, 404);
     }
 
     private function normalizeLabel(string $label): ?string
@@ -132,10 +136,16 @@ class SceneBookmarkController extends Controller
             return route('bookmarks.index');
         }
 
+        $world = $scene->campaign->world;
+
         $postId = (int) ($bookmark->post_id ?? 0);
 
         if ($postId <= 0) {
-            return route('campaigns.scenes.show', [$scene->campaign, $scene]);
+            return route('campaigns.scenes.show', [
+                'world' => $world,
+                'campaign' => $scene->campaign,
+                'scene' => $scene,
+            ]);
         }
 
         $postExistsInScene = Post::query()
@@ -144,7 +154,11 @@ class SceneBookmarkController extends Controller
             ->exists();
 
         if (! $postExistsInScene) {
-            return route('campaigns.scenes.show', [$scene->campaign, $scene]);
+            return route('campaigns.scenes.show', [
+                'world' => $world,
+                'campaign' => $scene->campaign,
+                'scene' => $scene,
+            ]);
         }
 
         $newerPostsCount = (int) Post::query()
@@ -155,6 +169,7 @@ class SceneBookmarkController extends Controller
         $page = intdiv($newerPostsCount, self::THREAD_POSTS_PER_PAGE) + 1;
 
         return route('campaigns.scenes.show', [
+            'world' => $world,
             'campaign' => $scene->campaign,
             'scene' => $scene,
             'page' => $page,

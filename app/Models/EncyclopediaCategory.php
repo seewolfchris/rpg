@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EncyclopediaCategory extends Model
@@ -15,6 +16,7 @@ class EncyclopediaCategory extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'world_id',
         'name',
         'slug',
         'summary',
@@ -28,9 +30,24 @@ class EncyclopediaCategory extends Model
     protected function casts(): array
     {
         return [
+            'world_id' => 'integer',
             'position' => 'integer',
             'is_public' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (EncyclopediaCategory $category): void {
+            if (! $category->world_id) {
+                $category->world_id = World::resolveDefaultId();
+            }
+        });
+    }
+
+    public function world(): BelongsTo
+    {
+        return $this->belongsTo(World::class);
     }
 
     public function entries(): HasMany
@@ -48,5 +65,12 @@ class EncyclopediaCategory extends Model
     public function scopeVisible(Builder $query): Builder
     {
         return $query->where('is_public', true);
+    }
+
+    public function scopeForWorld(Builder $query, World|int $world): Builder
+    {
+        $worldId = $world instanceof World ? (int) $world->id : (int) $world;
+
+        return $query->where('world_id', $worldId);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AttachRequestId;
+use App\Http\Middleware\ApplyWorldContext;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ProtectAgainstCrawlers;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             AttachRequestId::class,
             ProtectAgainstCrawlers::class,
+            ApplyWorldContext::class,
         ]);
         $middleware->redirectGuestsTo(fn (Request $request) => route('login'));
         $middleware->redirectUsersTo('/dashboard');

@@ -37,7 +37,7 @@ class SceneReadTrackingTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertOk();
 
         $subscription = SceneSubscription::query()
@@ -68,16 +68,16 @@ class SceneReadTrackingTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get(route('campaigns.show', $campaign))
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
             ->assertSee('Neu seit deinem letzten Besuch');
 
         $this->actingAs($user)
-            ->get(route('campaigns.scenes.show', [$campaign, $scene]))
+            ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertOk();
 
         $this->actingAs($user)
-            ->get(route('campaigns.show', $campaign))
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
             ->assertDontSee('Neu seit deinem letzten Besuch');
     }
@@ -105,7 +105,7 @@ class SceneReadTrackingTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patch(route('campaigns.scenes.subscription.read', [$campaign, $scene]))
+            ->patch(route('campaigns.scenes.subscription.read', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -115,7 +115,7 @@ class SceneReadTrackingTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patch(route('campaigns.scenes.subscription.unread', [$campaign, $scene]))
+            ->patch(route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -150,7 +150,7 @@ class SceneReadTrackingTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->get(route('campaigns.scenes.show', [$campaign, $scene]));
+            ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
 
         $response->assertOk();
         $response->assertSee('Zum letzten Read');

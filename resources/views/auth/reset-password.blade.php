@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Passwort zurücksetzen | Chroniken der Asche')
+@section('title', 'Passwort zurücksetzen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-lg rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8">

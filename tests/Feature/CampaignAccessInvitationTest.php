@@ -32,7 +32,7 @@ class CampaignAccessInvitationTest extends TestCase
         $indexResponse->assertOk();
         $indexResponse->assertDontSee('Geheimbund von Tharn');
 
-        $showResponse = $this->actingAs($outsider)->get(route('campaigns.show', $campaign));
+        $showResponse = $this->actingAs($outsider)->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
         $showResponse->assertForbidden();
     }
 
@@ -57,11 +57,11 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->post(route('campaigns.invitations.store', $campaign), [
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
                 'email' => $player->email,
                 'role' => CampaignInvitation::ROLE_PLAYER,
             ])
-            ->assertRedirect(route('campaigns.show', $campaign));
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
         $invitation = CampaignInvitation::query()
             ->where('campaign_id', $campaign->id)
@@ -73,12 +73,12 @@ class CampaignAccessInvitationTest extends TestCase
         $this->assertNull($invitation->accepted_at);
 
         $this->actingAs($player)
-            ->get(route('campaigns.show', $campaign))
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertForbidden();
 
         $this->actingAs($player)
             ->patch(route('campaign-invitations.accept', $invitation))
-            ->assertRedirect(route('campaigns.show', $campaign));
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
         $invitation->refresh();
         $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $invitation->status);
@@ -94,7 +94,7 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($player)
-            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'post_type' => 'ic',
                 'character_id' => $character->id,
                 'content_format' => 'plain',
@@ -124,7 +124,7 @@ class CampaignAccessInvitationTest extends TestCase
             'is_public' => false,
         ]);
 
-        $this->actingAs($owner)->post(route('campaigns.invitations.store', $campaign), [
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $player->email,
             'role' => CampaignInvitation::ROLE_PLAYER,
         ])->assertRedirect();
@@ -144,7 +144,7 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($player)
-            ->get(route('campaigns.show', $campaign))
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertForbidden();
     }
 
@@ -167,7 +167,7 @@ class CampaignAccessInvitationTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $this->actingAs($owner)->post(route('campaigns.invitations.store', $campaign), [
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $coGm->email,
             'role' => CampaignInvitation::ROLE_CO_GM,
         ])->assertRedirect();
@@ -181,7 +181,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->patch(route('campaign-invitations.accept', $coGmInvitation))
             ->assertRedirect();
 
-        $this->actingAs($owner)->post(route('campaigns.invitations.store', $campaign), [
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $player->email,
             'role' => CampaignInvitation::ROLE_PLAYER,
         ])->assertRedirect();
@@ -200,7 +200,7 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($player)
-            ->post(route('campaigns.scenes.posts.store', [$campaign, $scene]), [
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
                 'post_type' => 'ic',
                 'character_id' => $character->id,
                 'content_format' => 'plain',
@@ -211,7 +211,7 @@ class CampaignAccessInvitationTest extends TestCase
         $post = \App\Models\Post::query()->where('scene_id', $scene->id)->where('user_id', $player->id)->latest('id')->firstOrFail();
 
         $this->actingAs($coGm)
-            ->patch(route('posts.moderate', $post), [
+            ->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'moderation_status' => 'approved',
                 'moderation_note' => 'Co-GM Freigabe.',
             ])
@@ -224,7 +224,7 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($coGm)
-            ->post(route('campaigns.scenes.store', $campaign), [
+            ->post(route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
                 'title' => 'Wachturm',
                 'slug' => 'wachturm',
                 'summary' => 'Co-GM erstellt eine neue Szene.',
@@ -241,7 +241,7 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($coGm)
-            ->delete(route('campaigns.destroy', $campaign))
+            ->delete(route('campaigns.destroy', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertForbidden();
     }
 
@@ -322,7 +322,7 @@ class CampaignAccessInvitationTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $this->actingAs($owner)->post(route('campaigns.invitations.store', $campaign), [
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $player->email,
             'role' => CampaignInvitation::ROLE_PLAYER,
         ])->assertRedirect();
@@ -352,8 +352,8 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->delete(route('campaigns.invitations.destroy', [$campaign, $invitation]))
-            ->assertRedirect(route('campaigns.show', $campaign));
+            ->delete(route('campaigns.invitations.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'invitation' => $invitation]))
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
         $this->assertDatabaseMissing('scene_subscriptions', [
             'scene_id' => $scene->id,

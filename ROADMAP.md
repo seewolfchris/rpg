@@ -1,29 +1,29 @@
-# ROADMAP - Chroniken der Asche (6 Monate)
+# ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
-Status: 6-Monats-Plan abgeschlossen, Betrieb in Stabilisierung  
+Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
 Stand: 2026-03-09
 
 ## Zielbild
-- Von feature-starker Beta zu stabiler, wartbarer Release-Beta.
-- Lieferbarkeit vor Feature-Inflation.
+- Stabile, wartbare Release-Beta mit verlässlicher Delivery.
+- Plattform ist nicht mehr auf eine einzelne Welt festgelegt.
 - WIP-Limit bleibt: `1 Feature-Task + 1 Bugfix`.
 
 ## Quality Gates (jede Iteration)
-- `php artisan test --without-tty --do-not-cache-result` ist grün.
-- `npm run build` ist grün.
-- `composer analyse` (Larastan/PHPStan) ist grün.
+- `php artisan test --without-tty --do-not-cache-result` ist gruen.
+- `npm run build` ist gruen.
+- `composer analyse` (Larastan/PHPStan) ist gruen.
 - Keine Role/Policy-Regression in GM/Player-Flows.
-- Mobile Basischeck (375px) für geänderte Views.
+- Mobile Basischeck (375px) fuer geaenderte Views.
 
-## Sprint-Plan (12 x 2 Wochen)
+## Paket 1 - Stabilisierung (12 x 2 Wochen)
 | Sprint | Fokus | Status |
 |---|---|---|
-| 1 | Architektur-Baseline (ADR für Post/Scene-Domäne) | Erledigt |
+| 1 | Architektur-Baseline (ADR fuer Post/Scene-Domaene) | Erledigt |
 | 2 | Post-Flow Entkopplung I (Store/Notify/Points) | Erledigt |
 | 3 | Post-Flow Entkopplung II (Probe + Inventar-Award Services) | Erledigt |
 | 4 | Scene-Flow Entkopplung (Read-Tracking, Jump-URL, Quick-Action Services) | Erledigt |
 | 5 | CI-Grundlage (`.github/workflows/ci.yml`) | Erledigt |
-| 6 | Release-Härtung (`scripts/release_smoke.sh`) | Erledigt |
+| 6 | Release-Haertung (`scripts/release_smoke.sh`) | Erledigt |
 | 7 | Datenbank-Performance (Hot-Path-Indizes) | Erledigt |
 | 8 | Observability (strukturierte Logs + `X-Request-Id`) | Erledigt |
 | 9 | UI-Foundation I (Design-Tokens + UI-Komponenten) | Erledigt |
@@ -31,45 +31,50 @@ Stand: 2026-03-09
 | 11 | GM-Flow-Polish (Jump/Pin/Quick-Action UX) | Erledigt |
 | 12 | Release-Kandidat (Doku-Konsolidierung + Bugburn) | Erledigt |
 
+## Paket 2 - Multi-Welt-Plattform (Release A/B/C)
+| Release | Fokus | Status |
+|---|---|---|
+| A | Datenmodell + Admin-Welten (`worlds`, FKs, Backfill) | Erledigt |
+| B | Weltkontext-Routing `/w/{world}/...` + Legacy-`301` + Konsistenzhaertung | Erledigt |
+| C | UX/Branding auf `C76-RPG`, Weltkatalog, Weltgetrennte Wissensbasis | Erledigt |
+
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
-- Domänenservices: `app/Domain/Post/*`, `app/Domain/Scene/*`, `app/Domain/Campaign/CampaignParticipantResolver.php`
+- Domaenenservices: `app/Domain/Post/*`, `app/Domain/Scene/*`, `app/Domain/Campaign/CampaignParticipantResolver.php`
+- Multi-Welt:
+  - `app/Models/World.php`
+  - `database/migrations/2026_03_09_120000_create_worlds_table.php`
+  - `database/migrations/2026_03_09_120100_add_world_context_to_core_tables.php`
+  - `app/Http/Controllers/WorldController.php`
+  - `app/Http/Controllers/WorldAdminController.php`
+  - `app/Http/Middleware/ApplyWorldContext.php`
+- Delivery:
+  - `.github/workflows/ci.yml`
+  - `scripts/release_smoke.sh`
 - Observability:
   - `app/Http/Middleware/AttachRequestId.php`
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
-- Delivery:
-  - `.github/workflows/ci.yml`
-  - `scripts/release_smoke.sh`
-- DB-Performance:
-  - `database/migrations/2026_03_08_120000_add_hot_path_indexes_for_post_scene_and_invitation_queries.php`
 
-## Sprint-12 Abschluss (2026-03-08)
-- Release-Kandidat ist abgeschlossen.
-- Verifikation (aktualisiert):
-  - `php artisan test --without-tty --do-not-cache-result` -> **131 passed, 663 assertions**
-  - `npm run build` -> **grün**
-  - `scripts/release_smoke.sh` -> **grün** (artisan fallback mode in restriktiver Local-Sandbox)
+## Aktueller Verifikationsstand (2026-03-09)
+- `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
+- `npm run build` -> **gruen**
+- `composer analyse` -> im CI-Gate enthalten
 
-## Nach Sprint-12 umgesetzt (Stabilisierung/Compliance)
-- Browser-Benachrichtigungen finalisiert (Permission-Flow, Polling-Endpunkt, Service-Worker-Klickverhalten, Feature-Tests).
-- Rechtliche Seiten ergänzt und verlinkt:
-  - zentrale Links auf `https://c76.org/impressum/` und `https://c76.org/datenschutz/`
-- Footer auf allen sichtbaren Seiten vereinheitlicht:
-  - Links zu Impressum + Datenschutz
-  - Rights-Hinweis: `©2026 copyright by C. Sieber | all rights reserved`
-- Statische Analyse eingeführt:
-  - `larastan/larastan` + `phpstan/phpstan` als Dev-Dependencies
-  - `phpstan.neon.dist` + `phpstan-baseline.neon`
-  - Composer-Script `composer analyse`
-  - CI führt `composer analyse` vor Test/Build aus
-- Externe Frontend-CDN-Abhängigkeit entfernt:
-  - Alpine wird lokal ausgeliefert (`public/js/alpinejs-3.14.8.min.js`).
-- Lizenzlage im Repo klargestellt:
-  - `LICENSE` (proprietär / all rights reserved)
-  - `composer.json` Lizenzmetadaten auf `proprietary`.
+## Compliance und Betrieb
+- Rechtliche Verlinkung zentral auf:
+  - `https://c76.org/impressum/`
+  - `https://c76.org/datenschutz/`
+- Footer vereinheitlicht auf allen sichtbaren Seiten.
+- Repo-Lizenz klar als proprietaer (`LICENSE`, Composer-Metadaten).
+- Alpine/Frontend ohne externe CDN-Abhaengigkeit (lokal gehostet).
 
-## Parking Lot (weiterhin bewusst nicht jetzt)
-- Echten Web-Push (VAPID/Subscription-Management) nur bei Bedarf als separates Folgeprojekt.
+## Parking Lot (bewusst nicht jetzt)
+- Echten Web-Push-Stack (VAPID/Subscription-Management) nur bei Bedarf als Folgeprojekt.
 - Realtime/WebSockets.
 - Externe Media/CDN-Optimierung.
+
+## Naechste Schritte
+1. Staging/Prod-Smoke fuer Multi-Welt-Flows (`/welten`, `/w/{world}/campaigns`, Legacy-Redirects) vollstaendig protokollieren.
+2. Performance-Pass auf Weltkontext-Queries (Index-Nutzung und Explain-Checks) fuer reale Lastdaten.
+3. Optional: Admin-UX fuer Welt-Sortierung/Deaktivierung weiter scharfziehen.

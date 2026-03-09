@@ -8,11 +8,12 @@
         <h1 class="font-heading text-3xl text-stone-100">Kategorie erstellen</h1>
         <p class="mt-2 text-stone-300">Neue Struktur für Weltwissen anlegen.</p>
 
-        <form method="POST" action="{{ route('knowledge.admin.kategorien.store') }}" class="mt-8">
+        <form method="POST" action="{{ route('knowledge.admin.kategorien.store', ['world' => $world]) }}" class="mt-8">
             @csrf
             @include('knowledge.admin.categories._form', [
                 'submitLabel' => 'Kategorie speichern',
                 'category' => $category,
+                'cancelUrl' => route('knowledge.admin.kategorien.index', ['world' => $world]),
             ])
         </form>
     </section>

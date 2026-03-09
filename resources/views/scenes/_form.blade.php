@@ -149,7 +149,7 @@
         </button>
 
         <a
-            href="{{ isset($scene) ? route('campaigns.scenes.show', [$campaign, $scene]) : route('campaigns.show', $campaign) }}"
+            href="{{ isset($scene) ? route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) : route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
             class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
         >
             Abbrechen

@@ -53,9 +53,13 @@ class PostModerationStatusNotification extends Notification
             ->line('Neuer Status: '.$this->newStatus)
             ->action(
                 'Beitrag öffnen',
-                route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id,
+                route('campaigns.scenes.show', [
+                    'world' => $this->post->scene->campaign->world,
+                    'campaign' => $this->post->scene->campaign,
+                    'scene' => $this->post->scene,
+                ]).'#post-'.$this->post->id,
             )
-            ->line('Chroniken der Asche informiert dich automatisch über relevante Änderungen.');
+            ->line('C76-RPG informiert dich automatisch über relevante Änderungen.');
 
         if ($this->moderationNote !== null) {
             $mailMessage->line('Hinweis: '.$this->moderationNote);
@@ -76,7 +80,11 @@ class PostModerationStatusNotification extends Notification
             'title' => 'Moderationsstatus geändert',
             'message' => 'Dein Beitrag wurde von '.$this->moderator->name.' auf "'.$this->newStatus.'" gesetzt.'
                 .($this->moderationNote ? ' Grund: '.$this->moderationNote : ''),
-            'action_url' => route('campaigns.scenes.show', [$this->post->scene->campaign, $this->post->scene]).'#post-'.$this->post->id,
+            'action_url' => route('campaigns.scenes.show', [
+                'world' => $this->post->scene->campaign->world,
+                'campaign' => $this->post->scene->campaign,
+                'scene' => $this->post->scene,
+            ]).'#post-'.$this->post->id,
             'post_id' => $this->post->id,
             'scene_id' => $this->post->scene_id,
             'campaign_id' => $this->post->scene->campaign_id,

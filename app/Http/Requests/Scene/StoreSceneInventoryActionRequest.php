@@ -75,7 +75,7 @@ class StoreSceneInventoryActionRequest extends FormRequest
             }
 
             $targetCharacter = Character::query()
-                ->select(['id', 'user_id'])
+                ->select(['id', 'user_id', 'world_id'])
                 ->find($characterId);
 
             if (! $targetCharacter) {
@@ -94,6 +94,11 @@ class StoreSceneInventoryActionRequest extends FormRequest
                 $validator->errors()->add(
                     'inventory_action_character_id',
                     'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                );
+            } elseif ((int) $targetCharacter->world_id !== (int) $scene->campaign->world_id) {
+                $validator->errors()->add(
+                    'inventory_action_character_id',
+                    'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'
                 );
             }
         });

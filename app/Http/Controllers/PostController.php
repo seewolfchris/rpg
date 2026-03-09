@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\StorePostService;
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
@@ -11,6 +12,7 @@ use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Models\World;
 use App\Support\Gamification\PointService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
@@ -18,15 +20,17 @@ use Illuminate\View\View;
 
 class PostController extends Controller
 {
+    use EnsuresWorldContext;
+
     public function __construct(
         private readonly PointService $pointService,
         private readonly StorePostService $storePostService,
         private readonly PostModerationService $postModerationService,
     ) {}
 
-    public function store(StorePostRequest $request, Campaign $campaign, Scene $scene): RedirectResponse
+    public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
-        $this->ensureSceneBelongsToCampaign($campaign, $scene);
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('create', [Post::class, $scene]);
 
         $data = $request->validated();
@@ -51,12 +55,14 @@ class PostController extends Controller
         }
 
         return redirect()
-            ->to(route('campaigns.scenes.show', [$campaign, $scene]).'#post-'.$storedPost->post->id)
+            ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$storedPost->post->id)
             ->with('status', $statusMessage);
     }
 
-    public function edit(Post $post): View
+    public function edit(World $world, Post $post): View
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('update', $post);
 
         $post->load(['scene.campaign', 'user', 'character']);
@@ -67,14 +73,17 @@ class PostController extends Controller
 
         $characters = $characterOwner
             ->characters()
+            ->where('world_id', $post->scene->campaign->world_id)
             ->orderBy('name')
             ->get();
 
-        return view('posts.edit', compact('post', 'characters'));
+        return view('posts.edit', compact('world', 'post', 'characters'));
     }
 
-    public function update(UpdatePostRequest $request, Post $post): RedirectResponse
+    public function update(UpdatePostRequest $request, World $world, Post $post): RedirectResponse
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('update', $post);
 
         $data = $request->validated();
@@ -135,12 +144,18 @@ class PostController extends Controller
         $post->load('scene.campaign', 'scene');
 
         return redirect()
-            ->to(route('campaigns.scenes.show', [$post->scene->campaign, $post->scene]).'#post-'.$post->id)
+            ->to(route('campaigns.scenes.show', [
+                'world' => $post->scene->campaign->world,
+                'campaign' => $post->scene->campaign,
+                'scene' => $post->scene,
+            ]).'#post-'.$post->id)
             ->with('status', 'Beitrag aktualisiert.');
     }
 
-    public function destroy(Post $post): RedirectResponse
+    public function destroy(World $world, Post $post): RedirectResponse
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('delete', $post);
 
         $post->load('scene.campaign', 'scene');
@@ -151,12 +166,18 @@ class PostController extends Controller
         $post->delete();
 
         return redirect()
-            ->route('campaigns.scenes.show', [$campaign, $scene])
+            ->route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ])
             ->with('status', 'Beitrag gelöscht.');
     }
 
-    public function moderate(ModeratePostRequest $request, Post $post): RedirectResponse
+    public function moderate(ModeratePostRequest $request, World $world, Post $post): RedirectResponse
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
         $status = $request->validated('moderation_status');
@@ -186,8 +207,10 @@ class PostController extends Controller
         return back()->with('status', 'Moderationsstatus aktualisiert.');
     }
 
-    public function pin(Post $post): RedirectResponse
+    public function pin(World $world, Post $post): RedirectResponse
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
         $post->is_pinned = true;
@@ -198,8 +221,10 @@ class PostController extends Controller
         return back()->with('status', 'Beitrag angepinnt.');
     }
 
-    public function unpin(Post $post): RedirectResponse
+    public function unpin(World $world, Post $post): RedirectResponse
     {
+        $post->loadMissing('scene.campaign.world');
+        $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
         $post->is_pinned = false;
@@ -208,11 +233,6 @@ class PostController extends Controller
         $post->save();
 
         return back()->with('status', 'Pin entfernt.');
-    }
-
-    private function ensureSceneBelongsToCampaign(Campaign $campaign, Scene $scene): void
-    {
-        abort_unless($scene->campaign_id === $campaign->id, 404);
     }
 
     /**

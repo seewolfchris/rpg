@@ -16,16 +16,16 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
-                    <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopädie von Vhal'Tor</h1>
+                    <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopädie · {{ $world->name }}</h1>
                     <p class="mt-4 max-w-4xl text-base leading-relaxed text-[#cccccc] sm:text-lg">
-                        Öffentliches Nachschlagewerk für Zeitalter, Machtblöcke, Regionen und Spezies.
-                        Immersion zuerst, Rechenwerkzeuge danach.
+                        Öffentliches Nachschlagewerk für die ausgewählte Welt.
+                        Lore zuerst, Spielfluss immer im Blick.
                     </p>
                 </div>
 
                 @if ($canManage)
                     <a
-                        href="{{ route('knowledge.admin.kategorien.index') }}"
+                        href="{{ route('knowledge.admin.kategorien.index', ['world' => $world]) }}"
                         class="ui-btn ui-btn-accent"
                     >
                         Enzyklopädie verwalten
@@ -39,7 +39,7 @@
         <form
             x-ref="filterForm"
             method="GET"
-            action="{{ route('knowledge.encyclopedia') }}"
+            action="{{ route('knowledge.encyclopedia', ['world' => $world]) }}"
             class="ui-card p-4 sm:p-6"
         >
             <div class="grid gap-3 sm:grid-cols-[2fr_auto_auto] sm:items-end">
@@ -168,7 +168,7 @@
 
                                             <div class="mt-4 text-right">
                                                 <a
-                                                    href="{{ route('knowledge.encyclopedia.entry', [$category->slug, $entry->slug]) }}"
+                                                    href="{{ route('knowledge.encyclopedia.entry', ['world' => $world, 'categorySlug' => $category->slug, 'entrySlug' => $entry->slug]) }}"
                                                     class="ui-btn ui-btn-danger"
                                                 >
                                                     Mehr lesen

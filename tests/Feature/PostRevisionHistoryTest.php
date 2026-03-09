@@ -29,7 +29,7 @@ class PostRevisionHistoryTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $response = $this->actingAs($player)->patch(route('posts.update', $post), [
+        $response = $this->actingAs($player)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,
@@ -67,14 +67,14 @@ class PostRevisionHistoryTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $this->actingAs($player)->patch(route('posts.update', $post), [
+        $this->actingAs($player)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,
             'content' => 'Version B',
         ])->assertRedirect();
 
-        $this->actingAs($player)->patch(route('posts.update', $post), [
+        $this->actingAs($player)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,
@@ -108,7 +108,7 @@ class PostRevisionHistoryTest extends TestCase
             'moderation_status' => 'pending',
         ]);
 
-        $response = $this->actingAs($gm)->patch(route('posts.update', $post), [
+        $response = $this->actingAs($gm)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $character->id,

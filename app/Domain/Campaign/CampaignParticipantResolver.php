@@ -39,6 +39,7 @@ class CampaignParticipantResolver
 
         return Character::query()
             ->whereIn('user_id', $participantUserIds)
+            ->where('world_id', $campaign->world_id)
             ->with('user:id,name')
             ->orderBy('name')
             ->get(['id', 'user_id', 'name']);

@@ -19,7 +19,7 @@ class MutatingRoutesRateLimitTest extends TestCase
         [$gm, $player, $post] = $this->seedPostContext();
 
         for ($attempt = 0; $attempt < 30; $attempt++) {
-            $this->actingAs($player)->patch(route('posts.update', $post), [
+            $this->actingAs($player)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'post_type' => 'ic',
                 'content_format' => 'markdown',
                 'character_id' => $post->character_id,
@@ -27,7 +27,7 @@ class MutatingRoutesRateLimitTest extends TestCase
             ])->assertStatus(302);
         }
 
-        $this->actingAs($player)->patch(route('posts.update', $post), [
+        $this->actingAs($player)->patch(route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'post_type' => 'ic',
             'content_format' => 'markdown',
             'character_id' => $post->character_id,
@@ -40,12 +40,12 @@ class MutatingRoutesRateLimitTest extends TestCase
         [$gm, $player, $post] = $this->seedPostContext();
 
         for ($attempt = 0; $attempt < 15; $attempt++) {
-            $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+            $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
                 'moderation_status' => $attempt % 2 === 0 ? 'approved' : 'rejected',
             ])->assertStatus(302);
         }
 
-        $this->actingAs($gm)->patch(route('posts.moderate', $post), [
+        $this->actingAs($gm)->patch(route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]), [
             'moderation_status' => 'approved',
         ])->assertStatus(429);
     }

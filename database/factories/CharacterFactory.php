@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Character;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,9 @@ class CharacterFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'world_id' => fn () => World::query()
+                ->where('slug', World::defaultSlug())
+                ->value('id') ?? World::factory()->chronikenDerAsche(),
             'name' => fake()->firstName().' von '.fake()->city(),
             'epithet' => fake()->optional()->sentence(3),
             'bio' => fake()->paragraphs(3, true),

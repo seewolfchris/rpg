@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Character;
 
+use App\Models\World;
 use App\Support\CharacterInventoryService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,6 +34,7 @@ abstract class CharacterSheetRequest extends FormRequest
         $traitMax = (int) data_get($this->sheet(), 'traits.max', 3);
 
         $rules = [
+            'world_id' => ['required', 'integer', 'exists:worlds,id'],
             'name' => ['required', 'string', 'max:120'],
             'epithet' => ['nullable', 'string', 'max:120'],
             'bio' => ['required', 'string', 'min:20', 'max:5000'],
@@ -127,6 +129,7 @@ abstract class CharacterSheetRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $merged = [
+            'world_id' => (int) $this->input('world_id', World::resolveDefaultId()),
             'species' => Str::lower(trim((string) $this->input('species', ''))),
             'calling' => Str::lower(trim((string) $this->input('calling', ''))),
             'origin' => Str::lower(trim((string) $this->input('origin', ''))),

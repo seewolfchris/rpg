@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Mitteilungs-Einstellungen | Chroniken der Asche')
+@section('title', 'Mitteilungs-Einstellungen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-4xl space-y-6">

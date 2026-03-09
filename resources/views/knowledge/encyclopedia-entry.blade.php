@@ -23,20 +23,20 @@
 
             <div class="mt-5 flex flex-wrap gap-3">
                 <a
-                    href="{{ route('knowledge.encyclopedia', ['k' => $entry->category->slug]) }}"
+                    href="{{ route('knowledge.encyclopedia', ['world' => $world, 'k' => $entry->category->slug]) }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zur Kategorie
                 </a>
                 <a
-                    href="{{ route('knowledge.encyclopedia') }}"
+                    href="{{ route('knowledge.encyclopedia', ['world' => $world]) }}"
                     class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Alle Einträge
                 </a>
                 @if ($canManage)
                     <a
-                        href="{{ route('knowledge.admin.kategorien.eintraege.edit', [$entry->category, $entry]) }}"
+                        href="{{ route('knowledge.admin.kategorien.eintraege.edit', ['world' => $world, 'encyclopediaCategory' => $entry->category, 'encyclopediaEntry' => $entry]) }}"
                         class="rounded-md border border-red-500/60 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-red-100 transition hover:bg-red-900/35"
                     >
                         Admin-Bearbeitung
@@ -133,7 +133,7 @@
                     @foreach ($relatedEntries as $relatedEntry)
                         <li>
                             <a
-                                href="{{ route('knowledge.encyclopedia.entry', [$entry->category->slug, $relatedEntry->slug]) }}"
+                                href="{{ route('knowledge.encyclopedia.entry', ['world' => $world, 'categorySlug' => $entry->category->slug, 'entrySlug' => $relatedEntry->slug]) }}"
                                 class="block rounded-md border border-stone-700/80 bg-black/35 px-3 py-2 text-sm text-stone-200 transition hover:border-red-800/70 hover:bg-red-900/20"
                             >
                                 {{ $relatedEntry->title }}

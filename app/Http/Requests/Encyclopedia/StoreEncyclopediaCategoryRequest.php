@@ -23,9 +23,18 @@ class StoreEncyclopediaCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        $worldId = $this->route('world')?->id;
+
         return [
             'name' => ['required', 'string', 'max:120'],
-            'slug' => ['required', 'string', 'max:140', 'alpha_dash', Rule::unique('encyclopedia_categories', 'slug')],
+            'slug' => [
+                'required',
+                'string',
+                'max:140',
+                'alpha_dash',
+                Rule::unique('encyclopedia_categories', 'slug')
+                    ->where(fn ($query) => $query->where('world_id', $worldId)),
+            ],
             'summary' => ['nullable', 'string', 'max:2000'],
             'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
             'is_public' => ['sometimes', 'boolean'],

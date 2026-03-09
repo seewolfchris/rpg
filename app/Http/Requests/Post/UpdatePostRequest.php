@@ -67,11 +67,12 @@ class UpdatePostRequest extends FormRequest
 
                 $isAllowed = Character::query()
                     ->whereKey($characterId)
+                    ->where('world_id', (int) $scene->campaign->world_id)
                     ->whereIn('user_id', array_unique($allowedUserIds))
                     ->exists();
 
                 if (! $isAllowed) {
-                    $validator->errors()->add('character_id', 'Charakter passt nicht zu den erlaubten Besitzern.');
+                    $validator->errors()->add('character_id', 'Charakter passt nicht zur Welt oder zu den erlaubten Besitzern.');
                 }
             }
         });

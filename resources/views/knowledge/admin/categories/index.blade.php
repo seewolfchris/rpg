@@ -13,13 +13,13 @@
 
             <div class="mt-5 flex flex-wrap gap-3">
                 <a
-                    href="{{ route('knowledge.encyclopedia') }}"
+                    href="{{ route('knowledge.encyclopedia', ['world' => $world]) }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zur Enzyklopädie
                 </a>
                 <a
-                    href="{{ route('knowledge.admin.kategorien.create') }}"
+                    href="{{ route('knowledge.admin.kategorien.create', ['world' => $world]) }}"
                     class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Kategorie erstellen
@@ -70,12 +70,12 @@
                                     <td class="px-3 py-3">
                                         <div class="flex flex-wrap justify-end gap-2">
                                             <a
-                                                href="{{ route('knowledge.admin.kategorien.edit', $category) }}"
+                                                href="{{ route('knowledge.admin.kategorien.edit', ['world' => $world, 'encyclopediaCategory' => $category]) }}"
                                                 class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                             >
                                                 Bearbeiten
                                             </a>
-                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', $category) }}" onsubmit="return confirm('Kategorie wirklich löschen? Alle Einträge werden entfernt.');">
+                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', ['world' => $world, 'encyclopediaCategory' => $category]) }}" onsubmit="return confirm('Kategorie wirklich löschen? Alle Einträge werden entfernt.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button

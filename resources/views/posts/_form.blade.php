@@ -390,7 +390,7 @@
 
         @if (isset($post))
             <a
-                href="{{ route('campaigns.scenes.show', [$post->scene->campaign, $post->scene]) }}"
+                href="{{ route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) }}"
                 class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
             >
                 Abbrechen

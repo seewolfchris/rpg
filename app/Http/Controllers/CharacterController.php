@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
+use App\Models\World;
 use App\Support\CharacterInventoryService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -17,25 +19,37 @@ class CharacterController extends Controller
         private readonly CharacterInventoryService $inventoryService,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = auth()->user();
+        $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
+        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
+        $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
+
+        if ($selectedWorld) {
+            $request->session()->put('world_slug', $selectedWorld->slug);
+        }
 
         $characters = Character::query()
+            ->when($selectedWorld, fn ($query) => $query->where('world_id', $selectedWorld->id))
             ->when(
                 ! $user->isGmOrAdmin(),
                 fn ($query) => $query->where('user_id', $user->id)
             )
-            ->with('user')
+            ->with(['user', 'world'])
             ->latest()
             ->paginate(12);
 
-        return view('characters.index', compact('characters'));
+        return view('characters.index', compact('characters', 'worlds', 'selectedWorld'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('characters.create');
+        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
+        $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
+        $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
+
+        return view('characters.create', compact('worlds', 'selectedWorld'));
     }
 
     public function store(StoreCharacterRequest $request): RedirectResponse
@@ -82,7 +96,9 @@ class CharacterController extends Controller
     {
         $this->ensureCanManageCharacter($character);
 
-        return view('characters.edit', compact('character'));
+        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
+
+        return view('characters.edit', compact('character', 'worlds'));
     }
 
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse

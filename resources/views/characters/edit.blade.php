@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Charakter bearbeiten | Chroniken der Asche')
+@section('title', 'Charakter bearbeiten | C76-RPG')
 
 @section('content')
     @include('characters.partials.form', [

@@ -20,6 +20,15 @@
 
     $character = $character ?? null;
     $isEdit = $mode === 'edit';
+    $worldOptions = isset($worlds)
+        ? collect($worlds)
+        : \App\Models\World::query()->active()->ordered()->get(['id', 'name', 'slug']);
+    $selectedWorldId = (int) old(
+        'world_id',
+        $character?->world_id
+            ?? ($selectedWorld->id ?? $worldOptions->first()?->id ?? \App\Models\World::resolveDefaultId())
+    );
+    $selectedWorldName = (string) ($worldOptions->firstWhere('id', $selectedWorldId)->name ?? 'C76-RPG');
 
     $selectedOrigin = (string) old('origin', $character?->origin ?? $defaultOrigin);
     $selectedSpecies = (string) old('species', $character?->species ?? $defaultSpecies);
@@ -241,13 +250,13 @@
     x-data="window.characterSheetForm(@js($componentPayload))"
 >
     <header class="rounded-2xl border border-stone-800 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950/35 p-6">
-        <p class="text-xs uppercase tracking-[0.2em] text-red-300/80">Chroniken der Asche</p>
+        <p class="text-xs uppercase tracking-[0.2em] text-red-300/80">{{ $selectedWorldName }}</p>
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">
-            {{ $isEdit ? 'Charakter neu schmieden' : 'Neuen Charakter in die Chronik schreiben' }}
+            {{ $isEdit ? 'Charakter aktualisieren' : 'Neuen Charakter erstellen' }}
         </h1>
         <p class="mt-3 max-w-4xl text-sm leading-relaxed text-stone-300 sm:text-base">
-            Erzeuge eine glaubhafte Figur zwischen Blutpforten, Aschefluch und brüchigen Schwüren.
-            Werte stützen die Geschichte, sie ersetzen sie nicht.
+            Definiere Figur, Hintergrund und Werte für die gewählte Welt.
+            Zahlen stützen die Geschichte, sie ersetzen sie nicht.
         </p>
     </header>
 
@@ -301,6 +310,22 @@
                     </div>
 
                     <div>
+                        <label for="world_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Welt</label>
+                        <select
+                            id="world_id"
+                            name="world_id"
+                            required
+                            class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
+                        >
+                            @foreach ($worldOptions as $worldOption)
+                                <option value="{{ $worldOption->id }}" @selected($selectedWorldId === (int) $worldOption->id)>
+                                    {{ $worldOption->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
                         <label for="bio" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Biografie</label>
                         <textarea
                             id="bio"
@@ -308,7 +333,7 @@
                             rows="6"
                             required
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
-                            placeholder="Wer warst du, bevor die Asche dich fand?"
+                            placeholder="Wer war deine Figur, bevor die Geschichte begann?"
                         >{{ old('bio', $character->bio ?? '') }}</textarea>
                     </div>
 

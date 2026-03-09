@@ -27,7 +27,7 @@ class PostPinningTest extends TestCase
         ]);
 
         $this->actingAs($gm)
-            ->patch(route('posts.pin', $post))
+            ->patch(route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('posts', [
@@ -37,7 +37,7 @@ class PostPinningTest extends TestCase
         ]);
 
         $this->actingAs($gm)
-            ->patch(route('posts.unpin', $post))
+            ->patch(route('posts.unpin', ['world' => $post->scene->campaign->world, 'post' => $post]))
             ->assertRedirect();
 
         $this->assertDatabaseHas('posts', [
@@ -60,7 +60,7 @@ class PostPinningTest extends TestCase
         ]);
 
         $this->actingAs($player)
-            ->patch(route('posts.pin', $post))
+            ->patch(route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]))
             ->assertForbidden();
 
         $this->assertDatabaseHas('posts', [

@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\World;
 use App\Support\NavigationCounters;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -26,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        URL::defaults([
+            'world' => World::defaultSlug(),
+        ]);
+
         RateLimiter::for('register', function (Request $request): Limit {
             return Limit::perMinute(3)->by($request->ip());
         });

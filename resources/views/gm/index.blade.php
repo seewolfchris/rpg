@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Hub | Chroniken der Asche')
+@section('title', 'GM Hub | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">

@@ -228,7 +228,7 @@ function setupBrowserNotifications() {
 
     browserNotificationConfig = {
         pollUrl,
-        appName: root.dataset.appName || 'Chroniken der Asche',
+        appName: root.dataset.appName || 'C76-RPG',
         enabledKinds: normalizeBrowserNotificationKinds(root.dataset.enabledKinds),
         statusNode: document.querySelector(BROWSER_NOTIFICATION_STATUS_SELECTOR),
         enableButton: document.querySelector(BROWSER_NOTIFICATION_ENABLE_SELECTOR),

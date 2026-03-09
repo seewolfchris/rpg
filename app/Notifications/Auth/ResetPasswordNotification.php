@@ -17,7 +17,7 @@ class ResetPasswordNotification extends BaseResetPassword
         return (new MailMessage)
             ->subject('Passwort zurücksetzen | '.config('app.name'))
             ->view('mail.auth.password-reset', [
-                'appName' => config('app.name', 'Chroniken der Asche'),
+                'appName' => config('app.name', 'C76-RPG'),
                 'userName' => $notifiable->name,
                 'resetUrl' => $this->resetUrl($notifiable),
                 'expirationMinutes' => $expirationMinutes,

@@ -217,7 +217,7 @@
         </button>
 
         <a
-            href="{{ route('knowledge.admin.kategorien.edit', $category) }}"
+            href="{{ route('knowledge.admin.kategorien.edit', ['world' => $world, 'encyclopediaCategory' => $category]) }}"
             class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
         >
             Abbrechen

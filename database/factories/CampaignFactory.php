@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,9 @@ class CampaignFactory extends Factory
     public function definition(): array
     {
         return [
+            'world_id' => fn () => World::query()
+                ->where('slug', World::defaultSlug())
+                ->value('id') ?? World::factory()->chronikenDerAsche(),
             'owner_id' => User::factory()->gm(),
             'title' => fake()->unique()->sentence(3),
             'slug' => fake()->unique()->slug(),

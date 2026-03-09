@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Wissenszentrum · Chroniken der Asche')
+@section('title', 'Wissenszentrum · C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -8,8 +8,8 @@
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Leitfaden für Spiel, Welt und Regeln</h1>
             <p class="mt-4 max-w-4xl text-base leading-relaxed text-stone-300 sm:text-lg">
-                Hier findest du den strukturierten Einstieg für Chroniken der Asche: wie das Play-by-Post funktioniert,
-                welche Regeln im Alltag gelten und wie die Welt Vhal'Tor aufgebaut ist.
+                Strukturierter Einstieg für die Welt <strong class="text-amber-200">{{ $world->name }}</strong>:
+                Wie Play-by-Post hier funktioniert, welche Regeln gelten und wie du dich schnell orientierst.
             </p>
         </header>
 
@@ -23,7 +23,7 @@
                     In 7 Schritten vom ersten Login bis zum ersten IC-Post in Ich-Perspektive.
                 </p>
                 <a
-                    href="{{ route('knowledge.how-to-play') }}"
+                    href="{{ route('knowledge.how-to-play', ['world' => $world]) }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Einstieg öffnen
@@ -37,7 +37,7 @@
                     IC/OOC-Konventionen, Posting-Standards, Prozentproben (d100), Moderation und Spoiler-Richtlinien.
                 </p>
                 <a
-                    href="{{ route('knowledge.rules') }}"
+                    href="{{ route('knowledge.rules', ['world' => $world]) }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Regeln lesen
@@ -48,10 +48,10 @@
                 <p class="text-xs uppercase tracking-widest text-amber-300">Lore</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Enzyklopädie</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
-                    Zeitalter, Fraktionen, Regionen und Begriffe der Welt der letzten Schwüre.
+                    Kategorien, Fraktionen, Regionen und Begriffe der ausgewählten Welt.
                 </p>
                 <a
-                    href="{{ route('knowledge.encyclopedia') }}"
+                    href="{{ route('knowledge.encyclopedia', ['world' => $world]) }}"
                     class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Welt erkunden
