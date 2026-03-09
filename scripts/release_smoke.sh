@@ -9,9 +9,13 @@ BASE_URL="${SMOKE_BASE_URL:-http://127.0.0.1:8000}"
 WORLD_SLUG="${SMOKE_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-chroniken-der-asche}}"
 START_SERVER="${SMOKE_START_SERVER:-1}"
 SMOKE_MODE="${SMOKE_MODE:-http}"
+SMOKE_EFFECTIVE_MODE="$SMOKE_MODE"
 ALLOW_ARTISAN_FALLBACK="${SMOKE_ALLOW_ARTISAN_FALLBACK:-1}"
 TMP_BODY_FILE="${SMOKE_TMP_BODY_FILE:-/tmp/release_smoke_body.txt}"
 TMP_HEADER_FILE="${SMOKE_TMP_HEADER_FILE:-/tmp/release_smoke_header.txt}"
+REPORT_OUT="${SMOKE_REPORT_OUT:-}"
+SMOKE_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+declare -a SMOKE_RESULTS=()
 SERVER_PID=""
 
 cleanup() {
@@ -29,6 +33,42 @@ require_cmd() {
   fi
 }
 
+record_result() {
+  local message="$1"
+  SMOKE_RESULTS+=("$message")
+}
+
+write_report() {
+  if [[ -z "$REPORT_OUT" ]]; then
+    return
+  fi
+
+  local report_dir
+  report_dir="$(dirname "$REPORT_OUT")"
+  mkdir -p "$report_dir"
+
+  {
+    echo "# Release Smoke Report"
+    echo
+    echo "- Generated at: \`$SMOKE_STARTED_AT\`"
+    echo "- Requested mode: \`$SMOKE_MODE\`"
+    echo "- Effective mode: \`$SMOKE_EFFECTIVE_MODE\`"
+    echo "- Base URL: \`$BASE_URL\`"
+    echo "- World slug: \`$WORLD_SLUG\`"
+    echo
+    echo "## Checks"
+    if [[ ${#SMOKE_RESULTS[@]} -eq 0 ]]; then
+      echo "- (no checks recorded)"
+    else
+      for result in "${SMOKE_RESULTS[@]}"; do
+        echo "- $result"
+      done
+    fi
+  } >"$REPORT_OUT"
+
+  echo "Saved smoke report: $REPORT_OUT"
+}
+
 check_status() {
   local path="$1"
   local expected="$2"
@@ -44,6 +84,7 @@ check_status() {
     exit 1
   fi
 
+  record_result "\`GET $path\` -> \`$code\`"
   echo "OK   $path -> $code"
 }
 
@@ -68,6 +109,7 @@ check_redirect() {
     exit 1
   fi
 
+  record_result "\`GET $path\` -> \`$code\` (\`$location\`)"
   echo "OK   $path -> $code (${location})"
 }
 
@@ -82,6 +124,7 @@ check_header_contains() {
     exit 1
   fi
 
+  record_result "\`HEAD $path\` has \`$header_name\` (contains \`$expected_fragment\`)"
   echo "OK   header ${header_name} on ${path}"
 }
 
@@ -96,6 +139,8 @@ run_artisan_fallback() {
   "$PHP_BIN" artisan route:list --path=hilfe >/dev/null
   "$PHP_BIN" artisan about --only=environment >/dev/null
 
+  record_result "\`artisan route:list\` checks for smoke-critical paths passed"
+  record_result "\`artisan about --only=environment\` passed"
   echo "OK   artisan fallback checks passed."
 }
 
@@ -103,7 +148,9 @@ require_cmd curl
 require_cmd "$PHP_BIN"
 
 if [[ "$SMOKE_MODE" == "artisan" ]]; then
+  SMOKE_EFFECTIVE_MODE="artisan"
   run_artisan_fallback
+  write_report
   echo "Smoke checks passed (artisan mode)."
   exit 0
 fi
@@ -128,7 +175,9 @@ fi
 
 if ! curl -sS "$BASE_URL/up" >/dev/null 2>&1; then
   if [[ "$ALLOW_ARTISAN_FALLBACK" == "1" ]]; then
+    SMOKE_EFFECTIVE_MODE="artisan-fallback"
     run_artisan_fallback
+    write_report
     echo "Smoke checks passed (artisan fallback mode)."
     exit 0
   fi
@@ -153,4 +202,5 @@ check_redirect "/hilfe" "301" "/w/${WORLD_SLUG}/wissen"
 check_header_contains "/" "X-Request-Id" ""
 check_header_contains "/" "X-Robots-Tag" "noindex"
 
+write_report
 echo "Smoke checks passed."

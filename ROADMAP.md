@@ -50,14 +50,15 @@ Stand: 2026-03-09
   - `app/Http/Middleware/ApplyWorldContext.php`
 - Delivery:
   - `.github/workflows/ci.yml`
-  - `scripts/release_smoke.sh` (inkl. Weltkontext- und Legacy-Redirect-Checks)
+  - `scripts/release_smoke.sh` (inkl. Weltkontext-/Legacy-Redirect-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
+  - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
 - Observability:
   - `app/Http/Middleware/AttachRequestId.php`
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-09)
-- `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **138 passed, 686 assertions**
 - `npm run build` -> **gruen**
 - `composer analyse` -> im CI-Gate enthalten
 
@@ -75,6 +76,6 @@ Stand: 2026-03-09
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. Staging/Prod-Smoke fuer Multi-Welt-Flows (`/welten`, `/w/{world}/campaigns`, Legacy-Redirects) mit erweitertem Smoke-Skript vollstaendig protokollieren.
+1. Staging/Prod-Smoke fuer Multi-Welt-Flows als Report protokollieren (`SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md`).
 2. Optional: `posts.latest_by_id`-Plan auf MySQL bei steigender Datenmenge beobachten/benchmarken.
-3. Optional: Admin-UX fuer Welt-Sortierung/Deaktivierung weiter scharfziehen.
+3. Doku bei jedem Release auf Test-/Build-Stand synchron halten.

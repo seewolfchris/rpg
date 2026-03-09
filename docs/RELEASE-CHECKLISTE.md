@@ -58,8 +58,9 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 ## 6. Smoke-Test nach Deploy (5 Minuten)
 
 - Automatisierter Basissmoke:
-  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="chroniken-der-asche" scripts/release_smoke.sh`
+  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="chroniken-der-asche" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh`
   - Alternativ rein lokal/ohne HTTP-Server: `SMOKE_MODE=artisan scripts/release_smoke.sh`
+- Das Skript kann einen Markdown-Report schreiben (`SMOKE_REPORT_OUT=...`).
 - Login/Logout funktioniert.
 - Dashboard laedt.
 - Weltkatalog und Weltkontext-Routing funktionieren (`/welten`, `/w/{world}/...`).
@@ -88,3 +89,4 @@ Fuer jeden Release einmal notieren:
 - Zeitpunkt Deploy
 - Ergebnis Smoke-Test
 - offene Nacharbeiten
+- Optional/empfohlen: Link auf den Smoke-Report (`docs/SMOKE-PASS-STAGING-PROD.md`).

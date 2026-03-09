@@ -36,13 +36,13 @@ scripts/release_smoke.sh
 Optional gegen laufende Instanz:
 
 ```bash
-SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="chroniken-der-asche" scripts/release_smoke.sh
+SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="chroniken-der-asche" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
 ```
 
 Optional ohne HTTP-Checks (z. B. CI/offline):
 
 ```bash
-SMOKE_MODE=artisan scripts/release_smoke.sh
+SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_smoke.sh
 ```
 
 ## Nach Deployment

@@ -10,6 +10,7 @@ Repository-Branch: `main`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
+- Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
@@ -19,7 +20,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.19-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
+  - `php artisan test --without-tty --do-not-cache-result` -> **138 passed, 686 assertions**
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
@@ -82,6 +83,8 @@ Repository-Branch: `main`
   - `npm run build`
 - Release-Checkliste:
   - `docs/RELEASE-CHECKLISTE.md`
+- Smoke-Report-Ausgabe:
+  - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
 
 ### 5.2 Observability
 - Request-Korrelation aktiv (`X-Request-Id`).
@@ -109,8 +112,8 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. Staging/Prod-Smoke fuer alle Weltkontext- und Legacy-Redirect-Flows dokumentieren.
-2. Query-Performance der Welt-Hotpaths in realen Daten bestaetigen.
+1. Staging/Prod-Smoke pro Deploy als Report aktualisieren (`docs/SMOKE-PASS-STAGING-PROD.md`).
+2. Optional: `posts.latest_by_id`-Plan bei steigender Datenmenge benchmarken.
 3. Doku bei jedem Release synchron halten (`README`, `ROADMAP`, Projekt-Uebersicht, Release-Checkliste).
 
 ---
