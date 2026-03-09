@@ -90,6 +90,7 @@ Repository-Branch: `main`
 - Hotpath-Performance initial dokumentiert:
   - `docs/PERFORMANCE-PASS-2026-03-09.md`
   - Reproduzierbarer EXPLAIN-Runner: `php artisan perf:world-hotpaths`
+  - Staging/Prod-Lauf protokolliert: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:

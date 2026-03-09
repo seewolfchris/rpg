@@ -76,5 +76,5 @@ Stand: 2026-03-09
 
 ## Naechste Schritte
 1. Staging/Prod-Smoke fuer Multi-Welt-Flows (`/welten`, `/w/{world}/campaigns`, Legacy-Redirects) mit erweitertem Smoke-Skript vollstaendig protokollieren.
-2. Performance-Pass auf Weltkontext-Queries in Staging/Prod mit Realdaten finalisieren (lokaler Initialpass + Command `perf:world-hotpaths` dokumentiert in `docs/PERFORMANCE-PASS-2026-03-09.md`, Protokollvorlage: `docs/PERFORMANCE-PASS-STAGING-PROD.md`).
+2. Unread-Counter-Hotpath (`scene_subscriptions.unread_count`) optional weiter optimieren und erneut per `perf:world-hotpaths` validieren.
 3. Optional: Admin-UX fuer Welt-Sortierung/Deaktivierung weiter scharfziehen.
