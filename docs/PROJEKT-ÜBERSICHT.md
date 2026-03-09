@@ -8,6 +8,7 @@ Repository-Branch: `main`
 - Gesamt-Roadmap: `ROADMAP.md`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
+- Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
@@ -85,6 +86,8 @@ Repository-Branch: `main`
 - Request-Korrelation aktiv (`X-Request-Id`).
 - Strukturierte Logs via `app/Support/Observability/StructuredLogger.php`.
 - Incident-Ablauf im Runbook dokumentiert.
+- Hotpath-Performance initial dokumentiert:
+  - `docs/PERFORMANCE-PASS-2026-03-09.md`
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:

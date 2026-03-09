@@ -56,7 +56,7 @@ check_redirect() {
   local location
 
   code="$(curl -sS -o "$TMP_BODY_FILE" -D "$TMP_HEADER_FILE" -w '%{http_code}' "$url")"
-  location="$(awk -F': ' 'BEGIN {IGNORECASE=1} /^Location:/ {gsub(/\r/, "", $2); print $2}' "$TMP_HEADER_FILE" | tail -n 1)"
+  location="$(awk -F': ' 'tolower($1) == "location" {gsub(/\r/, "", $2); print $2}' "$TMP_HEADER_FILE" | tail -n 1)"
 
   if [[ "$code" != "$expected_status" ]]; then
     echo "ERROR: $url returned HTTP $code (expected redirect status $expected_status)"

@@ -30,12 +30,20 @@ class CampaignInvitationController extends Controller
             ? (string) $request->query('status', CampaignInvitation::STATUS_PENDING)
             : CampaignInvitation::STATUS_PENDING;
 
-        $invitations = CampaignInvitation::query()
+        $invitationsQuery = CampaignInvitation::query()
             ->where('user_id', $request->user()->id)
             ->with(['campaign.owner', 'campaign.world', 'inviter'])
-            ->when($status !== 'all', fn ($query) => $query->where('status', $status))
-            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'accepted' THEN 1 ELSE 2 END")
-            ->latest('created_at')
+            ->when($status !== 'all', fn ($query) => $query->where('status', $status));
+
+        if ($status === 'all') {
+            $invitationsQuery
+                ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'accepted' THEN 1 ELSE 2 END")
+                ->latest('created_at');
+        } else {
+            $invitationsQuery->latest('created_at');
+        }
+
+        $invitations = $invitationsQuery
             ->paginate(20)
             ->withQueryString();
 
