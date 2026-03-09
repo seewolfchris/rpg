@@ -312,6 +312,15 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     Route::prefix('/admin')
         ->middleware('role:admin')
         ->group(function (): void {
+            Route::patch('worlds/{world}/toggle-active', [WorldAdminController::class, 'toggleActive'])
+                ->name('admin.worlds.toggle-active')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/move/{direction}', [WorldAdminController::class, 'move'])
+                ->where('direction', 'up|down')
+                ->name('admin.worlds.move')
+                ->middleware('throttle:moderation');
+
             Route::resource('worlds', WorldAdminController::class)
                 ->except(['show'])
                 ->names('admin.worlds')

@@ -6,6 +6,7 @@ use App\Http\Requests\World\StoreWorldRequest;
 use App\Http\Requests\World\UpdateWorldRequest;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class WorldAdminController extends Controller
@@ -48,6 +49,82 @@ class WorldAdminController extends Controller
         return redirect()
             ->route('admin.worlds.edit', $world)
             ->with('status', 'Welt aktualisiert.');
+    }
+
+    public function toggleActive(World $world): RedirectResponse
+    {
+        if ($world->is_active) {
+            if ($world->slug === World::defaultSlug()) {
+                return back()->withErrors([
+                    'world' => 'Die Standardwelt kann nicht deaktiviert werden.',
+                ]);
+            }
+
+            $activeWorldCount = World::query()
+                ->where('is_active', true)
+                ->count();
+
+            if ($activeWorldCount <= 1) {
+                return back()->withErrors([
+                    'world' => 'Mindestens eine aktive Welt muss bestehen bleiben.',
+                ]);
+            }
+        }
+
+        $world->is_active = ! $world->is_active;
+        $world->save();
+
+        return redirect()
+            ->route('admin.worlds.index')
+            ->with('status', $world->is_active ? 'Welt aktiviert.' : 'Welt deaktiviert.');
+    }
+
+    public function move(World $world, string $direction): RedirectResponse
+    {
+        if (! in_array($direction, ['up', 'down'], true)) {
+            abort(404);
+        }
+
+        $orderedIds = World::query()
+            ->ordered()
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
+        $currentIndex = array_search((int) $world->id, $orderedIds, true);
+        if ($currentIndex === false) {
+            return back()->withErrors([
+                'world' => 'Welt konnte in der Sortierung nicht gefunden werden.',
+            ]);
+        }
+
+        $targetIndex = $direction === 'up'
+            ? $currentIndex - 1
+            : $currentIndex + 1;
+
+        if (! isset($orderedIds[$targetIndex])) {
+            return redirect()
+                ->route('admin.worlds.index')
+                ->with('status', $direction === 'up'
+                    ? 'Welt ist bereits ganz oben.'
+                    : 'Welt ist bereits ganz unten.');
+        }
+
+        [$orderedIds[$currentIndex], $orderedIds[$targetIndex]] = [$orderedIds[$targetIndex], $orderedIds[$currentIndex]];
+
+        DB::transaction(function () use ($orderedIds): void {
+            foreach ($orderedIds as $index => $worldId) {
+                World::query()
+                    ->whereKey($worldId)
+                    ->update(['position' => ($index + 1) * 10]);
+            }
+        });
+
+        return redirect()
+            ->route('admin.worlds.index')
+            ->with('status', 'Welt-Sortierung aktualisiert.');
     }
 
     public function destroy(World $world): RedirectResponse

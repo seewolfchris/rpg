@@ -37,6 +37,11 @@
                                 <span class="inline-flex rounded-full border px-2 py-1 text-xs uppercase tracking-widest {{ $world->is_active ? 'border-emerald-500/60 text-emerald-200' : 'border-stone-600 text-stone-300' }}">
                                     {{ $world->is_active ? 'Aktiv' : 'Inaktiv' }}
                                 </span>
+                                @if ($world->slug === \App\Models\World::defaultSlug())
+                                    <span class="ml-2 inline-flex rounded-full border border-amber-500/60 px-2 py-1 text-xs uppercase tracking-widest text-amber-200">
+                                        Standard
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-3 py-3 text-xs text-stone-400">
                                 Kampagnen: {{ $world->campaigns_count }} |
@@ -45,6 +50,21 @@
                             </td>
                             <td class="px-3 py-3">
                                 <div class="flex justify-end gap-2">
+                                    <form method="POST" action="{{ route('admin.worlds.move', ['world' => $world, 'direction' => 'up']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="ui-btn inline-flex disabled:cursor-not-allowed disabled:opacity-40" @disabled($loop->first)>Hoch</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.worlds.move', ['world' => $world, 'direction' => 'down']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="ui-btn inline-flex disabled:cursor-not-allowed disabled:opacity-40" @disabled($loop->last)>Runter</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.worlds.toggle-active', $world) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="ui-btn inline-flex">{{ $world->is_active ? 'Deaktivieren' : 'Aktivieren' }}</button>
+                                    </form>
                                     <a href="{{ route('admin.worlds.edit', $world) }}" class="ui-btn inline-flex">Bearbeiten</a>
                                     <form method="POST" action="{{ route('admin.worlds.destroy', $world) }}" onsubmit="return confirm('Welt wirklich löschen?');">
                                         @csrf
