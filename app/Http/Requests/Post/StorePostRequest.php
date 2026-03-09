@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
@@ -98,6 +99,9 @@ class StorePostRequest extends FormRequest
                 return;
             }
 
+            /** @var Campaign $campaign */
+            $campaign = $scene->campaign;
+
             $postType = (string) $this->input('post_type');
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
@@ -112,28 +116,29 @@ class StorePostRequest extends FormRequest
             }
 
             if ($characterId) {
+                /** @var Character|null $character */
                 $character = Character::query()->find($characterId);
 
-                if ($character && $character->user_id !== (int) $this->user()?->id) {
+                if ($character instanceof Character && $character->user_id !== (int) $this->user()?->id) {
                     $validator->errors()->add('character_id', 'Du kannst nur eigene Charaktere verwenden.');
-                } elseif ($character && (int) $character->world_id !== (int) $scene->campaign->world_id) {
+                } elseif ($character instanceof Character && (int) $character->world_id !== (int) $campaign->world_id) {
                     $validator->errors()->add('character_id', 'Der gewählte Charakter gehört nicht zur Welt dieser Kampagne.');
                 }
             }
 
             $user = $this->user();
             $canModerate = $user
-                && ($user->isGmOrAdmin() || $scene->campaign->isCoGm($user));
+                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
 
             $probeEnabled = (bool) $this->boolean('probe_enabled');
             $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');
 
             $campaignParticipantUserIds = collect();
             if ($probeEnabled || $inventoryAwardEnabled) {
-                $campaignParticipantUserIds = $scene->campaign->invitations()
+                $campaignParticipantUserIds = $campaign->invitations()
                     ->where('status', CampaignInvitation::STATUS_ACCEPTED)
                     ->pluck('user_id')
-                    ->push((int) $scene->campaign->owner_id)
+                    ->push((int) $campaign->owner_id)
                     ->unique();
             }
 
@@ -148,13 +153,14 @@ class StorePostRequest extends FormRequest
                     if (! $probeCharacterId) {
                         $validator->errors()->add('probe_character_id', 'Für die Probe muss ein Ziel-Held gewählt werden.');
                     } else {
+                        /** @var Character|null $probeCharacter */
                         $probeCharacter = Character::query()
                             ->select(['id', 'user_id', 'world_id'])
                             ->find($probeCharacterId);
 
-                        if (! $probeCharacter) {
+                        if (! $probeCharacter instanceof Character) {
                             $validator->errors()->add('probe_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
-                        } elseif ((int) $probeCharacter->world_id !== (int) $scene->campaign->world_id) {
+                        } elseif ((int) $probeCharacter->world_id !== (int) $campaign->world_id) {
                             $validator->errors()->add(
                                 'probe_character_id',
                                 'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'
@@ -183,13 +189,14 @@ class StorePostRequest extends FormRequest
                             'Für den Inventar-Fund muss ein Ziel-Held gewählt werden.'
                         );
                     } else {
+                        /** @var Character|null $awardCharacter */
                         $awardCharacter = Character::query()
                             ->select(['id', 'user_id', 'world_id'])
                             ->find($awardCharacterId);
 
-                        if (! $awardCharacter) {
+                        if (! $awardCharacter instanceof Character) {
                             $validator->errors()->add('inventory_award_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
-                        } elseif ((int) $awardCharacter->world_id !== (int) $scene->campaign->world_id) {
+                        } elseif ((int) $awardCharacter->world_id !== (int) $campaign->world_id) {
                             $validator->errors()->add(
                                 'inventory_award_character_id',
                                 'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'

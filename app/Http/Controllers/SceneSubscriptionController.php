@@ -256,7 +256,7 @@ class SceneSubscriptionController extends Controller
                 $join->on('scene_subscriptions.scene_id', '=', 'latest_posts.scene_id');
             })
             ->where('scene_subscriptions.user_id', $userId)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->forWorld($world))
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id))
             ->whereNotNull('latest_posts.latest_post_id')
             ->where(function ($query): void {
                 $query->whereNull('scene_subscriptions.last_read_post_id')
@@ -271,6 +271,6 @@ class SceneSubscriptionController extends Controller
             ->where('user_id', $user->id)
             ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
                 ->visibleTo($user)
-                ->forWorld($world));
+                ->where('world_id', (int) $world->id));
     }
 }

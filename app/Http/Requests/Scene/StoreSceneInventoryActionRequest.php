@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Scene;
 
+use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Scene;
@@ -53,9 +54,12 @@ class StoreSceneInventoryActionRequest extends FormRequest
                 return;
             }
 
+            /** @var Campaign $campaign */
+            $campaign = $scene->campaign;
+
             $user = $this->user();
             $canModerate = $user
-                && ($user->isGmOrAdmin() || $scene->campaign->isCoGm($user));
+                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
 
             if (! $canModerate) {
                 $validator->errors()->add(
@@ -74,20 +78,21 @@ class StoreSceneInventoryActionRequest extends FormRequest
                 return;
             }
 
+            /** @var Character|null $targetCharacter */
             $targetCharacter = Character::query()
                 ->select(['id', 'user_id', 'world_id'])
                 ->find($characterId);
 
-            if (! $targetCharacter) {
+            if (! $targetCharacter instanceof Character) {
                 $validator->errors()->add('inventory_action_character_id', 'Der Ziel-Held konnte nicht gefunden werden.');
 
                 return;
             }
 
-            $campaignParticipantUserIds = $scene->campaign->invitations()
+            $campaignParticipantUserIds = $campaign->invitations()
                 ->where('status', CampaignInvitation::STATUS_ACCEPTED)
                 ->pluck('user_id')
-                ->push((int) $scene->campaign->owner_id)
+                ->push((int) $campaign->owner_id)
                 ->unique();
 
             if (! $campaignParticipantUserIds->contains((int) $targetCharacter->user_id)) {
@@ -95,7 +100,7 @@ class StoreSceneInventoryActionRequest extends FormRequest
                     'inventory_action_character_id',
                     'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
                 );
-            } elseif ((int) $targetCharacter->world_id !== (int) $scene->campaign->world_id) {
+            } elseif ((int) $targetCharacter->world_id !== (int) $campaign->world_id) {
                 $validator->errors()->add(
                     'inventory_action_character_id',
                     'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'

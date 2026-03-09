@@ -66,18 +66,23 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $post->load(['scene.campaign', 'user', 'character']);
+        [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $characterOwner = $post->user_id === (int) auth()->id()
             ? auth()->user()
             : $post->user;
 
+        if (! $characterOwner instanceof User) {
+            abort(403);
+        }
+
         $characters = $characterOwner
             ->characters()
-            ->where('world_id', $post->scene->campaign->world_id)
+            ->where('world_id', (int) $campaign->world_id)
             ->orderBy('name')
             ->get();
 
-        return view('posts.edit', compact('world', 'post', 'characters'));
+        return view('posts.edit', compact('world', 'post', 'scene', 'campaign', 'characters'));
     }
 
     public function update(UpdatePostRequest $request, World $world, Post $post): RedirectResponse
@@ -142,12 +147,13 @@ class PostController extends Controller
         );
 
         $post->load('scene.campaign', 'scene');
+        [$scene, $campaign] = $this->resolveSceneContext($post);
 
         return redirect()
             ->to(route('campaigns.scenes.show', [
-                'world' => $post->scene->campaign->world,
-                'campaign' => $post->scene->campaign,
-                'scene' => $post->scene,
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
             ]).'#post-'.$post->id)
             ->with('status', 'Beitrag aktualisiert.');
     }
@@ -159,8 +165,7 @@ class PostController extends Controller
         $this->authorize('delete', $post);
 
         $post->load('scene.campaign', 'scene');
-        $campaign = $post->scene->campaign;
-        $scene = $post->scene;
+        [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $this->pointService->revokeApprovedPostPoints($post);
         $post->delete();
@@ -269,6 +274,19 @@ class PostController extends Controller
     private function canModerateScene(User $user, Scene $scene): bool
     {
         return $user->isGmOrAdmin() || $scene->campaign->isCoGm($user);
+    }
+
+    /**
+     * @return array{Scene, Campaign}
+     */
+    private function resolveSceneContext(Post $post): array
+    {
+        /** @var Scene $scene */
+        $scene = $post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
+
+        return [$scene, $campaign];
     }
 
     private function normalizeModerationNote(string $note): ?string

@@ -139,18 +139,6 @@ parameters:
 			path: app/Http/Controllers/NotificationController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/PostController.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:characters\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Controllers/PostController.php
-
-		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -221,42 +209,6 @@ parameters:
 			identifier: arrayValues.list
 			count: 1
 			path: app/Http/Requests/Character/CharacterSheetRequest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Requests/Post/StorePostRequest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:invitations\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Requests/Post/StorePostRequest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Requests/Post/StorePostRequest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:invitations\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
 
 		-
 			message: '#^Parameter \#1 \$key of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:contains\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|Illuminate\\Database\\Eloquent\\Model\|int\|string, Closure\(App\\Models\\CampaignInvitation\)\: bool given\.$#'
@@ -369,36 +321,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
 			identifier: property.notFound
-			count: 2
-			path: app/Notifications/PostModerationStatusNotification.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Notifications/PostModerationStatusNotification.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Notifications/SceneNewPostNotification.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Notifications/SceneNewPostNotification.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Notifications/SceneNewPostNotification.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
-			identifier: property.notFound
 			count: 4
 			path: app/Policies/PostPolicy.php
 
@@ -431,30 +353,6 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: app/Policies/ScenePolicy.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Support/EncyclopediaEntryMetaBuilder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Support/EncyclopediaEntryMetaBuilder.php
-
-		-
-			message: '#^Offset ''label'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Support/EncyclopediaEntryMetaBuilder.php
-
-		-
-			message: '#^Offset ''slug'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Support/EncyclopediaEntryMetaBuilder.php
 
 		-
 			message: '#^Offset ''url'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'

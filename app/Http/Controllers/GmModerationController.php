@@ -24,7 +24,8 @@ class GmModerationController extends Controller
             : 'pending';
         $search = trim((string) $request->query('q', ''));
 
-        $baseQuery = Post::query()->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->forWorld($world));
+        $baseQuery = Post::query()
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id));
 
         $postsQuery = (clone $baseQuery)
             ->with(['scene.campaign', 'scene', 'user', 'character', 'approvedBy', 'latestModerationLog.moderator'])
@@ -67,7 +68,7 @@ class GmModerationController extends Controller
         $moderator = $request->user();
 
         $postsQuery = Post::query()
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->forWorld($world))
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id))
             ->with(['scene.campaign', 'user']);
 
         $this->applyFilters($postsQuery, $statusFilter, $search);

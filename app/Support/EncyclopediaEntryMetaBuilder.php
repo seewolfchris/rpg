@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
+use App\Models\World;
 use Illuminate\Support\Str;
 
 class EncyclopediaEntryMetaBuilder
@@ -34,10 +36,10 @@ class EncyclopediaEntryMetaBuilder
 
             $seenUrls[$url] = true;
             $links[] = [
-                'label' => trim((string) ($match['label'] ?? '')),
+                'label' => trim((string) $match['label']),
                 'url' => $url,
-                'category' => trim((string) ($match['category'] ?? '')),
-                'slug' => trim((string) ($match['slug'] ?? '')),
+                'category' => trim((string) $match['category']),
+                'slug' => trim((string) $match['slug']),
             ];
 
             if (count($links) >= $limit) {
@@ -55,10 +57,20 @@ class EncyclopediaEntryMetaBuilder
     {
         $title = trim(str_replace('"', '', $entry->title));
         $excerpt = trim((string) ($entry->excerpt ?? ''));
-        $category = trim((string) ($entry->category?->name ?? 'Enzyklopädie'));
-        $worldName = trim((string) ($entry->category?->world?->name ?? 'C76-RPG'));
+        /** @var EncyclopediaCategory|null $categoryModel */
+        $categoryModel = $entry->category;
+        $category = trim((string) ($categoryModel?->name ?? 'Enzyklopädie'));
+        $worldName = 'C76-RPG';
 
-        $categoryDirective = match ($entry->category?->slug) {
+        if ($categoryModel instanceof EncyclopediaCategory) {
+            /** @var World|null $world */
+            $world = $categoryModel->world;
+            if ($world instanceof World && trim($world->name) !== '') {
+                $worldName = trim($world->name);
+            }
+        }
+
+        $categoryDirective = match ((string) ($categoryModel->slug ?? '')) {
             'monster-bestiarium' => 'focus on creature anatomy, scarred hide, predatory stance, field-guide realism',
             'waffen-ruestungen-relikte' => 'focus on material detail, wear marks, smithing history, practical combat look',
             'heldenarchetypen-berufungen' => 'focus on character silhouette, role identity, emotional tension',

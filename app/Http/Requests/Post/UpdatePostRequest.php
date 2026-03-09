@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -45,6 +46,8 @@ class UpdatePostRequest extends FormRequest
 
             /** @var Scene $scene */
             $scene = $post->scene;
+            /** @var Campaign $campaign */
+            $campaign = $scene->campaign;
             $postType = (string) $this->input('post_type');
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
@@ -67,7 +70,7 @@ class UpdatePostRequest extends FormRequest
 
                 $isAllowed = Character::query()
                     ->whereKey($characterId)
-                    ->where('world_id', (int) $scene->campaign->world_id)
+                    ->where('world_id', (int) $campaign->world_id)
                     ->whereIn('user_id', array_unique($allowedUserIds))
                     ->exists();
 

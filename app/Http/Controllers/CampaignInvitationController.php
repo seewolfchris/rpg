@@ -121,10 +121,14 @@ class CampaignInvitationController extends Controller
         $invitation->responded_at = now();
         $invitation->save();
 
+        $campaign = Campaign::query()
+            ->with('world')
+            ->findOrFail((int) $invitation->campaign_id);
+
         return redirect()
             ->route('campaigns.show', [
-                'world' => $invitation->campaign->world,
-                'campaign' => $invitation->campaign,
+                'world' => $campaign->world,
+                'campaign' => $campaign,
             ])
             ->with('status', 'Einladung angenommen.');
     }

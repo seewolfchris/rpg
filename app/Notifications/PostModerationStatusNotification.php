@@ -2,8 +2,11 @@
 
 namespace App\Notifications;
 
+use App\Models\Campaign;
 use App\Models\Post;
+use App\Models\Scene;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -46,6 +49,8 @@ class PostModerationStatusNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        [$world, $campaign, $scene] = $this->resolveContext();
+
         $mailMessage = (new MailMessage)
             ->subject('Moderationsstatus geändert')
             ->greeting('Hallo '.$notifiable->name.',')
@@ -54,9 +59,9 @@ class PostModerationStatusNotification extends Notification
             ->action(
                 'Beitrag öffnen',
                 route('campaigns.scenes.show', [
-                    'world' => $this->post->scene->campaign->world,
-                    'campaign' => $this->post->scene->campaign,
-                    'scene' => $this->post->scene,
+                    'world' => $world,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
                 ]).'#post-'.$this->post->id,
             )
             ->line('C76-RPG informiert dich automatisch über relevante Änderungen.');
@@ -75,23 +80,40 @@ class PostModerationStatusNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        [$world, $campaign, $scene] = $this->resolveContext();
+
         return [
             'kind' => 'post_moderation',
             'title' => 'Moderationsstatus geändert',
             'message' => 'Dein Beitrag wurde von '.$this->moderator->name.' auf "'.$this->newStatus.'" gesetzt.'
                 .($this->moderationNote ? ' Grund: '.$this->moderationNote : ''),
             'action_url' => route('campaigns.scenes.show', [
-                'world' => $this->post->scene->campaign->world,
-                'campaign' => $this->post->scene->campaign,
-                'scene' => $this->post->scene,
+                'world' => $world,
+                'campaign' => $campaign,
+                'scene' => $scene,
             ]).'#post-'.$this->post->id,
             'post_id' => $this->post->id,
-            'scene_id' => $this->post->scene_id,
-            'campaign_id' => $this->post->scene->campaign_id,
+            'scene_id' => $scene->id,
+            'campaign_id' => $campaign->id,
             'previous_status' => $this->previousStatus,
             'new_status' => $this->newStatus,
             'moderator_id' => $this->moderator->id,
             'moderation_note' => $this->moderationNote,
         ];
+    }
+
+    /**
+     * @return array{World, Campaign, Scene}
+     */
+    private function resolveContext(): array
+    {
+        /** @var Scene $scene */
+        $scene = $this->post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
+        /** @var World $world */
+        $world = $campaign->world;
+
+        return [$world, $campaign, $scene];
     }
 }

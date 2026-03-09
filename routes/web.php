@@ -380,8 +380,13 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     });
 
     Route::get('/posts/{post}/edit', function (Post $post) {
+        /** @var Scene $scene */
+        $scene = $post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
+
         return redirect()->route('posts.edit', [
-            'world' => $post->scene->campaign->world,
+            'world' => $campaign->world,
             'post' => $post,
         ], 301);
     });
