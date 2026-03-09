@@ -247,20 +247,16 @@ class SceneSubscriptionController extends Controller
 
     private function unreadCountForUser(int $userId, World $world): int
     {
-        $latestPostsPerScene = Post::query()
-            ->selectRaw('scene_id, MAX(id) as latest_post_id')
-            ->groupBy('scene_id');
-
         return (int) SceneSubscription::query()
-            ->leftJoinSub($latestPostsPerScene, 'latest_posts', function ($join): void {
-                $join->on('scene_subscriptions.scene_id', '=', 'latest_posts.scene_id');
-            })
+            ->join('scenes', 'scenes.id', '=', 'scene_subscriptions.scene_id')
+            ->join('campaigns', 'campaigns.id', '=', 'scenes.campaign_id')
             ->where('scene_subscriptions.user_id', $userId)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id))
-            ->whereNotNull('latest_posts.latest_post_id')
-            ->where(function ($query): void {
-                $query->whereNull('scene_subscriptions.last_read_post_id')
-                    ->orWhereColumn('scene_subscriptions.last_read_post_id', '<', 'latest_posts.latest_post_id');
+            ->where('campaigns.world_id', (int) $world->id)
+            ->whereExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('posts')
+                    ->whereColumn('posts.scene_id', 'scene_subscriptions.scene_id')
+                    ->whereRaw('posts.id > COALESCE(scene_subscriptions.last_read_post_id, 0)');
             })
             ->count();
     }

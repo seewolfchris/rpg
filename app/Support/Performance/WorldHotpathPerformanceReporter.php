@@ -246,15 +246,17 @@ class WorldHotpathPerformanceReporter
                 'bindings' => [$samples['user_id']],
             ],
             'scene_subscriptions.unread_count' => [
-                'title' => 'Unread counter with latest post join',
+                'title' => 'Unread counter with EXISTS strategy',
                 'sql' => 'SELECT COUNT(*) '
                     .'FROM scene_subscriptions ss '
                     .'JOIN scenes s ON s.id = ss.scene_id '
                     .'JOIN campaigns c ON c.id = s.campaign_id '
-                    .'LEFT JOIN (SELECT scene_id, MAX(id) AS latest_post_id FROM posts GROUP BY scene_id) lp ON lp.scene_id = ss.scene_id '
                     .'WHERE ss.user_id = ?'.$worldFilter.' '
-                    .'AND lp.latest_post_id IS NOT NULL '
-                    .'AND (ss.last_read_post_id IS NULL OR ss.last_read_post_id < lp.latest_post_id)',
+                    .'AND EXISTS ('
+                    .'SELECT 1 FROM posts p '
+                    .'WHERE p.scene_id = ss.scene_id '
+                    .'AND p.id > COALESCE(ss.last_read_post_id, 0)'
+                    .')',
                 'bindings' => array_values(array_merge([$samples['user_id']], $worldBindings)),
             ],
             'campaign_invitations.inbox_status_specific' => [
