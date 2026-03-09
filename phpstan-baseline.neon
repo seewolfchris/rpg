@@ -1,0 +1,493 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) should return Illuminate\\Support\\Collection\<int, int\> but returns Illuminate\\Support\\Collection\<int, int\<1, max\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Domain/Campaign/CampaignParticipantResolver.php
+
+		-
+			message: '#^Parameter \#1 \$campaign of method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) expects App\\Models\\Campaign, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Post/PostInventoryAwardService.php
+
+		-
+			message: '#^Property App\\Models\\Character\:\:\$inventory \(string\|null\) does not accept array\<int, array\<string, bool\|int\|string\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Post/PostInventoryAwardService.php
+
+		-
+			message: '#^Property App\\Models\\Post\:\:\$meta \(string\|null\) does not accept array\<string, array\<string, bool\|int\|string\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Post/PostInventoryAwardService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Domain/Post/PostModerationService.php
+
+		-
+			message: '#^Parameter \#1 \$campaign of method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) expects App\\Models\\Campaign, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Domain/Post/PostProbeService.php
+
+		-
+			message: '#^Property App\\Models\\Post\:\:\$meta \(string\|null\) does not accept array\<string, array\<string, int\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Post/PostProbeService.php
+
+		-
+			message: '#^Property App\\Models\\Character\:\:\$inventory \(string\|null\) does not accept array\<int, array\<string, bool\|int\|string\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Domain/Scene/SceneInventoryQuickActionService.php
+
+		-
+			message: '#^Offset 1 on array\{0\: non\-falsy\-string, 1\: numeric\-string, 2\: numeric\-string, 3\?\: non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Offset 2 on array\{0\: non\-falsy\-string, 1\: numeric\-string, 2\: numeric\-string, 3\?\: non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{name\: non\-empty\-string, attack\: mixed, parry\: mixed, damage\: int\<1, max\>\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{name\: non\-empty\-string, protection\: mixed, equipped\: bool\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>advantages" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>armors" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>calling" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>disadvantages" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>inventory" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>origin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>species" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>weapons" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/CharacterController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visible\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/KnowledgeController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:characters\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/PostController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SceneBookmarkController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/SceneBookmarkController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/SceneBookmarkController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/SceneController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_read_post_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/SceneController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>post_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/SceneController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/SceneSubscriptionController.php
+
+		-
+			message: '#^Offset 1 on array\{0\: non\-falsy\-string, 1\: numeric\-string, 2\: numeric\-string, 3\?\: non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Requests/Character/CharacterSheetRequest.php
+
+		-
+			message: '#^Offset 2 on array\{0\: non\-falsy\-string, 1\: numeric\-string, 2\: numeric\-string, 3\?\: non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Requests/Character/CharacterSheetRequest.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{name\: non\-empty\-string, protection\: mixed, equipped\: bool\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Http/Requests/Character/CharacterSheetRequest.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{name\: string, attack\: ''''\|int, parry\: ''''\|int, damage\: int\|string\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Http/Requests/Character/CharacterSheetRequest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/Post/StorePostRequest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:invitations\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Requests/Post/StorePostRequest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Requests/Post/StorePostRequest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:invitations\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Requests/Scene/StoreSceneInventoryActionRequest.php
+
+		-
+			message: '#^Parameter \#1 \$key of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:contains\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|Illuminate\\Database\\Eloquent\\Model\|int\|string, Closure\(App\\Models\\CampaignInvitation\)\: bool given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Models/Campaign.php
+
+		-
+			message: '#^Call to function is_array\(\) with \*NEVER\* will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Call to function is_string\(\) with \*NEVER\* will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Empty array passed to foreach\.$#'
+			identifier: foreach.emptyArray
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''equipped'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''item'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''name'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''protection'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''protection'' on array\{name\: string, protection\: int, equipped\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Offset ''rs'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Models/Character.php
+
+		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Offset ''campaign_invitation''\|''post_moderation''\|''scene_new_post'' on array\{\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/CampaignInvitationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/CampaignInvitationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Notifications/CampaignInvitationNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Notifications/CampaignInvitationNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/PostModerationStatusNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/PostModerationStatusNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/SceneNewPostNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/SceneNewPostNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/SceneNewPostNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$campaign\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Policies/PostPolicy.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Policies/PostPolicy.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isVisibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Policies/PostPolicy.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/ScenePolicy.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isCoGm\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Policies/ScenePolicy.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isVisibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Policies/ScenePolicy.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Offset ''label'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Offset ''slug'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Offset ''url'' on array\{0\: string, label\: non\-empty\-string, 1\: non\-empty\-string, url\: non\-falsy\-string, 2\: non\-falsy\-string, category\: non\-empty\-string, 3\: non\-empty\-string, slug\: non\-empty\-string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/EncyclopediaEntryMetaBuilder.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Support/NavigationCounters.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Symfony\\Component\\HttpFoundation\\HeaderBag\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/Observability/StructuredLogger.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Symfony\\Component\\HttpFoundation\\ParameterBag\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/Observability/StructuredLogger.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Support/Observability/StructuredLogger.php

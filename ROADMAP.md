@@ -1,7 +1,7 @@
 # ROADMAP - Chroniken der Asche (6 Monate)
 
 Status: 6-Monats-Plan abgeschlossen, Betrieb in Stabilisierung  
-Stand: 2026-03-08
+Stand: 2026-03-09
 
 ## Zielbild
 - Von feature-starker Beta zu stabiler, wartbarer Release-Beta.
@@ -11,6 +11,7 @@ Stand: 2026-03-08
 ## Quality Gates (jede Iteration)
 - `php artisan test --without-tty --do-not-cache-result` ist grün.
 - `npm run build` ist grün.
+- `composer analyse` (Larastan/PHPStan) ist grün.
 - Keine Role/Policy-Regression in GM/Player-Flows.
 - Mobile Basischeck (375px) für geänderte Views.
 
@@ -46,19 +47,22 @@ Stand: 2026-03-08
 ## Sprint-12 Abschluss (2026-03-08)
 - Release-Kandidat ist abgeschlossen.
 - Verifikation (aktualisiert):
-  - `php artisan test --without-tty --do-not-cache-result` -> **131 passed, 665 assertions**
+  - `php artisan test --without-tty --do-not-cache-result` -> **131 passed, 663 assertions**
   - `npm run build` -> **grün**
   - `scripts/release_smoke.sh` -> **grün** (artisan fallback mode in restriktiver Local-Sandbox)
 
 ## Nach Sprint-12 umgesetzt (Stabilisierung/Compliance)
 - Browser-Benachrichtigungen finalisiert (Permission-Flow, Polling-Endpunkt, Service-Worker-Klickverhalten, Feature-Tests).
 - Rechtliche Seiten ergänzt und verlinkt:
-  - `/impressum`
-  - `/datenschutz`
-  - `/copyright` (Alias `/urheberrecht`)
+  - zentrale Links auf `https://c76.org/impressum/` und `https://c76.org/datenschutz/`
 - Footer auf allen sichtbaren Seiten vereinheitlicht:
   - Links zu Impressum + Datenschutz
   - Rights-Hinweis: `©2026 copyright by C. Sieber | all rights reserved`
+- Statische Analyse eingeführt:
+  - `larastan/larastan` + `phpstan/phpstan` als Dev-Dependencies
+  - `phpstan.neon.dist` + `phpstan-baseline.neon`
+  - Composer-Script `composer analyse`
+  - CI führt `composer analyse` vor Test/Build aus
 - Externe Frontend-CDN-Abhängigkeit entfernt:
   - Alpine wird lokal ausgeliefert (`public/js/alpinejs-3.14.8.min.js`).
 - Lizenzlage im Repo klargestellt:

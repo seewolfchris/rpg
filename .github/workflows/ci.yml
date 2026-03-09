@@ -42,6 +42,9 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Run static analysis
+        run: composer analyse
+
       - name: Run backend tests
         run: php artisan test --without-tty --do-not-cache-result
 

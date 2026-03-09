@@ -126,9 +126,18 @@ CI lokal spiegeln:
 
 ```bash
 composer validate --strict
+composer analyse
 php artisan test --without-tty --do-not-cache-result
 npm run build
 ```
+
+Statische Analyse (Larastan/PHPStan):
+
+```bash
+composer analyse
+```
+
+Hinweis: Altbefunde sind als Startpunkt in `phpstan-baseline.neon` erfasst. Neue Fehler brechen den Lauf.
 
 Code-Style:
 
@@ -207,9 +216,7 @@ Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests
 - Bookmarks: `/bookmarks`
 - Mitteilungen: `/notifications`
 - GM Hub: `/gm`
-- Impressum: `/impressum`
-- Datenschutz: `/datenschutz`
-- Urheberrecht: `/copyright` (Alias: `/urheberrecht`)
+- Rechtliche Seiten: zentral unter `https://c76.org/impressum/` und `https://c76.org/datenschutz/` (Footer-Links)
 
 ## Bekannte Grenzen (Beta)
 

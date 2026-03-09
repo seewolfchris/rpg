@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::table('dice_rolls', function (Blueprint $table): void {
             $table->foreignId('post_id')
                 ->nullable()
-                ->after('scene_id')
-                ->constrained()
-                ->nullOnDelete()
-                ->unique();
+                ->after('scene_id');
+
+            $table->unique('post_id');
+            $table->foreign('post_id')
+                ->references('id')
+                ->on('posts')
+                ->nullOnDelete();
         });
     }
 
