@@ -10,7 +10,7 @@
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum · Enzyklopädie</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">{{ $entry->title }}</h1>
 
-            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-400">
+            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-widest text-stone-400">
                 <span class="rounded-full border border-stone-700/80 bg-black/45 px-2 py-1">{{ $entry->category->name }}</span>
                 @if ($entry->published_at)
                     <span class="rounded-full border border-stone-700/80 bg-black/45 px-2 py-1">Stand {{ $entry->published_at->translatedFormat('d.m.Y') }}</span>
@@ -24,20 +24,20 @@
             <div class="mt-5 flex flex-wrap gap-3">
                 <a
                     href="{{ route('knowledge.encyclopedia', ['k' => $entry->category->slug]) }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zur Kategorie
                 </a>
                 <a
                     href="{{ route('knowledge.encyclopedia') }}"
-                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Alle Einträge
                 </a>
                 @if ($canManage)
                     <a
                         href="{{ route('knowledge.admin.kategorien.eintraege.edit', [$entry->category, $entry]) }}"
-                        class="rounded-md border border-red-500/60 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-100 transition hover:bg-red-900/35"
+                        class="rounded-md border border-red-500/60 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-red-100 transition hover:bg-red-900/35"
                     >
                         Admin-Bearbeitung
                     </a>
@@ -70,35 +70,35 @@
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                     @if (!empty($entry->game_relevance['le_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3">
-                            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">LE</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">LE</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['le_hint'] }}</p>
                         </article>
                     @endif
 
                     @if (!empty($entry->game_relevance['rs_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3">
-                            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">RS</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">RS</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['rs_hint'] }}</p>
                         </article>
                     @endif
 
                     @if (!empty($entry->game_relevance['ae_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3">
-                            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">AE</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">AE</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['ae_hint'] }}</p>
                         </article>
                     @endif
 
                     @if (!empty($entry->game_relevance['probe_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3">
-                            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">GM-Proben</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">GM-Proben</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['probe_hint'] }}</p>
                         </article>
                     @endif
 
                     @if (!empty($entry->game_relevance['real_world_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3 sm:col-span-2">
-                            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">Real-World-Hinweis</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">Real-World-Hinweis</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['real_world_hint'] }}</p>
                         </article>
                     @endif

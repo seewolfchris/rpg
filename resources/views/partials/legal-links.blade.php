@@ -2,7 +2,7 @@
 @php($privacyUrl = 'https://c76.org/datenschutz/')
 
 <div class="space-y-2 text-center">
-    <nav aria-label="Rechtliche Hinweise" class="flex flex-wrap items-center justify-center gap-3 text-[0.7rem] uppercase tracking-[0.1em] text-stone-500">
+    <nav aria-label="Rechtliche Hinweise" class="flex flex-wrap items-center justify-center gap-3 text-[0.7rem] uppercase tracking-widest text-stone-500">
         <a href="{{ $imprintUrl }}" target="_blank" rel="noopener noreferrer" class="transition hover:text-stone-300">
             Impressum
         </a>

@@ -105,7 +105,7 @@
                         Eine Probe wird beim Speichern direkt ausgeführt und als Ergebnisblock im Beitrag angezeigt.
                     </p>
                 </div>
-                <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
+                <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-200">
                     <input
                         type="checkbox"
                         name="probe_enabled"
@@ -256,10 +256,10 @@
             <div class="mt-5 rounded-md border border-stone-700/80 bg-black/25 p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <h4 class="text-sm font-semibold uppercase tracking-[0.1em] text-amber-200">Inventar-Fund im gleichen Post</h4>
+                        <h4 class="text-sm font-semibold uppercase tracking-widest text-amber-200">Inventar-Fund im gleichen Post</h4>
                         <p class="mt-1 text-xs text-stone-400">Optional: Fügt dem Ziel-Held direkt einen Gegenstand im Charakterbogen hinzu.</p>
                     </div>
-                    <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-amber-200">
+                    <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-200">
                         <input
                             type="checkbox"
                             name="inventory_award_enabled"
@@ -328,7 +328,7 @@
                         @enderror
                     </div>
                     <div class="sm:col-span-2 lg:col-span-4">
-                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-300">
+                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-stone-300">
                             <input
                                 type="checkbox"
                                 name="inventory_award_equipped"

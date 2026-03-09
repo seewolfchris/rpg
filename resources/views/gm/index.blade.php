@@ -19,7 +19,7 @@
             </p>
             <a
                 href="{{ route('gm.moderation.index') }}"
-                class="mt-5 inline-flex rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                class="mt-5 inline-flex rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
             >
                 Zur Queue
             </a>

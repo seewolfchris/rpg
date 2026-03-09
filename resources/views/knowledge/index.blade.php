@@ -17,42 +17,42 @@
 
         <section class="grid gap-4 lg:grid-cols-3">
             <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-5">
-                <p class="text-xs uppercase tracking-[0.1em] text-amber-300">Einsteigerpfad</p>
+                <p class="text-xs uppercase tracking-widest text-amber-300">Einsteigerpfad</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Wie spielt man?</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
                     In 7 Schritten vom ersten Login bis zum ersten IC-Post in Ich-Perspektive.
                 </p>
                 <a
                     href="{{ route('knowledge.how-to-play') }}"
-                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Einstieg öffnen
                 </a>
             </article>
 
             <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-5">
-                <p class="text-xs uppercase tracking-[0.1em] text-amber-300">System</p>
+                <p class="text-xs uppercase tracking-widest text-amber-300">System</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Regelwerk</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
                     IC/OOC-Konventionen, Posting-Standards, Prozentproben (d100), Moderation und Spoiler-Richtlinien.
                 </p>
                 <a
                     href="{{ route('knowledge.rules') }}"
-                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Regeln lesen
                 </a>
             </article>
 
             <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-5">
-                <p class="text-xs uppercase tracking-[0.1em] text-amber-300">Lore</p>
+                <p class="text-xs uppercase tracking-widest text-amber-300">Lore</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Enzyklopädie</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
                     Zeitalter, Fraktionen, Regionen und Begriffe der Welt der letzten Schwüre.
                 </p>
                 <a
                     href="{{ route('knowledge.encyclopedia') }}"
-                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="mt-4 inline-flex rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Welt erkunden
                 </a>

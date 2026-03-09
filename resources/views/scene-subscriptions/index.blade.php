@@ -16,7 +16,7 @@
 
                 <a
                     href="{{ route('notifications.index') }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zur Inbox
                 </a>
@@ -63,7 +63,7 @@
 
                 <button
                     type="submit"
-                    class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Filtern
                 </button>
@@ -92,7 +92,7 @@
 
                 <button
                     type="submit"
-                    class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Anwenden
                 </button>
@@ -132,7 +132,7 @@
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a
                                             href="{{ route('campaigns.scenes.show', [$subscribedScene->campaign, $subscribedScene]) }}"
-                                            class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                            class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                         >
                                             Szene
                                         </a>
@@ -142,7 +142,7 @@
                                             @method('PATCH')
                                             <button
                                                 type="submit"
-                                                class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                                class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                             >
                                                 {{ $subscription->is_muted ? 'Unmute' : 'Mute' }}
                                             </button>
@@ -154,7 +154,7 @@
                                                 @method('PATCH')
                                                 <button
                                                     type="submit"
-                                                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                                                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                                                 >
                                                     Als gelesen
                                                 </button>
@@ -165,7 +165,7 @@
                                                 @method('PATCH')
                                                 <button
                                                     type="submit"
-                                                    class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                                    class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                                 >
                                                     Als ungelesen
                                                 </button>
@@ -177,7 +177,7 @@
                                             @method('DELETE')
                                             <button
                                                 type="submit"
-                                                class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
+                                                class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                                             >
                                                 Unfollow
                                             </button>

@@ -99,7 +99,7 @@
                         type="button"
                         @click="setCategory('')"
                         :class="selectedCategory === '' ? 'border-amber-500/70 bg-amber-500/15 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-200 hover:border-stone-500'"
-                        class="w-full rounded-md border px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] transition"
+                        class="w-full rounded-md border px-3 py-2 text-left text-xs font-semibold uppercase tracking-widest transition"
                     >
                         Alle Kategorien
                     </button>
@@ -109,7 +109,7 @@
                             type="button"
                             @click="setCategory('{{ $availableCategory->slug }}')"
                             :class="selectedCategory === '{{ $availableCategory->slug }}' ? 'border-amber-500/70 bg-amber-500/15 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-200 hover:border-stone-500'"
-                            class="w-full rounded-md border px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] transition"
+                            class="w-full rounded-md border px-3 py-2 text-left text-xs font-semibold uppercase tracking-widest transition"
                         >
                             {{ $availableCategory->name }}
                         </button>
@@ -157,7 +157,7 @@
                                             </div>
 
                                             @if ($entry->published_at)
-                                                <p class="mt-2 text-xs uppercase tracking-[0.1em] text-stone-500">
+                                                <p class="mt-2 text-xs uppercase tracking-widest text-stone-500">
                                                     Stand {{ $entry->published_at->translatedFormat('d.m.Y') }}
                                                 </p>
                                             @endif

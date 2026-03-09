@@ -5,7 +5,7 @@
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="ui-card p-6 sm:p-8">
-            <a href="{{ route('campaigns.show', $campaign) }}" class="break-words text-xs uppercase tracking-[0.1em] text-amber-300 hover:text-amber-200">
+            <a href="{{ route('campaigns.show', $campaign) }}" class="break-words text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
                 Zur Kampagne: {{ $campaign->title }}
             </a>
 
@@ -90,7 +90,7 @@
             @endif
 
             <div class="ui-card-soft mt-6 space-y-3 p-4">
-                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Schnellnavigation und Thread-Aktionen</p>
+                <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Aktionen</p>
                 <div class="flex flex-wrap items-center gap-3">
                 @if ($jumpToLatestPostUrl)
                     <a
@@ -359,7 +359,7 @@
                     </div>
 
                     <div class="md:col-span-2 xl:col-span-5">
-                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-stone-300">
+                        <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-stone-300">
                             <input
                                 type="checkbox"
                                 name="inventory_action_equipped"

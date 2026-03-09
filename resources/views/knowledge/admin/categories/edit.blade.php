@@ -27,7 +27,7 @@
                 </div>
                 <a
                     href="{{ route('knowledge.admin.kategorien.eintraege.create', $category) }}"
-                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Eintrag erstellen
                 </a>
@@ -56,7 +56,7 @@
                             <div class="flex flex-wrap gap-2">
                                 <a
                                     href="{{ route('knowledge.admin.kategorien.eintraege.edit', [$category, $entry]) }}"
-                                    class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                    class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                 >
                                     Bearbeiten
                                 </a>
@@ -65,7 +65,7 @@
                                     @method('DELETE')
                                     <button
                                         type="submit"
-                                        class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-500/20"
+                                        class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-500/20"
                                     >
                                         Löschen
                                     </button>

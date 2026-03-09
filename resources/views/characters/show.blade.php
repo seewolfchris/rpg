@@ -80,7 +80,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <a
                     href="{{ route('characters.edit', $character) }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Bearbeiten
                 </a>
@@ -89,7 +89,7 @@
                     @method('DELETE')
                     <button
                         type="submit"
-                        class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
+                        class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                     >
                         Löschen
                     </button>
@@ -153,7 +153,7 @@
                             @endphp
                             <article class="rounded-lg border border-stone-700/80 bg-black/30 p-3">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-300">{{ $label }}</p>
+                                    <p class="text-xs font-semibold uppercase tracking-widest text-stone-300">{{ $label }}</p>
                                     <p class="text-sm text-stone-100">
                                         {{ $baseValue }} %
                                         @if ($effectiveValue !== $baseValue)
@@ -171,7 +171,7 @@
 
                 <section class="grid gap-3 sm:grid-cols-2">
                     <article class="rounded-lg border border-emerald-700/60 bg-emerald-900/15 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200">Vorteile</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-widest text-emerald-200">Vorteile</h4>
                         @if (is_array($character->advantages) && count($character->advantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
                                 @foreach ($character->advantages as $advantage)
@@ -184,7 +184,7 @@
                     </article>
 
                     <article class="rounded-lg border border-red-700/60 bg-red-900/15 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-red-200">Nachteile</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-widest text-red-200">Nachteile</h4>
                         @if (is_array($character->disadvantages) && count($character->disadvantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-red-100/90">
                                 @foreach ($character->disadvantages as $disadvantage)
@@ -199,7 +199,7 @@
 
                 <section class="grid gap-3 lg:grid-cols-3">
                     <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/10 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200">Inventar</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-widest text-emerald-200">Inventar</h4>
                         @if ($inventoryEntries->isNotEmpty())
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
                                 @foreach ($inventoryEntries as $inventoryEntry)
@@ -217,7 +217,7 @@
                     </article>
 
                     <article class="rounded-lg border border-amber-700/50 bg-amber-950/10 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-amber-200">Waffen</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-widest text-amber-200">Waffen</h4>
                         @if (is_array($character->weapons) && count($character->weapons) > 0)
                             <div class="mt-2 overflow-x-auto">
                                 <table class="min-w-full border-collapse text-sm text-stone-200">
@@ -247,7 +247,7 @@
                     </article>
 
                     <article class="rounded-lg border border-sky-700/50 bg-sky-950/10 p-3">
-                        <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-sky-200">Rüstung</h4>
+                        <h4 class="text-xs font-semibold uppercase tracking-widest text-sky-200">Rüstung</h4>
                         @if ($armorEntries->isNotEmpty())
                             <p class="mt-2 text-xs uppercase tracking-[0.08em] text-sky-300">
                                 Effektiver RS: {{ $totalArmorProtection }}
@@ -274,7 +274,7 @@
                 </section>
 
                 <section class="rounded-lg border border-stone-700/70 bg-black/30 p-4">
-                    <h4 class="text-xs font-semibold uppercase tracking-[0.1em] text-stone-300">Inventar-Audit-Log</h4>
+                    <h4 class="text-xs font-semibold uppercase tracking-widest text-stone-300">Inventar-Audit-Log</h4>
                     @if ($inventoryLogs->isNotEmpty())
                         <ul class="mt-3 space-y-2 text-sm text-stone-200">
                             @foreach ($inventoryLogs as $logEntry)

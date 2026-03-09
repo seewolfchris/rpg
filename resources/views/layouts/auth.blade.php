@@ -49,41 +49,41 @@
                     @include('partials.pwa-install-button')
                     <a
                         href="{{ route('knowledge.index') }}"
-                        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Wissen
                     </a>
                     @auth
-                        <span class="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100">
+                        <span class="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100">
                             {{ auth()->user()->points }} Punkte
                         </span>
                         <a
                             href="{{ route('dashboard') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Dashboard
                         </a>
                         <a
                             href="{{ route('leaderboard.index') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Rangliste
                         </a>
                         <a
                             href="{{ route('campaigns.index') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Kampagnen
                         </a>
                         <a
                             href="{{ route('characters.index') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Charaktere
                         </a>
                         <a
                             href="{{ route('notifications.index') }}"
-                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Mitteilungen
                             @if ($unreadNotificationsCount > 0)
@@ -94,13 +94,13 @@
                         </a>
                         <a
                             href="{{ route('scene-subscriptions.index') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Abos
                         </a>
                         <a
                             href="{{ route('bookmarks.index') }}"
-                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Bookmarks
                             @if ($bookmarkCount > 0)
@@ -111,7 +111,7 @@
                         </a>
                         <a
                             href="{{ route('campaign-invitations.index') }}"
-                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Einladungen
                             @if ($pendingCampaignInvitationsCount > 0)
@@ -123,7 +123,7 @@
                         @if (auth()->user()->isGmOrAdmin())
                             <a
                                 href="{{ route('gm.index') }}"
-                                class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/20"
+                                class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
                             >
                                 GM Hub
                             </a>
@@ -132,7 +132,7 @@
                             @csrf
                             <button
                                 type="submit"
-                                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                             >
                                 Logout
                             </button>
@@ -140,13 +140,13 @@
                     @else
                         <a
                             href="{{ route('login') }}"
-                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Login
                         </a>
                         <a
                             href="{{ route('register') }}"
-                            class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                            class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                         >
                             Registrierung
                         </a>

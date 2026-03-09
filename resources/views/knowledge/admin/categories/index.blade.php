@@ -14,13 +14,13 @@
             <div class="mt-5 flex flex-wrap gap-3">
                 <a
                     href="{{ route('knowledge.encyclopedia') }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zur Enzyklopädie
                 </a>
                 <a
                     href="{{ route('knowledge.admin.kategorien.create') }}"
-                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                    class="rounded-md border border-amber-500/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Kategorie erstellen
                 </a>
@@ -36,7 +36,7 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full border-collapse text-left text-sm">
                         <thead>
-                            <tr class="border-b border-stone-700/80 text-xs uppercase tracking-[0.1em] text-stone-400">
+                            <tr class="border-b border-stone-700/80 text-xs uppercase tracking-widest text-stone-400">
                                 <th class="px-3 py-3">Kategorie</th>
                                 <th class="px-3 py-3">Slug</th>
                                 <th class="px-3 py-3">Sichtbar</th>
@@ -71,7 +71,7 @@
                                         <div class="flex flex-wrap justify-end gap-2">
                                             <a
                                                 href="{{ route('knowledge.admin.kategorien.edit', $category) }}"
-                                                class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                                class="rounded-md border border-stone-600/80 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                             >
                                                 Bearbeiten
                                             </a>
@@ -80,7 +80,7 @@
                                                 @method('DELETE')
                                                 <button
                                                     type="submit"
-                                                    class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-500/20"
+                                                    class="rounded-md border border-red-500/70 bg-red-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-500/20"
                                                 >
                                                     Löschen
                                                 </button>

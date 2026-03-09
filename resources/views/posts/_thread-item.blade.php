@@ -45,7 +45,7 @@
                 <input type="hidden" name="post_id" value="{{ $post->id }}">
                 <button
                     type="submit"
-                    class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-emerald-200 transition hover:bg-emerald-900/35"
+                    class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-900/35"
                 >
                     Bookmark
                 </button>
@@ -58,7 +58,7 @@
                         @method('PATCH')
                         <button
                             type="submit"
-                            class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-200 transition hover:bg-amber-900/35"
+                            class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-200 transition hover:bg-amber-900/35"
                         >
                             Unpin
                         </button>
@@ -69,7 +69,7 @@
                         @method('PATCH')
                         <button
                             type="submit"
-                            class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-200 transition hover:bg-amber-900/35"
+                            class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-200 transition hover:bg-amber-900/35"
                         >
                             Pin
                         </button>
@@ -80,7 +80,7 @@
             @can('update', $post)
                 <a
                     href="{{ route('posts.edit', $post) }}"
-                    class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Bearbeiten
                 </a>
@@ -92,7 +92,7 @@
                     @method('DELETE')
                     <button
                         type="submit"
-                        class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-red-200 transition hover:bg-red-900/40"
+                        class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                     >
                         Löschen
                     </button>
@@ -112,7 +112,7 @@
         @php($probeAttributeLabel = $probeAttributeKey !== '' ? (string) data_get($probeAttributeConfig, $probeAttributeKey.'.label', strtoupper($probeAttributeKey)) : null)
         @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Bestanden' : 'Nicht bestanden'))
         <section class="mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
-            <p class="text-xs uppercase tracking-[0.1em] text-amber-300">GM-Probe</p>
+            <p class="text-xs uppercase tracking-widest text-amber-300">GM-Probe</p>
             <p class="mt-2 text-sm text-stone-200">{{ $post->diceRoll->label }}</p>
 
             <div class="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-400">
@@ -195,7 +195,7 @@
         @php($inventoryAwardQuantity = max(1, (int) ($inventoryAward['quantity'] ?? 1)))
         @php($inventoryAwardEquipped = (bool) ($inventoryAward['equipped'] ?? false))
         <section class="mt-4 rounded-lg border border-emerald-700/40 bg-emerald-900/10 p-4">
-            <p class="text-xs uppercase tracking-[0.1em] text-emerald-300">Inventar aktualisiert</p>
+            <p class="text-xs uppercase tracking-widest text-emerald-300">Inventar aktualisiert</p>
             <p class="mt-2 text-sm text-stone-200">
                 Held:
                 <span class="font-semibold text-emerald-200">{{ $inventoryAward['character_name'] ?? 'Unbekannt' }}</span>
@@ -305,7 +305,7 @@
             >
             <button
                 type="submit"
-                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-500/30"
+                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
             >
                 Setzen
             </button>

@@ -253,7 +253,7 @@
 
     @if ($errors->any())
         <article class="mt-6 rounded-xl border border-red-700/60 bg-red-950/35 p-4 text-sm text-red-200">
-            <h2 class="font-semibold uppercase tracking-[0.1em]">Validierung fehlgeschlagen</h2>
+            <h2 class="font-semibold uppercase tracking-widest">Validierung fehlgeschlagen</h2>
             <ul class="mt-2 list-disc space-y-1 pl-5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -391,7 +391,7 @@
                         <input class="sr-only" type="radio" name="species" value="{{ $speciesKey }}" x-model="species" @checked($selectedSpecies === $speciesKey)>
                         <h3 class="font-heading text-lg text-stone-100">{{ $species['label'] }}</h3>
                         <p class="mt-2 text-sm leading-relaxed text-stone-300">{{ $species['description'] ?? 'Keine Beschreibung in der Konfiguration.' }}</p>
-                        <p class="mt-3 text-xs uppercase tracking-[0.1em] text-red-200/90" x-text="formatSpeciesModifiers('{{ $speciesKey }}')"></p>
+                        <p class="mt-3 text-xs uppercase tracking-widest text-red-200/90" x-text="formatSpeciesModifiers('{{ $speciesKey }}')"></p>
                     </label>
                 @endforeach
             </div>
@@ -427,7 +427,7 @@
                     @endphp
                     <article class="rounded-xl border border-stone-700/80 bg-black/45 p-4">
                         <div class="flex items-center justify-between gap-3">
-                            <label for="attr-{{ $key }}" class="text-sm font-semibold uppercase tracking-[0.1em] text-stone-200">{{ $label }}</label>
+                            <label for="attr-{{ $key }}" class="text-sm font-semibold uppercase tracking-widest text-stone-200">{{ $label }}</label>
                             <span class="rounded border border-stone-600/80 bg-stone-800/60 px-2 py-0.5 text-xs text-stone-300"
                                 x-text="effectiveAttributes['{{ $key }}'] + ' % effektiv'"
                             ></span>
@@ -444,7 +444,7 @@
                             class="mt-3 w-full rounded-md border border-stone-600/80 bg-stone-900/70 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                         >
 
-                        <label for="attr-note-{{ $key }}" class="mt-3 block text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-stone-400">Narrative Ausprägung</label>
+                        <label for="attr-note-{{ $key }}" class="mt-3 block text-[0.68rem] font-semibold uppercase tracking-widest text-stone-400">Narrative Ausprägung</label>
                         <textarea
                             id="attr-note-{{ $key }}"
                             name="{{ $key }}_note"
@@ -539,7 +539,7 @@
                 <div class="mt-4 space-y-4">
                     <div class="rounded-lg border border-red-800/70 bg-red-950/25 p-4">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-semibold uppercase tracking-[0.1em] text-red-100">Lebensenergie</p>
+                            <p class="text-sm font-semibold uppercase tracking-widest text-red-100">Lebensenergie</p>
                             <p class="font-heading text-2xl text-red-100"><span x-text="leMax"></span> / <span x-text="leMax"></span></p>
                         </div>
                         <div class="mt-2 h-2 rounded-full bg-red-950/70">
@@ -550,7 +550,7 @@
 
                     <div class="rounded-lg border border-indigo-800/70 bg-indigo-950/25 p-4">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-semibold uppercase tracking-[0.1em] text-indigo-100">Astralenergie</p>
+                            <p class="text-sm font-semibold uppercase tracking-widest text-indigo-100">Astralenergie</p>
                             <p class="font-heading text-2xl text-indigo-100"><span x-text="aeMax"></span> / <span x-text="aeMax"></span></p>
                         </div>
                         <div class="mt-2 h-2 rounded-full bg-indigo-950/70">
@@ -572,7 +572,7 @@
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
                 <article class="rounded-xl border border-stone-700/80 bg-black/40 p-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-semibold uppercase tracking-[0.1em] text-emerald-200">Vorteile</h3>
+                        <h3 class="font-semibold uppercase tracking-widest text-emerald-200">Vorteile</h3>
                         <button
                             type="button"
                             class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100 disabled:opacity-40"
@@ -609,7 +609,7 @@
 
                 <article class="rounded-xl border border-stone-700/80 bg-black/40 p-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-semibold uppercase tracking-[0.1em] text-amber-200">Nachteile</h3>
+                        <h3 class="font-semibold uppercase tracking-widest text-amber-200">Nachteile</h3>
                         <button
                             type="button"
                             class="rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100 disabled:opacity-40"

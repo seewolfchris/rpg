@@ -20,12 +20,12 @@
                     <table class="min-w-full border-separate border-spacing-y-2 text-left">
                         <thead>
                             <tr>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Rang</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Spieler</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Rolle</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Punkte</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Freigegebene Posts</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-[0.1em] text-stone-500">Charaktere</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Rang</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Spieler</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Rolle</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Punkte</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Freigegebene Posts</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Charaktere</th>
                             </tr>
                         </thead>
                         <tbody>
