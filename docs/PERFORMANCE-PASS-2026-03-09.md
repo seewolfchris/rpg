@@ -34,5 +34,21 @@
 - Restthema: `status=all`-Inbox-Sortierung bleibt bewusst sortierintensiv.
 
 ## Offene Nacharbeit (Staging/Prod)
-- Gleiches EXPLAIN auf MariaDB/MySQL mit Realdaten fahren und dokumentieren.
+- Staging/Prod-Lauf ueber neuen Artisan-Command ausfuehren und Report speichern:
+  - `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Bei Bedarf separates Materialized-/Denormalized-Sortfeld fuer `status=all` pruefen.
+
+## Umsetzungshilfe fuer Plesk (MariaDB/MySQL)
+Auf dem Server im Projektverzeichnis:
+
+```bash
+cd /var/www/vhosts/c76.org/rpg.c76.org
+PHP_BIN=/opt/plesk/php/8.5/bin/php
+$PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md
+```
+
+Danach Report pruefen:
+
+```bash
+cat docs/PERFORMANCE-PASS-STAGING-PROD.md
+```

@@ -148,6 +148,12 @@ composer analyse
 
 Hinweis: Altbefunde sind als Startpunkt in `phpstan-baseline.neon` erfasst. Neue Fehler brechen den Lauf.
 
+Performance-EXPLAIN fuer Welt-Hotpaths:
+
+```bash
+php artisan perf:world-hotpaths --world=chroniken-der-asche
+```
+
 Code-Style:
 
 ```bash

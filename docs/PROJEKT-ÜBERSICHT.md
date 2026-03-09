@@ -9,6 +9,7 @@ Repository-Branch: `main`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
+- Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
@@ -88,6 +89,7 @@ Repository-Branch: `main`
 - Incident-Ablauf im Runbook dokumentiert.
 - Hotpath-Performance initial dokumentiert:
   - `docs/PERFORMANCE-PASS-2026-03-09.md`
+  - Reproduzierbarer EXPLAIN-Runner: `php artisan perf:world-hotpaths`
 
 ### 5.3 Rechtliches / Lizenz
 - Rechtstexte zentral auf Hauptdomain:

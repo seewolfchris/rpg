@@ -68,6 +68,11 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
 
+## 6b. Performance-EXPLAIN (Staging/Prod, empfohlen)
+
+- `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
+- Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
+
 ## 7. Dokumentation aktualisieren
 
 - `docs/PROJEKT-ÜBERSICHT.md` auf aktuellen Stand bringen:
