@@ -76,8 +76,8 @@
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-14 lg:pb-24">
-                <section>
+            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-12 lg:gap-14 lg:pb-24">
+                <section class="md:pr-2">
                     <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
                         Jede Legende beginnt mit einer Entscheidung.
                     </p>
@@ -119,11 +119,11 @@
                     </div>
                 </section>
 
-                <section class="relative flex items-center justify-center lg:justify-end">
+                <section class="relative flex items-center justify-center md:justify-end">
                     <img
                         src="{{ asset('images/hero-placeholder.svg') }}"
                         alt="C76-RPG Logo"
-                        class="mx-auto h-auto w-full max-w-[34rem] object-contain sm:max-w-[44rem] lg:w-[120%] lg:max-w-[56rem] xl:max-w-[62rem]"
+                        class="mx-auto aspect-square h-auto w-full max-w-[20rem] object-contain sm:max-w-[24rem] md:max-w-[28rem] lg:max-w-[34rem] xl:max-w-[38rem]"
                         loading="lazy"
                     >
                 </section>
