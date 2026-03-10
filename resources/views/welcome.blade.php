@@ -76,12 +76,12 @@
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-14 lg:pb-24">
+            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-14 lg:pb-24">
                 <section>
                     <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
                         Jede Legende beginnt mit einer Entscheidung.
                     </p>
-                    <h1 class="mb-6 font-heading text-3xl leading-tight text-stone-100 sm:text-5xl lg:text-6xl">
+                    <h1 class="mb-6 font-heading text-2xl leading-tight text-stone-100 sm:text-4xl lg:text-5xl">
                         Wähle deine Welt.<br class="hidden sm:block">Schreibe Geschichte.
                     </h1>
                     <div class="font-body max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
@@ -119,11 +119,11 @@
                     </div>
                 </section>
 
-                <section class="relative flex items-center justify-center">
+                <section class="relative flex items-center justify-center lg:justify-end">
                     <img
                         src="{{ asset('images/hero-placeholder.svg') }}"
                         alt="C76-RPG Logo"
-                        class="mx-auto h-auto w-full max-w-[40rem] object-contain sm:max-w-[46rem] lg:max-w-[52rem]"
+                        class="mx-auto h-auto w-full max-w-[34rem] object-contain sm:max-w-[44rem] lg:w-[120%] lg:max-w-[56rem] xl:max-w-[62rem]"
                         loading="lazy"
                     >
                 </section>
