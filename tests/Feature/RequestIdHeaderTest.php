@@ -21,7 +21,7 @@ class RequestIdHeaderTest extends TestCase
             ->withHeader('X-Request-Id', 'req-test-12345')
             ->get('/wissen');
 
-        $response->assertStatus(301);
+        $response->assertOk();
         $response->assertHeader('X-Request-Id', 'req-test-12345');
     }
 }

@@ -58,7 +58,7 @@
                     <a href="{{ route('worlds.index') }}" class="ui-btn inline-flex !rounded-full sm:tracking-[0.14em]">
                         Welten
                     </a>
-                    <a href="{{ route('knowledge.index') }}" class="ui-btn inline-flex !rounded-full sm:tracking-[0.14em]">
+                    <a href="{{ route('knowledge.global.index') }}" class="ui-btn inline-flex !rounded-full sm:tracking-[0.14em]">
                         Wissen
                     </a>
                     @auth

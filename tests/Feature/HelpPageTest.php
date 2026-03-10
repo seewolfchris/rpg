@@ -21,10 +21,33 @@ class HelpPageTest extends TestCase
     {
         $response = $this->get(route('help.index'));
 
-        $response->assertRedirect(route('knowledge.index', ['world' => $this->defaultWorld()]));
+        $response->assertRedirect(route('knowledge.global.index'));
     }
 
-    public function test_knowledge_center_pages_are_accessible_for_guests(): void
+    public function test_global_knowledge_center_pages_are_accessible_for_guests(): void
+    {
+        $this->get(route('knowledge.global.index'))
+            ->assertOk()
+            ->assertSeeText('Plattformwissen')
+            ->assertSeeText('Weltenbezogenes Wissen');
+
+        $this->get(route('knowledge.global.how-to-play'))
+            ->assertOk()
+            ->assertSeeText('Schnellstart in 7 Schritten')
+            ->assertSeeText('Ich-Perspektive');
+
+        $this->get(route('knowledge.global.rules'))
+            ->assertOk()
+            ->assertSeeText('Regelwerk')
+            ->assertSeeText('Prozentproben (d100)');
+
+        $this->get(route('knowledge.global.encyclopedia'))
+            ->assertOk()
+            ->assertSeeText('Enzyklopädie je Welt')
+            ->assertSeeText('Enzyklopädie öffnen');
+    }
+
+    public function test_world_knowledge_center_pages_are_accessible_for_guests(): void
     {
         $world = $this->defaultWorld();
 
@@ -51,7 +74,7 @@ class HelpPageTest extends TestCase
 
     public function test_rules_page_uses_gm_only_probe_wording_without_d20_legacy(): void
     {
-        $response = $this->get(route('knowledge.rules', ['world' => $this->defaultWorld()]));
+        $response = $this->get(route('knowledge.global.rules'));
 
         $response->assertOk()
             ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgelöst.')

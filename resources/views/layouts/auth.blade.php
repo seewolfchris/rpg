@@ -75,7 +75,7 @@
                         Welten
                     </a>
                     <a
-                        href="{{ route('knowledge.index') }}"
+                        href="{{ route('knowledge.global.index') }}"
                         class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Wissen

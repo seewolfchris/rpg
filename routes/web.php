@@ -59,6 +59,18 @@ Route::get('/welten', [WorldController::class, 'index'])
 Route::get('/welten/{world:slug}/aktivieren', [WorldController::class, 'activate'])
     ->name('worlds.activate');
 
+Route::get('/wissen', [KnowledgeController::class, 'index'])
+    ->name('knowledge.global.index');
+
+Route::get('/wissen/wie-spielt-man', [KnowledgeController::class, 'howToPlay'])
+    ->name('knowledge.global.how-to-play');
+
+Route::get('/wissen/regelwerk', [KnowledgeController::class, 'rules'])
+    ->name('knowledge.global.rules');
+
+Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia'])
+    ->name('knowledge.global.encyclopedia');
+
 Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
     Route::get('/', [WorldController::class, 'show'])
         ->name('worlds.show');
@@ -201,39 +213,29 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
     });
 });
 
-Route::get('/wissen', function (Request $request) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.index', ['world' => $resolveWorldSlug($request)], 301);
-});
-
-Route::get('/wissen/wie-spielt-man', function (Request $request) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.how-to-play', ['world' => $resolveWorldSlug($request)], 301);
-});
-
-Route::get('/wissen/regelwerk', function (Request $request) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.rules', ['world' => $resolveWorldSlug($request)], 301);
-});
-
-Route::get('/wissen/enzyklopaedie', function (Request $request) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.encyclopedia', ['world' => $resolveWorldSlug($request)], 301);
-});
-
 Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', function (
     Request $request,
     string $categorySlug,
     string $entrySlug
-) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.encyclopedia.entry', [
-        'world' => $resolveWorldSlug($request),
-        'categorySlug' => $categorySlug,
-        'entrySlug' => $entrySlug,
-    ], 301);
+) {
+    $sessionSlug = $request->session()->get('world_slug');
+
+    if (is_string($sessionSlug) && $sessionSlug !== '') {
+        return redirect()->route('knowledge.encyclopedia.entry', [
+            'world' => $sessionSlug,
+            'categorySlug' => $categorySlug,
+            'entrySlug' => $entrySlug,
+        ], 302);
+    }
+
+    return redirect()->route('knowledge.global.encyclopedia', [], 302);
 })->where([
     'categorySlug' => '(?!admin$)[a-z0-9\\-]+',
     'entrySlug' => '[a-z0-9\\-]+',
 ]);
 
-Route::get('/hilfe', function (Request $request) use ($resolveWorldSlug) {
-    return redirect()->route('knowledge.index', ['world' => $resolveWorldSlug($request)], 301);
+Route::get('/hilfe', function () {
+    return redirect()->route('knowledge.global.index', [], 302);
 })->name('help.index');
 
 Route::middleware('guest')->group(function (): void {

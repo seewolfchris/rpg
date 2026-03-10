@@ -7,29 +7,44 @@ use App\Models\EncyclopediaEntry;
 use App\Models\World;
 use App\Support\EncyclopediaContentRenderer;
 use App\Support\EncyclopediaEntryMetaBuilder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class KnowledgeController extends Controller
 {
-    public function index(World $world): View
+    public function index(Request $request, ?World $world = null): View
     {
-        return view('knowledge.index', compact('world'));
+        $worlds = $world === null
+            ? $this->activeWorldCatalog()
+            : new EloquentCollection();
+
+        $selectedWorldSlug = trim((string) $request->session()->get('world_slug', ''));
+
+        return view('knowledge.index', compact('world', 'worlds', 'selectedWorldSlug'));
     }
 
-    public function howToPlay(World $world): View
+    public function howToPlay(?World $world = null): View
     {
         return view('knowledge.how-to-play', compact('world'));
     }
 
-    public function rules(World $world): View
+    public function rules(?World $world = null): View
     {
         return view('knowledge.rules', compact('world'));
     }
 
-    public function encyclopedia(Request $request, World $world): View
+    public function encyclopedia(Request $request, ?World $world = null): View
     {
+        if ($world === null) {
+            $worlds = $this->activeWorldCatalog();
+            $selectedWorldSlug = trim((string) $request->session()->get('world_slug', ''));
+
+            return view('knowledge.encyclopedia-worlds', compact('worlds', 'selectedWorldSlug'));
+        }
+
         $search = trim((string) $request->query('q', ''));
         $selectedCategorySlug = trim((string) $request->query('k', ''));
 
@@ -94,6 +109,32 @@ class KnowledgeController extends Controller
             'initialFilters',
             'canManage',
         ));
+    }
+
+    /**
+     * @return EloquentCollection<int, World>
+     */
+    private function activeWorldCatalog(): EloquentCollection
+    {
+        if (! Schema::hasTable('worlds')) {
+            return new EloquentCollection();
+        }
+
+        $query = World::query()
+            ->active()
+            ->ordered();
+
+        if (Schema::hasTable('campaigns')) {
+            $query->withCount('campaigns');
+        }
+
+        return $query->get([
+            'id',
+            'name',
+            'slug',
+            'tagline',
+            'description',
+        ]);
     }
 
     public function encyclopediaEntry(
