@@ -12,12 +12,14 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 - Composer-Validierung:
   - `composer validate --strict`
+- Statische Analyse:
+  - `composer analyse`
 - Tests:
   - `php artisan test --without-tty --do-not-cache-result`
 - Frontend-Build:
   - `npm run build`
 
-Nur wenn beides gruen ist, weiter.
+Nur wenn alles gruen ist, weiter.
 
 ## 3. Version aktualisieren
 
@@ -34,12 +36,15 @@ Beispiel fuer `APP_BUILD`:
 git rev-parse --short HEAD
 ```
 
-## 3b. Web Push (falls aktiv)
+## 3b. Web Push (aktiv seit `v0.20-beta`)
 
 - VAPID-Keys muessen gesetzt sein:
   - `VAPID_PUBLIC_KEY`
   - `VAPID_PRIVATE_KEY`
   - optional `VAPID_SUBJECT`
+- DB-Connection:
+  - Standard: folgt `DB_CONNECTION` (empfohlen)
+  - optionaler Override nur falls noetig: `WEBPUSH_DB_CONNECTION=mysql`
 - Optional neu generieren:
   - `php artisan webpush:vapid`
 
@@ -62,6 +67,14 @@ Post-Deploy muss mit PHP 8.5 laufen:
 ```bash
 cd /var/www/vhosts/c76.org/rpg.c76.org
 PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
+```
+
+Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:
+
+```bash
+PHP_BIN=/opt/plesk/php/8.5/bin/php
+$PHP_BIN artisan optimize:clear
+$PHP_BIN artisan config:cache
 ```
 
 ## 6. Smoke-Test nach Deploy (5 Minuten)

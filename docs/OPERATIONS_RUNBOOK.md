@@ -23,6 +23,23 @@ Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden B
 - `scene_id`
 - `post_id`
 
+## Web Push Schnellcheck
+Wenn Browser-Push nicht ankommt, zuerst:
+
+```bash
+php artisan tinker --execute="echo config('webpush.vapid.public_key') ? 'VAPID OK'.PHP_EOL : 'VAPID MISSING'.PHP_EOL;"
+php artisan tinker --execute="echo \App\Models\PushSubscription::count().PHP_EOL;"
+```
+
+Dann in Logs nach WebPush-Events suchen:
+
+```bash
+grep -E "webpush\\.(subscription_upserted|subscription_deleted|scene_post_sent|delivery_failed)" storage/logs/laravel.log | tail -n 100
+```
+
+Hinweis:
+- `webpush.delivery_failed` mit Status `404` oder `410` fuehrt zur automatischen Loeschung der ungueltigen Subscription.
+
 ## Standard-Incident-Ablauf
 1. Fehlerbericht mit Zeitpunkt und betroffener Route aufnehmen.
 2. `X-Request-Id` aus Response/Client-Log holen.

@@ -4,8 +4,8 @@ Diese Anleitung ist bewusst simpel. Arbeite sie von oben nach unten ab.
 
 ## 0) Was du wissen musst
 
-- Lokal nutzt dein Projekt aktuell **SQLite**.
-- Auf Plesk solltest du **MySQL/MariaDB** nutzen.
+- Lokal und in Produktion ist **MySQL/MariaDB** der Standard.
+- CI-Tests laufen reproduzierbar mit **SQLite in-memory** (kein Produktiv-Setup).
 - Du lädst **nicht einfach nur Dateien hoch und fertig**.
 - Nach Upload müssen auf dem Server Laravel-Befehle laufen.
 
@@ -83,19 +83,28 @@ DB_PASSWORD=DEIN_DB_PASS
 
 Für Mail später SMTP eintragen. Zum Start kann Mail notfalls auf `log` bleiben.
 
+Für Web Push (aktiv in `v0.20-beta`) ergänzen:
+
+```env
+VAPID_SUBJECT=mailto:noreply@deine-domain.tld
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+```
+
 ## 6) Laravel-Kommandos auf dem Server ausführen
 
 Im Laravel Toolkit oder über SSH im Projektordner:
 
 ```bash
+PHP_BIN=/opt/plesk/php/8.5/bin/php
 composer install --no-dev --optimize-autoloader
-php artisan key:generate --force
-php artisan migrate --force
-php artisan storage:link
-php artisan optimize:clear
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+$PHP_BIN artisan key:generate --force
+$PHP_BIN artisan migrate --force
+$PHP_BIN artisan storage:link
+$PHP_BIN artisan optimize:clear
+$PHP_BIN artisan config:cache
+$PHP_BIN artisan route:cache
+$PHP_BIN artisan view:cache
 ```
 
 ## 7) Dateirechte prüfen

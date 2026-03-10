@@ -19,7 +19,7 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 Stand: **Release-Beta `v0.20-beta`** (funktional, getestet, build-faehig)
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result` -> **133 passed, 672 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
 - `npm run build` -> **gruen**
 
 Enthalten:
@@ -33,7 +33,7 @@ Enthalten:
 - Read-Tracking: Ungelesen-Status, Read/Unread-Aktionen, Jump-Links
 - Bookmarks: Szenen-Bookmark je User inkl. Jump auf Post/Page
 - GM-Proben im Post: GM-only mit Anlass/Ziel-Held/Modifikator, d100-Rollmode, Log in DB und direkter LE/AE-Persistenz
-- Benachrichtigungen: In-App + Mail-Kanäle (präferenzgesteuert)
+- Benachrichtigungen: In-App + Mail + Browser Web Push (VAPID, weltkontextfaehig)
 - Gamification: Punkte für freigegebene Posts
 - Wissenszentrum: Uebersicht, Wie-spielt-man, Regelwerk, Enzyklopaedie
 - Enzyklopaedie-Admin: Kategorien/Eintraege CRUD fuer GM/Admin
@@ -63,7 +63,7 @@ Enthalten:
 ## Tech Stack
 
 - PHP 8.5+
-- Laravel 12/13 kompatibel (Skeleton-basiert)
+- Laravel 12 (Skeleton-basiert)
 - MySQL / MariaDB (Produktion und empfohlen lokal)
 - SQLite nur optional fuer einzelne lokale Test-Setups
 - Tailwind CSS (Vite)
@@ -139,6 +139,10 @@ composer analyse
 php artisan test --without-tty --do-not-cache-result
 npm run build
 ```
+
+Hinweis zur DB in Tests/CI:
+- Produktion und lokale Standard-Entwicklung laufen auf MySQL/MariaDB.
+- Der Testlauf in CI nutzt SQLite in-memory (`phpunit.xml`), damit die Pipeline ohne externe DB reproduzierbar bleibt.
 
 Statische Analyse (Larastan/PHPStan):
 
@@ -222,6 +226,7 @@ Folgende zentrale Limiter sind fuer schreibende Endpunkte aktiv:
 - `writes`: **30 Requests/Minute je Nutzer/IP** fuer allgemeine Schreibaktionen (POST/PATCH/DELETE), z. B. Kampagnen/Szenen/Posts/Einladungen/Bookmarks/Subscriptions/Logout.
 - `moderation`: **15 Requests/Minute je Nutzer/IP** fuer Moderationsaktionen, z. B. Post-Freigabe/Ablehnung, Pin/Unpin, GM-Bulk-Moderation und Enzyklopaedie-Admin-CRUD.
 - `notifications`: **20 Requests/Minute je Nutzer/IP** fuer mutierende Benachrichtigungs-Routen (`read`, `read-all`, Preferences-Update).
+- `webpush-subscriptions`: **20 Requests/Minute je Nutzer/IP und Welt** fuer `/api/webpush/subscribe` und `/api/webpush/unsubscribe`.
 
 Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests`.
 
@@ -247,7 +252,7 @@ Hinweis: Legacy-Routen ohne Weltsegment bleiben erreichbar und leiten per `301` 
 ## Bekannte Grenzen (Beta)
 
 - Keine Realtime-Websockets (asynchrones PbP ist primär HTTP-basiert)
-- Push Notifications sind vorbereitet, aber noch nicht final integriert
+- Web Push benoetigt Browser-Permission und aktiven Service Worker pro Endgeraet
 - Keine externe Medien-CDN-Optimierung (lokaler Speicher/Disk)
 
 ## Deployment-Notiz (Plesk)

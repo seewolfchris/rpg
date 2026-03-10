@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-09  
+Stand: 2026-03-10  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -27,6 +27,7 @@ Repository-Branch: `main`
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
+  - Aktueller CI-Lauf auf `main` ist gruen (Run `22879624772`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Legacy-Redirect-Checks)
 
 ## 2) Produktstatus nach Bereichen
@@ -88,6 +89,10 @@ Repository-Branch: `main`
   - `docs/RELEASE-CHECKLISTE.md`
 - Smoke-Report-Ausgabe:
   - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
+- DB-Betriebsmodus:
+  - Produktion: MySQL/MariaDB
+  - CI-Tests: SQLite in-memory (`phpunit.xml`)
+  - WebPush-DB folgt standardmaessig `DB_CONNECTION` (Override nur bei Bedarf via `WEBPUSH_DB_CONNECTION`)
 
 ### 5.2 Observability
 - Request-Korrelation aktiv (`X-Request-Id`).

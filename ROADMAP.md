@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-09
+Stand: 2026-03-10
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -57,6 +57,7 @@ Stand: 2026-03-09
   - `laravel-notification-channels/webpush` (VAPID, echte Push-Zustellung)
   - `app/Http/Controllers/Api/WebPushSubscriptionController.php` (`/api/webpush/subscribe`, `/api/webpush/unsubscribe`)
   - `database/migrations/2026_03_09_230000_create_push_subscriptions_table.php`
+  - CI-Kompatibilitaet: WebPush-DB-Connection folgt standardmaessig `DB_CONNECTION` (optional via `WEBPUSH_DB_CONNECTION` uebersteuerbar)
 - Performance:
   - `php artisan perf:posts-latest-by-id-benchmark` (neuer Benchmark-Command)
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md` (lokale Baseline)
@@ -66,10 +67,11 @@ Stand: 2026-03-09
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
-## Aktueller Verifikationsstand (2026-03-09)
+## Aktueller Verifikationsstand (2026-03-10)
 - `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
 - `npm run build` -> **gruen**
 - `composer analyse` -> im CI-Gate enthalten
+- GitHub Actions (`main`, Run `22879624772`) -> **gruen**
 
 ## Compliance und Betrieb
 - Rechtliche Verlinkung zentral auf:

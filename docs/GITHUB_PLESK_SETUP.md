@@ -38,7 +38,7 @@ Hinweis:
 In der Git-Erweiterung (Deployment actions / Additional deploy actions) folgendes setzen:
 
 ```bash
-/bin/bash scripts/plesk_post_deploy.sh
+PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 ```
 
 Dieses Script liegt im Repo und macht:
@@ -66,6 +66,14 @@ DB_PORT=3306
 DB_DATABASE=DEINE_DB
 DB_USERNAME=DEIN_DB_USER
 DB_PASSWORD=DEIN_DB_PASS
+```
+
+Zusatzwerte fuer Web Push (aktiv in `v0.20-beta`):
+
+```env
+VAPID_SUBJECT=mailto:noreply@deine-domain.tld
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
 ```
 
 ## 5) Erster Deploy
