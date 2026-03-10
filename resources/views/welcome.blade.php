@@ -108,16 +108,13 @@
                     </div>
                 </section>
 
-                <section class="relative">
-                    <div class="absolute -inset-4 rounded-2xl bg-gradient-to-br from-amber-500/20 via-transparent to-transparent blur-2xl"></div>
-                    <div class="relative overflow-hidden rounded-2xl border border-stone-700/80 bg-black/50 shadow-2xl shadow-black/60">
-                        <img
-                            src="{{ asset('images/hero-placeholder.svg') }}"
-                            alt="C76-RPG Logo"
-                            class="h-[22rem] w-full object-contain p-4 sm:h-[28rem] lg:max-h-[70vh]"
-                            loading="lazy"
-                        >
-                    </div>
+                <section class="relative flex items-center justify-center">
+                    <img
+                        src="{{ asset('images/hero-placeholder.svg') }}"
+                        alt="C76-RPG Logo"
+                        class="mx-auto h-auto w-full max-w-[40rem] object-contain sm:max-w-[46rem] lg:max-w-[52rem]"
+                        loading="lazy"
+                    >
                 </section>
             </main>
 

@@ -1,16 +1,11 @@
 <svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0A0D15"/>
-      <stop offset="0.6" stop-color="#171326"/>
-      <stop offset="1" stop-color="#08090F"/>
-    </linearGradient>
-    <radialGradient id="haloA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1220 170) rotate(90) scale(240)">
-      <stop stop-color="#D58A3E" stop-opacity="0.42"/>
+    <radialGradient id="glowWarm" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(880 320) rotate(90) scale(250)">
+      <stop stop-color="#D58A3E" stop-opacity="0.32"/>
       <stop offset="1" stop-color="#D58A3E" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="haloB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 760) rotate(90) scale(280)">
-      <stop stop-color="#7B5AAE" stop-opacity="0.35"/>
+    <radialGradient id="glowCool" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(720 520) rotate(90) scale(280)">
+      <stop stop-color="#7B5AAE" stop-opacity="0.28"/>
       <stop offset="1" stop-color="#7B5AAE" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="ring" x1="520" y1="260" x2="920" y2="660" gradientUnits="userSpaceOnUse">
@@ -19,11 +14,8 @@
     </linearGradient>
   </defs>
 
-  <rect width="1600" height="900" fill="url(#bg)"/>
-  <rect width="1600" height="900" fill="url(#haloA)"/>
-  <rect width="1600" height="900" fill="url(#haloB)"/>
-
-  <rect x="120" y="90" width="1360" height="720" rx="34" fill="#101421" stroke="#A86A30" stroke-opacity="0.48"/>
+  <circle cx="820" cy="390" r="190" fill="url(#glowWarm)"/>
+  <circle cx="780" cy="430" r="220" fill="url(#glowCool)"/>
 
   <circle cx="800" cy="390" r="170" stroke="url(#ring)" stroke-width="12"/>
   <ellipse cx="800" cy="390" rx="205" ry="126" transform="rotate(-23 800 390)" stroke="#8C6FC2" stroke-opacity="0.64" stroke-width="8"/>
