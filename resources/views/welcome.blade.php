@@ -79,15 +79,26 @@
             <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-14 lg:pb-24">
                 <section>
                     <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
-                        Asynchron • Story-Driven • Multi-Welt
+                        Jede Legende beginnt mit einer Entscheidung.
                     </p>
                     <h1 class="mb-6 font-heading text-3xl leading-tight text-stone-100 sm:text-5xl lg:text-6xl">
-                        Eine Plattform, viele Welten
+                        Wähle deine Welt.<br class="hidden sm:block">Schreibe Geschichte.
                     </h1>
-                    <p class="font-body max-w-xl text-lg leading-relaxed text-stone-300 sm:text-xl">
-                        C76-RPG verbindet Charakterbogen, Kampagnenmanagement, Szenen-Threads und Wissenszentrum in einem konsistenten Play-by-Post Workflow.
-                        Du wählst die Welt, der Rest bleibt vertraut.
-                    </p>
+                    <div class="font-body max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
+                        <p>
+                            Ein Charakter tritt aus der Dunkelheit.<br>
+                            Eine Gruppe formt sich.<br>
+                            Eine Welt öffnet ihre Tore.
+                        </p>
+                        <p>
+                            Auf C76-RPG entstehen Geschichten nicht nur - sie werden gelebt.
+                            Charaktere, Kampagnen, Szenen und Lore verschmelzen zu einem lebendigen Play-by-Post-Universum.
+                        </p>
+                        <p>
+                            Neue Welten warten. Geheimnisse liegen verborgen.
+                            Abenteuer beginnen mit dem ersten Satz.
+                        </p>
+                    </div>
 
                     <div class="mt-8 flex flex-wrap items-center gap-4">
                         @guest
