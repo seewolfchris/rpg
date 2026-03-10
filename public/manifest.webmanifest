@@ -1,8 +1,8 @@
 {
     "id": "/",
-    "name": "Chroniken der Asche",
-    "short_name": "AscheRPG",
-    "description": "Dark-Fantasy Play-by-Post RPG mit asynchronem Storytelling.",
+    "name": "C76-RPG",
+    "short_name": "C76-RPG",
+    "description": "Multi-World Play-by-Post RPG mit asynchronem Storytelling.",
     "lang": "de-DE",
     "dir": "ltr",
     "start_url": "/",

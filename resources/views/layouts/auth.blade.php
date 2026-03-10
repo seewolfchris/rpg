@@ -16,7 +16,7 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         @php($appName = config('app.name', 'C76-RPG'))
         @php($metaDescription = trim((string) $__env->yieldContent('meta_description', 'C76-RPG ist eine asynchrone Play-by-Post Plattform mit Kampagnen, Szenen und Charakterverwaltung in mehreren Welten.')))
-        @php($ogImage = asset('images/og/chroniken-der-asche-og.png'))
+        @php($ogImage = asset('images/og/c76-rpg-og.png'))
         @php($pageUrl = url()->current())
         @php($characterSheetGlobalPath = public_path('js/character-sheet.global.js'))
         @if (file_exists($characterSheetGlobalPath))

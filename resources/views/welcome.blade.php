@@ -14,7 +14,7 @@
         @php($appName = config('app.name', 'C76-RPG'))
         @php($pageTitle = 'C76-RPG | Multi-Welt Play-by-Post Plattform')
         @php($metaDescription = 'C76-RPG ist eine asynchrone Multi-Welt Play-by-Post Plattform mit Kampagnen, Szenen und Charakterverwaltung.')
-        @php($ogImage = asset('images/og/chroniken-der-asche-og.png'))
+        @php($ogImage = asset('images/og/c76-rpg-og.png'))
         @php($pageUrl = url()->current())
 
         <meta property="og:site_name" content="{{ $appName }}">

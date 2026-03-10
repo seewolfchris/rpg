@@ -9,8 +9,8 @@
   <circle cx="1040" cy="120" r="180" fill="#a86a30" fill-opacity="0.18"/>
   <circle cx="170" cy="580" r="210" fill="#5b3a82" fill-opacity="0.12"/>
   <rect x="80" y="70" width="1120" height="580" rx="28" fill="#0f1017" stroke="#a86a30" stroke-opacity="0.5"/>
-  <text x="130" y="142" fill="#e7c7a2" font-size="42" font-family="Arial, sans-serif" font-weight="700">CHRONIKEN DER ASCHE</text>
-  <text x="130" y="188" fill="#bcb7c9" font-size="22" font-family="Arial, sans-serif">Asynchrones Dark-Fantasy Play-by-Post</text>
+  <text x="130" y="142" fill="#e7c7a2" font-size="42" font-family="Arial, sans-serif" font-weight="700">C76-RPG</text>
+  <text x="130" y="188" fill="#bcb7c9" font-size="22" font-family="Arial, sans-serif">Asynchrones Multi-World Play-by-Post</text>
   <rect x="130" y="230" width="390" height="320" rx="18" fill="#171924" stroke="#3e4256"/>
   <rect x="560" y="230" width="590" height="74" rx="14" fill="#1b1e2a" stroke="#44495f"/>
   <rect x="560" y="322" width="590" height="74" rx="14" fill="#1b1e2a" stroke="#44495f"/>
