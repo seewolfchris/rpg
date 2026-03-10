@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'chroniken-static-v7';
+const STATIC_CACHE = 'chroniken-static-v8';
 const PAGE_CACHE = 'chroniken-pages-v6';
 const CONTENT_CACHE = 'chroniken-content-v6';
 const QUEUE_DB_NAME = 'chroniken-pbp';

@@ -1,54 +1,38 @@
-<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#090A0F"/>
-      <stop offset="0.55" stop-color="#14111E"/>
-      <stop offset="1" stop-color="#060608"/>
+      <stop stop-color="#0A0D15"/>
+      <stop offset="0.6" stop-color="#171326"/>
+      <stop offset="1" stop-color="#08090F"/>
     </linearGradient>
-    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1180 180) rotate(90) scale(210)">
-      <stop stop-color="#D58A3E" stop-opacity="0.45"/>
+    <radialGradient id="haloA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1220 170) rotate(90) scale(240)">
+      <stop stop-color="#D58A3E" stop-opacity="0.42"/>
       <stop offset="1" stop-color="#D58A3E" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 720) rotate(90) scale(260)">
-      <stop stop-color="#6C4FA8" stop-opacity="0.3"/>
-      <stop offset="1" stop-color="#6C4FA8" stop-opacity="0"/>
+    <radialGradient id="haloB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 760) rotate(90) scale(280)">
+      <stop stop-color="#7B5AAE" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#7B5AAE" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#171B27"/>
-      <stop offset="1" stop-color="#0E111B"/>
-    </linearGradient>
-    <linearGradient id="portal" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#F2B978"/>
-      <stop offset="1" stop-color="#C46A2A"/>
+    <linearGradient id="ring" x1="520" y1="260" x2="920" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0BF84"/>
+      <stop offset="1" stop-color="#C46D2E"/>
     </linearGradient>
   </defs>
 
   <rect width="1600" height="900" fill="url(#bg)"/>
-  <rect width="1600" height="900" fill="url(#glowA)"/>
-  <rect width="1600" height="900" fill="url(#glowB)"/>
+  <rect width="1600" height="900" fill="url(#haloA)"/>
+  <rect width="1600" height="900" fill="url(#haloB)"/>
 
-  <rect x="92" y="84" width="1416" height="732" rx="34" fill="#0D111B" stroke="#A96E36" stroke-opacity="0.45"/>
+  <rect x="120" y="90" width="1360" height="720" rx="34" fill="#101421" stroke="#A86A30" stroke-opacity="0.48"/>
 
-  <circle cx="520" cy="404" r="182" fill="none" stroke="url(#portal)" stroke-width="10"/>
-  <circle cx="520" cy="404" r="138" fill="none" stroke="#8461B8" stroke-opacity="0.55" stroke-width="6"/>
+  <circle cx="800" cy="390" r="170" stroke="url(#ring)" stroke-width="12"/>
+  <ellipse cx="800" cy="390" rx="205" ry="126" transform="rotate(-23 800 390)" stroke="#8C6FC2" stroke-opacity="0.64" stroke-width="8"/>
+  <ellipse cx="800" cy="390" rx="205" ry="126" transform="rotate(23 800 390)" stroke="#5C9BC8" stroke-opacity="0.6" stroke-width="7"/>
 
-  <circle cx="520" cy="404" r="30" fill="#EFB97B"/>
-  <circle cx="360" cy="292" r="18" fill="#7391D9"/>
-  <circle cx="694" cy="330" r="16" fill="#A77AD5"/>
-  <circle cx="634" cy="542" r="18" fill="#64B8A0"/>
-  <circle cx="390" cy="560" r="14" fill="#D26E6E"/>
+  <circle cx="655" cy="315" r="14" fill="#74A7D9"/>
+  <circle cx="947" cy="312" r="14" fill="#C98AE1"/>
+  <circle cx="800" cy="552" r="14" fill="#E39A55"/>
 
-  <path d="M360 292L520 404L694 330" stroke="#8C95B0" stroke-opacity="0.6" stroke-width="3"/>
-  <path d="M390 560L520 404L634 542" stroke="#8C95B0" stroke-opacity="0.6" stroke-width="3"/>
-
-  <rect x="840" y="230" width="560" height="116" rx="16" fill="url(#card)" stroke="#49506A"/>
-  <rect x="840" y="372" width="560" height="116" rx="16" fill="url(#card)" stroke="#49506A"/>
-  <rect x="840" y="514" width="560" height="116" rx="16" fill="url(#card)" stroke="#49506A"/>
-
-  <text x="880" y="286" fill="#E8C7A2" font-family="Arial, sans-serif" font-size="34" font-weight="700">Welten verwalten</text>
-  <text x="880" y="428" fill="#E8C7A2" font-family="Arial, sans-serif" font-size="34" font-weight="700">Szenen schreiben</text>
-  <text x="880" y="570" fill="#E8C7A2" font-family="Arial, sans-serif" font-size="34" font-weight="700">Charaktere spielen</text>
-
-  <text x="140" y="736" fill="#EAC9A5" font-family="Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="1.5">C76-RPG</text>
-  <text x="140" y="786" fill="#B7ADC7" font-family="Arial, sans-serif" font-size="28" letter-spacing="1">MULTI-WORLD PLAY-BY-POST PLATFORM</text>
+  <text x="800" y="430" fill="#F6E5CC" font-family="Arial, sans-serif" font-size="138" font-weight="700" text-anchor="middle" letter-spacing="-7">C76</text>
+  <text x="800" y="660" fill="#E8C9A6" font-family="Arial, sans-serif" font-size="86" font-weight="700" text-anchor="middle" letter-spacing="2">C76-RPG</text>
 </svg>

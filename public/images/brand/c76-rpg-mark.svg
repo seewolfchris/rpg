@@ -1,19 +1,36 @@
-<svg width="192" height="192" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="none">
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="none">
   <defs>
     <linearGradient id="bg" x1="120" y1="80" x2="920" y2="940" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0D111B"/>
       <stop offset="0.55" stop-color="#171628"/>
       <stop offset="1" stop-color="#090A10"/>
     </linearGradient>
+    <radialGradient id="haloA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(760 220) rotate(90) scale(230)">
+      <stop stop-color="#D58A3E" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#D58A3E" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="haloB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(250 790) rotate(90) scale(260)">
+      <stop stop-color="#7B5AAE" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#7B5AAE" stop-opacity="0"/>
+    </radialGradient>
     <linearGradient id="ring" x1="300" y1="300" x2="760" y2="760" gradientUnits="userSpaceOnUse">
       <stop stop-color="#F0BF84"/>
       <stop offset="1" stop-color="#C46D2E"/>
     </linearGradient>
   </defs>
+
   <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="220" fill="url(#haloA)"/>
+  <rect width="1024" height="1024" rx="220" fill="url(#haloB)"/>
   <rect x="54" y="54" width="916" height="916" rx="182" stroke="#A86A30" stroke-opacity="0.62" stroke-width="8"/>
+
   <circle cx="512" cy="512" r="248" stroke="url(#ring)" stroke-width="22"/>
   <ellipse cx="512" cy="512" rx="298" ry="184" transform="rotate(-23 512 512)" stroke="#8C6FC2" stroke-opacity="0.62" stroke-width="12"/>
   <ellipse cx="512" cy="512" rx="300" ry="182" transform="rotate(23 512 512)" stroke="#5C9BC8" stroke-opacity="0.58" stroke-width="10"/>
+
+  <circle cx="302" cy="398" r="24" fill="#74A7D9"/>
+  <circle cx="742" cy="394" r="24" fill="#C98AE1"/>
+  <circle cx="512" cy="752" r="24" fill="#E39A55"/>
+
   <text x="512" y="564" fill="#F6E5CC" font-family="Arial, sans-serif" font-size="236" font-weight="700" text-anchor="middle" letter-spacing="-10">C76</text>
 </svg>

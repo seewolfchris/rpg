@@ -1,17 +1,32 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#090A0F"/>
-      <stop offset="1" stop-color="#18131F"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A0D15"/>
+      <stop offset="0.6" stop-color="#171326"/>
+      <stop offset="1" stop-color="#08090F"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 120) rotate(90) scale(180)">
+      <stop stop-color="#D58A3E" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#D58A3E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="210" y1="165" x2="470" y2="425" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0BF84"/>
+      <stop offset="1" stop-color="#C46D2E"/>
     </linearGradient>
   </defs>
+
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="980" cy="120" r="190" fill="#A86A30" fill-opacity="0.2"/>
-  <circle cx="140" cy="590" r="210" fill="#5B3A82" fill-opacity="0.12"/>
-  <rect x="70" y="60" width="1060" height="510" rx="28" fill="#0F1017" stroke="#A86A30" stroke-opacity="0.5"/>
-  <text x="120" y="180" fill="#E7C7A2" font-size="62" font-family="Arial, sans-serif" font-weight="700">C76-RPG</text>
-  <text x="120" y="246" fill="#C8C2D6" font-size="30" font-family="Arial, sans-serif">Multi-World Play-by-Post Plattform</text>
-  <text x="120" y="306" fill="#B3ADBF" font-size="24" font-family="Arial, sans-serif">Asynchrones Storytelling • Kampagnen • Szenen • Charaktere</text>
-  <rect x="120" y="368" width="280" height="70" rx="14" fill="#A86A30"/>
-  <text x="168" y="413" fill="#101016" font-size="30" font-family="Arial, sans-serif" font-weight="700">rpg.c76.org</text>
+  <rect width="1200" height="630" fill="url(#halo)"/>
+  <rect x="56" y="46" width="1088" height="538" rx="26" fill="#101421" stroke="#A86A30" stroke-opacity="0.46"/>
+
+  <circle cx="340" cy="315" r="118" stroke="url(#ring)" stroke-width="9"/>
+  <ellipse cx="340" cy="315" rx="145" ry="88" transform="rotate(-23 340 315)" stroke="#8C6FC2" stroke-opacity="0.64" stroke-width="6"/>
+  <ellipse cx="340" cy="315" rx="145" ry="88" transform="rotate(23 340 315)" stroke="#5C9BC8" stroke-opacity="0.6" stroke-width="5"/>
+
+  <circle cx="240" cy="263" r="10" fill="#74A7D9"/>
+  <circle cx="447" cy="260" r="10" fill="#C98AE1"/>
+  <circle cx="340" cy="430" r="10" fill="#E39A55"/>
+
+  <text x="340" y="344" fill="#F6E5CC" font-family="Arial, sans-serif" font-size="92" font-weight="700" text-anchor="middle" letter-spacing="-4">C76</text>
+  <text x="525" y="316" fill="#E8C9A6" font-family="Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="2">C76-RPG</text>
 </svg>

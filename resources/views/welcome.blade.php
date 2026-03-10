@@ -113,8 +113,8 @@
                     <div class="relative overflow-hidden rounded-2xl border border-stone-700/80 bg-black/50 shadow-2xl shadow-black/60">
                         <img
                             src="{{ asset('images/hero-placeholder.svg') }}"
-                            alt="C76-RPG Plattform"
-                            class="h-[22rem] w-full object-cover sm:h-[28rem] lg:max-h-[70vh]"
+                            alt="C76-RPG Logo"
+                            class="h-[22rem] w-full object-contain p-4 sm:h-[28rem] lg:max-h-[70vh]"
                             loading="lazy"
                         >
                     </div>
