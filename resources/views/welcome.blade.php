@@ -76,7 +76,7 @@
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-12 lg:gap-14 lg:pb-24">
+            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-2 md:items-center md:gap-12 lg:gap-14 lg:pb-24">
                 <section class="md:pr-2">
                     <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
                         Jede Legende beginnt mit einer Entscheidung.
