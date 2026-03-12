@@ -159,6 +159,22 @@ Performance-EXPLAIN fuer Welt-Hotpaths:
 php artisan perf:world-hotpaths --world=chroniken-der-asche
 ```
 
+posts.latest_by_id Recheck + Delta-Report:
+
+```bash
+scripts/perf_posts_latest_by_id.sh
+```
+
+Optional mit Parametern:
+
+```bash
+PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=600 scripts/perf_posts_latest_by_id.sh
+```
+
+Das Skript schreibt:
+- den datierten Laufreport (Default: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`)
+- den jeweils aktuellen Vergleichsreport (`docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`, inkl. Delta zum letzten Lauf)
+
 Code-Style:
 
 ```bash
@@ -172,6 +188,18 @@ npm run build
 ```
 
 Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.global.js` aus `resources/js/character-sheet.js` (keine manuelle Doppelpflege mehr).
+
+Release-Metadaten (Version/Build/Doku) vorbereiten:
+
+```bash
+scripts/release_prepare.sh --version v0.22-beta
+```
+
+Optional auch lokale `.env` aktualisieren:
+
+```bash
+scripts/release_prepare.sh --version v0.22-beta --update-dotenv
+```
 
 Release-Smoke automatisiert:
 

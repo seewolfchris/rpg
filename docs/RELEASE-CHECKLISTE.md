@@ -25,18 +25,25 @@ Nur wenn alles gruen ist, weiter.
 
 ## 3. Version aktualisieren
 
-- Laufende lokale Instanz:
-  - `.env`: `APP_VERSION=vX.XX-beta`
-- Repo-Vorlage fuer neue Umgebungen:
-  - `.env.example`: `APP_VERSION=vX.XX-beta`
-- Optional:
-  - `.env`: `APP_BUILD=<kurzer commit hash>`
-
-Beispiel fuer `APP_BUILD`:
+- Automatisiert (empfohlen):
 
 ```bash
-git rev-parse --short HEAD
+scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"
 ```
+
+- Optional auch lokale `.env` setzen:
+
+```bash
+scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)" --update-dotenv
+```
+
+- Manuell (falls noetig):
+  - Laufende lokale Instanz:
+    - `.env`: `APP_VERSION=vX.XX-beta`
+  - Repo-Vorlage fuer neue Umgebungen:
+    - `.env.example`: `APP_VERSION=vX.XX-beta`
+  - Optional:
+    - `.env`: `APP_BUILD=<kurzer commit hash>`
 
 ## 3b. Web Push (aktiv seit `v0.20-beta`)
 
@@ -98,7 +105,9 @@ $PHP_BIN artisan config:cache
 - `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
 - Optional fuer `posts.latest_by_id`:
-  - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+  - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
+  - Fallback direkt via Artisan:
+    - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 
 ## 7. Dokumentation aktualisieren
 

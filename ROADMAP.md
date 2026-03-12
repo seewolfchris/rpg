@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-10
+Stand: 2026-03-12
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -60,7 +60,9 @@ Stand: 2026-03-10
   - CI-Kompatibilitaet: WebPush-DB-Connection folgt standardmaessig `DB_CONNECTION` (optional via `WEBPUSH_DB_CONNECTION` uebersteuerbar)
 - Performance:
   - `php artisan perf:posts-latest-by-id-benchmark` (neuer Benchmark-Command)
+  - `scripts/perf_posts_latest_by_id.sh` (Recheck + Delta-Report)
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md` (lokale Baseline)
+  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md` (automatischer Vergleich zum letzten Lauf)
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Prod-Benchmark)
 - Observability:
   - `app/Http/Middleware/AttachRequestId.php`
@@ -86,6 +88,6 @@ Stand: 2026-03-10
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. Optional: `posts.latest_by_id` bei wachsender Datenmenge erneut benchmarken (Default vs. `FORCE INDEX`) und Delta fortschreiben.
-2. Optional: MySQL-spezifischen Hint fuer diesen einzelnen Hotpath nur bei messbarem Lastnutzen evaluieren.
-3. Doku bei jedem Release auf Test-/Build-Stand synchron halten.
+1. `scripts/perf_posts_latest_by_id.sh` vor jedem Release laufen lassen und Delta im `LATEST`-Report kontrollieren.
+2. Optional: MySQL-spezifischen Hint fuer `posts.latest_by_id` nur bei stabil messbarem Lastnutzen aktivieren.
+3. `scripts/release_prepare.sh` fest in den Release-Flow aufnehmen (Version/Build/Doku vor Commit/Pull Request).

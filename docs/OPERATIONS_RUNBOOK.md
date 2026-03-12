@@ -89,3 +89,11 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
 1. `scripts/release_smoke.sh` ausführen.
 2. Dashboard, Szene und GM-Moderation manuell öffnen.
 3. Bei Fehlern `request_id` notieren und Incident-Ablauf starten.
+
+## Release-Vorbereitung
+1. Version/Build/Doku mit einem Befehl synchronisieren:
+   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
+2. Optional lokale `.env` ebenfalls setzen:
+   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)" --update-dotenv`
+3. Performance-Recheck vor dem Deploy:
+   - `scripts/perf_posts_latest_by_id.sh`

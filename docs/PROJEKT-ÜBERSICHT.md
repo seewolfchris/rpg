@@ -11,6 +11,7 @@ Repository-Branch: `main`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Benchmark `posts.latest_by_id`: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
+- Benchmark `posts.latest_by_id` Latest/Deltas: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
 - Benchmark `posts.latest_by_id` Staging/Prod: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 - Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
 - Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
@@ -87,6 +88,8 @@ Repository-Branch: `main`
   - `npm run build`
 - Release-Checkliste:
   - `docs/RELEASE-CHECKLISTE.md`
+- Release-Prepare (Version/Build/Doku):
+  - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
 - Smoke-Report-Ausgabe:
   - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
 - DB-Betriebsmodus:
@@ -110,7 +113,9 @@ Repository-Branch: `main`
   - Staging/Prod-Lauf protokolliert: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
   - `scene_subscriptions.unread_count` auf `EXISTS` umgestellt und auf Prod erfolgreich validiert
 - `posts.latest_by_id` Benchmark-Runner vorhanden:
-  - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+  - `scripts/perf_posts_latest_by_id.sh` (inkl. Delta-Report)
+  - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Fallback/Raw)
+  - Automatischer Vergleichsreport: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
   - Lokale Baseline: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
   - Prod-Benchmark dokumentiert: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
   - Ergebnis Prod: `FORCE INDEX posts_scene_id_id_idx` im Sample schneller als Default (avg/p95), beide Pfade aber bereits im Sub-Millisekundenbereich
@@ -130,9 +135,9 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. Optional: `posts.latest_by_id` bei steigender Datenmenge erneut benchmarken und Delta dokumentieren.
-2. Optional: Query-Hint (`FORCE INDEX`) nur bei real messbarem Lastnutzen einfuehren.
-3. Doku bei jedem Release synchron halten (`README`, `ROADMAP`, Projekt-Uebersicht, Release-Checkliste).
+1. `scripts/perf_posts_latest_by_id.sh` regelmaessig (z. B. vor Release) ausfuehren und `LATEST`-Delta beobachten.
+2. Query-Hint (`FORCE INDEX`) nur bei stabil messbarem Lastnutzen im Zielsystem aktivieren.
+3. `scripts/release_prepare.sh` als festen Schritt vor Commit/Push in den Release-Ablauf aufnehmen.
 
 ---
 Diese Datei ist der operative Master-Status fuer Produkt, Technik und Delivery.
