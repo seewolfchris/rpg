@@ -12,6 +12,7 @@ Repository-Branch: `main`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Benchmark `posts.latest_by_id`: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
 - Benchmark `posts.latest_by_id` Latest/Deltas: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
+- Benchmark `posts.latest_by_id` Gate/Ampel: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
 - Benchmark `posts.latest_by_id` Staging/Prod: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 - Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
 - Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
@@ -114,8 +115,10 @@ Repository-Branch: `main`
   - `scene_subscriptions.unread_count` auf `EXISTS` umgestellt und auf Prod erfolgreich validiert
 - `posts.latest_by_id` Benchmark-Runner vorhanden:
   - `scripts/perf_posts_latest_by_id.sh` (inkl. Delta-Report)
+  - `scripts/release_perf_gate.sh` (inkl. Ampel-Entscheidung fuer Release)
   - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Fallback/Raw)
   - Automatischer Vergleichsreport: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
+  - Automatischer Gate-Report: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
   - Lokale Baseline: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
   - Prod-Benchmark dokumentiert: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
   - Ergebnis Prod: `FORCE INDEX posts_scene_id_id_idx` im Sample schneller als Default (avg/p95), beide Pfade aber bereits im Sub-Millisekundenbereich

@@ -95,5 +95,6 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
    - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
 2. Optional lokale `.env` ebenfalls setzen:
    - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)" --update-dotenv`
-3. Performance-Recheck vor dem Deploy:
-   - `scripts/perf_posts_latest_by_id.sh`
+3. Performance-Gate vor dem Deploy:
+   - `scripts/release_perf_gate.sh`
+4. Wenn Gate `ROT` ist: Hotpath analysieren, Baseline/Datensatz pruefen, danach erneut laufen lassen.

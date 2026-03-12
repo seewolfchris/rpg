@@ -104,7 +104,14 @@ $PHP_BIN artisan config:cache
 
 - `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
-- Optional fuer `posts.latest_by_id`:
+- Empfohlen fuer `posts.latest_by_id` (inkl. Ampel-Gate):
+  - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
+  - Gate-Report pruefen: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
+  - Ampel-Interpretation:
+    - `GRUEN`: weiter im Release-Flow.
+    - `GELB`: weiter moeglich, aber Delta beobachten.
+    - `ROT`: Hotpath zuerst analysieren, dann erneut messen.
+- Fallback ohne Gate:
   - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
   - Fallback direkt via Artisan:
     - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`

@@ -175,6 +175,18 @@ Das Skript schreibt:
 - den datierten Laufreport (Default: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`)
 - den jeweils aktuellen Vergleichsreport (`docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`, inkl. Delta zum letzten Lauf)
 
+Release-Perf-Gate (Ampel fuer `default`-Szenario):
+
+```bash
+scripts/release_perf_gate.sh
+```
+
+Das Skript:
+- fuehrt den Benchmark-Recheck aus
+- bewertet Delta gegen Schwellwerte (GRUEN/GELB/ROT)
+- schreibt `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
+- liefert Exit Code `1` bei `ROT` (Release-Blocker), sonst `0`
+
 Code-Style:
 
 ```bash
