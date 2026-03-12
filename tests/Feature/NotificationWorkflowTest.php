@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -10,6 +11,7 @@ use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Notifications\SceneNewPostNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class NotificationWorkflowTest extends TestCase
@@ -97,6 +99,70 @@ class NotificationWorkflowTest extends TestCase
         $this->assertSame('scene_new_post', $otherNotification->data['kind'] ?? null);
     }
 
+    public function test_new_scene_post_skips_stale_subscribers_without_campaign_access(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $invitedFollower = User::factory()->create();
+        $staleFollower = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitedFollower->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $invitedFollower->id,
+            'is_muted' => false,
+        ]);
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $staleFollower->id,
+            'is_muted' => false,
+        ]);
+
+        $campaign->update(['is_public' => false]);
+
+        $this->actingAs($staleFollower)
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertForbidden();
+
+        $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ooc',
+            'content_format' => 'markdown',
+            'content' => 'Vertraulicher Beitrag in einer privaten Kampagne.',
+        ])->assertRedirect();
+
+        $this->assertSame(0, $staleFollower->fresh()->unreadNotifications()->count());
+
+        $notification = $invitedFollower->fresh()->unreadNotifications()->first();
+        $this->assertNotNull($notification);
+        $this->assertSame('scene_new_post', $notification->data['kind'] ?? null);
+    }
+
     public function test_notification_center_can_mark_single_and_all_as_read(): void
     {
         [$gm, $player, $campaign, $scene, $character] = $this->seedSceneContext();
@@ -133,6 +199,34 @@ class NotificationWorkflowTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(0, $player->fresh()->unreadNotifications()->count());
+    }
+
+    public function test_notification_read_ignores_external_action_url(): void
+    {
+        $user = User::factory()->create();
+
+        $notification = $user->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => SceneNewPostNotification::class,
+            'data' => [
+                'kind' => 'scene_new_post',
+                'title' => 'Neue Nachricht',
+                'message' => 'Externe URL sollte nicht weitergeleitet werden.',
+                'action_url' => 'https://example-evil.test/phishing',
+            ],
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('notifications.read', $notification->id))
+            ->assertRedirect(route('notifications.index'));
+
+        $readAt = $user->fresh()
+            ->notifications()
+            ->whereKey($notification->id)
+            ->value('read_at');
+
+        $this->assertNotNull($readAt);
     }
 
     /**

@@ -68,7 +68,7 @@ DB_USERNAME=DEIN_DB_USER
 DB_PASSWORD=DEIN_DB_PASS
 ```
 
-Zusatzwerte fuer Web Push (aktiv in `v0.20-beta`):
+Zusatzwerte fuer Web Push (aktiv seit `v0.20-beta`):
 
 ```env
 VAPID_SUBJECT=mailto:noreply@deine-domain.tld

@@ -7,6 +7,7 @@ use App\Models\SceneSubscription;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
@@ -69,9 +70,50 @@ class NotificationController extends Controller
             $notification->markAsRead();
         }
 
-        $actionUrl = data_get($notification->data, 'action_url', route('notifications.index'));
+        $fallbackUrl = route('notifications.index');
+        $actionUrl = data_get($notification->data, 'action_url');
+        $resolvedUrl = $this->resolveSafeActionUrl($request, $actionUrl, $fallbackUrl);
 
-        return redirect()->to($actionUrl);
+        return redirect()->to($resolvedUrl);
+    }
+
+    private function resolveSafeActionUrl(Request $request, mixed $actionUrl, string $fallbackUrl): string
+    {
+        if (! is_string($actionUrl) || trim($actionUrl) === '') {
+            return $fallbackUrl;
+        }
+
+        $candidate = trim($actionUrl);
+        if (Str::startsWith($candidate, ['/'])) {
+            return $candidate;
+        }
+
+        $parsed = parse_url($candidate);
+        if (! is_array($parsed)) {
+            return $fallbackUrl;
+        }
+
+        $host = strtolower((string) ($parsed['host'] ?? ''));
+        $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
+        $port = isset($parsed['port']) ? (int) $parsed['port'] : null;
+
+        if ($host === '' || ! in_array($scheme, ['http', 'https'], true)) {
+            return $fallbackUrl;
+        }
+
+        $requestHost = strtolower($request->getHost());
+        $requestScheme = strtolower($request->getScheme());
+        $requestPort = $request->getPort();
+
+        if ($host !== $requestHost || $scheme !== $requestScheme) {
+            return $fallbackUrl;
+        }
+
+        if ($port !== null && $port !== $requestPort) {
+            return $fallbackUrl;
+        }
+
+        return $candidate;
     }
 
     public function readAll(Request $request): RedirectResponse

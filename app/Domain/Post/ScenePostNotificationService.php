@@ -2,8 +2,11 @@
 
 namespace App\Domain\Post;
 
+use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\PushSubscription;
+use App\Models\Scene;
 use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Notifications\SceneNewPostNotification;
@@ -24,6 +27,15 @@ class ScenePostNotificationService
     public function notifySceneParticipants(Post $post, User $author): array
     {
         $post->loadMissing(['scene.campaign']);
+        /** @var Scene $scene */
+        $scene = $post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
+        $campaign->loadMissing([
+            'invitations' => fn ($query) => $query
+                ->select(['id', 'campaign_id', 'user_id', 'status', 'role', 'accepted_at', 'responded_at', 'invited_by', 'created_at'])
+                ->where('status', CampaignInvitation::STATUS_ACCEPTED),
+        ]);
 
         $recipientIds = SceneSubscription::query()
             ->where('scene_id', $post->scene_id)
@@ -40,7 +52,11 @@ class ScenePostNotificationService
             ];
         }
 
-        $recipients = User::query()->whereIn('id', $recipientIds)->get();
+        $recipients = User::query()
+            ->whereIn('id', $recipientIds)
+            ->get()
+            ->filter(fn (User $recipient): bool => $campaign->isVisibleTo($recipient))
+            ->values();
 
         if ($recipients->isEmpty()) {
             return [

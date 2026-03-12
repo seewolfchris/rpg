@@ -304,6 +304,85 @@ class CampaignAccessInvitationTest extends TestCase
         $allResponse->assertDontSee('Nebelpass');
     }
 
+    public function test_co_gm_can_edit_player_post_with_player_character(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $coGm = User::factory()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $coGm->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $this->actingAs($player)
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
+                'post_type' => 'ic',
+                'character_id' => $character->id,
+                'content_format' => 'plain',
+                'content' => 'Originalbeitrag des Spielers in der Szene.',
+            ])
+            ->assertRedirect();
+
+        $post = \App\Models\Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $player->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->actingAs($coGm)
+            ->patch(route('posts.update', ['world' => $campaign->world, 'post' => $post]), [
+                'post_type' => 'ic',
+                'character_id' => $character->id,
+                'content_format' => 'plain',
+                'content' => 'Co-GM hat den Beitrag redaktionell angepasst.',
+                'moderation_status' => 'approved',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $post->refresh();
+
+        $this->assertSame('Co-GM hat den Beitrag redaktionell angepasst.', $post->content);
+        $this->assertSame($character->id, (int) $post->character_id);
+        $this->assertSame('approved', $post->moderation_status);
+    }
+
     public function test_removing_accepted_invitation_cleans_scene_subscriptions_and_bookmarks(): void
     {
         $owner = User::factory()->gm()->create();

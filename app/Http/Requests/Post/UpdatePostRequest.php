@@ -62,9 +62,10 @@ class UpdatePostRequest extends FormRequest
             }
 
             if ($characterId) {
-                $allowedUserIds = [(int) $this->user()?->id];
+                $user = $this->user();
+                $allowedUserIds = [(int) $user?->id];
 
-                if ($this->user()?->isGmOrAdmin()) {
+                if ($user && ($user->isGmOrAdmin() || $campaign->isCoGm($user))) {
                     $allowedUserIds[] = (int) $post->user_id;
                 }
 

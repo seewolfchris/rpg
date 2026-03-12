@@ -83,7 +83,7 @@ DB_PASSWORD=DEIN_DB_PASS
 
 Für Mail später SMTP eintragen. Zum Start kann Mail notfalls auf `log` bleiben.
 
-Für Web Push (aktiv in `v0.20-beta`) ergänzen:
+Für Web Push (aktiv seit `v0.20-beta`) ergänzen:
 
 ```env
 VAPID_SUBJECT=mailto:noreply@deine-domain.tld

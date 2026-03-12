@@ -5,6 +5,7 @@ namespace App\Support\Gamification;
 use App\Models\PointEvent;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class PointService
@@ -59,18 +60,26 @@ class PointService
 
             $points = (int) config('gamification.post_approved_points', 10);
 
-            PointEvent::query()->create([
-                'user_id' => $post->user_id,
-                'source_type' => self::SOURCE_POST,
-                'source_id' => $post->id,
-                'event_key' => self::EVENT_APPROVED,
-                'points' => $points,
-                'meta' => [
-                    'post_type' => $post->post_type,
-                    'scene_id' => $post->scene_id,
-                ],
-                'created_at' => now(),
-            ]);
+            try {
+                PointEvent::query()->create([
+                    'user_id' => $post->user_id,
+                    'source_type' => self::SOURCE_POST,
+                    'source_id' => $post->id,
+                    'event_key' => self::EVENT_APPROVED,
+                    'points' => $points,
+                    'meta' => [
+                        'post_type' => $post->post_type,
+                        'scene_id' => $post->scene_id,
+                    ],
+                    'created_at' => now(),
+                ]);
+            } catch (QueryException $exception) {
+                if ($this->isDuplicatePointEventException($exception)) {
+                    return;
+                }
+
+                throw $exception;
+            }
 
             User::query()
                 ->whereKey($post->user_id)
@@ -85,5 +94,12 @@ class PointService
             ->where('source_type', self::SOURCE_POST)
             ->where('source_id', $post->id)
             ->where('event_key', self::EVENT_APPROVED);
+    }
+
+    private function isDuplicatePointEventException(QueryException $exception): bool
+    {
+        $sqlState = (string) ($exception->errorInfo[0] ?? $exception->getCode());
+
+        return in_array($sqlState, ['23000', '23505'], true);
     }
 }
