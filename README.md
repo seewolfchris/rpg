@@ -137,6 +137,7 @@ CI lokal spiegeln:
 composer validate --strict
 composer analyse
 php artisan test --without-tty --do-not-cache-result
+npm run test:sw
 npm run build
 ```
 

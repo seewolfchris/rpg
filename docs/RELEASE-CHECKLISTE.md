@@ -16,6 +16,8 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
   - `composer analyse`
 - Tests:
   - `php artisan test --without-tty --do-not-cache-result`
+- Service-Worker Regression:
+  - `npm run test:sw`
 - Frontend-Build:
   - `npm run build`
 
