@@ -2,6 +2,22 @@
 
 Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
+## 0. Empfohlener One-Command-Flow
+
+Fuer Standard-Releases zuerst immer:
+
+```bash
+scripts/release_flow.sh --version vX.XX-beta
+```
+
+Das Skript fuehrt in fixer Reihenfolge aus:
+- `release_prepare.sh`
+- lokale Quality Gates (Analyse, Tests, SW-Tests, Build)
+- `release_perf_gate.sh`
+- `release_smoke.sh` (artisan mode)
+
+Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
+
 ## 1. Lokal vorbereiten
 
 - `git pull --rebase origin main`
@@ -106,6 +122,7 @@ $PHP_BIN artisan config:cache
 - Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
 - Empfohlen fuer `posts.latest_by_id` (inkl. Ampel-Gate):
   - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
+  - Optionaler Runtime-Hint (nur bei stabil messbarem Vorteil): `.env` -> `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
   - Gate-Report pruefen: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
   - Ampel-Interpretation:
     - `GRUEN`: weiter im Release-Flow.

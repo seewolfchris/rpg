@@ -187,6 +187,15 @@ Das Skript:
 - schreibt `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
 - liefert Exit Code `1` bei `ROT` (Release-Blocker), sonst `0`
 
+Optionaler Runtime-Toggle fuer den MySQL-Hotpath `posts.latest_by_id`:
+
+```env
+PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true
+PERF_POSTS_LATEST_BY_ID_FORCE_INDEX_NAME=posts_scene_id_id_idx
+```
+
+Hinweis: Standard ist `false`. Nur aktivieren, wenn der Gate-/Benchmark-Lauf im Zielsystem stabilen Vorteil zeigt.
+
 Code-Style:
 
 ```bash
@@ -211,6 +220,12 @@ Optional auch lokale `.env` aktualisieren:
 
 ```bash
 scripts/release_prepare.sh --version v0.22-beta --update-dotenv
+```
+
+Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
+
+```bash
+scripts/release_flow.sh --version v0.22-beta
 ```
 
 Release-Smoke automatisiert:

@@ -48,6 +48,13 @@ class PostsLatestByIdBenchmarker
             ],
         ];
 
+        if ($this->shouldUseForceIndexForRuntime($driver)) {
+            $scenarios['runtime_configured'] = [
+                'title' => 'Runtime configured (FORCE INDEX)',
+                'sql' => 'SELECT id FROM posts FORCE INDEX ('.$this->configuredForceIndexName().') WHERE scene_id = ? ORDER BY id DESC LIMIT 20',
+            ];
+        }
+
         if ($this->supportsForceIndex($driver)) {
             $scenarios['force_index_scene_id_id'] = [
                 'title' => 'FORCE INDEX posts_scene_id_id_idx',
@@ -222,6 +229,38 @@ class PostsLatestByIdBenchmarker
         }
 
         return $this->hasIndex('posts', 'posts_scene_id_id_idx');
+    }
+
+    private function shouldUseForceIndexForRuntime(string $driver): bool
+    {
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            return false;
+        }
+
+        if (! (bool) config('performance.posts_latest_by_id.force_index_enabled', false)) {
+            return false;
+        }
+
+        $indexName = $this->configuredForceIndexName();
+
+        if ($indexName === '') {
+            return false;
+        }
+
+        if (! Schema::hasTable('posts') || ! Schema::hasColumn('posts', 'scene_id')) {
+            return false;
+        }
+
+        return $this->hasIndex('posts', $indexName);
+    }
+
+    private function configuredForceIndexName(): string
+    {
+        $indexName = (string) config('performance.posts_latest_by_id.force_index_name', 'posts_scene_id_id_idx');
+
+        return preg_match('/^[A-Za-z0-9_]+$/', $indexName) === 1
+            ? $indexName
+            : '';
     }
 
     private function hasIndex(string $table, string $indexName): bool

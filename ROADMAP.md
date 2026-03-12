@@ -88,6 +88,6 @@ Stand: 2026-03-12
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. `scripts/release_perf_gate.sh` vor jedem Release laufen lassen und Ampel-Report (`...GATE-LATEST.md`) kontrollieren.
-2. Optional: MySQL-spezifischen Hint fuer `posts.latest_by_id` nur bei stabil messbarem Lastnutzen aktivieren.
-3. `scripts/release_prepare.sh` fest in den Release-Flow aufnehmen (Version/Build/Doku vor Commit/Pull Request).
+1. `scripts/release_flow.sh --version ...` als Standard-Release-Ablauf etablieren.
+2. Perf-Gate (`scripts/release_perf_gate.sh`) vor jedem Deploy gegen Zielsystem laufen lassen und Report ablegen.
+3. Runtime-Hint fuer `posts.latest_by_id` anhand der Perf-Gate-Historie aktiv/aus halten.

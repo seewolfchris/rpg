@@ -91,6 +91,8 @@ Repository-Branch: `main`
   - `docs/RELEASE-CHECKLISTE.md`
 - Release-Prepare (Version/Build/Doku):
   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
+- Release-Flow (fixe Reihenfolge inkl. Prepare):
+  - `scripts/release_flow.sh --version vX.XX-beta`
 - Smoke-Report-Ausgabe:
   - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
 - DB-Betriebsmodus:
@@ -116,6 +118,7 @@ Repository-Branch: `main`
 - `posts.latest_by_id` Benchmark-Runner vorhanden:
   - `scripts/perf_posts_latest_by_id.sh` (inkl. Delta-Report)
   - `scripts/release_perf_gate.sh` (inkl. Ampel-Entscheidung fuer Release)
+  - Optionaler Runtime-Hint via ENV (`PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`, MySQL/MariaDB)
   - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Fallback/Raw)
   - Automatischer Vergleichsreport: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
   - Automatischer Gate-Report: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
@@ -138,9 +141,9 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. `scripts/perf_posts_latest_by_id.sh` regelmaessig (z. B. vor Release) ausfuehren und `LATEST`-Delta beobachten.
-2. Query-Hint (`FORCE INDEX`) nur bei stabil messbarem Lastnutzen im Zielsystem aktivieren.
-3. `scripts/release_prepare.sh` als festen Schritt vor Commit/Push in den Release-Ablauf aufnehmen.
+1. `scripts/release_flow.sh --version ...` als Standard vor jedem Release nutzen.
+2. Perf-Gate-Statushistorie (`...GATE-LATEST.md`) bei jeder Staging/Prod-Runde fortschreiben.
+3. Runtime-Hint aktiv lassen oder deaktivieren anhand wiederholter Messungen im Zielsystem.
 
 ---
 Diese Datei ist der operative Master-Status fuer Produkt, Technik und Delivery.

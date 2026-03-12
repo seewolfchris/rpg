@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Support\PostContentRenderer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 class Post extends Model
@@ -93,6 +95,19 @@ class Post extends Model
     public function latestModerationLog(): HasOne
     {
         return $this->hasOne(PostModerationLog::class)->latestOfMany('created_at');
+    }
+
+    public function scopeLatestByIdHotpath(Builder $query): Builder
+    {
+        $driver = DB::connection($query->getModel()->getConnectionName())->getDriverName();
+        $forceIndexEnabled = (bool) config('performance.posts_latest_by_id.force_index_enabled', false);
+        $indexName = (string) config('performance.posts_latest_by_id.force_index_name', 'posts_scene_id_id_idx');
+
+        if ($forceIndexEnabled && in_array($driver, ['mysql', 'mariadb'], true) && preg_match('/^[A-Za-z0-9_]+$/', $indexName) === 1) {
+            $query->from(DB::raw($this->getTable().' FORCE INDEX ('.$indexName.')'));
+        }
+
+        return $query->orderByDesc('id');
     }
 
     public function renderedContent(): HtmlString

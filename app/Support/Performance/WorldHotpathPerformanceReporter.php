@@ -27,7 +27,7 @@ class WorldHotpathPerformanceReporter
         $worldId = $this->resolveWorldId($normalizedWorldSlug);
         $samples = $this->resolveSampleIds($worldId);
 
-        $queries = $this->queryDefinitions($worldId, $samples);
+        $queries = $this->queryDefinitions($worldId, $samples, $driver);
         $explainedQueries = [];
 
         foreach ($queries as $key => $definition) {
@@ -219,7 +219,7 @@ class WorldHotpathPerformanceReporter
      * @param  array{scene_id: int, campaign_id: int, user_id: int}  $samples
      * @return array<string, array{title: string, sql: string, bindings: list<int|string>}>
      */
-    private function queryDefinitions(?int $worldId, array $samples): array
+    private function queryDefinitions(?int $worldId, array $samples, string $driver): array
     {
         $worldFilter = '';
         $worldBindings = [];
@@ -229,6 +229,21 @@ class WorldHotpathPerformanceReporter
             $worldBindings[] = $worldId;
         }
 
+        $postsLatestByIdSql = 'SELECT id FROM posts WHERE scene_id = ? ORDER BY id DESC LIMIT 20';
+        $postsLatestByIdTitle = 'Scene newest posts by id';
+
+        $forceIndexEnabled = (bool) config('performance.posts_latest_by_id.force_index_enabled', false);
+        $forceIndexName = (string) config('performance.posts_latest_by_id.force_index_name', 'posts_scene_id_id_idx');
+
+        if (
+            $forceIndexEnabled
+            && in_array($driver, ['mysql', 'mariadb'], true)
+            && preg_match('/^[A-Za-z0-9_]+$/', $forceIndexName) === 1
+        ) {
+            $postsLatestByIdSql = 'SELECT id FROM posts FORCE INDEX ('.$forceIndexName.') WHERE scene_id = ? ORDER BY id DESC LIMIT 20';
+            $postsLatestByIdTitle .= ' (FORCE INDEX configured)';
+        }
+
         return [
             'posts.thread_by_created_at' => [
                 'title' => 'Scene thread ordered by created_at',
@@ -236,8 +251,8 @@ class WorldHotpathPerformanceReporter
                 'bindings' => [$samples['scene_id']],
             ],
             'posts.latest_by_id' => [
-                'title' => 'Scene newest posts by id',
-                'sql' => 'SELECT id FROM posts WHERE scene_id = ? ORDER BY id DESC LIMIT 20',
+                'title' => $postsLatestByIdTitle,
+                'sql' => $postsLatestByIdSql,
                 'bindings' => [$samples['scene_id']],
             ],
             'scene_subscriptions.dashboard' => [

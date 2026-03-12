@@ -1,8 +1,8 @@
 # posts.latest_by_id Release Perf Gate
 
-- Evaluated at: `2026-03-12T09:49:46Z`
+- Evaluated at: `2026-03-12T10:19:56Z`
 - Benchmark latest: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
-- Benchmark generated at: `2026-03-12T09:49:46+00:00`
+- Benchmark generated at: `2026-03-12T10:19:55+00:00`
 - Source report: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-12.md`
 - Scenario: `default`
 - Thresholds:
@@ -13,8 +13,8 @@
 
 ## Result
 - Status: `GRUEN`
-- avg delta vs baseline: `-22.22%`
-- p95 delta vs baseline: `-36.12%`
+- avg delta vs baseline: `-25.23%`
+- p95 delta vs baseline: `-41.54%`
 - Reason: Keine relevante Regression gegen Baseline.
 
 ## Interpretation

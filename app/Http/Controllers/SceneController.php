@@ -99,7 +99,7 @@ class SceneController extends Controller
         $posts = Post::query()
             ->where('scene_id', $scene->id)
             ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator', 'diceRoll.character.user'])
-            ->latest()
+            ->latestByIdHotpath()
             ->paginate(self::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
 

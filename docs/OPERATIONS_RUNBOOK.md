@@ -91,10 +91,11 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
 3. Bei Fehlern `request_id` notieren und Incident-Ablauf starten.
 
 ## Release-Vorbereitung
-1. Version/Build/Doku mit einem Befehl synchronisieren:
+1. Bevorzugt kompletter Ablauf:
+   - `scripts/release_flow.sh --version vX.XX-beta`
+2. Einzelbausteine bei Bedarf:
    - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
-2. Optional lokale `.env` ebenfalls setzen:
-   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)" --update-dotenv`
-3. Performance-Gate vor dem Deploy:
    - `scripts/release_perf_gate.sh`
+3. Optionaler Runtime-Hint fuer `posts.latest_by_id` nur bei stabil messbarem Vorteil:
+   - `.env`: `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
 4. Wenn Gate `ROT` ist: Hotpath analysieren, Baseline/Datensatz pruefen, danach erneut laufen lassen.
