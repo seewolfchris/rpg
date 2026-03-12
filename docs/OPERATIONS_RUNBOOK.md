@@ -40,6 +40,25 @@ grep -E "webpush\\.(subscription_upserted|subscription_deleted|scene_post_sent|d
 Hinweis:
 - `webpush.delivery_failed` mit Status `404` oder `410` fuehrt zur automatischen Loeschung der ungueltigen Subscription.
 
+## Offline-Post-Queue Schnellcheck
+Wenn Offline-Posts nicht synchronisiert werden:
+
+1. Browser-Konsole auf Service-Worker-Events prüfen (`POST_SYNC_*`).
+2. IndexedDB `chroniken-pbp` / Store `postQueue` prüfen (`retry_count`, `next_retry_at`, `last_error_status`).
+3. Bei `POST_SYNC_AUTH_REQUIRED`: Login-Status prüfen, Seite neu laden, Sync erneut anstoßen.
+
+Erwartete Event-Reihenfolgen:
+- 419 mit erfolgreichem Re-Signing:
+  - `POST_SYNC_STARTED`
+  - `POST_SYNC_AUTH_RETRY`
+  - `POST_SYNC_SUCCESS`
+  - `POST_SYNC_FINISHED`
+- Session/CSRF nicht erneuerbar:
+  - `POST_SYNC_STARTED`
+  - `POST_SYNC_RETRY_SCHEDULED`
+  - `POST_SYNC_AUTH_REQUIRED`
+  - `POST_SYNC_FINISHED` (mit `remaining > 0`)
+
 ## Standard-Incident-Ablauf
 1. Fehlerbericht mit Zeitpunkt und betroffener Route aufnehmen.
 2. `X-Request-Id` aus Response/Client-Log holen.

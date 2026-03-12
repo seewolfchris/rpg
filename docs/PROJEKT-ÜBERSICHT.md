@@ -42,7 +42,7 @@ Repository-Branch: `main`
 | Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
 | Wissenszentrum / Enzyklopaedie | Stabil | Oeffentliche Seiten + GM/Admin-Redaktion |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
-| PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue |
+| PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. 419-Re-Signing + Retry-Backoff |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 
 ## 3) Multi-Welt-Umstellung (neu)

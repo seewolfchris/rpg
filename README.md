@@ -204,6 +204,12 @@ SMOKE_MODE=artisan scripts/release_smoke.sh
 - Offline-Seite: `public/offline.html`
 - Install-Button erscheint nur, wenn Browser-Install-Prompt verfügbar ist.
 - Offline-Post-Queue nutzt IndexedDB und Sync/Fallback-Trigger.
+- Bei `419` versucht der Service Worker automatisch ein Re-Signing (neuer CSRF-Token + aktuelle Form-Action) und sendet den Queue-Post erneut.
+- Bei `401`/`419`/`429` werden Queue-Eintraege nicht verworfen, sondern mit Backoff (`retry_count`, `next_retry_at`) geplant.
+- Relevante Service-Worker-Events fuer die UI:
+  - `POST_SYNC_AUTH_RETRY`: Re-Signing erfolgreich, erneuter Sendeversuch startet.
+  - `POST_SYNC_RETRY_SCHEDULED`: Retry mit naechstem Zeitpunkt geplant.
+  - `POST_SYNC_AUTH_REQUIRED`: Session/CSRF nicht erneuerbar, Nutzeraktion (Login) erforderlich.
 
 ## Crawler / KI-Bot Schutz
 

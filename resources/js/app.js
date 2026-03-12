@@ -195,6 +195,35 @@ function setupServiceWorkerMessageHandling() {
             return;
         }
 
+        if (data.type === 'POST_SYNC_AUTH_RETRY') {
+            showSyncNotice('Sicherheits-Token aktualisiert. Offline-Beitrag wird erneut gesendet.', 'warning');
+            return;
+        }
+
+        if (data.type === 'POST_SYNC_AUTH_REQUIRED') {
+            const retryHint = formatRetryHint(data.payload?.nextRetryAt);
+            showSyncNotice(`Offline-Queue pausiert (Anmeldung/CSRF). Nächster Versuch ${retryHint}.`, 'warning');
+            return;
+        }
+
+        if (data.type === 'POST_SYNC_RETRY_SCHEDULED') {
+            const status = Number(data.payload?.status || 0);
+
+            if (status === 401 || status === 419) {
+                return;
+            }
+
+            const retryHint = formatRetryHint(data.payload?.nextRetryAt);
+
+            if (status === 429) {
+                showSyncNotice(`Server-Limit erreicht. Nächster Sync-Versuch ${retryHint}.`, 'warning');
+                return;
+            }
+
+            showSyncNotice(`Synchronisierung pausiert. Nächster Versuch ${retryHint}.`, 'warning');
+            return;
+        }
+
         if (data.type === 'POST_SYNC_FINISHED') {
             const remaining = Number(data.payload?.remaining || 0);
 
@@ -614,6 +643,7 @@ function isOfflineReadableUrl(url) {
         }
 
         return (
+            /^\/w\/[^/]+\/campaigns\/[^/]+\/scenes\/[^/]+\/?$/.test(parsed.pathname) ||
             /^\/campaigns\/[^/]+\/scenes\/[^/]+\/?$/.test(parsed.pathname) ||
             /^\/characters\/[^/]+\/?$/.test(parsed.pathname)
         );
@@ -691,6 +721,7 @@ async function queuePostSubmission(form) {
         entries,
         queued_at: new Date().toISOString(),
         source_path: window.location.pathname,
+        source_url: `${window.location.pathname}${window.location.search}`,
     };
 
     const database = await openQueueDatabase();
@@ -750,6 +781,23 @@ function showSyncNotice(message, level = 'info') {
             container.remove();
         }
     }, 9000);
+}
+
+function formatRetryHint(nextRetryAt) {
+    const retryTimestampMs = Date.parse(typeof nextRetryAt === 'string' ? nextRetryAt : '');
+
+    if (!Number.isFinite(retryTimestampMs)) {
+        return 'später';
+    }
+
+    const remainingSeconds = Math.max(1, Math.round((retryTimestampMs - Date.now()) / 1000));
+
+    if (remainingSeconds < 60) {
+        return `in ${remainingSeconds}s`;
+    }
+
+    const remainingMinutes = Math.ceil(remainingSeconds / 60);
+    return `in ${remainingMinutes}min`;
 }
 
 function getOrCreateSyncNoticeContainer() {
