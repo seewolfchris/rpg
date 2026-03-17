@@ -57,6 +57,9 @@ class Character extends Model
         'le_current',
         'ae_max',
         'ae_current',
+        'xp_total',
+        'level',
+        'attribute_points_unspent',
         'strength',
         'dexterity',
         'constitution',
@@ -97,6 +100,9 @@ class Character extends Model
             'le_current' => 'integer',
             'ae_max' => 'integer',
             'ae_current' => 'integer',
+            'xp_total' => 'integer',
+            'level' => 'integer',
+            'attribute_points_unspent' => 'integer',
             'strength' => 'integer',
             'dexterity' => 'integer',
             'constitution' => 'integer',
@@ -138,6 +144,11 @@ class Character extends Model
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(CharacterInventoryLog::class)->latest('created_at');
+    }
+
+    public function progressionEvents(): HasMany
+    {
+        return $this->hasMany(CharacterProgressionEvent::class)->latest('created_at');
     }
 
     public function avatarUrl(): string

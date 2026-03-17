@@ -43,6 +43,19 @@
         $totalArmorProtection = $effectiveArmorEntries
             ->sum(static fn (array $armor): int => max(0, (int) ($armor['protection'] ?? 0)));
         $inventoryLogs = isset($inventoryLogs) ? collect($inventoryLogs) : collect();
+        $progressionState = is_array($progressionState ?? null) ? $progressionState : [];
+        $progressionEvents = isset($progressionEvents) ? collect($progressionEvents) : collect();
+        $currentLevel = max(1, (int) ($progressionState['level'] ?? 1));
+        $xpTotal = max(0, (int) ($progressionState['xp_total'] ?? 0));
+        $xpNextLevelThreshold = max(0, (int) ($progressionState['xp_next_level_threshold'] ?? 0));
+        $xpToNextLevel = max(0, (int) ($progressionState['xp_to_next_level'] ?? 0));
+        $progressPercent = (float) ($progressionState['progress_percent'] ?? 0);
+        $attributePointsUnspent = max(0, (int) ($progressionState['attribute_points_unspent'] ?? 0));
+        $canSpendAttributePoints = auth()->id() === (int) $character->user_id || auth()->user()->isGmOrAdmin();
+        $errorKeys = collect($errors->getMessages())->keys();
+        $hasAllocationErrors = $errorKeys->contains(
+            static fn (string $key): bool => str_starts_with($key, 'attribute_allocations')
+        );
         $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
             $value = $characterModel->{$attributeKey};
             if ($value !== null) {
@@ -115,9 +128,84 @@
                     <div class="rounded border border-red-700/70 bg-red-950/25 px-3 py-2">LE: {{ $character->le_current ?? 0 }} / {{ $character->le_max ?? 0 }}</div>
                     <div class="rounded border border-sky-700/70 bg-sky-950/25 px-3 py-2">AE: {{ $character->ae_current ?? 0 }} / {{ $character->ae_max ?? 0 }}</div>
                 </div>
+
+                <div class="rounded border border-emerald-700/60 bg-emerald-900/15 p-3">
+                    <p class="text-xs uppercase tracking-[0.08em] text-emerald-200">Entwicklung</p>
+                    <p class="mt-2 text-sm text-emerald-100">Stufe {{ $currentLevel }}</p>
+                    <p class="mt-1 text-xs text-emerald-200/80">XP: {{ $xpTotal }} / {{ $xpNextLevelThreshold }} (nächste Stufe)</p>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-emerald-950/70">
+                        <div class="h-full bg-emerald-500/80" style="width: {{ max(0, min($progressPercent, 100)) }}%;"></div>
+                    </div>
+                    <p class="mt-2 text-xs text-emerald-200/80">Noch {{ $xpToNextLevel }} XP bis Stufe {{ $currentLevel + 1 }}</p>
+                    <p class="mt-2 text-xs uppercase tracking-[0.08em] text-emerald-300">Unverteilte AP: {{ $attributePointsUnspent }}</p>
+                </div>
             </aside>
 
             <article class="space-y-5 rounded-xl border border-stone-800 bg-black/45 p-6">
+                <section class="rounded-lg border border-emerald-700/60 bg-emerald-950/15 p-4">
+                    <h2 class="font-heading text-2xl text-emerald-100">Entwicklung</h2>
+                    <p class="mt-2 text-sm text-emerald-200/90">
+                        Attributsteigerungen sind nur über Attributpunkte (AP) aus Stufenaufstiegen möglich.
+                    </p>
+
+                    @if ($canSpendAttributePoints && $attributePointsUnspent > 0)
+                        <form method="POST" action="{{ route('characters.progression.spend', $character) }}" class="mt-4 space-y-3">
+                            @csrf
+
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                @foreach ($attributeMeta as $key => $meta)
+                                    @php
+                                        $label = (string) ($meta['label'] ?? strtoupper($key));
+                                    @endphp
+                                    <label class="rounded border border-emerald-700/50 bg-black/25 px-3 py-2 text-xs uppercase tracking-[0.08em] text-emerald-200">
+                                        {{ $label }}
+                                        <input
+                                            type="number"
+                                            name="attribute_allocations[{{ $key }}]"
+                                            min="0"
+                                            max="{{ min(4, $attributePointsUnspent) }}"
+                                            step="1"
+                                            value="{{ old('attribute_allocations.'.$key, 0) }}"
+                                            class="mt-2 w-full rounded border border-stone-700/80 bg-black/40 px-2 py-1 text-sm normal-case tracking-normal text-stone-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+                                        >
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            <div>
+                                <label for="progression-note" class="mb-2 block text-xs uppercase tracking-[0.08em] text-emerald-200">Notiz (optional)</label>
+                                <input
+                                    id="progression-note"
+                                    type="text"
+                                    name="note"
+                                    maxlength="500"
+                                    value="{{ old('note', '') }}"
+                                    placeholder="z. B. Kapitel 3: Fokus auf körperliche Belastbarkeit"
+                                    class="w-full rounded border border-stone-700/80 bg-black/40 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
+                                >
+                            </div>
+
+                            @if ($hasAllocationErrors)
+                                <div class="rounded border border-red-700/70 bg-red-950/30 p-3 text-sm text-red-200">
+                                    @foreach ($errors->all() as $message)
+                                        @if (str_contains(strtolower($message), 'attribut') || str_contains(strtolower($message), 'punkt'))
+                                            <p>{{ $message }}</p>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <button type="submit" class="ui-btn ui-btn-success">
+                                AP verteilen
+                            </button>
+                        </form>
+                    @else
+                        @if ($attributePointsUnspent <= 0)
+                            <p class="mt-3 text-sm text-emerald-200/80">Aktuell sind keine unverteilten Attributpunkte verfügbar.</p>
+                        @endif
+                    @endif
+                </section>
+
                 <section>
                     <h2 class="font-heading text-2xl text-stone-100">Biografie</h2>
                     <div class="mt-4 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
@@ -299,6 +387,60 @@
                         </ul>
                     @else
                         <p class="mt-2 text-sm text-stone-400">Noch keine Inventar-Änderungen protokolliert.</p>
+                    @endif
+                </section>
+
+                <section class="rounded-lg border border-emerald-700/60 bg-emerald-950/10 p-4">
+                    <h4 class="text-xs font-semibold uppercase tracking-widest text-emerald-200">Progressions-Log</h4>
+                    @if ($progressionEvents->isNotEmpty())
+                        <ul class="mt-3 space-y-2 text-sm text-emerald-100">
+                            @foreach ($progressionEvents as $event)
+                                @php
+                                    $eventType = (string) $event->event_type;
+                                    $eventLabel = match ($eventType) {
+                                        'xp_milestone' => 'XP-Meilenstein',
+                                        'xp_correction' => 'XP-Korrektur',
+                                        'ap_spend' => 'AP-Ausgabe',
+                                        'level_up_system' => 'Stufenaufstieg',
+                                        default => $eventType,
+                                    };
+                                    $attributeDeltas = is_array($event->attribute_deltas) ? $event->attribute_deltas : [];
+                                @endphp
+                                <li class="rounded border border-emerald-700/40 bg-black/20 px-3 py-2">
+                                    <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">
+                                        {{ optional($event->created_at)->format('d.m.Y H:i') ?? '-' }}
+                                        • {{ $eventLabel }}
+                                        • {{ $event->actorUser->name ?? 'System' }}
+                                    </p>
+                                    <p class="mt-1">
+                                        XP Δ {{ (int) $event->xp_delta >= 0 ? '+' : '' }}{{ (int) $event->xp_delta }}
+                                        • AP Δ {{ (int) $event->ap_delta >= 0 ? '+' : '' }}{{ (int) $event->ap_delta }}
+                                        • Stufe {{ (int) $event->level_before }} → {{ (int) $event->level_after }}
+                                    </p>
+                                    @if ($attributeDeltas !== [])
+                                        <p class="mt-1 text-xs text-emerald-200/90">
+                                            Attribute:
+                                            {{ collect($attributeDeltas)->map(fn ($value, $key): string => strtoupper((string) $key).' +'.(int) $value)->implode(', ') }}
+                                        </p>
+                                    @endif
+                                    @if ($event->campaign || $event->scene || $event->reason)
+                                        <p class="mt-1 text-xs text-emerald-200/80">
+                                            @if ($event->campaign)
+                                                Kampagne: {{ $event->campaign->title }}
+                                            @endif
+                                            @if ($event->scene)
+                                                • Szene: {{ $event->scene->title }}
+                                            @endif
+                                            @if ($event->reason)
+                                                • Grund: {{ $event->reason }}
+                                            @endif
+                                        </p>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="mt-2 text-sm text-emerald-200/80">Noch keine Progressions-Einträge vorhanden.</p>
                     @endif
                 </section>
             </article>

@@ -8,9 +8,11 @@ use App\Http\Controllers\Api\WebPushSubscriptionController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
+use App\Http\Controllers\CharacterProgressionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
+use App\Http\Controllers\GmProgressionController;
 use App\Http\Controllers\GmModerationController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
@@ -193,6 +195,13 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->middleware(['role:gm,admin', 'throttle:moderation'])
             ->name('gm.moderation.bulk-update');
 
+        Route::get('/gm/progression', [GmProgressionController::class, 'index'])
+            ->name('gm.progression.index');
+
+        Route::post('/gm/progression/xp', [GmProgressionController::class, 'awardXp'])
+            ->middleware('throttle:moderation')
+            ->name('gm.progression.award-xp');
+
         Route::prefix('/wissen/enzyklopaedie/admin')
             ->as('knowledge.admin.')
             ->middleware('role:gm,admin')
@@ -274,6 +283,10 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
 
     Route::resource('characters', CharacterController::class)
         ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+
+    Route::post('/characters/{character}/progression/spend', [CharacterProgressionController::class, 'spend'])
+        ->middleware('throttle:writes')
+        ->name('characters.progression.spend');
 
     Route::get('/campaign-invitations', [CampaignInvitationController::class, 'index'])
         ->name('campaign-invitations.index');

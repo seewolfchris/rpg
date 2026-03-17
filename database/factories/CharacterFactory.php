@@ -34,6 +34,9 @@ class CharacterFactory extends Factory
             'intelligence' => fake()->numberBetween(6, 18),
             'wisdom' => fake()->numberBetween(6, 18),
             'charisma' => fake()->numberBetween(6, 18),
+            'xp_total' => 0,
+            'level' => 1,
+            'attribute_points_unspent' => 0,
         ];
     }
 }

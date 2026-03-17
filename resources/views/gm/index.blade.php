@@ -20,8 +20,21 @@
             <a
                 href="{{ route('gm.moderation.index') }}"
                 class="mt-5 inline-flex rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
+                >
+                    Zur Queue
+                </a>
+        </article>
+
+        <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <h2 class="font-heading text-2xl text-stone-100">Charakterentwicklung</h2>
+            <p class="mt-3 text-sm text-stone-300">
+                Vergib XP-Meilensteine oder Korrekturen für Kampagnen-Charaktere und steuere den Stufenfortschritt.
+            </p>
+            <a
+                href="{{ route('gm.progression.index') }}"
+                class="mt-5 inline-flex rounded-md border border-emerald-500/60 bg-emerald-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-500/30"
             >
-                Zur Queue
+                Zur Charakterentwicklung
             </a>
         </article>
     </section>

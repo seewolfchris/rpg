@@ -72,6 +72,29 @@ class CharacterManagementTest extends TestCase
         return array_merge($payload, $overrides);
     }
 
+    /**
+     * @return array<string, int>
+     */
+    private function persistedAttributes(array $overrides = []): array
+    {
+        return array_merge([
+            'mu' => 40,
+            'kl' => 45,
+            'in' => 40,
+            'ch' => 35,
+            'ff' => 40,
+            'ge' => 40,
+            'ko' => 45,
+            'kk' => 40,
+            'strength' => 40,
+            'dexterity' => 40,
+            'constitution' => 45,
+            'intelligence' => 45,
+            'wisdom' => 40,
+            'charisma' => 35,
+        ], $overrides);
+    }
+
     public function test_guest_cannot_access_character_index(): void
     {
         $response = $this->get('/characters');
@@ -285,6 +308,7 @@ class CharacterManagementTest extends TestCase
                 'parry' => 32,
                 'damage' => 8,
             ]],
+            ...$this->persistedAttributes(),
         ]);
 
         $this->actingAs($gm)
@@ -349,6 +373,7 @@ class CharacterManagementTest extends TestCase
                 'quantity' => 1,
                 'equipped' => false,
             ]],
+            ...$this->persistedAttributes(),
         ]);
 
         $this->actingAs($user)->put(route('characters.update', $character), [
@@ -450,6 +475,22 @@ class CharacterManagementTest extends TestCase
         $character = Character::factory()->create([
             'user_id' => $user->id,
             'name' => 'Vorher',
+            ...$this->persistedAttributes([
+                'mu' => 45,
+                'kl' => 42,
+                'in' => 40,
+                'ch' => 36,
+                'ff' => 38,
+                'ge' => 37,
+                'ko' => 44,
+                'kk' => 46,
+                'strength' => 46,
+                'dexterity' => 37,
+                'constitution' => 44,
+                'intelligence' => 42,
+                'wisdom' => 40,
+                'charisma' => 36,
+            ]),
         ]);
 
         $response = $this->actingAs($user)->put(route('characters.update', $character), [
@@ -526,6 +567,31 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect(route('characters.show', $character));
     }
 
+    public function test_user_cannot_change_attributes_directly_after_creation(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            ...$this->persistedAttributes(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.edit', $character))
+            ->put(route('characters.update', $character), [
+                ...$this->characterPayload([
+                    'name' => $character->name,
+                    'mu' => 41,
+                ]),
+            ]);
+
+        $response->assertRedirect(route('characters.edit', $character));
+        $response->assertSessionHasErrors('mu');
+
+        $character->refresh();
+        $this->assertSame(40, (int) $character->mu);
+    }
+
     public function test_updating_character_keeps_current_pools_and_ignores_injected_pool_values(): void
     {
         $user = User::factory()->create();
@@ -538,6 +604,7 @@ class CharacterManagementTest extends TestCase
             'ae_current' => 12,
             'species' => 'mensch',
             'calling' => 'heiler',
+            ...$this->persistedAttributes(),
         ]);
 
         $response = $this->actingAs($user)->put(route('characters.update', $character), [

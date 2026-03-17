@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Character\CharacterProgressionService;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
@@ -17,6 +18,7 @@ class CharacterController extends Controller
 {
     public function __construct(
         private readonly CharacterInventoryService $inventoryService,
+        private readonly CharacterProgressionService $progressionService,
     ) {}
 
     public function index(Request $request): View
@@ -88,8 +90,13 @@ class CharacterController extends Controller
             ->with('actor:id,name')
             ->limit(25)
             ->get();
+        $progressionEvents = $character->progressionEvents()
+            ->with(['actorUser:id,name', 'campaign:id,title', 'scene:id,title'])
+            ->limit(20)
+            ->get();
+        $progressionState = $this->progressionService->describe($character);
 
-        return view('characters.show', compact('character', 'inventoryLogs'));
+        return view('characters.show', compact('character', 'inventoryLogs', 'progressionEvents', 'progressionState'));
     }
 
     public function edit(Character $character): View
