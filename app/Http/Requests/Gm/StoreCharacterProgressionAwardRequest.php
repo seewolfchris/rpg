@@ -13,9 +13,27 @@ use Illuminate\Validation\Rule;
 
 class StoreCharacterProgressionAwardRequest extends FormRequest
 {
+    private bool $campaignResolved = false;
+
+    private ?Campaign $resolvedCampaign = null;
+
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isGmOrAdmin()) {
+            return true;
+        }
+
+        $campaign = $this->resolveCampaign();
+        if (! $campaign) {
+            return true;
+        }
+
+        return $campaign->isCoGm($user);
     }
 
     /**
@@ -52,9 +70,7 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
                 return;
             }
 
-            $campaignId = (int) $this->input('campaign_id');
-            /** @var Campaign|null $campaign */
-            $campaign = Campaign::query()->find($campaignId);
+            $campaign = $this->resolveCampaign();
             if (! $campaign) {
                 $validator->errors()->add('campaign_id', 'Kampagne konnte nicht geladen werden.');
 
@@ -78,16 +94,6 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
                 if (! $sceneBelongsToCampaign) {
                     $validator->errors()->add('scene_id', 'Szene gehört nicht zur gewählten Kampagne.');
                 }
-            }
-
-            $user = $this->user();
-            $canAwardXp = $user && (
-                $user->isGmOrAdmin()
-                || $campaign->isCoGm($user)
-            );
-
-            if (! $canAwardXp) {
-                $validator->errors()->add('campaign_id', 'Du darfst für diese Kampagne keine XP vergeben.');
             }
 
             $eventMode = (string) $this->input('event_mode', 'milestone');
@@ -168,6 +174,21 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
             ];
         }
 
-        return array_values($normalized);
+        return $normalized;
+    }
+
+    private function resolveCampaign(): ?Campaign
+    {
+        if ($this->campaignResolved) {
+            return $this->resolvedCampaign;
+        }
+
+        $campaignId = (int) $this->input('campaign_id');
+        $this->resolvedCampaign = $campaignId > 0
+            ? Campaign::query()->find($campaignId)
+            : null;
+        $this->campaignResolved = true;
+
+        return $this->resolvedCampaign;
     }
 }

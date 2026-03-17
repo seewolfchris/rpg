@@ -146,7 +146,6 @@ class CharacterProgressionTest extends TestCase
         $this->assertSame(30, (int) $character->xp_total);
 
         $this->actingAs($coGm)
-            ->from(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]))
             ->post(route('gm.progression.award-xp', ['world' => $campaign->world]), [
                 'campaign_id' => $otherCampaign->id,
                 'event_mode' => 'milestone',
@@ -155,8 +154,7 @@ class CharacterProgressionTest extends TestCase
                     'xp_delta' => 30,
                 ]],
             ])
-            ->assertRedirect(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]))
-            ->assertSessionHasErrors('campaign_id');
+            ->assertForbidden();
     }
 
     public function test_player_cannot_award_campaign_xp(): void
@@ -164,7 +162,6 @@ class CharacterProgressionTest extends TestCase
         [$gm, $player, $campaign, $scene, $character] = $this->seedCampaignWithParticipantCharacter();
 
         $response = $this->actingAs($player)
-            ->from(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]))
             ->post(route('gm.progression.award-xp', ['world' => $campaign->world]), [
                 'campaign_id' => $campaign->id,
                 'scene_id' => $scene->id,
@@ -175,8 +172,7 @@ class CharacterProgressionTest extends TestCase
                 ]],
             ]);
 
-        $response->assertRedirect(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]));
-        $response->assertSessionHasErrors('campaign_id');
+        $response->assertForbidden();
     }
 
     public function test_negative_correction_cannot_reduce_below_current_level_threshold(): void

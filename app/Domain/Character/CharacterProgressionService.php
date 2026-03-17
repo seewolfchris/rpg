@@ -377,6 +377,79 @@ class CharacterProgressionService
      */
     private function historicalAttributeSpendTotals(int $characterId): array
     {
+        $attributeKeys = $this->attributeKeys();
+        if ($attributeKeys === []) {
+            return [];
+        }
+
+        try {
+            return $this->historicalAttributeSpendTotalsAggregated($characterId, $attributeKeys);
+        } catch (\Throwable) {
+            return $this->historicalAttributeSpendTotalsFromEvents($characterId);
+        }
+    }
+
+    /**
+     * @param  list<string>  $attributeKeys
+     * @return array<string, int>
+     */
+    private function historicalAttributeSpendTotalsAggregated(int $characterId, array $attributeKeys): array
+    {
+        $query = CharacterProgressionEvent::query()
+            ->where('character_id', $characterId)
+            ->where('event_type', CharacterProgressionEvent::EVENT_AP_SPEND);
+
+        $driver = DB::connection($query->getModel()->getConnectionName())->getDriverName();
+        $selectFragments = [];
+        $bindings = [];
+
+        foreach ($attributeKeys as $key) {
+            $attributeKey = trim($key);
+            if ($attributeKey === '') {
+                continue;
+            }
+
+            $path = '$.'.$attributeKey;
+            $alias = $this->historicalSpendAlias($attributeKey);
+
+            if (in_array($driver, ['mysql', 'mariadb'], true)) {
+                $selectFragments[] = 'SUM(COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(attribute_deltas, ?)) AS SIGNED), 0)) as '.$alias;
+                $bindings[] = $path;
+
+                continue;
+            }
+
+            if ($driver === 'sqlite') {
+                $selectFragments[] = 'SUM(COALESCE(CAST(json_extract(attribute_deltas, ?) AS INTEGER), 0)) as '.$alias;
+                $bindings[] = $path;
+
+                continue;
+            }
+        }
+
+        if ($selectFragments === []) {
+            return $this->historicalAttributeSpendTotalsFromEvents($characterId);
+        }
+
+        $totalsRow = $query->selectRaw(implode(', ', $selectFragments), $bindings)->first();
+        if (! $totalsRow) {
+            return array_fill_keys($attributeKeys, 0);
+        }
+        $totals = [];
+
+        foreach ($attributeKeys as $key) {
+            $alias = $this->historicalSpendAlias($key);
+            $totals[$key] = max(0, (int) ($totalsRow->{$alias} ?? 0));
+        }
+
+        return $totals;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function historicalAttributeSpendTotalsFromEvents(int $characterId): array
+    {
         $totals = [];
         $events = CharacterProgressionEvent::query()
             ->where('character_id', $characterId)
@@ -402,7 +475,7 @@ class CharacterProgressionService
     }
 
     /**
-     * @return Collection<int, int>
+     * @return Collection<int, int<1, max>>
      */
     private function campaignParticipantUserIds(Campaign $campaign): Collection
     {
@@ -414,6 +487,13 @@ class CharacterProgressionService
             ->filter(static fn (int $id): bool => $id > 0)
             ->unique()
             ->values();
+    }
+
+    private function historicalSpendAlias(string $attributeKey): string
+    {
+        $suffix = preg_replace('/[^a-z0-9_]/i', '_', strtolower($attributeKey)) ?? 'attribute';
+
+        return 'sum_'.$suffix;
     }
 
     /**
