@@ -58,7 +58,8 @@ Route::get('/', function () {
 Route::get('/welten', [WorldController::class, 'index'])
     ->name('worlds.index');
 
-Route::get('/welten/{world:slug}/aktivieren', [WorldController::class, 'activate'])
+Route::post('/welten/{world:slug}/aktivieren', [WorldController::class, 'activate'])
+    ->middleware('throttle:writes')
     ->name('worlds.activate');
 
 Route::get('/wissen', [KnowledgeController::class, 'index'])

@@ -84,6 +84,11 @@ class NotificationController extends Controller
         }
 
         $candidate = trim($actionUrl);
+        // Block protocol-relative targets such as //evil.example.
+        if (Str::startsWith($candidate, '//')) {
+            return $fallbackUrl;
+        }
+
         if (Str::startsWith($candidate, ['/'])) {
             return $candidate;
         }

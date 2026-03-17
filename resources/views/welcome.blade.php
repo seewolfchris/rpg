@@ -149,7 +149,10 @@
                                 @auth
                                     <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Kampagnen öffnen</a>
                                 @else
-                                    <a href="{{ route('worlds.activate', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Aktivieren</a>
+                                    <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
+                                        @csrf
+                                        <button type="submit" class="ui-btn ui-btn-accent inline-flex">Aktivieren</button>
+                                    </form>
                                 @endauth
                             </div>
                         </article>

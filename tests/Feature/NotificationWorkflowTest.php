@@ -229,6 +229,34 @@ class NotificationWorkflowTest extends TestCase
         $this->assertNotNull($readAt);
     }
 
+    public function test_notification_read_ignores_protocol_relative_action_url(): void
+    {
+        $user = User::factory()->create();
+
+        $notification = $user->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => SceneNewPostNotification::class,
+            'data' => [
+                'kind' => 'scene_new_post',
+                'title' => 'Neue Nachricht',
+                'message' => 'Protocol-relative URL sollte nicht weitergeleitet werden.',
+                'action_url' => '//example-evil.test/phishing',
+            ],
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('notifications.read', $notification->id))
+            ->assertRedirect(route('notifications.index'));
+
+        $readAt = $user->fresh()
+            ->notifications()
+            ->whereKey($notification->id)
+            ->value('read_at');
+
+        $this->assertNotNull($readAt);
+    }
+
     /**
      * @return array{0: User, 1: User, 2: Campaign, 3: Scene, 4: Character}
      */

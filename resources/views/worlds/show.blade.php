@@ -16,9 +16,12 @@
         </p>
 
         <div class="mt-6 flex flex-wrap gap-3">
-            <a href="{{ route('worlds.activate', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">
-                Welt aktivieren
-            </a>
+            <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
+                @csrf
+                <button type="submit" class="ui-btn ui-btn-accent inline-flex">
+                    Welt aktivieren
+                </button>
+            </form>
             <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn inline-flex">
                 Kampagnen in dieser Welt
             </a>

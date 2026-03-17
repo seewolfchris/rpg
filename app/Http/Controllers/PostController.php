@@ -16,6 +16,7 @@ use App\Models\World;
 use App\Support\Gamification\PointService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -256,19 +257,26 @@ class PostController extends Controller
 
     private function createRevisionSnapshot(Post $post, User $editor): void
     {
-        $nextVersion = ((int) $post->revisions()->max('version')) + 1;
+        DB::transaction(function () use ($post, $editor): void {
+            $lockedPost = Post::query()
+                ->whereKey($post->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $post->revisions()->create([
-            'version' => $nextVersion,
-            'editor_id' => $editor->id,
-            'character_id' => $post->character_id,
-            'post_type' => $post->post_type,
-            'content_format' => $post->content_format,
-            'content' => $post->content,
-            'meta' => $post->meta,
-            'moderation_status' => $post->moderation_status,
-            'created_at' => now(),
-        ]);
+            $nextVersion = ((int) $lockedPost->revisions()->max('version')) + 1;
+
+            $lockedPost->revisions()->create([
+                'version' => $nextVersion,
+                'editor_id' => $editor->id,
+                'character_id' => $lockedPost->character_id,
+                'post_type' => $lockedPost->post_type,
+                'content_format' => $lockedPost->content_format,
+                'content' => $lockedPost->content,
+                'meta' => $lockedPost->meta,
+                'moderation_status' => $lockedPost->moderation_status,
+                'created_at' => now(),
+            ]);
+        }, 3);
     }
 
     private function canModerateScene(User $user, Scene $scene): bool

@@ -155,12 +155,15 @@
                                 </div>
 
                                 <div class="flex items-center gap-2">
-                                    <a
-                                        href="{{ $data['action_url'] ?? route('notifications.index') }}"
-                                        class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
-                                    >
-                                        Öffnen
-                                    </a>
+                                    <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                        >
+                                            Öffnen
+                                        </button>
+                                    </form>
 
                                     @if ($isUnread)
                                         <form method="POST" action="{{ route('notifications.read', $notification->id) }}">

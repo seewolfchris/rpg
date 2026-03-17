@@ -50,12 +50,12 @@
                         >
                             Weltwissen
                         </a>
-                        <a
-                            href="{{ route('worlds.activate', ['world' => $catalogWorld]) }}"
-                            class="ui-btn inline-flex"
-                        >
-                            Welt aktivieren
-                        </a>
+                        <form method="POST" action="{{ route('worlds.activate', ['world' => $catalogWorld]) }}">
+                            @csrf
+                            <button type="submit" class="ui-btn inline-flex">
+                                Welt aktivieren
+                            </button>
+                        </form>
                     </div>
                 </article>
             @endforeach

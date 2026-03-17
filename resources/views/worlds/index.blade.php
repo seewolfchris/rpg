@@ -31,9 +31,12 @@
                     <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">
                         Welt ansehen
                     </a>
-                    <a href="{{ route('worlds.activate', ['world' => $world]) }}" class="ui-btn inline-flex">
-                        Welt aktivieren
-                    </a>
+                    <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
+                        @csrf
+                        <button type="submit" class="ui-btn inline-flex">
+                            Welt aktivieren
+                        </button>
+                    </form>
                 </div>
             </article>
         @empty

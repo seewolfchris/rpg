@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-12  
+Stand: 2026-03-17  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -23,9 +23,9 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.21-beta`**.
+- Laufende Versionslinie: **`v0.22-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **145 passed, 737 assertions**
+  - `php artisan test --without-tty --do-not-cache-result` -> **158 passed, 797 assertions**
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
