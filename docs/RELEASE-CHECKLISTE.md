@@ -105,13 +105,16 @@ $PHP_BIN artisan config:cache
 ## 6. Smoke-Test nach Deploy (5 Minuten)
 
 - Automatisierter Basissmoke:
-  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh`
+  - `SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh`
   - Alternativ rein lokal/ohne HTTP-Server: `SMOKE_MODE=artisan scripts/release_smoke.sh`
 - Das Skript kann einen Markdown-Report schreiben (`SMOKE_REPORT_OUT=...`).
+- Wenn `SMOKE_WORLD_SLUG` fehlt, wird `WORLD_DEFAULT_SLUG` aus `.env` verwendet.
+- Bei externer `SMOKE_BASE_URL` wird kein lokaler `artisan serve` gestartet.
 - Login/Logout funktioniert.
 - Dashboard laedt.
 - Weltkatalog und Weltkontext-Routing funktionieren (`/welten`, `/w/{world}/...`).
-- Legacy-URLs liefern `301` auf Weltkontext (`/wissen`, `/wissen/enzyklopaedie`, `/hilfe`).
+- Globale Wissensseiten laden (`/wissen`, `/wissen/enzyklopaedie`), `/hilfe` liefert `302` auf `/wissen`.
+- Kampagnen-/Szenen-Legacy-Pfade ohne Weltsegment liefern `301` auf den Weltkontext.
 - Charakter-Erstellung laedt ohne JS-Fehler.
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
@@ -119,11 +122,11 @@ $PHP_BIN artisan config:cache
 ## 6a. Immersion Phase-A Gate (wenn Welle 1/2 ausgerollt wird)
 
 - One-Command Deploy-Flow (empfohlen):
-  - `scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+  - `PHP_BIN=/opt/plesk/php/8.5/bin/php scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
   - Enthalten: `migrate --force`, `optimize:clear`, `config:cache`, `release_phase_a_smoke.sh` als hartes Go/No-Go-Gate.
   - Deploy-sicherer Default: keine Testausfuehrung auf der Zielumgebung (`--run-test-gates 0`).
 - Verbindlicher Gate-Run fuer DB + Welle 1/2:
-  - `PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" scripts/release_phase_a_smoke.sh`
+  - `PHP_BIN=/opt/plesk/php/8.5/bin/php PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" scripts/release_phase_a_smoke.sh`
 - Hinweis: `<world-slug>` ist eine aktive Welt (`/w/<world-slug>/...`) oder kommt aus `WORLD_DEFAULT_SLUG`.
 - Das Skript prueft:
   - Basis-HTTP-Smoke (`scripts/release_smoke.sh`)
@@ -137,6 +140,7 @@ $PHP_BIN artisan config:cache
   - `scripts/release_phase_a_stability_check.sh --smoke-mode artisan --report-out "docs/PHASE-A-STABILITY-DAY1.md"`
   - Optional mit produktionsnahem HTTP-Smoke:
     - `scripts/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http --report-out "docs/PHASE-A-STABILITY-DAY1.md" --smoke-report-out "docs/SMOKE-PHASE-A-DAY1.md"`
+  - Wichtig: `release_phase_a_stability_check.sh` benoetigt `node` (wegen JS-Draft-Tests). Ohne Node auf dem Zielhost den Stability-Check lokal/CI laufen lassen und auf dem Server nur `release_phase_a_smoke.sh` nutzen.
 
 ## 6b. Performance-EXPLAIN (Staging/Prod, empfohlen)
 

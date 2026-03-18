@@ -43,7 +43,7 @@ Konfiguration in `config/features.php`:
    - `PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" scripts/release_phase_a_smoke.sh`
 
 One-Command-Variante:
-- `scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+- `PHP_BIN=/opt/plesk/php/8.5/bin/php scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
 - Das Skript fuehrt `migrate --force`, Cache-Refresh und danach das Phase-A-Gate in fixer Reihenfolge aus.
 - Standard ist deploy-sicher: keine `artisan test`-Ausfuehrung im Post-Deploy-Flow (`--run-test-gates` default `0`).
 - `<world-slug>` entspricht einer aktiven Welt aus `/w/<world-slug>/...` oder kommt aus `WORLD_DEFAULT_SLUG`.
@@ -85,6 +85,7 @@ One-Command Tagescheck:
 - `scripts/release_phase_a_stability_check.sh --smoke-mode artisan --report-out "docs/PHASE-A-STABILITY-DAY1.md"`
 - Optional produktionsnah mit HTTP-Smoke:
   - `scripts/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http --report-out "docs/PHASE-A-STABILITY-DAY1.md" --smoke-report-out "docs/SMOKE-PHASE-A-DAY1.md"`
+- Hinweis: Das Stability-Skript benoetigt `node`. Ohne Node auf dem Zielhost den Stability-Check lokal/CI ausfuehren und serverseitig nur das Phase-A-Smoke-Gate laufen lassen.
 
 ### Exit-Kriterien fuer Phase B
 - Keine regressiven Fehler im Posting-Flow in 3-5 aufeinanderfolgenden Tagen

@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-12
+Stand: 2026-03-18
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -10,6 +10,7 @@ Stand: 2026-03-12
 
 ## Quality Gates (jede Iteration)
 - `php artisan test --without-tty --do-not-cache-result` ist gruen.
+- `node --test tests/js/*.mjs` ist gruen.
 - `npm run build` ist gruen.
 - `composer analyse` (Larastan/PHPStan) ist gruen.
 - Keine Role/Policy-Regression in GM/Player-Flows.
@@ -50,9 +51,13 @@ Stand: 2026-03-12
   - `app/Http/Middleware/ApplyWorldContext.php`
 - Delivery:
   - `.github/workflows/ci.yml`
-  - `scripts/release_smoke.sh` (inkl. Weltkontext-/Legacy-Redirect-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
+  - `scripts/release_smoke.sh` (inkl. Weltkontext-/Global-Wissen-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
   - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
   - `docs/SMOKE-PASS-STAGING-PROD.md` (echter HTTP-Prod-Smoke)
+- Immersion-Rollout:
+  - `docs/IMMERSION_ROLLOUT_PHASED.md` (Phase A/B/C Betriebsablauf)
+  - `scripts/release_phase_a_flow.sh` (Go/No-Go Rollout fuer Welle 1/2)
+  - `scripts/release_phase_a_stability_check.sh` (Daily-Stability-Checks nach Phase A)
 - Web Push:
   - `laravel-notification-channels/webpush` (VAPID, echte Push-Zustellung)
   - `app/Http/Controllers/Api/WebPushSubscriptionController.php` (`/api/webpush/subscribe`, `/api/webpush/unsubscribe`)
@@ -69,11 +74,12 @@ Stand: 2026-03-12
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
-## Aktueller Verifikationsstand (2026-03-10)
-- `php artisan test --without-tty --do-not-cache-result` -> **141 passed, 711 assertions**
+## Aktueller Verifikationsstand (2026-03-18)
+- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions**
+- `node --test tests/js/*.mjs` -> **8 passed**
 - `npm run build` -> **gruen**
-- `composer analyse` -> im CI-Gate enthalten
-- GitHub Actions (`main`, Run `22879624772`) -> **gruen**
+- `composer analyse` -> **keine Fehler**
+- GitHub Actions (`main`) -> **gruen**
 
 ## Compliance und Betrieb
 - Rechtliche Verlinkung zentral auf:

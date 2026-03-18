@@ -19,7 +19,9 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 Stand: **Release-Beta `v0.22-beta`** (funktional, getestet, build-faehig)
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result` -> **158 passed, 797 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-18)
+- `node --test tests/js/*.mjs` -> **8 passed**
+- `composer analyse` -> **keine Fehler**
 - `npm run build` -> **gruen**
 
 Enthalten:
@@ -40,7 +42,8 @@ Enthalten:
 - Multi-Welt-Plattform:
   - Weltmodell + Admin-CRUD (`worlds`)
   - Weltkontext-Routing unter `/w/{world}/...`
-  - Legacy-URLs ohne Weltsegment mit `301`-Redirect
+  - Legacy-Redirects (`301`) fuer kampagnen-/szenenbezogene Altpfade ohne Weltsegment
+  - Globale Wissensrouten ohne Weltsegment bleiben direkt erreichbar (`/wissen`, `/wissen/*`)
   - Weltbindung auf Kampagnen, Charaktere und Enzyklopaedie-Kategorien
 - PWA-Basis: Manifest, Service Worker, Offline-Lesen (Szenen/Charaktere), Offline-Post-Queue
 - Security-Basis: Validation, Policies, CSRF, Auth-Middleware, Rate Limiting
@@ -156,7 +159,7 @@ Hinweis: Altbefunde sind als Startpunkt in `phpstan-baseline.neon` erfasst. Neue
 Performance-EXPLAIN fuer Welt-Hotpaths:
 
 ```bash
-php artisan perf:world-hotpaths --world=chroniken-der-asche
+php artisan perf:world-hotpaths --world=<world-slug>
 ```
 
 posts.latest_by_id Recheck + Delta-Report:
@@ -168,7 +171,7 @@ scripts/perf_posts_latest_by_id.sh
 Optional mit Parametern:
 
 ```bash
-PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=600 scripts/perf_posts_latest_by_id.sh
+PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=600 scripts/perf_posts_latest_by_id.sh
 ```
 
 Das Skript schreibt:
@@ -237,8 +240,12 @@ scripts/release_smoke.sh
 Optional gegen laufende Staging/Prod-Instanz:
 
 ```bash
-SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="chroniken-der-asche" scripts/release_smoke.sh
+SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
 ```
+
+Hinweis:
+- `SMOKE_WORLD_SLUG` kann entfallen, wenn `WORLD_DEFAULT_SLUG` in `.env` gesetzt ist.
+- Bei externer `SMOKE_BASE_URL` startet `scripts/release_smoke.sh` keinen lokalen `artisan serve`.
 
 Optional ohne HTTP-Checks (nur Route-/Environment-Basischeck):
 
@@ -309,7 +316,9 @@ Erreicht ein Client das Limit, antwortet Laravel mit HTTP `429 Too Many Requests
 - GM Moderation (canonical): `/w/{world}/gm/moderation`
 - Rechtliche Seiten: zentral unter `https://c76.org/impressum/` und `https://c76.org/datenschutz/` (Footer-Links)
 
-Hinweis: Legacy-Routen ohne Weltsegment bleiben erreichbar und leiten per `301` auf die passende Welt-URL um.
+Hinweis:
+- Globale Wissensseiten bleiben ohne Weltsegment erreichbar (`/wissen`, `/wissen/*`).
+- Kampagnen-/Szenen-Legacy-Pfade ohne Weltsegment leiten per `301` auf die passende Welt-URL um.
 
 ## Bekannte Grenzen (Beta)
 
@@ -320,7 +329,8 @@ Hinweis: Legacy-Routen ohne Weltsegment bleiben erreichbar und leiten per `301` 
 ## Deployment-Notiz (Plesk)
 
 - `.env` auf Produktiv-URL/DB setzen
-- `php artisan migrate --force`
+- `PHP_BIN=/opt/plesk/php/8.5/bin/php` setzen (Projekt benoetigt PHP `>= 8.5`)
+- `$PHP_BIN artisan migrate --force`
 - `npm run build`
 - Webroot auf `public/` zeigen lassen
 

@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-17  
+Stand: 2026-03-18  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -25,12 +25,14 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.22-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **158 passed, 797 assertions**
+  - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions**
+  - `node --test tests/js/*.mjs` -> **8 passed**
+  - `composer analyse` -> **keine Fehler**
   - `npm run build` -> **gruen**
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
-  - Aktueller CI-Lauf auf `main` ist gruen (Run `22879624772`)
-  - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Legacy-Redirect-Checks)
+  - Aktueller CI-Lauf auf `main` ist gruen
+  - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
 
 ## 2) Produktstatus nach Bereichen
 
@@ -95,6 +97,8 @@ Repository-Branch: `main`
   - `scripts/release_flow.sh --version vX.XX-beta`
 - Smoke-Report-Ausgabe:
   - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
+  - `WORLD_DEFAULT_SLUG` wird in den Release-/Smoke-Skripten bei leerem Shell-Env direkt aus `.env` gelesen
+  - Bei externer `SMOKE_BASE_URL` startet `release_smoke.sh` keinen lokalen `artisan serve`
 - DB-Betriebsmodus:
   - Produktion: MySQL/MariaDB
   - CI-Tests: SQLite in-memory (`phpunit.xml`)

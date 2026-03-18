@@ -76,8 +76,12 @@ scripts/release_smoke.sh
 Optional gegen laufende Instanz:
 
 ```bash
-SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
+SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
 ```
+
+Hinweise:
+- Wenn `SMOKE_WORLD_SLUG` fehlt, nutzt das Skript `WORLD_DEFAULT_SLUG` aus `.env`.
+- Bei externer `SMOKE_BASE_URL` wird kein lokaler `artisan serve` gestartet.
 
 Optional ohne HTTP-Checks (z. B. CI/offline):
 
@@ -99,3 +103,9 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
 3. Optionaler Runtime-Hint fuer `posts.latest_by_id` nur bei stabil messbarem Vorteil:
    - `.env`: `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
 4. Wenn Gate `ROT` ist: Hotpath analysieren, Baseline/Datensatz pruefen, danach erneut laufen lassen.
+
+## Phase-A Stabilitaetschecks
+- `scripts/release_phase_a_stability_check.sh` benoetigt `node` (JS-Draft-Tests).
+- Falls Zielhost kein Node installiert hat:
+  - Stabilitaetscheck lokal oder in CI ausfuehren.
+  - Auf dem Zielhost nur `scripts/release_phase_a_smoke.sh` als laufende Betriebspruefung nutzen.
