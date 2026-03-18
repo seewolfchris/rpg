@@ -5,7 +5,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 PHP_BIN="${PHP_BIN:-php}"
-WORLD_SLUG="${PERF_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-chroniken-der-asche}}"
+WORLD_SLUG="${PERF_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-}}"
 ITERATIONS="${PERF_ITERATIONS:-400}"
 REPORT_PREFIX="${PERF_REPORT_PREFIX:-docs/PERFORMANCE-POSTS-LATEST-BY-ID}"
 REPORT_OUT="${PERF_REPORT_OUT:-${REPORT_PREFIX}-$(date -u '+%Y-%m-%d').md}"
@@ -30,6 +30,17 @@ require_numeric() {
 
   if [[ "$value" -lt 1 ]]; then
     echo "ERROR: ${label} must be >= 1 (received: ${value})"
+    exit 1
+  fi
+}
+
+require_non_empty() {
+  local value="$1"
+  local label="$2"
+  local hint="$3"
+
+  if [[ -z "$value" ]]; then
+    echo "ERROR: ${label} is empty. ${hint}"
     exit 1
   fi
 }
@@ -195,6 +206,7 @@ require_cmd awk
 require_cmd find
 
 require_numeric "$ITERATIONS" "PERF_ITERATIONS"
+require_non_empty "$WORLD_SLUG" "PERF_WORLD_SLUG/WORLD_DEFAULT_SLUG" "Set PERF_WORLD_SLUG or WORLD_DEFAULT_SLUG (e.g. 'my-world')."
 
 REPORT_OUT_ABS="$(absolute_path "$REPORT_OUT")"
 LATEST_OUT_ABS="$(absolute_path "$LATEST_OUT")"

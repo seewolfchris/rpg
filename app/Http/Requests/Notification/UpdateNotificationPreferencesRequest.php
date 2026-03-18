@@ -32,6 +32,8 @@ class UpdateNotificationPreferencesRequest extends FormRequest
             'campaign_invitation_database' => ['required', 'boolean'],
             'campaign_invitation_mail' => ['required', 'boolean'],
             'campaign_invitation_browser' => ['required', 'boolean'],
+            'character_mention_database' => ['required', 'boolean'],
+            'character_mention_mail' => ['required', 'boolean'],
         ];
     }
 
@@ -47,6 +49,8 @@ class UpdateNotificationPreferencesRequest extends FormRequest
             'campaign_invitation_database' => $this->boolean('campaign_invitation_database'),
             'campaign_invitation_mail' => $this->boolean('campaign_invitation_mail'),
             'campaign_invitation_browser' => $this->boolean('campaign_invitation_browser'),
+            'character_mention_database' => $this->boolean('character_mention_database'),
+            'character_mention_mail' => $this->boolean('character_mention_mail'),
         ]);
     }
 
@@ -81,6 +85,10 @@ class UpdateNotificationPreferencesRequest extends FormRequest
                 ),
                 'mail' => (bool) $this->validated('campaign_invitation_mail', data_get($defaults, 'campaign_invitation.mail', false)),
                 'browser' => (bool) $this->validated('campaign_invitation_browser', data_get($defaults, 'campaign_invitation.browser', false)),
+            ],
+            'character_mention' => [
+                'database' => (bool) $this->validated('character_mention_database', data_get($defaults, 'character_mention.database', true)),
+                'mail' => (bool) $this->validated('character_mention_mail', data_get($defaults, 'character_mention.mail', false)),
             ],
         ];
     }

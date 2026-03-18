@@ -38,6 +38,10 @@ class User extends Authenticatable
             'mail' => false,
             'browser' => false,
         ],
+        'character_mention' => [
+            'database' => true,
+            'mail' => false,
+        ],
     ];
 
     /**
@@ -106,6 +110,16 @@ class User extends Authenticatable
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
+    }
+
+    public function postReactions(): HasMany
+    {
+        return $this->hasMany(PostReaction::class);
+    }
+
+    public function receivedPostMentions(): HasMany
+    {
+        return $this->hasMany(PostMention::class, 'mentioned_user_id');
     }
 
     public function approvedPosts(): HasMany
@@ -211,8 +225,10 @@ class User extends Authenticatable
 
         foreach ($resolved as $kind => $channels) {
             foreach (array_keys($channels) as $channel) {
-                if (isset($stored[$kind][$channel])) {
-                    $resolved[$kind][$channel] = (bool) $stored[$kind][$channel];
+                $storedValue = data_get($stored, $kind.'.'.$channel);
+
+                if ($storedValue !== null) {
+                    $resolved[$kind][$channel] = (bool) $storedValue;
                 }
             }
         }

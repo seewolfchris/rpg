@@ -18,6 +18,7 @@ use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
@@ -155,6 +156,10 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->middleware('throttle:writes')
             ->name('campaigns.scenes.posts.store');
 
+        Route::post('/posts/preview', [PostController::class, 'preview'])
+            ->middleware('throttle:writes')
+            ->name('posts.preview');
+
         Route::post('/campaigns/{campaign}/scenes/{scene}/inventory-quick-action', [SceneController::class, 'inventoryQuickAction'])
             ->middleware('throttle:writes')
             ->name('campaigns.scenes.inventory-quick-action');
@@ -187,6 +192,16 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->withoutScopedBindings()
             ->middleware('throttle:moderation')
             ->name('posts.unpin');
+
+        Route::post('/posts/{post}/reactions', [PostReactionController::class, 'store'])
+            ->withoutScopedBindings()
+            ->middleware('throttle:writes')
+            ->name('posts.reactions.store');
+
+        Route::delete('/posts/{post}/reactions', [PostReactionController::class, 'destroy'])
+            ->withoutScopedBindings()
+            ->middleware('throttle:writes')
+            ->name('posts.reactions.destroy');
 
         Route::get('/gm/moderation', [GmModerationController::class, 'index'])
             ->middleware('role:gm,admin')

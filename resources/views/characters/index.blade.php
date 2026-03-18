@@ -8,6 +8,8 @@
         $isGmView = auth()->user()->isGmOrAdmin();
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
         $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
+        $characterStatuses = (array) ($characterStatuses ?? config('characters.statuses', []));
+        $selectedStatus = (string) ($selectedStatus ?? 'all');
         $indexAttributeKeys = ['mu', 'kl', 'in', 'ch'];
         $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
             $value = $characterModel->{$attributeKey};
@@ -66,6 +68,21 @@
                             {{ $worldOption->name }}
                         </option>
                     @endforeach
+                    </select>
+            </div>
+            <div>
+                <label for="status" class="mb-2 block text-xs uppercase tracking-widest text-stone-400">Statusfilter</label>
+                <select
+                    id="status"
+                    name="status"
+                    class="rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-100 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/35"
+                >
+                    <option value="all" @selected($selectedStatus === 'all')>Alle</option>
+                    @foreach ($characterStatuses as $statusKey => $statusMeta)
+                        <option value="{{ $statusKey }}" @selected($selectedStatus === $statusKey)>
+                            {{ $statusMeta['label'] ?? ucfirst((string) $statusKey) }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
             <button type="submit" class="ui-btn inline-flex">Anwenden</button>
@@ -87,6 +104,10 @@
                         $originLabel = (string) data_get($sheet, 'origins.'.$character->origin, $character->origin ?: '-');
                         $speciesLabel = (string) data_get($sheet, 'species.'.$character->species.'.label', $character->species ?: '-');
                         $callingLabel = (string) data_get($sheet, 'callings.'.$character->calling.'.label', $character->calling ?: '-');
+                        $statusKey = (string) ($character->status ?: config('characters.default_status', 'active'));
+                        $statusMeta = (array) data_get($characterStatuses, $statusKey, data_get($characterStatuses, 'active', []));
+                        $statusLabel = (string) ($statusMeta['label'] ?? ucfirst($statusKey));
+                        $statusBadgeClass = (string) ($statusMeta['badge_class'] ?? 'border-stone-600/80 bg-stone-900/35 text-stone-200');
                     @endphp
                     <article class="overflow-hidden rounded-xl border border-stone-800 bg-neutral-900/65 shadow-lg shadow-black/30">
                         <img
@@ -109,6 +130,10 @@
 
                             <div class="space-y-1 text-xs uppercase tracking-[0.08em] text-stone-400">
                                 <p>Welt: <span class="text-stone-200">{{ $character->world?->name ?? '-' }}</span></p>
+                                <p>
+                                    Status:
+                                    <span class="ml-1 inline-flex rounded border px-1.5 py-0.5 text-[0.62rem] tracking-[0.08em] {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
+                                </p>
                                 <p>Herkunft: <span class="text-stone-200">{{ $originLabel }}</span></p>
                                 <p>Spezies: <span class="text-stone-200">{{ $speciesLabel }}</span></p>
                                 <p>Berufung: <span class="text-stone-200">{{ $callingLabel }}</span></p>

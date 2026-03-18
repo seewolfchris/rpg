@@ -15,6 +15,7 @@ class StorePostService
         private readonly PostProbeService $postProbeService,
         private readonly PostInventoryAwardService $postInventoryAwardService,
         private readonly ScenePostNotificationService $scenePostNotificationService,
+        private readonly PostMentionNotificationService $postMentionNotificationService,
         private readonly PointService $pointService,
         private readonly StructuredLogger $logger,
     ) {}
@@ -24,6 +25,13 @@ class StorePostService
      */
     public function store(Scene $scene, User $user, array $data, bool $isModerator): StorePostResult
     {
+        $meta = [];
+        $icQuote = trim((string) ($data['ic_quote'] ?? ''));
+
+        if (($data['post_type'] ?? 'ooc') === 'ic' && $icQuote !== '') {
+            $meta['ic_quote'] = $icQuote;
+        }
+
         $post = Post::query()->create([
             'scene_id' => $scene->id,
             'user_id' => $user->id,
@@ -31,7 +39,7 @@ class StorePostService
             'post_type' => $data['post_type'],
             'content_format' => $data['content_format'],
             'content' => $data['content'],
-            'meta' => null,
+            'meta' => $meta !== [] ? $meta : null,
             'moderation_status' => $isModerator ? 'approved' : 'pending',
             'approved_at' => $isModerator ? now() : null,
             'approved_by' => $isModerator ? $user->id : null,
@@ -56,6 +64,7 @@ class StorePostService
         $this->ensureAuthorSubscription($post, $user);
         $this->pointService->syncApprovedPost($post);
         $notificationResult = $this->scenePostNotificationService->notifySceneParticipants($post, $user);
+        $mentionRecipientCount = $this->postMentionNotificationService->notifyMentions($post, $user);
 
         $this->logger->info('post.created', [
             'user_id' => $user->id,
@@ -67,6 +76,7 @@ class StorePostService
             'inventory_award_applied' => $inventoryAwardApplied,
             'notification_recipients' => $notificationResult['in_app_recipients'],
             'webpush_recipients' => $notificationResult['webpush_recipients'],
+            'mention_recipients' => $mentionRecipientCount,
         ]);
 
         return new StorePostResult(

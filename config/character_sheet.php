@@ -2,14 +2,14 @@
 
 return [
     'attributes' => [
-        'mu' => ['label' => 'Mut', 'min' => 30, 'max' => 60],
-        'kl' => ['label' => 'Klugheit', 'min' => 30, 'max' => 60],
-        'in' => ['label' => 'Intuition', 'min' => 30, 'max' => 60],
-        'ch' => ['label' => 'Charisma', 'min' => 30, 'max' => 60],
-        'ff' => ['label' => 'Fingerfertigkeit', 'min' => 30, 'max' => 60],
-        'ge' => ['label' => 'Gewandtheit', 'min' => 30, 'max' => 60],
-        'ko' => ['label' => 'Konstitution', 'min' => 30, 'max' => 60],
-        'kk' => ['label' => 'Körperkraft', 'min' => 30, 'max' => 60],
+        'mu' => ['label' => 'Mut', 'min' => 30, 'max' => 60, 'description' => 'Willenskraft, Standhaftigkeit und psychische Belastbarkeit in Gefahrensituationen.'],
+        'kl' => ['label' => 'Klugheit', 'min' => 30, 'max' => 60, 'description' => 'Analytisches Denken, Wissen, Lernfähigkeit und strategische Planung.'],
+        'in' => ['label' => 'Intuition', 'min' => 30, 'max' => 60, 'description' => 'Bauchgefühl, Wahrnehmung feiner Signale und schnelles situationsbezogenes Entscheiden.'],
+        'ch' => ['label' => 'Charisma', 'min' => 30, 'max' => 60, 'description' => 'Ausstrahlung, Überzeugungskraft und soziale Präsenz in Interaktionen.'],
+        'ff' => ['label' => 'Fingerfertigkeit', 'min' => 30, 'max' => 60, 'description' => 'Feinmotorik, präzise Handarbeit und kontrollierte Bewegungen unter Druck.'],
+        'ge' => ['label' => 'Gewandtheit', 'min' => 30, 'max' => 60, 'description' => 'Beweglichkeit, Körperkoordination und Reaktionsvermögen im Raum.'],
+        'ko' => ['label' => 'Konstitution', 'min' => 30, 'max' => 60, 'description' => 'Physische Widerstandskraft, Ausdauer und Erholungsfähigkeit.'],
+        'kk' => ['label' => 'Körperkraft', 'min' => 30, 'max' => 60, 'description' => 'Rohkraft, Tragfähigkeit und Durchsetzungsvermögen bei körperlichen Aufgaben.'],
     ],
 
     'average_max' => 50,

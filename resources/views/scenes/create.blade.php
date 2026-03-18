@@ -8,10 +8,9 @@
         <h1 class="font-heading text-3xl text-stone-100">Szene erstellen</h1>
         <p class="mt-2 text-stone-300">Kampagne: {{ $campaign->title }}</p>
 
-        <form method="POST" action="{{ route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-8">
+        <form method="POST" action="{{ route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-8" enctype="multipart/form-data">
             @csrf
             @include('scenes._form', ['campaign' => $campaign, 'submitLabel' => 'Szene erstellen'])
         </form>
     </section>
 @endsection
-

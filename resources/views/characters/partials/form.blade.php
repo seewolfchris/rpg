@@ -13,6 +13,7 @@
 
     $traitsMin = (int) data_get($sheet, 'traits.min', 1);
     $traitsMax = (int) data_get($sheet, 'traits.max', 3);
+    $statusOptions = (array) config('characters.statuses', []);
 
     $defaultOrigin = array_key_exists('native_vhaltor', $originOptions) ? 'native_vhaltor' : (array_key_first($originOptions) ?? '');
     $defaultSpecies = array_key_exists('mensch', $speciesOptions) ? 'mensch' : (array_key_first($speciesOptions) ?? '');
@@ -33,6 +34,7 @@
     $selectedOrigin = (string) old('origin', $character?->origin ?? $defaultOrigin);
     $selectedSpecies = (string) old('species', $character?->species ?? $defaultSpecies);
     $selectedCalling = (string) old('calling', $character?->calling ?? $defaultCalling);
+    $selectedStatus = (string) old('status', $character?->status ?? (string) config('characters.default_status', 'active'));
 
     $legacyToPercent = function (?int $rawValue): int {
         if ($rawValue === null) {
@@ -326,6 +328,22 @@
                     </div>
 
                     <div>
+                        <label for="status" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Status</label>
+                        <select
+                            id="status"
+                            name="status"
+                            required
+                            class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
+                        >
+                            @foreach ($statusOptions as $statusKey => $statusMeta)
+                                <option value="{{ $statusKey }}" @selected($selectedStatus === $statusKey)>
+                                    {{ $statusMeta['label'] ?? ucfirst((string) $statusKey) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
                         <label for="bio" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Biografie</label>
                         <textarea
                             id="bio"
@@ -456,14 +474,18 @@
                         $label = (string) ($meta['label'] ?? strtoupper($key));
                         $min = (int) ($meta['min'] ?? 30);
                         $max = (int) ($meta['max'] ?? 60);
+                        $description = (string) ($meta['description'] ?? '');
                     @endphp
                     <article class="rounded-xl border border-stone-700/80 bg-black/45 p-4">
                         <div class="flex items-center justify-between gap-3">
-                            <label for="attr-{{ $key }}" class="text-sm font-semibold uppercase tracking-widest text-stone-200">{{ $label }}</label>
+                            <label for="attr-{{ $key }}" class="text-sm font-semibold uppercase tracking-widest text-stone-200" @if ($description !== '') title="{{ $description }}" @endif>{{ $label }}</label>
                             <span class="rounded border border-stone-600/80 bg-stone-800/60 px-2 py-0.5 text-xs text-stone-300"
                                 x-text="effectiveAttributes['{{ $key }}'] + ' % effektiv'"
                             ></span>
                         </div>
+                        @if ($description !== '')
+                            <p class="mt-2 text-xs text-stone-400">{{ $description }}</p>
+                        @endif
 
                         <input
                             id="attr-{{ $key }}"

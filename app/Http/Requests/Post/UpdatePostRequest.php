@@ -27,9 +27,20 @@ class UpdatePostRequest extends FormRequest
             'character_id' => ['nullable', 'integer', 'exists:characters,id'],
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
+            'ic_quote' => ['nullable', 'string', 'max:180'],
             'moderation_status' => ['nullable', Rule::in(['pending', 'approved', 'rejected'])],
             'moderation_note' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $quote = trim((string) $this->input('ic_quote', ''));
+
+        $this->merge([
+            'ic_quote' => $quote !== '' ? $quote : null,
+            'moderation_note' => trim((string) $this->input('moderation_note', '')),
+        ]);
     }
 
     public function withValidator(Validator $validator): void
@@ -59,6 +70,10 @@ class UpdatePostRequest extends FormRequest
 
             if ($postType === 'ic' && ! $characterId) {
                 $validator->errors()->add('character_id', 'Für IC-Beiträge ist ein Charakter erforderlich.');
+            }
+
+            if ($postType !== 'ic' && trim((string) ($this->input('ic_quote') ?? '')) !== '') {
+                $validator->errors()->add('ic_quote', 'Ein IC-Zitat ist nur für IC-Beiträge erlaubt.');
             }
 
             if ($characterId) {

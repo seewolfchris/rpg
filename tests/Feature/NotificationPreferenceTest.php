@@ -30,6 +30,8 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_database' => '1',
             'campaign_invitation_mail' => '0',
             'campaign_invitation_browser' => '0',
+            'character_mention_database' => '1',
+            'character_mention_mail' => '1',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -44,6 +46,8 @@ class NotificationPreferenceTest extends TestCase
         $this->assertTrue((bool) data_get($preferences, 'campaign_invitation.database'));
         $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.mail'));
         $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.browser'));
+        $this->assertTrue((bool) data_get($preferences, 'character_mention.database'));
+        $this->assertTrue((bool) data_get($preferences, 'character_mention.mail'));
     }
 
     public function test_enabling_browser_channel_keeps_database_channel_enabled_for_storage(): void
@@ -60,6 +64,8 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_database' => '0',
             'campaign_invitation_mail' => '0',
             'campaign_invitation_browser' => '0',
+            'character_mention_database' => '0',
+            'character_mention_mail' => '0',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Character;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -38,9 +40,27 @@ class LeaderboardController extends Controller
             })
             ->count() + 1;
 
+        $activeCharactersThisWeek = collect();
+
+        if ((bool) config('features.wave4.active_characters_week', false)) {
+            $activeCharactersThisWeek = Character::query()
+                ->select(['characters.id', 'characters.name', 'characters.user_id'])
+                ->selectRaw('COUNT(posts.id) as weekly_posts_count')
+                ->join('posts', 'posts.character_id', '=', 'characters.id')
+                ->where('posts.post_type', 'ic')
+                ->where('posts.created_at', '>=', Carbon::now()->subDays(7))
+                ->groupBy('characters.id', 'characters.name', 'characters.user_id')
+                ->with('user:id,name')
+                ->orderByDesc('weekly_posts_count')
+                ->orderBy('characters.name')
+                ->limit(10)
+                ->get();
+        }
+
         return view('leaderboard.index', [
             'leaders' => $leaders,
             'rank' => $rank,
+            'activeCharactersThisWeek' => $activeCharactersThisWeek,
         ]);
     }
 }

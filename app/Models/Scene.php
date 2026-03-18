@@ -20,9 +20,12 @@ class Scene extends Model
         'created_by',
         'title',
         'slug',
+        'previous_scene_id',
         'summary',
         'description',
+        'header_image_path',
         'status',
+        'mood',
         'position',
         'allow_ooc',
         'opens_at',
@@ -35,6 +38,7 @@ class Scene extends Model
     protected function casts(): array
     {
         return [
+            'previous_scene_id' => 'integer',
             'allow_ooc' => 'boolean',
             'position' => 'integer',
             'opens_at' => 'datetime',
@@ -55,6 +59,11 @@ class Scene extends Model
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
+    }
+
+    public function previousScene(): BelongsTo
+    {
+        return $this->belongsTo(Scene::class, 'previous_scene_id');
     }
 
     public function diceRolls(): HasMany

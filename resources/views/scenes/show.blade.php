@@ -3,13 +3,29 @@
 @section('title', $scene->title.' | Szene')
 
 @section('content')
+    @php
+        $sceneMoodConfig = (array) config('scenes.moods', []);
+        $sceneMoodKey = (string) ($scene->mood ?: config('scenes.default_mood', 'neutral'));
+        $sceneMoodMeta = (array) data_get($sceneMoodConfig, $sceneMoodKey, data_get($sceneMoodConfig, 'neutral', []));
+        $sceneMoodLabel = (string) ($sceneMoodMeta['label'] ?? ucfirst($sceneMoodKey));
+        $sceneMoodThemeClass = (string) ($sceneMoodMeta['theme_class'] ?? 'scene-mood-neutral');
+        $sceneMoodBadgeClass = (string) ($sceneMoodMeta['badge_class'] ?? '');
+        $sceneHeaderStyle = null;
+        $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
+        $wave3DraftAutosaveEnabled = (bool) config('features.wave3.draft_autosave', false);
+        $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
+
+        if (! empty($scene->header_image_path)) {
+            $sceneHeaderStyle = "background-image: linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,.78)), url('".asset('storage/'.$scene->header_image_path)."'); background-size: cover; background-position: center;";
+        }
+    @endphp
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="ui-card p-6 sm:p-8">
+        <div class="ui-card {{ $sceneMoodThemeClass }} p-6 sm:p-8">
             <a href="{{ route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="break-words text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
                 Zur Kampagne: {{ $campaign->title }}
             </a>
 
-            <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+            <div class="mt-3 flex flex-wrap items-start justify-between gap-4 rounded-xl p-4 sm:p-5 {{ $sceneHeaderStyle ? 'border border-stone-700/80' : '' }}" @if ($sceneHeaderStyle) style="{{ $sceneHeaderStyle }}" @endif>
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Szene</p>
                     <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $scene->title }}</h1>
@@ -24,6 +40,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="ui-badge !rounded">
                         {{ $scene->status }}
+                    </span>
+                    <span class="ui-badge !rounded {{ $sceneMoodBadgeClass }}">
+                        Stimmung: {{ $sceneMoodLabel }}
                     </span>
                     @if ($scene->allow_ooc)
                         <span class="ui-badge !rounded !border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300">OOC ON</span>
@@ -50,6 +69,22 @@
                 </div>
             </div>
 
+            @if ($scene->previousScene)
+                <div class="ui-card-soft mt-4 flex flex-wrap items-center gap-2 border-amber-700/40 bg-amber-950/20 px-4 py-3">
+                    <p class="text-xs uppercase tracking-[0.08em] text-amber-300">Diese Szene folgt auf:</p>
+                    @if (auth()->user()->can('view', $scene->previousScene))
+                        <a
+                            href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene->previousScene]) }}"
+                            class="text-sm font-semibold text-amber-100 underline decoration-amber-500/60 underline-offset-4 hover:text-amber-50"
+                        >
+                            {{ $scene->previousScene->title }}
+                        </a>
+                    @else
+                        <span class="text-sm text-amber-100/90">{{ $scene->previousScene->title }}</span>
+                    @endif
+                </div>
+            @endif
+
             @if ($scene->description)
                 <article class="ui-card-soft mt-6 p-5">
                     <h2 class="font-heading text-xl text-stone-100">Szenenbeschreibung</h2>
@@ -72,7 +107,7 @@
                                         • {{ $pinnedPost->character->name }}
                                     @endif
                                     @if ($pinnedPost->pinned_at)
-                                        • gepinnt {{ $pinnedPost->pinned_at->format('d.m.Y H:i') }}
+                                        • gepinnt <x-relative-time :at="$pinnedPost->pinned_at" />
                                     @endif
                                 </p>
                                 @if (! empty($pinnedPostJumpUrls[$pinnedPost->id]))
@@ -248,7 +283,7 @@
                 </p>
             @elseif ($subscription && $subscription->last_read_at)
                 <p class="mt-4 text-xs uppercase tracking-[0.08em] text-stone-500">
-                    Letzter Read-Checkpoint: {{ $subscription->last_read_at->format('d.m.Y H:i') }}
+                    Letzter Read-Checkpoint: <x-relative-time :at="$subscription->last_read_at" />
                 </p>
             @endif
             @error('post_id')
@@ -389,7 +424,7 @@
             </section>
         @endif
 
-        <section class="ui-card p-6 sm:p-8">
+        <section class="ui-card p-6 sm:p-8" data-scene-thread-reading-mode data-scene-id="{{ $scene->id }}">
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
 
             @if ($posts->isEmpty())
@@ -419,11 +454,13 @@
                         @endif
                     </section>
 
-                    <section class="ui-card-soft border-stone-700/70 bg-neutral-900/35 p-4">
-                        <h3 class="font-heading text-xl text-stone-100">OOC-Kanal</h3>
-                        <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">
-                            Absprachen und Meta-Kommentare getrennt vom Abenteuerfluss.
-                        </p>
+                    <details data-ooc-thread class="ui-card-soft border-stone-700/70 bg-neutral-900/35 p-4">
+                        <summary class="cursor-pointer list-none">
+                            <h3 class="font-heading inline text-xl text-stone-100">OOC-Kanal</h3>
+                            <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">
+                                Absprachen und Meta-Kommentare getrennt vom Abenteuerfluss.
+                            </p>
+                        </summary>
 
                         @if ($oocPosts->isEmpty())
                             <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
@@ -434,7 +471,7 @@
                                 @endforeach
                             </div>
                         @endif
-                    </section>
+                    </details>
                 </div>
 
                 <div class="mt-6">
@@ -454,6 +491,9 @@
                     action="{{ route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
                     class="mt-6"
                     data-offline-post-form
+                    @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif
+                    @if ($wave3EditorPreviewEnabled) data-preview-url="{{ route('posts.preview', ['world' => $campaign->world]) }}" @endif
+                    @if ($wave3DraftAutosaveEnabled) data-draft-key="scene-{{ $scene->id }}-user-{{ auth()->id() }}-new" @endif
                 >
                     @csrf
                     @include('posts._form', [

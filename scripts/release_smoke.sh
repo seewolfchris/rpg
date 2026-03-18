@@ -6,7 +6,7 @@ cd "$PROJECT_ROOT"
 
 PHP_BIN="${PHP_BIN:-php}"
 BASE_URL="${SMOKE_BASE_URL:-http://127.0.0.1:8000}"
-WORLD_SLUG="${SMOKE_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-chroniken-der-asche}}"
+WORLD_SLUG="${SMOKE_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-}}"
 START_SERVER="${SMOKE_START_SERVER:-1}"
 SMOKE_MODE="${SMOKE_MODE:-http}"
 SMOKE_EFFECTIVE_MODE="$SMOKE_MODE"
@@ -29,6 +29,17 @@ trap cleanup EXIT
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "ERROR: required command not found: $1"
+    exit 1
+  fi
+}
+
+require_non_empty() {
+  local value="$1"
+  local label="$2"
+  local hint="$3"
+
+  if [[ -z "$value" ]]; then
+    echo "ERROR: $label is empty. $hint"
     exit 1
   fi
 }
@@ -159,6 +170,8 @@ if [[ "$SMOKE_MODE" != "http" ]]; then
   echo "ERROR: unsupported SMOKE_MODE='$SMOKE_MODE' (expected 'http' or 'artisan')"
   exit 1
 fi
+
+require_non_empty "$WORLD_SLUG" "SMOKE_WORLD_SLUG/WORLD_DEFAULT_SLUG" "Set SMOKE_WORLD_SLUG or WORLD_DEFAULT_SLUG (e.g. 'my-world')."
 
 if [[ "$START_SERVER" == "1" ]]; then
   echo "Starting local Laravel server for smoke checks..."

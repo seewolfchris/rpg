@@ -237,7 +237,7 @@
                                         Status: {{ strtoupper($invitation->status) }}
                                         • Rolle: {{ strtoupper($invitation->role) }}
                                         • von {{ $invitation->inviter?->name ?? 'System' }}
-                                        • {{ $invitation->created_at?->format('d.m.Y H:i') }}
+                                        • <x-relative-time :at="$invitation->created_at" />
                                     </p>
                                 </div>
 

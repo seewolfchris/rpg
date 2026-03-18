@@ -3,7 +3,7 @@
         <div>
             <p class="text-sm text-stone-200">
                 <span class="font-semibold">{{ $post->user->name }}</span>
-                <span class="text-stone-500">• {{ $post->created_at->format('d.m.Y H:i') }}</span>
+                <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
             </p>
 
             @if ($post->character)
@@ -101,9 +101,53 @@
         </div>
     </div>
 
-    <div class="mt-4 break-words leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+    <div class="mt-4 max-w-[75ch] break-words leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+        @php($postMeta = is_array($post->meta) ? $post->meta : [])
+        @php($icQuote = trim((string) ($postMeta['ic_quote'] ?? '')))
+        @if ($post->post_type === 'ic' && $icQuote !== '')
+            <blockquote class="mb-4 rounded-lg border border-amber-700/50 bg-amber-900/10 px-4 py-3 text-sm italic text-amber-100">
+                „{{ $icQuote }}“
+            </blockquote>
+        @endif
         {!! $post->renderedContent() !!}
     </div>
+
+    @if (config('features.wave4.reactions', false))
+        @php($reactionSymbols = ['heart' => '❤️', 'joy' => '😂', 'clap' => '👏', 'fire' => '🔥'])
+        @php($reactionCollection = $post->relationLoaded('reactions') ? $post->reactions : collect())
+        @php($reactionCounts = $reactionCollection->groupBy('emoji')->map(fn ($items) => $items->count()))
+        @php($currentUserReactionKeys = $reactionCollection->where('user_id', (int) auth()->id())->pluck('emoji')->all())
+        <section class="mt-4 flex flex-wrap items-center gap-2">
+            @foreach ($reactionSymbols as $reactionKey => $reactionSymbol)
+                @php($currentCount = (int) ($reactionCounts[$reactionKey] ?? 0))
+                @php($hasReacted = in_array($reactionKey, $currentUserReactionKeys, true))
+                @if ($hasReacted)
+                    <form method="POST" action="{{ route('posts.reactions.destroy', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                        @csrf
+                        @method('DELETE')
+                        <input type="hidden" name="emoji" value="{{ $reactionKey }}">
+                        <button
+                            type="submit"
+                            class="rounded-full border border-amber-600/70 bg-amber-900/25 px-2.5 py-1 text-xs text-amber-100 transition hover:bg-amber-900/40"
+                        >
+                            {{ $reactionSymbol }} {{ $currentCount }}
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('posts.reactions.store', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                        @csrf
+                        <input type="hidden" name="emoji" value="{{ $reactionKey }}">
+                        <button
+                            type="submit"
+                            class="rounded-full border border-stone-600/80 bg-black/35 px-2.5 py-1 text-xs text-stone-200 transition hover:border-stone-400"
+                        >
+                            {{ $reactionSymbol }} {{ $currentCount }}
+                        </button>
+                    </form>
+                @endif
+            @endforeach
+        </section>
+    @endif
 
     @if ($post->diceRoll)
         @php($probeRolls = is_array($post->diceRoll->rolls) ? $post->diceRoll->rolls : [])
@@ -221,7 +265,7 @@
                     <li class="rounded-md border border-stone-800/70 bg-neutral-900/50 p-3">
                         <p class="text-xs uppercase tracking-[0.08em] text-stone-500">
                             v{{ $revision->version }}
-                            • {{ $revision->created_at->format('d.m.Y H:i') }}
+                            • <x-relative-time :at="$revision->created_at" />
                             • {{ strtoupper($revision->post_type) }}
                             @if ($revision->editor)
                                 • bearbeitet von {{ $revision->editor->name }}
@@ -249,7 +293,7 @@
                 von {{ $post->pinnedBy->name }}
             @endif
             @if ($post->pinned_at)
-                • {{ $post->pinned_at->format('d.m.Y H:i') }}
+                • <x-relative-time :at="$post->pinned_at" />
             @endif
         </p>
     @endif
@@ -266,7 +310,7 @@
                         <p class="text-xs uppercase tracking-[0.08em] text-stone-500">
                             {{ strtoupper($log->previous_status) }}
                             → {{ strtoupper($log->new_status) }}
-                            • {{ $log->created_at->format('d.m.Y H:i') }}
+                            • <x-relative-time :at="$log->created_at" />
                             @if ($log->moderator)
                                 • von {{ $log->moderator->name }}
                             @endif

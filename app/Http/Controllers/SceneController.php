@@ -18,6 +18,7 @@ use App\Models\SceneSubscription;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class SceneController extends Controller
@@ -38,7 +39,9 @@ class SceneController extends Controller
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Scene::class, $campaign]);
 
-        return view('scenes.create', compact('world', 'campaign'));
+        $previousSceneOptions = $this->previousSceneOptions($campaign);
+
+        return view('scenes.create', compact('world', 'campaign', 'previousSceneOptions'));
     }
 
     public function store(StoreSceneRequest $request, World $world, Campaign $campaign): RedirectResponse
@@ -47,8 +50,13 @@ class SceneController extends Controller
         $this->authorize('create', [Scene::class, $campaign]);
 
         $data = $request->validated();
+        unset($data['header_image'], $data['remove_header_image']);
         $data['campaign_id'] = $campaign->id;
         $data['created_by'] = auth()->id();
+
+        if ($request->hasFile('header_image')) {
+            $data['header_image_path'] = $request->file('header_image')->store('scene-headers', 'public');
+        }
 
         $scene = Scene::query()->create($data);
 
@@ -65,7 +73,7 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
-        $scene->load(['campaign.owner', 'creator']);
+        $scene->load(['campaign.owner', 'creator', 'previousScene']);
         $scene->loadCount('subscriptions');
 
         $userId = (int) auth()->id();
@@ -98,7 +106,7 @@ class SceneController extends Controller
 
         $posts = Post::query()
             ->where('scene_id', $scene->id)
-            ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator', 'diceRoll.character.user'])
+            ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator', 'diceRoll.character.user', 'reactions'])
             ->latestByIdHotpath()
             ->paginate(self::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
@@ -190,7 +198,9 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
-        return view('scenes.edit', compact('world', 'campaign', 'scene'));
+        $previousSceneOptions = $this->previousSceneOptions($campaign, $scene);
+
+        return view('scenes.edit', compact('world', 'campaign', 'scene', 'previousSceneOptions'));
     }
 
     public function update(UpdateSceneRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -198,7 +208,23 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
-        $scene->update($request->validated());
+        $data = $request->validated();
+        unset($data['header_image'], $data['remove_header_image']);
+
+        if ($request->boolean('remove_header_image') && $scene->header_image_path) {
+            Storage::disk('public')->delete($scene->header_image_path);
+            $data['header_image_path'] = null;
+        }
+
+        if ($request->hasFile('header_image')) {
+            if ($scene->header_image_path) {
+                Storage::disk('public')->delete($scene->header_image_path);
+            }
+
+            $data['header_image_path'] = $request->file('header_image')->store('scene-headers', 'public');
+        }
+
+        $scene->update($data);
 
         return redirect()
             ->route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene])
@@ -209,6 +235,10 @@ class SceneController extends Controller
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('delete', $scene);
+
+        if ($scene->header_image_path) {
+            Storage::disk('public')->delete($scene->header_image_path);
+        }
 
         $scene->delete();
 
@@ -273,5 +303,20 @@ class SceneController extends Controller
                 'last_read_at' => now(),
             ]);
         }
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Scene>
+     */
+    private function previousSceneOptions(Campaign $campaign, ?Scene $excludeScene = null): \Illuminate\Database\Eloquent\Collection
+    {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Scene> $scenes */
+        $scenes = $campaign->scenes()
+            ->when($excludeScene instanceof Scene, fn ($query) => $query->whereKeyNot($excludeScene->id))
+            ->orderBy('position')
+            ->orderBy('created_at')
+            ->get(['id', 'title', 'position']);
+
+        return $scenes;
     }
 }

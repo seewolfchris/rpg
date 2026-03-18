@@ -145,7 +145,7 @@
                                         {{ $data['message'] ?? 'Neue Aktivität.' }}
                                     </p>
                                     <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
-                                        {{ $notification->created_at->format('d.m.Y H:i') }}
+                                        <x-relative-time :at="$notification->created_at" />
                                         @if ($isUnread)
                                             • Ungelesen
                                         @else

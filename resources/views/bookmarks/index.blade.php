@@ -59,7 +59,7 @@
                                             @if ($bookmark->label)
                                                 Label: {{ $bookmark->label }} •
                                             @endif
-                                            Gesetzt: {{ $bookmark->updated_at?->format('d.m.Y H:i') }}
+                                            Gesetzt: <x-relative-time :at="$bookmark->updated_at" />
                                             @if ($bookmark->post_id)
                                                 • Post #{{ $bookmark->post_id }}
                                             @endif

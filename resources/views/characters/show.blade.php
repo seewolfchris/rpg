@@ -6,6 +6,11 @@
     @php
         $sheet = (array) config('character_sheet', []);
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
+        $statusConfig = (array) config('characters.statuses', []);
+        $statusKey = (string) ($character->status ?: config('characters.default_status', 'active'));
+        $statusMeta = (array) data_get($statusConfig, $statusKey, data_get($statusConfig, 'active', []));
+        $statusLabel = (string) ($statusMeta['label'] ?? ucfirst($statusKey));
+        $statusBadgeClass = (string) ($statusMeta['badge_class'] ?? 'border-stone-600/80 bg-stone-900/35 text-stone-200');
         $effectiveAttributes = (array) ($character->effective_attributes ?? []);
         $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
         $originLabel = (string) data_get($sheet, 'origins.'.$character->origin, $character->origin ?: '-');
@@ -117,6 +122,10 @@
                     alt="Porträt von {{ $character->name }}"
                     class="h-72 w-full rounded-lg object-cover"
                 >
+
+                <p class="inline-flex w-full items-center justify-center rounded border px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] {{ $statusBadgeClass }}">
+                    Status: {{ $statusLabel }}
+                </p>
 
                 <div class="grid gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
                     <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2">Herkunft: {{ $originLabel }}</p>
@@ -235,6 +244,7 @@
                         @foreach ($attributeMeta as $key => $meta)
                             @php
                                 $label = (string) ($meta['label'] ?? strtoupper($key));
+                                $description = (string) ($meta['description'] ?? '');
                                 $baseValue = $resolveBaseAttribute($character, $key);
                                 $effectiveValue = (int) ($effectiveAttributes[$key] ?? $baseValue);
                                 $note = (string) ($character->{$key.'_note'} ?? '');
@@ -249,6 +259,9 @@
                                         @endif
                                     </p>
                                 </div>
+                                @if ($description !== '')
+                                    <p class="mt-2 text-xs leading-relaxed text-stone-500">{{ $description }}</p>
+                                @endif
                                 @if ($note !== '')
                                     <p class="mt-2 text-xs leading-relaxed text-stone-400">{{ $note }}</p>
                                 @endif
@@ -369,7 +382,7 @@
                                 @php($actionLabel = $logEntry->action === 'remove' ? 'entfernt' : 'hinzugefügt')
                                 <li class="rounded border border-stone-700/70 bg-neutral-900/50 px-3 py-2">
                                     <p class="text-xs uppercase tracking-[0.08em] text-stone-400">
-                                        {{ optional($logEntry->created_at)->format('d.m.Y H:i') ?? '-' }}
+                                        <x-relative-time :at="$logEntry->created_at" />
                                         • {{ $logEntry->actor->name ?? 'System' }}
                                     </p>
                                     <p class="mt-1">
@@ -408,7 +421,7 @@
                                 @endphp
                                 <li class="rounded border border-emerald-700/40 bg-black/20 px-3 py-2">
                                     <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">
-                                        {{ optional($event->created_at)->format('d.m.Y H:i') ?? '-' }}
+                                        <x-relative-time :at="$event->created_at" />
                                         • {{ $eventLabel }}
                                         • {{ $event->actorUser->name ?? 'System' }}
                                     </p>

@@ -28,6 +28,7 @@ class StorePostRequest extends FormRequest
             'character_id' => ['nullable', 'integer', 'exists:characters,id'],
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
+            'ic_quote' => ['nullable', 'string', 'max:180'],
             'probe_enabled' => ['nullable', 'boolean'],
             'probe_character_id' => ['nullable', 'integer', 'required_if:probe_enabled,1', 'exists:characters,id'],
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
@@ -52,6 +53,7 @@ class StorePostRequest extends FormRequest
         $normalized = [
             'probe_enabled' => $probeEnabled,
             'inventory_award_enabled' => $inventoryAwardEnabled,
+            'ic_quote' => ($quote = trim((string) $this->input('ic_quote', ''))) !== '' ? $quote : null,
             'inventory_award_item' => trim((string) $this->input('inventory_award_item', '')),
             'inventory_award_quantity' => (int) $this->input('inventory_award_quantity', 1),
             'inventory_award_equipped' => $this->boolean('inventory_award_equipped'),
@@ -113,6 +115,10 @@ class StorePostRequest extends FormRequest
 
             if ($postType === 'ic' && ! $characterId) {
                 $validator->errors()->add('character_id', 'Für IC-Beiträge ist ein Charakter erforderlich.');
+            }
+
+            if ($postType !== 'ic' && trim((string) ($this->input('ic_quote') ?? '')) !== '') {
+                $validator->errors()->add('ic_quote', 'Ein IC-Zitat ist nur für IC-Beiträge erlaubt.');
             }
 
             if ($characterId) {
@@ -222,6 +228,7 @@ class StorePostRequest extends FormRequest
             'probe_attribute_key' => 'Probe-Eigenschaft',
             'probe_character_id' => 'Ziel-Held',
             'probe_explanation' => 'Erklärung / Anlass',
+            'ic_quote' => 'IC-Zitat',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',
             'inventory_award_item' => 'Inventar-Fund',
             'inventory_award_quantity' => 'Menge (Inventar-Fund)',

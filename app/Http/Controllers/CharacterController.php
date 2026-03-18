@@ -25,6 +25,13 @@ class CharacterController extends Controller
     {
         $user = auth()->user();
         $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
+        $characterStatusOptions = array_keys((array) config('characters.statuses', []));
+        $selectedStatus = (string) $request->query('status', 'all');
+
+        if (! in_array($selectedStatus, array_merge(['all'], $characterStatusOptions), true)) {
+            $selectedStatus = 'all';
+        }
+
         $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
         $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
 
@@ -34,6 +41,7 @@ class CharacterController extends Controller
 
         $characters = Character::query()
             ->when($selectedWorld, fn ($query) => $query->where('world_id', $selectedWorld->id))
+            ->when($selectedStatus !== 'all', fn ($query) => $query->where('status', $selectedStatus))
             ->when(
                 ! $user->isGmOrAdmin(),
                 fn ($query) => $query->where('user_id', $user->id)
@@ -42,7 +50,13 @@ class CharacterController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('characters.index', compact('characters', 'worlds', 'selectedWorld'));
+        return view('characters.index', [
+            'characters' => $characters,
+            'worlds' => $worlds,
+            'selectedWorld' => $selectedWorld,
+            'selectedStatus' => $selectedStatus,
+            'characterStatuses' => (array) config('characters.statuses', []),
+        ]);
     }
 
     public function create(Request $request): View

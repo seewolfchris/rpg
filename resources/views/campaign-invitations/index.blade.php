@@ -62,7 +62,7 @@
                                     <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
                                         Eingeladen von {{ $invitation->inviter?->name ?? 'System' }}
                                         • Rolle: {{ strtoupper($invitation->role) }}
-                                        • {{ $invitation->created_at?->format('d.m.Y H:i') }}
+                                        • <x-relative-time :at="$invitation->created_at" />
                                     </p>
                                 </div>
 

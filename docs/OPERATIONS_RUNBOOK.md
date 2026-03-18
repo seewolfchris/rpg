@@ -76,7 +76,7 @@ scripts/release_smoke.sh
 Optional gegen laufende Instanz:
 
 ```bash
-SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="chroniken-der-asche" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
+SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh
 ```
 
 Optional ohne HTTP-Checks (z. B. CI/offline):

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Post\PostModerationService;
+use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
@@ -13,10 +14,14 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
+use App\Support\PostContentRenderer;
 use App\Support\Gamification\PointService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -27,6 +32,7 @@ class PostController extends Controller
         private readonly PointService $pointService,
         private readonly StorePostService $storePostService,
         private readonly PostModerationService $postModerationService,
+        private readonly PostMentionNotificationService $postMentionNotificationService,
     ) {}
 
     public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -116,12 +122,24 @@ class PostController extends Controller
         $nextCharacterId = $data['post_type'] === 'ic'
             ? (int) $data['character_id']
             : null;
+        /** @var array<string, mixed> $nextMeta */
+        $nextMeta = (array) ($post->meta ?? []);
+        $nextIcQuote = trim((string) ($data['ic_quote'] ?? ''));
+
+        if ($data['post_type'] === 'ic' && $nextIcQuote !== '') {
+            $nextMeta['ic_quote'] = $nextIcQuote;
+        } else {
+            unset($nextMeta['ic_quote']);
+        }
+
+        $normalizedNextMeta = $nextMeta !== [] ? $nextMeta : null;
 
         $hasContentChange = $this->hasTrackedChanges($post, [
             'character_id' => $nextCharacterId,
             'post_type' => $data['post_type'],
             'content_format' => $data['content_format'],
             'content' => $data['content'],
+            'meta' => $normalizedNextMeta,
         ]);
 
         if ($hasContentChange) {
@@ -133,6 +151,7 @@ class PostController extends Controller
             'post_type' => $data['post_type'],
             'content_format' => $data['content_format'],
             'content' => $data['content'],
+            'meta' => $normalizedNextMeta,
             'moderation_status' => $moderationStatus,
             'approved_at' => $approvedAt,
             'approved_by' => $approvedBy,
@@ -146,6 +165,10 @@ class PostController extends Controller
             previousStatus: $previousModerationStatus,
             moderationNote: $moderationNote,
         );
+
+        if ($hasContentChange) {
+            $this->postMentionNotificationService->notifyMentions($post, $user);
+        }
 
         $post->load('scene.campaign', 'scene');
         [$scene, $campaign] = $this->resolveSceneContext($post);
@@ -239,6 +262,25 @@ class PostController extends Controller
         $post->save();
 
         return back()->with('status', 'Pin entfernt.');
+    }
+
+    public function preview(Request $request, World $world): JsonResponse
+    {
+        abort_unless((bool) config('features.wave3.editor_preview', false), 404);
+
+        $data = $request->validate([
+            'content_format' => ['required', Rule::in(['markdown'])],
+            'content' => ['nullable', 'string', 'max:10000'],
+        ]);
+
+        $html = app(PostContentRenderer::class)
+            ->render((string) ($data['content'] ?? ''), (string) $data['content_format'])
+            ->toHtml();
+
+        return response()->json([
+            'status' => 'ok',
+            'html' => $html,
+        ]);
     }
 
     /**

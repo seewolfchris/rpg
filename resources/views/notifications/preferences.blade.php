@@ -82,6 +82,23 @@
                         </label>
                     </div>
                 </article>
+
+                <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                    <h2 class="font-heading text-lg text-stone-100">Charakter-Erwaehnungen</h2>
+                    <p class="mt-1 text-sm text-stone-300">
+                        Benachrichtigung, wenn ein eigener Charakter per <code>@Name</code> in einem Beitrag erwaehnt wird.
+                    </p>
+                    <div class="mt-3 flex flex-wrap gap-4">
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                            <input type="checkbox" name="character_mention_database" value="1" @checked(data_get($preferences, 'character_mention.database', true)) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
+                            In-App
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                            <input type="checkbox" name="character_mention_mail" value="1" @checked(data_get($preferences, 'character_mention.mail', false)) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
+                            E-Mail
+                        </label>
+                    </div>
+                </article>
             </div>
 
             <div class="mt-6 flex flex-wrap items-center gap-3">

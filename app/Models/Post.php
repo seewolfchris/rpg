@@ -87,6 +87,16 @@ class Post extends Model
         return $this->hasMany(PostModerationLog::class)->orderByDesc('created_at');
     }
 
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(PostReaction::class);
+    }
+
+    public function mentionRecords(): HasMany
+    {
+        return $this->hasMany(PostMention::class);
+    }
+
     public function diceRoll(): HasOne
     {
         return $this->hasOne(DiceRoll::class);

@@ -105,7 +105,7 @@ $PHP_BIN artisan config:cache
 ## 6. Smoke-Test nach Deploy (5 Minuten)
 
 - Automatisierter Basissmoke:
-  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="chroniken-der-asche" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh`
+  - `SMOKE_START_SERVER=0 SMOKE_BASE_URL="https://rpg.c76.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPORT_OUT="docs/SMOKE-PASS-STAGING-PROD.md" scripts/release_smoke.sh`
   - Alternativ rein lokal/ohne HTTP-Server: `SMOKE_MODE=artisan scripts/release_smoke.sh`
 - Das Skript kann einen Markdown-Report schreiben (`SMOKE_REPORT_OUT=...`).
 - Login/Logout funktioniert.
@@ -116,12 +116,34 @@ $PHP_BIN artisan config:cache
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
 
+## 6a. Immersion Phase-A Gate (wenn Welle 1/2 ausgerollt wird)
+
+- One-Command Deploy-Flow (empfohlen):
+  - `scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+  - Enthalten: `migrate --force`, `optimize:clear`, `config:cache`, `release_phase_a_smoke.sh` als hartes Go/No-Go-Gate.
+  - Deploy-sicherer Default: keine Testausfuehrung auf der Zielumgebung (`--run-test-gates 0`).
+- Verbindlicher Gate-Run fuer DB + Welle 1/2:
+  - `PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" scripts/release_phase_a_smoke.sh`
+- Hinweis: `<world-slug>` ist eine aktive Welt (`/w/<world-slug>/...`) oder kommt aus `WORLD_DEFAULT_SLUG`.
+- Das Skript prueft:
+  - Basis-HTTP-Smoke (`scripts/release_smoke.sh`)
+  - Flag-Zustaende fuer Phase A (Welle 3/4 aus)
+  - gezielte Immersion-Tests (Mood/Header/Vorgaenger, IC-first/OOC, IC-Zitat, Relative Time)
+- Optional fuer bereits aktivierte Welle-3/4-Umgebungen:
+  - `PHASE_A_STRICT_FLAGS=0 ... scripts/release_phase_a_smoke.sh`
+- Optionaler lokaler Vorab-Lauf inklusive Test-Gates:
+  - `scripts/release_phase_a_flow.sh --smoke-mode artisan --skip-migrate --run-test-gates 1 --report-out "docs/SMOKE-PHASE-A-LOCAL.md"`
+- Stabilitaetsphase (Tag 1-5) als Daily-Gate:
+  - `scripts/release_phase_a_stability_check.sh --smoke-mode artisan --report-out "docs/PHASE-A-STABILITY-DAY1.md"`
+  - Optional mit produktionsnahem HTTP-Smoke:
+    - `scripts/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http --report-out "docs/PHASE-A-STABILITY-DAY1.md" --smoke-report-out "docs/SMOKE-PHASE-A-DAY1.md"`
+
 ## 6b. Performance-EXPLAIN (Staging/Prod, empfohlen)
 
-- `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
+- `php artisan perf:world-hotpaths --world=<world-slug> --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
 - Empfohlen fuer `posts.latest_by_id` (inkl. Ampel-Gate):
-  - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
+  - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
   - Optionaler Runtime-Hint (nur bei stabil messbarem Vorteil): `.env` -> `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
   - Gate-Report pruefen: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
   - Ampel-Interpretation:
@@ -129,9 +151,9 @@ $PHP_BIN artisan config:cache
     - `GELB`: weiter moeglich, aber Delta beobachten.
     - `ROT`: Hotpath zuerst analysieren, dann erneut messen.
 - Fallback ohne Gate:
-  - `PERF_WORLD_SLUG=chroniken-der-asche PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
+  - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
   - Fallback direkt via Artisan:
-    - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
+    - `php artisan perf:posts-latest-by-id-benchmark --world=<world-slug> --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 
 ## 7. Dokumentation aktualisieren
 

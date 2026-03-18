@@ -1,5 +1,11 @@
 import './bootstrap';
 import { characterSheetForm, registerCharacterSheetComponent } from './character-sheet';
+import {
+    createPostDraftStorageKey,
+    hasPostDraftContent,
+    normalizePostDraftForRestore,
+    parsePostDraftPayload,
+} from './post-editor-draft';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
 const QUEUE_STORE_NAME = 'postQueue';
@@ -10,6 +16,10 @@ const PWA_INSTALL_BUTTON_SELECTOR = '[data-pwa-install-button]';
 const BROWSER_NOTIFICATION_ROOT_SELECTOR = '[data-browser-notifications]';
 const BROWSER_NOTIFICATION_STATUS_SELECTOR = '[data-browser-notifications-status]';
 const BROWSER_NOTIFICATION_ENABLE_SELECTOR = '[data-browser-notifications-enable]';
+const SCENE_THREAD_READING_MODE_SELECTOR = '[data-scene-thread-reading-mode]';
+const POST_EDITOR_SELECTOR = 'form[data-post-editor]';
+const POST_PREVIEW_DEBOUNCE_MS = 450;
+const POST_DRAFT_DEBOUNCE_MS = 350;
 
 let swRegistration = null;
 let deferredInstallPrompt = null;
@@ -36,6 +46,8 @@ startDeferredAlpine();
 window.addEventListener('load', startDeferredAlpine);
 
 const bootApplication = async () => {
+    setupSceneThreadReadingMode();
+    setupPostEditorEnhancements();
     setupPwaInstallPrompt();
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();
@@ -56,6 +68,235 @@ if (document.readyState === 'loading') {
     });
 } else {
     bootApplication();
+}
+
+function setupSceneThreadReadingMode() {
+    document.querySelectorAll(SCENE_THREAD_READING_MODE_SELECTOR).forEach((root) => {
+        if (!(root instanceof HTMLElement)) {
+            return;
+        }
+
+        const sceneId = String(root.dataset.sceneId || '').trim();
+        const oocDetails = root.querySelector('details[data-ooc-thread]');
+
+        if (!sceneId || !(oocDetails instanceof HTMLDetailsElement)) {
+            return;
+        }
+
+        const storageKey = `c76:scene-ooc-open:${sceneId}`;
+        const stored = readLocalStorageValue(storageKey);
+
+        if (stored === '1') {
+            oocDetails.open = true;
+        } else if (stored === '0') {
+            oocDetails.open = false;
+        }
+
+        oocDetails.addEventListener('toggle', () => {
+            writeLocalStorageValue(storageKey, oocDetails.open ? '1' : '0');
+        });
+    });
+}
+
+function setupPostEditorEnhancements() {
+    document.querySelectorAll(POST_EDITOR_SELECTOR).forEach((formNode) => {
+        if (!(formNode instanceof HTMLFormElement)) {
+            return;
+        }
+
+        const contentField = formNode.querySelector('[data-post-content-input]');
+        const formatField = formNode.querySelector('[data-post-content-format]');
+        const postTypeField = formNode.querySelector('select[name="post_type"]');
+        const characterField = formNode.querySelector('select[name="character_id"]');
+        const icQuoteField = formNode.querySelector('input[name="ic_quote"]');
+        const previewRoot = formNode.querySelector('[data-post-preview]');
+        const previewStatusNode = formNode.querySelector('[data-post-preview-status]');
+        const previewOutputNode = formNode.querySelector('[data-post-preview-output]');
+        const previewUrl = String(formNode.dataset.previewUrl || '').trim();
+        const draftKeySeed = String(formNode.dataset.draftKey || '').trim();
+        const storageKey = createPostDraftStorageKey(draftKeySeed);
+
+        if (!(contentField instanceof HTMLTextAreaElement) || !(formatField instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const restoreDraftIfNeeded = () => {
+            if (!storageKey || contentField.value.trim() !== '') {
+                return;
+            }
+
+            const raw = readLocalStorageValue(storageKey);
+            if (!raw) {
+                return;
+            }
+
+            const parsed = parsePostDraftPayload(raw);
+
+            if (!parsed) {
+                removeLocalStorageValue(storageKey);
+                return;
+            }
+
+            const restored = normalizePostDraftForRestore(parsed, {
+                allowedFormats: Array.from(formatField.options).map((option) => option.value),
+                allowedPostTypes: postTypeField instanceof HTMLSelectElement
+                    ? Array.from(postTypeField.options).map((option) => option.value)
+                    : [],
+                allowedCharacterIds: characterField instanceof HTMLSelectElement
+                    ? Array.from(characterField.options).map((option) => option.value)
+                    : [],
+            });
+
+            if (!restored) {
+                removeLocalStorageValue(storageKey);
+                return;
+            }
+
+            contentField.value = restored.content;
+
+            if (restored.content_format !== '') {
+                formatField.value = restored.content_format;
+            }
+
+            if (postTypeField instanceof HTMLSelectElement && restored.post_type !== '') {
+                postTypeField.value = restored.post_type;
+            }
+
+            if (characterField instanceof HTMLSelectElement && restored.character_id !== '') {
+                characterField.value = restored.character_id;
+            }
+
+            if (icQuoteField instanceof HTMLInputElement) {
+                icQuoteField.value = restored.ic_quote;
+            }
+
+            showSyncNotice('Lokaler Entwurf wiederhergestellt.', 'success');
+        };
+
+        const persistDraft = debounce(() => {
+            if (!storageKey) {
+                return;
+            }
+
+            const payload = {
+                content: contentField.value,
+                content_format: formatField.value,
+                post_type: postTypeField instanceof HTMLSelectElement ? postTypeField.value : '',
+                character_id: characterField instanceof HTMLSelectElement ? characterField.value : '',
+                ic_quote: icQuoteField instanceof HTMLInputElement ? icQuoteField.value : '',
+                saved_at: new Date().toISOString(),
+            };
+
+            if (!hasPostDraftContent(payload)) {
+                removeLocalStorageValue(storageKey);
+                return;
+            }
+
+            writeLocalStorageValue(storageKey, JSON.stringify(payload));
+        }, POST_DRAFT_DEBOUNCE_MS);
+
+        let previewAbortController = null;
+
+        const renderPreview = debounce(async () => {
+            if (!(previewRoot instanceof HTMLElement) || !(previewStatusNode instanceof HTMLElement) || !(previewOutputNode instanceof HTMLElement)) {
+                return;
+            }
+
+            const format = String(formatField.value || '');
+            const content = String(contentField.value || '');
+
+            if (format !== 'markdown') {
+                previewStatusNode.textContent = 'Live-Vorschau ist nur bei Markdown aktiv.';
+                previewOutputNode.innerHTML = '<p class="text-stone-500">Für dieses Format ist keine Live-Vorschau aktiv.</p>';
+                return;
+            }
+
+            if (content.trim() === '') {
+                previewStatusNode.textContent = 'Schreibe Text, um eine Vorschau zu sehen.';
+                previewOutputNode.innerHTML = '<p class="text-stone-500">Noch keine Vorschau verfügbar.</p>';
+                return;
+            }
+
+            if (!previewUrl) {
+                previewStatusNode.textContent = 'Live-Vorschau ist derzeit nicht verfügbar.';
+                return;
+            }
+
+            if (previewAbortController instanceof AbortController) {
+                previewAbortController.abort();
+            }
+
+            previewAbortController = new AbortController();
+            previewStatusNode.textContent = 'Vorschau wird aktualisiert ...';
+
+            try {
+                const response = await fetch(previewUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        content_format: 'markdown',
+                        content,
+                    }),
+                    signal: previewAbortController.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const payload = await response.json();
+                const html = typeof payload?.html === 'string'
+                    ? payload.html
+                    : '<p class="text-stone-500">Keine Vorschau verfügbar.</p>';
+
+                previewOutputNode.innerHTML = html;
+                previewStatusNode.textContent = 'Live-Vorschau aktiv.';
+            } catch (error) {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
+
+                previewStatusNode.textContent = 'Vorschau konnte nicht geladen werden.';
+            }
+        }, POST_PREVIEW_DEBOUNCE_MS);
+
+        restoreDraftIfNeeded();
+        renderPreview();
+
+        contentField.addEventListener('input', () => {
+            persistDraft();
+            renderPreview();
+        });
+
+        formatField.addEventListener('change', () => {
+            persistDraft();
+            renderPreview();
+        });
+
+        if (postTypeField instanceof HTMLSelectElement) {
+            postTypeField.addEventListener('change', persistDraft);
+        }
+
+        if (characterField instanceof HTMLSelectElement) {
+            characterField.addEventListener('change', persistDraft);
+        }
+
+        if (icQuoteField instanceof HTMLInputElement) {
+            icQuoteField.addEventListener('input', persistDraft);
+        }
+
+        formNode.addEventListener('submit', () => {
+            if (storageKey) {
+                removeLocalStorageValue(storageKey);
+            }
+        });
+    });
 }
 
 async function registerServiceWorker() {
@@ -560,6 +801,56 @@ function getCsrfToken() {
     }
 
     return tokenNode.content || '';
+}
+
+function readLocalStorageValue(key) {
+    if (!key) {
+        return null;
+    }
+
+    try {
+        return window.localStorage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function writeLocalStorageValue(key, value) {
+    if (!key) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(key, value);
+    } catch {
+        // Ignore storage write errors.
+    }
+}
+
+function removeLocalStorageValue(key) {
+    if (!key) {
+        return;
+    }
+
+    try {
+        window.localStorage.removeItem(key);
+    } catch {
+        // Ignore storage remove errors.
+    }
+}
+
+function debounce(callback, waitMs) {
+    let timeoutId = null;
+
+    return (...args) => {
+        if (timeoutId) {
+            window.clearTimeout(timeoutId);
+        }
+
+        timeoutId = window.setTimeout(() => {
+            callback(...args);
+        }, waitMs);
+    };
 }
 
 async function postJson(url, payload) {

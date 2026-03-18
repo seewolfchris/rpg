@@ -8,11 +8,10 @@
         <h1 class="font-heading text-3xl text-stone-100">Szene bearbeiten</h1>
         <p class="mt-2 text-stone-300">Kampagne: {{ $campaign->title }}</p>
 
-        <form method="POST" action="{{ route('campaigns.scenes.update', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="mt-8">
+        <form method="POST" action="{{ route('campaigns.scenes.update', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="mt-8" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             @include('scenes._form', ['campaign' => $campaign, 'scene' => $scene, 'submitLabel' => 'Speichern'])
         </form>
     </section>
 @endsection
-

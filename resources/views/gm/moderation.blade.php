@@ -118,7 +118,7 @@
                                 <div>
                                     <p class="text-sm text-stone-100">
                                         <span class="font-semibold">Post #{{ $post->id }}</span>
-                                        <span class="text-stone-500">• {{ $post->created_at->format('d.m.Y H:i') }}</span>
+                                        <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
                                     </p>
                                     <p class="mt-1 text-sm text-stone-300">
                                         {{ $post->scene->campaign->title }} • {{ $post->scene->title }}
@@ -158,7 +158,7 @@
                                         @if ($post->latestModerationLog->moderator)
                                             • {{ $post->latestModerationLog->moderator->name }}
                                         @endif
-                                        • {{ $post->latestModerationLog->created_at?->format('d.m.Y H:i') }}
+                                        • <x-relative-time :at="$post->latestModerationLog->created_at" />
                                     </p>
                                     <p class="mt-2 text-sm text-stone-300">
                                         {{ $post->latestModerationLog->reason }}
@@ -223,7 +223,7 @@
                                 <p class="mt-3 text-xs uppercase tracking-[0.08em] text-emerald-300">
                                     Letzte Freigabe durch {{ $post->approvedBy->name }}
                                     @if ($post->approved_at)
-                                        • {{ $post->approved_at->format('d.m.Y H:i') }}
+                                        • <x-relative-time :at="$post->approved_at" />
                                     @endif
                                 </p>
                             @endif

@@ -7,6 +7,7 @@ use App\Models\Scene;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateSceneRequest extends FormRequest
 {
@@ -36,9 +37,13 @@ class UpdateSceneRequest extends FormRequest
                     ->where(fn ($query) => $query->where('campaign_id', $campaign->id))
                     ->ignore($scene->id),
             ],
+            'previous_scene_id' => ['nullable', 'integer', 'exists:scenes,id'],
             'summary' => ['nullable', 'string', 'max:1200'],
             'description' => ['nullable', 'string', 'max:15000'],
+            'header_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
+            'remove_header_image' => ['sometimes', 'boolean'],
             'status' => ['required', Rule::in(['open', 'closed', 'archived'])],
+            'mood' => ['required', Rule::in($this->moodKeys())],
             'position' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'allow_ooc' => ['sometimes', 'boolean'],
             'opens_at' => ['nullable', 'date'],
@@ -53,7 +58,49 @@ class UpdateSceneRequest extends FormRequest
 
         $this->merge([
             'slug' => Str::slug((string) ($slugInput ?: $titleInput)),
+            'mood' => (string) $this->input('mood', (string) config('scenes.default_mood', 'neutral')),
             'allow_ooc' => $this->boolean('allow_ooc'),
+            'remove_header_image' => $this->boolean('remove_header_image'),
         ]);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            /** @var Campaign $campaign */
+            $campaign = $this->route('campaign');
+            /** @var Scene $scene */
+            $scene = $this->route('scene');
+            $previousSceneId = (int) ($this->input('previous_scene_id') ?? 0);
+
+            if ($previousSceneId <= 0) {
+                return;
+            }
+
+            if ($previousSceneId === (int) $scene->id) {
+                $validator->errors()->add('previous_scene_id', 'Eine Szene kann nicht auf sich selbst verweisen.');
+
+                return;
+            }
+
+            $isSameCampaign = $campaign->scenes()
+                ->whereKey($previousSceneId)
+                ->exists();
+
+            if (! $isSameCampaign) {
+                $validator->errors()->add('previous_scene_id', 'Die Vorgängerszene muss zur gleichen Kampagne gehören.');
+            }
+        });
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function moodKeys(): array
+    {
+        /** @var list<string> $keys */
+        $keys = array_keys((array) config('scenes.moods', []));
+
+        return $keys;
     }
 }

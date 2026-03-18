@@ -124,7 +124,7 @@
                                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
                                             Posts: {{ $subscribedScene->posts_count }}
                                             @if ($subscription->last_read_at)
-                                                • Letzter Read: {{ $subscription->last_read_at->format('d.m.Y H:i') }}
+                                                • Letzter Read: <x-relative-time :at="$subscription->last_read_at" />
                                             @endif
                                         </p>
                                     </div>

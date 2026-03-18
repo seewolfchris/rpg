@@ -3,6 +3,11 @@
 @section('title', 'Beitrag bearbeiten | C76-RPG')
 
 @section('content')
+    @php
+        $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
+        $wave3DraftAutosaveEnabled = (bool) config('features.wave3.draft_autosave', false);
+        $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
+    @endphp
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
         <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Beitrag bearbeiten</p>
         <h1 class="font-heading text-3xl text-stone-100">Thread-Beitrag aktualisieren</h1>
@@ -13,7 +18,14 @@
             </a>
         </p>
 
-        <form method="POST" action="{{ route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" class="mt-8">
+        <form
+            method="POST"
+            action="{{ route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+            class="mt-8"
+            @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif
+            @if ($wave3EditorPreviewEnabled) data-preview-url="{{ route('posts.preview', ['world' => $post->scene->campaign->world]) }}" @endif
+            @if ($wave3DraftAutosaveEnabled) data-draft-key="scene-{{ $post->scene_id }}-user-{{ auth()->id() }}-edit-{{ $post->id }}" @endif
+        >
             @csrf
             @method('PATCH')
             @include('posts._form', [

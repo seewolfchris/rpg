@@ -1,7 +1,13 @@
 @php
+    $postMeta = is_array($post->meta ?? null) ? $post->meta : [];
     $currentType = old('post_type', $post->post_type ?? 'ic');
     $currentCharacter = old('character_id', $post->character_id ?? '');
     $currentFormat = old('content_format', $post->content_format ?? 'markdown');
+    $currentIcQuote = (string) old('ic_quote', (string) ($postMeta['ic_quote'] ?? ''));
+    $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
+    $initialPreviewHtml = $wave3EditorPreviewEnabled && $currentFormat === 'markdown'
+        ? app(\App\Support\PostContentRenderer::class)->render((string) old('content', $post->content ?? ''), 'markdown')->toHtml()
+        : '';
     $currentModeration = old('moderation_status', $post->moderation_status ?? 'pending');
     $currentModerationNote = old('moderation_note');
     $showProbeControls = (bool) ($showProbeControls ?? false);
@@ -68,6 +74,7 @@
                 id="content_format"
                 name="content_format"
                 required
+                data-post-content-format
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
                 <option value="markdown" @selected($currentFormat === 'markdown')>Markdown</option>
@@ -87,6 +94,7 @@
             name="content"
             rows="8"
             required
+            data-post-content-input
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             placeholder="Schreibe deinen Beitrag ..."
         >{{ old('content', $post->content ?? '') }}</textarea>
@@ -95,6 +103,39 @@
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror
     </div>
+
+    <div>
+        <label for="ic_quote" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Optionales IC-Zitat</label>
+        <input
+            id="ic_quote"
+            type="text"
+            name="ic_quote"
+            maxlength="180"
+            value="{{ $currentIcQuote }}"
+            placeholder="Kurze prägende Zeile deines Charakters ..."
+            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+        >
+        <p class="mt-2 text-xs text-stone-500">Nur für IC-Beiträge. Wird als hervorgehobener Einstiegsquote über dem Beitrag angezeigt.</p>
+        @error('ic_quote')
+            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+        @enderror
+    </div>
+
+    @if ($wave3EditorPreviewEnabled)
+        <section data-post-preview class="rounded-lg border border-stone-700/80 bg-black/30 p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Markdown-Live-Preview</p>
+            <p data-post-preview-status class="mt-2 text-xs text-stone-400">
+                {{ $currentFormat === 'markdown' ? 'Live-Vorschau aktiv.' : 'Live-Vorschau ist nur bei Markdown aktiv.' }}
+            </p>
+            <div data-post-preview-output class="mt-3 break-words leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+                @if ($initialPreviewHtml !== '')
+                    {!! $initialPreviewHtml !!}
+                @else
+                    <p class="text-stone-500">Noch keine Vorschau verfügbar.</p>
+                @endif
+            </div>
+        </section>
+    @endif
 
     @if ($showProbeControls)
         <section class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">

@@ -194,6 +194,30 @@
         backdrop-filter: blur(6px);
     }
 
+    .scene-mood-neutral {
+        box-shadow: 0 20px 40px rgb(0 0 0 / 32%);
+    }
+
+    .scene-mood-dark {
+        border-color: rgb(71 85 105 / 60%);
+        box-shadow: 0 24px 46px rgb(8 47 73 / 24%);
+    }
+
+    .scene-mood-cheerful {
+        border-color: rgb(16 185 129 / 35%);
+        box-shadow: 0 24px 46px rgb(4 120 87 / 20%);
+    }
+
+    .scene-mood-mystic {
+        border-color: rgb(99 102 241 / 45%);
+        box-shadow: 0 24px 46px rgb(55 48 163 / 24%);
+    }
+
+    .scene-mood-tense {
+        border-color: rgb(239 68 68 / 45%);
+        box-shadow: 0 24px 46px rgb(153 27 27 / 22%);
+    }
+
     .ui-card-soft {
         border: 1px solid rgb(63 63 70 / 75%);
         background: rgb(10 10 10 / 45%);
@@ -399,6 +423,30 @@
         border: 0;
         border-top: 1px solid rgb(87 83 78 / 80%);
         margin: 1rem 0;
+    }
+
+    details[data-ooc-thread] > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    details[data-ooc-thread] > summary {
+        display: block;
+        position: relative;
+        padding-right: 1.25rem;
+    }
+
+    details[data-ooc-thread] > summary::after {
+        content: '▾';
+        position: absolute;
+        right: 0;
+        top: 0.2rem;
+        font-size: 0.85rem;
+        color: rgb(168 162 158);
+        transition: transform 150ms ease;
+    }
+
+    details[data-ooc-thread]:not([open]) > summary::after {
+        transform: rotate(-90deg);
     }
 
     @media (min-width: 640px) {

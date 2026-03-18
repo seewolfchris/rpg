@@ -23,6 +23,7 @@ class Character extends Model
         'epithet',
         'bio',
         'avatar_path',
+        'status',
         'origin',
         'species',
         'calling',
@@ -75,6 +76,7 @@ class Character extends Model
     {
         return [
             'world_id' => 'integer',
+            'status' => 'string',
             'mu' => 'integer',
             'kl' => 'integer',
             'in' => 'integer',

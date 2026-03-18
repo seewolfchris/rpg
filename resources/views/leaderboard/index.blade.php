@@ -49,5 +49,38 @@
                 </div>
             @endif
         </section>
+
+        @if (config('features.wave4.active_characters_week', false))
+            <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="mb-2 text-xs uppercase tracking-[0.16em] text-emerald-300/80">Welle 4</p>
+                        <h2 class="font-heading text-2xl text-stone-100">Aktive Charaktere diese Woche</h2>
+                        <p class="mt-2 text-sm text-stone-300">Sortiert nach IC-Posts in den letzten 7 Tagen.</p>
+                    </div>
+                </div>
+
+                @if (($activeCharactersThisWeek ?? collect())->isEmpty())
+                    <p class="mt-4 text-sm text-stone-400">Noch keine Aktivitaet in den letzten 7 Tagen.</p>
+                @else
+                    <ol class="mt-4 space-y-2">
+                        @foreach ($activeCharactersThisWeek as $index => $activeCharacter)
+                            <li class="rounded-xl border border-stone-800 bg-neutral-900/60 px-4 py-3">
+                                <p class="text-sm text-stone-100">
+                                    <span class="font-semibold text-emerald-200">#{{ $index + 1 }}</span>
+                                    <span class="ml-2 font-semibold">{{ $activeCharacter->name }}</span>
+                                    <span class="ml-2 text-stone-400">({{ $activeCharacter->weekly_posts_count }} IC-Posts)</span>
+                                </p>
+                                @if ($activeCharacter->user)
+                                    <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
+                                        Spieler: {{ $activeCharacter->user->name }}
+                                    </p>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </section>
+        @endif
     </section>
 @endsection

@@ -28,6 +28,7 @@ class CharacterFactory extends Factory
             'epithet' => fake()->optional()->sentence(3),
             'bio' => fake()->paragraphs(3, true),
             'avatar_path' => null,
+            'status' => 'active',
             'strength' => fake()->numberBetween(6, 18),
             'dexterity' => fake()->numberBetween(6, 18),
             'constitution' => fake()->numberBetween(6, 18),

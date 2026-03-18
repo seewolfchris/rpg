@@ -30,6 +30,7 @@ abstract class CharacterSheetRequest extends FormRequest
         $speciesKeys = array_keys((array) data_get($this->sheet(), 'species', []));
         $callingKeys = array_keys((array) data_get($this->sheet(), 'callings', []));
         $originKeys = array_keys((array) data_get($this->sheet(), 'origins', []));
+        $statusKeys = array_keys((array) config('characters.statuses', []));
         $traitMin = (int) data_get($this->sheet(), 'traits.min', 1);
         $traitMax = (int) data_get($this->sheet(), 'traits.max', 3);
 
@@ -39,6 +40,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'epithet' => ['nullable', 'string', 'max:120'],
             'bio' => ['required', 'string', 'min:20', 'max:5000'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:3072'],
+            'status' => ['required', 'string', Rule::in($statusKeys)],
 
             'origin' => ['required', 'string', Rule::in($originKeys)],
             'species' => ['required', 'string', Rule::in($speciesKeys)],
@@ -130,6 +132,7 @@ abstract class CharacterSheetRequest extends FormRequest
     {
         $merged = [
             'world_id' => (int) $this->input('world_id', World::resolveDefaultId()),
+            'status' => Str::lower(trim((string) $this->input('status', (string) config('characters.default_status', 'active')))),
             'species' => Str::lower(trim((string) $this->input('species', ''))),
             'calling' => Str::lower(trim((string) $this->input('calling', ''))),
             'origin' => Str::lower(trim((string) $this->input('origin', ''))),
