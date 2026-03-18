@@ -45,6 +45,25 @@ require_non_empty() {
   fi
 }
 
+read_env_var_from_dotenv() {
+  local key="$1"
+  local env_file="${PERF_ENV_FILE:-.env}"
+
+  if [[ ! -f "$env_file" ]]; then
+    return
+  fi
+
+  local value
+  value="$(awk -F '=' -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$env_file")"
+  value="${value%$'\r'}"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+
+  printf '%s\n' "$value"
+}
+
 ensure_parent_dir() {
   local path="$1"
   local parent
@@ -204,6 +223,10 @@ resolve_baseline_report() {
 require_cmd "$PHP_BIN"
 require_cmd awk
 require_cmd find
+
+if [[ -z "$WORLD_SLUG" ]]; then
+  WORLD_SLUG="$(read_env_var_from_dotenv "WORLD_DEFAULT_SLUG")"
+fi
 
 require_numeric "$ITERATIONS" "PERF_ITERATIONS"
 require_non_empty "$WORLD_SLUG" "PERF_WORLD_SLUG/WORLD_DEFAULT_SLUG" "Set PERF_WORLD_SLUG or WORLD_DEFAULT_SLUG (e.g. 'my-world')."

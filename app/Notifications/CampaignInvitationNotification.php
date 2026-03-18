@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\CampaignInvitation;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -121,8 +122,10 @@ class CampaignInvitationNotification extends Notification
 
     private function worldSlug(int $worldId): string
     {
+        $defaultSlug = World::defaultSlug();
+
         if ($worldId <= 0) {
-            return 'chroniken-der-asche';
+            return $defaultSlug;
         }
 
         $worldSlug = DB::table('worlds')
@@ -131,6 +134,6 @@ class CampaignInvitationNotification extends Notification
 
         return is_string($worldSlug) && $worldSlug !== ''
             ? $worldSlug
-            : 'chroniken-der-asche';
+            : $defaultSlug;
     }
 }

@@ -11,8 +11,8 @@ START_SERVER="${SMOKE_START_SERVER:-1}"
 SMOKE_MODE="${SMOKE_MODE:-http}"
 SMOKE_EFFECTIVE_MODE="$SMOKE_MODE"
 ALLOW_ARTISAN_FALLBACK="${SMOKE_ALLOW_ARTISAN_FALLBACK:-1}"
-TMP_BODY_FILE="${SMOKE_TMP_BODY_FILE:-/tmp/release_smoke_body.txt}"
-TMP_HEADER_FILE="${SMOKE_TMP_HEADER_FILE:-/tmp/release_smoke_header.txt}"
+TMP_BODY_FILE="${SMOKE_TMP_BODY_FILE:-storage/app/smoke/release_smoke_body.txt}"
+TMP_HEADER_FILE="${SMOKE_TMP_HEADER_FILE:-storage/app/smoke/release_smoke_header.txt}"
 REPORT_OUT="${SMOKE_REPORT_OUT:-}"
 SMOKE_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 declare -a SMOKE_RESULTS=()
@@ -42,6 +42,41 @@ require_non_empty() {
     echo "ERROR: $label is empty. $hint"
     exit 1
   fi
+}
+
+read_env_var_from_dotenv() {
+  local key="$1"
+  local env_file="${SMOKE_ENV_FILE:-.env}"
+
+  if [[ ! -f "$env_file" ]]; then
+    return
+  fi
+
+  local value
+  value="$(awk -F '=' -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$env_file")"
+  value="${value%$'\r'}"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+
+  printf '%s\n' "$value"
+}
+
+ensure_parent_dir() {
+  local path="$1"
+  mkdir -p "$(dirname "$path")"
+}
+
+is_local_base_url() {
+  case "$BASE_URL" in
+    http://127.0.0.1*|http://localhost*|https://127.0.0.1*|https://localhost*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }
 
 record_result() {
@@ -157,6 +192,18 @@ run_artisan_fallback() {
 
 require_cmd curl
 require_cmd "$PHP_BIN"
+
+if [[ -z "$WORLD_SLUG" ]]; then
+  WORLD_SLUG="$(read_env_var_from_dotenv "WORLD_DEFAULT_SLUG")"
+fi
+
+if [[ "$SMOKE_MODE" == "http" && "$START_SERVER" == "1" ]] && ! is_local_base_url; then
+  echo "Skipping local Laravel server start for remote BASE_URL: $BASE_URL"
+  START_SERVER="0"
+fi
+
+ensure_parent_dir "$TMP_BODY_FILE"
+ensure_parent_dir "$TMP_HEADER_FILE"
 
 if [[ "$SMOKE_MODE" == "artisan" ]]; then
   SMOKE_EFFECTIVE_MODE="artisan"

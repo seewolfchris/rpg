@@ -54,6 +54,25 @@ require_non_empty() {
   fi
 }
 
+read_env_var_from_dotenv() {
+  local key="$1"
+  local env_file="${PHASE_A_ENV_FILE:-.env}"
+
+  if [[ ! -f "$env_file" ]]; then
+    return
+  fi
+
+  local value
+  value="$(awk -F '=' -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$env_file")"
+  value="${value%$'\r'}"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+
+  printf '%s\n' "$value"
+}
+
 run_cmd() {
   local rendered=()
   for part in "$@"; do
@@ -174,6 +193,10 @@ done
 if [[ "$SMOKE_MODE" != "http" && "$SMOKE_MODE" != "artisan" ]]; then
   echo "ERROR: --smoke-mode must be 'http' or 'artisan' (received: $SMOKE_MODE)"
   exit 1
+fi
+
+if [[ -z "$WORLD_SLUG" ]]; then
+  WORLD_SLUG="$(read_env_var_from_dotenv "WORLD_DEFAULT_SLUG")"
 fi
 
 if [[ "$RUN_SMOKE" == "1" && "$SMOKE_MODE" == "http" ]]; then

@@ -33,6 +33,25 @@ require_non_empty() {
   fi
 }
 
+read_env_var_from_dotenv() {
+  local key="$1"
+  local env_file="${PHASE_A_ENV_FILE:-.env}"
+
+  if [[ ! -f "$env_file" ]]; then
+    return
+  fi
+
+  local value
+  value="$(awk -F '=' -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$env_file")"
+  value="${value%$'\r'}"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+
+  printf '%s\n' "$value"
+}
+
 require_toggle() {
   local value="$1"
   local label="$2"
@@ -120,6 +139,10 @@ require_cmd "$PHP_BIN"
 require_toggle "$PHASE_A_RUN_BASE_SMOKE" "PHASE_A_RUN_BASE_SMOKE"
 require_toggle "$PHASE_A_STRICT_FLAGS" "PHASE_A_STRICT_FLAGS"
 require_toggle "$PHASE_A_RUN_TEST_GATES" "PHASE_A_RUN_TEST_GATES"
+
+if [[ -z "$PHASE_A_WORLD_SLUG" ]]; then
+  PHASE_A_WORLD_SLUG="$(read_env_var_from_dotenv "WORLD_DEFAULT_SLUG")"
+fi
 
 if [[ "$PHASE_A_SMOKE_MODE" == "http" ]]; then
   require_non_empty "$PHASE_A_WORLD_SLUG" "PHASE_A_WORLD_SLUG/SMOKE_WORLD_SLUG/WORLD_DEFAULT_SLUG" "Set PHASE_A_WORLD_SLUG or WORLD_DEFAULT_SLUG (e.g. 'my-world')."
