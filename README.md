@@ -19,10 +19,10 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 Stand: **Release-Beta `v0.22-beta`** (funktional, getestet, build-faehig)
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-18)
-- `node --test tests/js/*.mjs` -> **8 passed**
-- `composer analyse` -> **keine Fehler**
-- `npm run build` -> **gruen**
+- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-19)
+- `node --test tests/js/*.mjs` -> **8 passed** (Stand: 2026-03-19)
+- `composer analyse` -> **keine Fehler** (Stand: 2026-03-19)
+- `npm run build` -> **gruen** (Stand: 2026-03-19)
 
 Enthalten:
 - Auth: Registrierung/Login/Logout (Breeze-Style, Blade)
@@ -71,7 +71,8 @@ Enthalten:
 - SQLite nur optional fuer einzelne lokale Test-Setups
 - Tailwind CSS (Vite)
 - Blade Templates
-- Keine zusätzlichen Frontend-Frameworks
+- HTMX 2.x + Alpine.js 3.x (lokal via Vite)
+- Kein Livewire, kein Inertia, kein Vue/React
 
 ## Lokale Entwicklung (Anfänger-freundlich)
 
@@ -131,8 +132,13 @@ Wichtig: Für Laravel **nicht** VSCode „Live Server“ verwenden. Nutze `php a
 Gesamtsuite ausführen:
 
 ```bash
+php artisan optimize:clear
 php artisan test
 ```
+
+Wichtig:
+- Falls vorher `config:cache`, `route:cache`, `event:cache` oder `view:cache` aktiv war, immer zuerst `php artisan optimize:clear`.
+- Sonst koennen Feature-Tests mit `419` fehlschlagen (CSRF/Environment-Mismatch).
 
 CI lokal spiegeln:
 

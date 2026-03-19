@@ -8,6 +8,27 @@
     font-display: swap;
 }
 
+@layer components {
+    [hx-indicator] {
+        opacity: 0;
+        transition: opacity 140ms ease;
+    }
+
+    .htmx-request [hx-indicator],
+    .htmx-request[hx-indicator] {
+        opacity: 1;
+    }
+
+    [data-hx-disable-while-request].htmx-request {
+        opacity: 0.55;
+        pointer-events: none;
+    }
+
+    #app-flash {
+        scroll-margin-top: 5rem;
+    }
+}
+
 @font-face {
     font-family: 'Goldman';
     src: url('../fonts/Goldman-Bold.woff2') format('woff2');

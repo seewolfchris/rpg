@@ -215,28 +215,7 @@
                     @endif
                 </section>
 
-                <section>
-                    <h2 class="font-heading text-2xl text-stone-100">Biografie</h2>
-                    <div class="mt-4 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
-                </section>
-
-                @if ($character->concept || $character->world_connection || $character->gm_secret || $character->gm_note)
-                    <section class="space-y-3 rounded-lg border border-stone-700/80 bg-black/30 p-4">
-                        <h3 class="font-heading text-xl text-stone-100">Narrative Kerndaten</h3>
-                        @if ($character->concept)
-                            <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Konzept:</span> {{ $character->concept }}</p>
-                        @endif
-                        @if ($character->world_connection)
-                            <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Weltbezug:</span> {{ $character->world_connection }}</p>
-                        @endif
-                        @if ($character->gm_secret)
-                            <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (GM):</span> {{ $character->gm_secret }}</p>
-                        @endif
-                        @if ($character->gm_note)
-                            <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">GM-Notiz:</span> {{ $character->gm_note }}</p>
-                        @endif
-                    </section>
-                @endif
+                @include('characters.partials.inline-editor', ['character' => $character])
 
                 <section>
                     <h3 class="font-heading text-xl text-stone-100">Grundeigenschaften</h3>

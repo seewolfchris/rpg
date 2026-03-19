@@ -114,6 +114,9 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->except('index')
             ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
 
+        Route::get('/campaigns/{campaign}/scenes/{scene}/thread', [SceneController::class, 'threadPage'])
+            ->name('campaigns.scenes.thread');
+
         Route::get('/scene-subscriptions', [SceneSubscriptionController::class, 'index'])
             ->name('scene-subscriptions.index');
 
@@ -211,6 +214,11 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->middleware(['role:gm,admin', 'throttle:moderation'])
             ->name('gm.moderation.bulk-update');
 
+        Route::post('/gm/moderation/{post}/probe', [GmModerationController::class, 'probe'])
+            ->withoutScopedBindings()
+            ->middleware(['role:gm,admin', 'throttle:moderation'])
+            ->name('gm.moderation.probe');
+
         Route::get('/gm/progression', [GmProgressionController::class, 'index'])
             ->name('gm.progression.index');
 
@@ -303,6 +311,10 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     Route::post('/characters/{character}/progression/spend', [CharacterProgressionController::class, 'spend'])
         ->middleware('throttle:writes')
         ->name('characters.progression.spend');
+
+    Route::patch('/characters/{character}/inline', [CharacterController::class, 'inlineUpdate'])
+        ->middleware('throttle:writes')
+        ->name('characters.inline-update');
 
     Route::get('/campaign-invitations', [CampaignInvitationController::class, 'index'])
         ->name('campaign-invitations.index');

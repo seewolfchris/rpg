@@ -59,6 +59,20 @@ Erwartete Event-Reihenfolgen:
   - `POST_SYNC_AUTH_REQUIRED`
   - `POST_SYNC_FINISHED` (mit `remaining > 0`)
 
+## Lokaler Testlauf zeigt viele 419-Fehler
+Typisches Symptom:
+- ploetzlich schlagen viele POST/PATCH/DELETE-Feature-Tests mit `419` fehl.
+
+Haeufige Ursache:
+- gecachte lokale Runtime-Konfiguration (`config/routes/events/views`) wurde nicht vor dem Testlauf geleert.
+
+Sofortmassnahme:
+
+```bash
+php artisan optimize:clear
+php artisan test --without-tty --do-not-cache-result
+```
+
 ## Standard-Incident-Ablauf
 1. Fehlerbericht mit Zeitpunkt und betroffener Route aufnehmen.
 2. `X-Request-Id` aus Response/Client-Log holen.

@@ -217,6 +217,33 @@
                                         </button>
                                     </div>
                                 </form>
+
+                                <form
+                                    method="POST"
+                                    action="{{ route('gm.moderation.probe', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                                    class="ui-card-soft grid gap-2 p-3 md:grid-cols-[8rem_auto_1fr]"
+                                    hx-post="{{ route('gm.moderation.probe', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                                    hx-target="#gm-probe-result-{{ $post->id }}"
+                                    hx-swap="innerHTML"
+                                >
+                                    @csrf
+                                    <input
+                                        type="number"
+                                        name="modifier"
+                                        min="-20"
+                                        max="20"
+                                        step="1"
+                                        value="0"
+                                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                                    >
+                                    <button
+                                        type="submit"
+                                        class="ui-btn"
+                                    >
+                                        Probe W20
+                                    </button>
+                                    <div id="gm-probe-result-{{ $post->id }}" class="min-h-8"></div>
+                                </form>
                             </div>
 
                             @if ($post->approvedBy)

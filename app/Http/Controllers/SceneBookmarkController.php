@@ -19,8 +19,6 @@ class SceneBookmarkController extends Controller
 {
     use EnsuresWorldContext;
 
-    private const THREAD_POSTS_PER_PAGE = 20;
-
     public function index(Request $request, World $world): View
     {
         $user = $request->user();
@@ -71,7 +69,7 @@ class SceneBookmarkController extends Controller
         World $world,
         Campaign $campaign,
         Scene $scene,
-    ): RedirectResponse {
+    ): View|RedirectResponse {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
@@ -104,6 +102,18 @@ class SceneBookmarkController extends Controller
             'post_id' => $postId > 0 ? $postId : null,
             'label' => $this->normalizeLabel((string) ($data['label'] ?? '')),
         ]);
+
+        if ($request->header('HX-Request') === 'true' && $postId > 0) {
+            $post = Post::query()
+                ->where('scene_id', $scene->id)
+                ->whereKey($postId)
+                ->with(Post::THREAD_ITEM_RELATIONS)
+                ->first();
+
+            if ($post instanceof Post) {
+                return view('posts._thread-item', compact('post', 'scene', 'campaign'));
+            }
+        }
 
         return back()->with('status', 'Bookmark gespeichert.');
     }
@@ -166,7 +176,7 @@ class SceneBookmarkController extends Controller
             ->where('id', '>', $postId)
             ->count();
 
-        $page = intdiv($newerPostsCount, self::THREAD_POSTS_PER_PAGE) + 1;
+        $page = intdiv($newerPostsCount, Post::THREAD_POSTS_PER_PAGE) + 1;
 
         return route('campaigns.scenes.show', [
             'world' => $world,

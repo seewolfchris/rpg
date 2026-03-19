@@ -16,6 +16,45 @@ class Post extends Model
 {
     use HasFactory;
 
+    public const THREAD_POSTS_PER_PAGE = 20;
+
+    /**
+     * @var list<string>
+     */
+    public const WORLD_CONTEXT_RELATIONS = [
+        'scene.campaign.world',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    public const SCENE_CONTEXT_RELATIONS = [
+        'scene.campaign',
+        'scene',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    public const THREAD_PAGE_RELATIONS = [
+        'user',
+        'character',
+        'approvedBy',
+        'pinnedBy',
+        'revisions.editor',
+        'moderationLogs.moderator',
+        'diceRoll.character.user',
+        'reactions',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    public const THREAD_ITEM_RELATIONS = [
+        ...self::WORLD_CONTEXT_RELATIONS,
+        ...self::THREAD_PAGE_RELATIONS,
+    ];
+
     /**
      * @var list<string>
      */

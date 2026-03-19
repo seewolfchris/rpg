@@ -10,7 +10,7 @@
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">In-App</p>
                     <h1 class="font-heading text-3xl text-stone-100">Benachrichtigungen</h1>
                     <p class="mt-2 text-sm text-stone-300">
-                        Ungelesen: <span class="font-semibold text-amber-200">{{ $unreadCount }}</span>
+                        Ungelesen: <span id="notifications-unread-count" class="font-semibold text-amber-200">{{ $unreadCount }}</span>
                     </p>
                     <div class="mt-4 rounded-xl border border-stone-700/80 bg-neutral-900/60 px-4 py-3">
                         <p class="text-xs uppercase tracking-[0.08em] text-stone-400">Browser-Push</p>
@@ -43,7 +43,13 @@
                         Einstellungen
                     </a>
                     @if ($unreadCount > 0)
-                        <form method="POST" action="{{ route('notifications.read-all') }}">
+                        <form
+                            method="POST"
+                            action="{{ route('notifications.read-all') }}"
+                            hx-post="{{ route('notifications.read-all') }}"
+                            hx-target="#notifications-inbox"
+                            hx-swap="outerHTML"
+                        >
                             @csrf
                             <button
                                 type="submit"
@@ -126,66 +132,7 @@
                 </div>
             @endif
 
-            <h2 class="font-heading text-xl text-stone-100">Inbox</h2>
-
-            @if ($notifications->isEmpty())
-                <p class="text-sm text-stone-400">Keine Benachrichtigungen vorhanden.</p>
-            @else
-                <div class="mt-4 space-y-3">
-                    @foreach ($notifications as $notification)
-                        @php($data = $notification->data)
-                        @php($isUnread = $notification->read_at === null)
-                        <article class="rounded-xl border {{ $isUnread ? 'border-amber-700/60 bg-amber-900/10' : 'border-stone-800 bg-neutral-900/60' }} p-4">
-                            <div class="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <p class="text-sm font-semibold text-stone-100">
-                                        {{ $data['title'] ?? 'Benachrichtigung' }}
-                                    </p>
-                                    <p class="mt-1 text-sm text-stone-300">
-                                        {{ $data['message'] ?? 'Neue Aktivität.' }}
-                                    </p>
-                                    <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
-                                        <x-relative-time :at="$notification->created_at" />
-                                        @if ($isUnread)
-                                            • Ungelesen
-                                        @else
-                                            • Gelesen
-                                        @endif
-                                    </p>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
-                                        @csrf
-                                        <button
-                                            type="submit"
-                                            class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
-                                        >
-                                            Öffnen
-                                        </button>
-                                    </form>
-
-                                    @if ($isUnread)
-                                        <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
-                                            @csrf
-                                            <button
-                                                type="submit"
-                                                class="rounded-md border border-amber-500/70 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
-                                            >
-                                                Als gelesen
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-
-                <div class="mt-6">
-                    {{ $notifications->links() }}
-                </div>
-            @endif
+            @include('notifications.partials.inbox', ['notifications' => $notifications, 'unreadCount' => $unreadCount])
         </section>
     </section>
 @endsection

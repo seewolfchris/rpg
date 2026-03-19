@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Post\PostModerationService;
+use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Post;
 use App\Models\World;
@@ -13,6 +14,8 @@ use Illuminate\View\View;
 
 class GmModerationController extends Controller
 {
+    use EnsuresWorldContext;
+
     public function __construct(
         private readonly PostModerationService $postModerationService,
     ) {}
@@ -112,6 +115,28 @@ class GmModerationController extends Controller
                 'q' => $search !== '' ? $search : null,
             ])
             ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Posts: '.$affected.'.');
+    }
+
+    public function probe(Request $request, World $world, Post $post): View
+    {
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
+        $this->ensurePostBelongsToWorld($world, $post);
+
+        $data = $request->validate([
+            'modifier' => ['nullable', 'integer', 'between:-20,20'],
+        ]);
+
+        $modifier = (int) ($data['modifier'] ?? 0);
+        $roll = random_int(1, 20);
+        $total = $roll + $modifier;
+        $outcome = match (true) {
+            $roll === 20 => 'Kritischer Erfolg',
+            $roll === 1 => 'Kritischer Patzer',
+            $total >= 15 => 'Erfolg',
+            default => 'Fehlschlag',
+        };
+
+        return view('gm.partials.probe-result', compact('post', 'roll', 'modifier', 'total', 'outcome'));
     }
 
     private function applyFilters(Builder $query, string $status, string $search): void

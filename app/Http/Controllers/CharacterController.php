@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CharacterController extends Controller
@@ -160,6 +161,34 @@ class CharacterController extends Controller
         return redirect()
             ->route('characters.show', $character)
             ->with('status', 'Charakter aktualisiert.');
+    }
+
+    public function inlineUpdate(Request $request, Character $character): View|RedirectResponse
+    {
+        $this->ensureCanManageCharacter($character);
+
+        $statusOptions = array_keys((array) config('characters.statuses', []));
+
+        $validated = $request->validate([
+            'epithet' => ['nullable', 'string', 'max:120'],
+            'status' => ['required', Rule::in($statusOptions)],
+            'bio' => ['required', 'string', 'max:12000'],
+            'concept' => ['nullable', 'string', 'max:180'],
+            'world_connection' => ['nullable', 'string', 'max:2000'],
+            'gm_secret' => ['nullable', 'string', 'max:3000'],
+            'gm_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $character->fill($validated);
+        $character->save();
+
+        if ($request->header('HX-Request') === 'true') {
+            return view('characters.partials.inline-editor', compact('character'));
+        }
+
+        return redirect()
+            ->route('characters.show', $character)
+            ->with('status', 'Charakter-Schnellbearbeitung gespeichert.');
     }
 
     public function destroy(Character $character): RedirectResponse

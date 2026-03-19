@@ -59,15 +59,20 @@ class NotificationController extends Controller
         ));
     }
 
-    public function read(Request $request, string $notificationId): RedirectResponse
+    public function read(Request $request, string $notificationId): View|RedirectResponse
     {
-        $notification = $request->user()
+        $user = $request->user();
+        $notification = $user
             ->notifications()
             ->whereKey($notificationId)
             ->firstOrFail();
 
         if (! $notification->read_at) {
             $notification->markAsRead();
+        }
+
+        if ($request->header('HX-Request') === 'true') {
+            return $this->renderInboxPanel($request, $user);
         }
 
         $fallbackUrl = route('notifications.index');
@@ -121,12 +126,30 @@ class NotificationController extends Controller
         return $candidate;
     }
 
-    public function readAll(Request $request): RedirectResponse
+    public function readAll(Request $request): View|RedirectResponse
     {
-        $request->user()
+        $user = $request->user();
+
+        $user
             ->unreadNotifications()
             ->update(['read_at' => now()]);
 
+        if ($request->header('HX-Request') === 'true') {
+            return $this->renderInboxPanel($request, $user);
+        }
+
         return back()->with('status', 'Alle Benachrichtigungen als gelesen markiert.');
+    }
+
+    private function renderInboxPanel(Request $request, \App\Models\User $user): View
+    {
+        $notifications = $user->notifications()
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $unreadCount = $user->unreadNotifications()->count();
+
+        return view('notifications.partials.inbox', compact('notifications', 'unreadCount'));
     }
 }

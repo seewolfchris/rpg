@@ -27,23 +27,21 @@ let browserNotificationConfig = null;
 
 window.characterSheetForm = characterSheetForm;
 
-window.addEventListener('alpine:init', () => {
-    if (!window.Alpine) {
-        return;
-    }
-
+if (window.Alpine) {
     registerCharacterSheetComponent(window.Alpine);
-});
+    window.Alpine.start();
+}
 
-const startDeferredAlpine = () => {
-    if (typeof window.__startAlpine === 'function') {
-        window.__startAlpine();
-        delete window.__startAlpine;
+document.addEventListener('htmx:afterSwap', (event) => {
+    const target = event.detail?.target;
+
+    if (window.Alpine && target instanceof HTMLElement) {
+        window.Alpine.initTree(target);
     }
-};
 
-startDeferredAlpine();
-window.addEventListener('load', startDeferredAlpine);
+    setupSceneThreadReadingMode();
+    setupPostEditorEnhancements();
+});
 
 const bootApplication = async () => {
     setupSceneThreadReadingMode();
@@ -77,23 +75,31 @@ function setupSceneThreadReadingMode() {
         }
 
         const sceneId = String(root.dataset.sceneId || '').trim();
-        const oocDetails = root.querySelector('details[data-ooc-thread]');
+        const oocDetailsList = Array.from(root.querySelectorAll('details[data-ooc-thread]'))
+            .filter((element) => element instanceof HTMLDetailsElement);
 
-        if (!sceneId || !(oocDetails instanceof HTMLDetailsElement)) {
+        if (!sceneId || oocDetailsList.length === 0) {
             return;
         }
 
         const storageKey = `c76:scene-ooc-open:${sceneId}`;
         const stored = readLocalStorageValue(storageKey);
 
-        if (stored === '1') {
-            oocDetails.open = true;
-        } else if (stored === '0') {
-            oocDetails.open = false;
-        }
+        oocDetailsList.forEach((oocDetails) => {
+            if (stored === '1') {
+                oocDetails.open = true;
+            } else if (stored === '0') {
+                oocDetails.open = false;
+            }
 
-        oocDetails.addEventListener('toggle', () => {
-            writeLocalStorageValue(storageKey, oocDetails.open ? '1' : '0');
+            if (oocDetails.dataset.readingModeBound === '1') {
+                return;
+            }
+
+            oocDetails.dataset.readingModeBound = '1';
+            oocDetails.addEventListener('toggle', () => {
+                writeLocalStorageValue(storageKey, oocDetails.open ? '1' : '0');
+            });
         });
     });
 }
@@ -103,6 +109,12 @@ function setupPostEditorEnhancements() {
         if (!(formNode instanceof HTMLFormElement)) {
             return;
         }
+
+        if (formNode.dataset.postEditorEnhanced === '1') {
+            return;
+        }
+
+        formNode.dataset.postEditorEnhanced = '1';
 
         const contentField = formNode.querySelector('[data-post-content-input]');
         const formatField = formNode.querySelector('[data-post-content-format]');

@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-18  
+Stand: 2026-03-19  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -25,10 +25,10 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.22-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions**
-  - `node --test tests/js/*.mjs` -> **8 passed**
-  - `composer analyse` -> **keine Fehler**
-  - `npm run build` -> **gruen**
+  - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (2026-03-19)
+  - `node --test tests/js/*.mjs` -> **8 passed** (2026-03-19)
+  - `composer analyse` -> **keine Fehler** (2026-03-19)
+  - `npm run build` -> **gruen** (2026-03-19)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Aktueller CI-Lauf auf `main` ist gruen
@@ -89,6 +89,8 @@ Repository-Branch: `main`
   - `composer analyse`
   - `php artisan test --without-tty --do-not-cache-result`
   - `npm run build`
+- Wichtiger Test-Hinweis:
+  - vor lokalen Feature-Testlaeufen nach aktivierten Caches immer `php artisan optimize:clear`
 - Release-Checkliste:
   - `docs/RELEASE-CHECKLISTE.md`
 - Release-Prepare (Version/Build/Doku):
@@ -138,7 +140,8 @@ Repository-Branch: `main`
 - Repo-Lizenz: `LICENSE` (proprietaer / all rights reserved).
 
 ### 5.4 Frontend-Abhaengigkeiten
-- Alpine lokal gehostet (keine Runtime-CDN-Abhaengigkeit).
+- HTMX 2.x + Alpine.js 3.x lokal via Vite (keine Runtime-CDN-Abhaengigkeit).
+- Keine zusaetzlichen SPA-Frameworks (kein Livewire/Inertia/Vue/React).
 
 ## 6) Offene Risiken und Restthemen
 - Kein WebSocket-/Realtime-Backbone (bewusste Entscheidung fuer asynchrones PbP).

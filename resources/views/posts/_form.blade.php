@@ -28,13 +28,32 @@
     $currentInventoryAwardEquipped = (bool) old('inventory_award_equipped', false);
 @endphp
 
-<div class="space-y-5">
+<div
+    class="space-y-5"
+    x-data="{
+        postType: '{{ $currentType }}',
+        contentFormat: '{{ $currentFormat }}',
+        probeEnabled: {{ $currentProbeEnabled ? 'true' : 'false' }},
+        formatHint() {
+            if (this.contentFormat === 'markdown') {
+                return 'Markdown aktiv: Vorschau und Format-Hotkeys sind freigeschaltet.';
+            }
+
+            if (this.contentFormat === 'bbcode') {
+                return 'BBCode aktiv: Vorschau ist deaktiviert, klassische Foren-Tags bleiben nutzbar.';
+            }
+
+            return 'Klartext aktiv: roher Text ohne Markdown/BBCode-Rendering.';
+        }
+    }"
+>
     <div class="grid gap-4 sm:grid-cols-3">
         <div>
             <label for="post_type" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Beitragstyp</label>
             <select
                 id="post_type"
                 name="post_type"
+                x-model="postType"
                 required
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
@@ -54,6 +73,8 @@
             <select
                 id="character_id"
                 name="character_id"
+                :disabled="postType !== 'ic'"
+                x-bind:class="postType !== 'ic' ? 'opacity-60' : ''"
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
                 <option value="">Kein Charakter</option>
@@ -75,12 +96,14 @@
                 name="content_format"
                 required
                 data-post-content-format
+                x-model="contentFormat"
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
                 <option value="markdown" @selected($currentFormat === 'markdown')>Markdown</option>
                 <option value="bbcode" @selected($currentFormat === 'bbcode')>BBCode</option>
                 <option value="plain" @selected($currentFormat === 'plain')>Klartext</option>
             </select>
+            <p class="mt-2 text-xs text-stone-500" x-text="formatHint()"></p>
             @error('content_format')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror
@@ -104,12 +127,13 @@
         @enderror
     </div>
 
-    <div>
+    <div x-show="postType === 'ic'" x-cloak>
         <label for="ic_quote" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Optionales IC-Zitat</label>
         <input
             id="ic_quote"
             type="text"
             name="ic_quote"
+            :disabled="postType !== 'ic'"
             maxlength="180"
             value="{{ $currentIcQuote }}"
             placeholder="Kurze prägende Zeile deines Charakters ..."
@@ -151,6 +175,7 @@
                         type="checkbox"
                         name="probe_enabled"
                         value="1"
+                        x-model="probeEnabled"
                         @checked($currentProbeEnabled)
                         class="h-4 w-4 rounded border-amber-600/70 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
                     >
@@ -161,6 +186,7 @@
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror
 
+            <div x-show="probeEnabled" x-cloak>
             <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="lg:col-span-2">
                     <label for="probe_explanation" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Erklärung / Anlass</label>
@@ -384,6 +410,7 @@
                         @enderror
                     </div>
                 </div>
+            </div>
             </div>
         </section>
     @endif

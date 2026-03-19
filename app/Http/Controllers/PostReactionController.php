@@ -18,7 +18,7 @@ class PostReactionController extends Controller
     {
         abort_unless((bool) config('features.wave4.reactions', false), 404);
 
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('view', $post->scene);
 
@@ -39,7 +39,7 @@ class PostReactionController extends Controller
     {
         abort_unless((bool) config('features.wave4.reactions', false), 404);
 
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('view', $post->scene);
 

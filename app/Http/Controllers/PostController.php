@@ -68,11 +68,11 @@ class PostController extends Controller
 
     public function edit(World $world, Post $post): View
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('update', $post);
 
-        $post->load(['scene.campaign', 'user', 'character']);
+        $post->load([...Post::SCENE_CONTEXT_RELATIONS, 'user', 'character']);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $characterOwner = $post->user_id === (int) auth()->id()
@@ -94,7 +94,7 @@ class PostController extends Controller
 
     public function update(UpdatePostRequest $request, World $world, Post $post): RedirectResponse
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('update', $post);
 
@@ -170,7 +170,7 @@ class PostController extends Controller
             $this->postMentionNotificationService->notifyMentions($post, $user);
         }
 
-        $post->load('scene.campaign', 'scene');
+        $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
         return redirect()
@@ -184,11 +184,11 @@ class PostController extends Controller
 
     public function destroy(World $world, Post $post): RedirectResponse
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('delete', $post);
 
-        $post->load('scene.campaign', 'scene');
+        $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $this->pointService->revokeApprovedPostPoints($post);
@@ -203,9 +203,9 @@ class PostController extends Controller
             ->with('status', 'Beitrag gelöscht.');
     }
 
-    public function moderate(ModeratePostRequest $request, World $world, Post $post): RedirectResponse
+    public function moderate(ModeratePostRequest $request, World $world, Post $post): View|RedirectResponse
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
@@ -233,12 +233,16 @@ class PostController extends Controller
             moderationNote: $moderationNote,
         );
 
+        if ($this->expectsThreadItemFragment($request)) {
+            return $this->threadItemFragment($post);
+        }
+
         return back()->with('status', 'Moderationsstatus aktualisiert.');
     }
 
-    public function pin(World $world, Post $post): RedirectResponse
+    public function pin(Request $request, World $world, Post $post): View|RedirectResponse
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
@@ -247,12 +251,16 @@ class PostController extends Controller
         $post->pinned_by = auth()->id();
         $post->save();
 
+        if ($request->header('HX-Request') === 'true') {
+            return $this->threadItemFragment($post);
+        }
+
         return back()->with('status', 'Beitrag angepinnt.');
     }
 
-    public function unpin(World $world, Post $post): RedirectResponse
+    public function unpin(Request $request, World $world, Post $post): View|RedirectResponse
     {
-        $post->loadMissing('scene.campaign.world');
+        $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
@@ -260,6 +268,10 @@ class PostController extends Controller
         $post->pinned_at = null;
         $post->pinned_by = null;
         $post->save();
+
+        if ($request->header('HX-Request') === 'true') {
+            return $this->threadItemFragment($post);
+        }
 
         return back()->with('status', 'Pin entfernt.');
     }
@@ -344,5 +356,28 @@ class PostController extends Controller
         $normalized = trim($note);
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    private function expectsThreadItemFragment(Request $request): bool
+    {
+        if ($request->header('HX-Request') !== 'true') {
+            return false;
+        }
+
+        $hxTarget = trim((string) $request->header('HX-Target', ''));
+
+        return str_starts_with($hxTarget, 'post-');
+    }
+
+    private function threadItemFragment(Post $post): View
+    {
+        $post->load(Post::THREAD_ITEM_RELATIONS);
+
+        /** @var Scene $scene */
+        $scene = $post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
+
+        return view('posts._thread-item', compact('post', 'scene', 'campaign'));
     }
 }

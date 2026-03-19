@@ -25,8 +25,6 @@ class SceneController extends Controller
 {
     use EnsuresWorldContext;
 
-    private const THREAD_POSTS_PER_PAGE = 20;
-
     public function __construct(
         private readonly SceneReadTrackingService $sceneReadTrackingService,
         private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
@@ -104,12 +102,7 @@ class SceneController extends Controller
         $hasUnreadPosts = $readTracking->hasUnreadPosts;
         $firstUnreadPostId = $readTracking->firstUnreadPostId;
 
-        $posts = Post::query()
-            ->where('scene_id', $scene->id)
-            ->with(['user', 'character', 'approvedBy', 'pinnedBy', 'revisions.editor', 'moderationLogs.moderator', 'diceRoll.character.user', 'reactions'])
-            ->latestByIdHotpath()
-            ->paginate(self::THREAD_POSTS_PER_PAGE)
-            ->withQueryString();
+        $posts = $this->threadPostsPaginator($scene);
 
         $pinnedPosts = Post::query()
             ->where('scene_id', $scene->id)
@@ -191,6 +184,16 @@ class SceneController extends Controller
             'userBookmark',
             'bookmarkJumpUrl',
         ));
+    }
+
+    public function threadPage(Request $request, World $world, Campaign $campaign, Scene $scene): View
+    {
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
+        $this->authorize('view', $scene);
+
+        $posts = $this->threadPostsPaginator($scene);
+
+        return view('scenes.partials.thread-page', compact('posts', 'campaign', 'scene'));
     }
 
     public function edit(World $world, Campaign $campaign, Scene $scene): View
@@ -303,6 +306,16 @@ class SceneController extends Controller
                 'last_read_at' => now(),
             ]);
         }
+    }
+
+    private function threadPostsPaginator(Scene $scene): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Post::query()
+            ->where('scene_id', $scene->id)
+            ->with(Post::THREAD_PAGE_RELATIONS)
+            ->latestByIdHotpath()
+            ->paginate(Post::THREAD_POSTS_PER_PAGE)
+            ->withQueryString();
     }
 
     /**

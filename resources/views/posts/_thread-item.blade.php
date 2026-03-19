@@ -40,7 +40,13 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+            <form
+                method="POST"
+                action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
+                hx-target="#post-{{ $post->id }}"
+                hx-swap="outerHTML"
+                class="contents"
+            >
                 @csrf
                 <input type="hidden" name="post_id" value="{{ $post->id }}">
                 <button
@@ -53,7 +59,13 @@
 
             @can('moderate', $post)
                 @if ($post->is_pinned)
-                    <form method="POST" action="{{ route('posts.unpin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                    <form
+                        method="POST"
+                        action="{{ route('posts.unpin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                        hx-target="#post-{{ $post->id }}"
+                        hx-swap="outerHTML"
+                        class="contents"
+                    >
                         @csrf
                         @method('PATCH')
                         <button
@@ -64,7 +76,13 @@
                         </button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                    <form
+                        method="POST"
+                        action="{{ route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                        hx-target="#post-{{ $post->id }}"
+                        hx-swap="outerHTML"
+                        class="contents"
+                    >
                         @csrf
                         @method('PATCH')
                         <button
@@ -327,7 +345,13 @@
     @endif
 
     @can('moderate', $post)
-        <form method="POST" action="{{ route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" class="mt-4 flex flex-wrap items-start gap-2 sm:items-center">
+        <form
+            method="POST"
+            action="{{ route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+            class="mt-4 flex flex-wrap items-start gap-2 sm:items-center"
+            hx-target="#post-{{ $post->id }}"
+            hx-swap="outerHTML"
+        >
             @csrf
             @method('PATCH')
             <label for="moderation_status_{{ $post->id }}" class="text-xs uppercase tracking-[0.08em] text-stone-400">Moderation</label>

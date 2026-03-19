@@ -26,6 +26,8 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
 
 ## 2. Qualitaet lokal pruefen
 
+- Cache-Snapshot zuruecksetzen (wichtig vor lokalen Feature-Tests):
+  - `php artisan optimize:clear`
 - Composer-Validierung:
   - `composer validate --strict`
 - Statische Analyse:
@@ -38,6 +40,9 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
   - `npm run build`
 
 Nur wenn alles gruen ist, weiter.
+
+Hinweis:
+- Wenn zuvor `config:cache`, `route:cache`, `event:cache` oder `view:cache` aktiv war, koennen Feature-Tests sonst mit `419` fehlschlagen.
 
 ## 3. Version aktualisieren
 
@@ -81,6 +86,9 @@ git add -A
 git commit -m "release: vX.XX-beta"
 git push origin main
 ```
+
+Wichtig:
+- Temporaere Dateien wie `.goutputstream-*` nicht committen.
 
 ## 5. Deploy auf Plesk
 

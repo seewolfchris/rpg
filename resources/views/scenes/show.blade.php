@@ -162,6 +162,7 @@
                 @can('create', [App\Models\Post::class, $scene])
                     <a
                         href="#new-post-form"
+                        hx-boost="false"
                         class="ui-btn"
                     >
                         Zum Schreibfeld
@@ -170,6 +171,7 @@
                 @if ($canModerateScene)
                     <a
                         href="#inventory-quick-action"
+                        hx-boost="false"
                         class="ui-btn ui-btn-success"
                     >
                         Inventar-Schnellaktion
@@ -426,58 +428,9 @@
 
         <section class="ui-card p-6 sm:p-8" data-scene-thread-reading-mode data-scene-id="{{ $scene->id }}">
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
-
-            @if ($posts->isEmpty())
-                <p class="mt-4 text-sm text-stone-400">Noch keine Beiträge in dieser Szene.</p>
-            @else
-                @php
-                    $pagePosts = $posts->getCollection();
-                    $icPosts = $pagePosts->where('post_type', 'ic');
-                    $oocPosts = $pagePosts->where('post_type', 'ooc');
-                @endphp
-
-                <div class="mt-5 space-y-6">
-                    <section class="ui-card-soft border-amber-700/30 bg-black/20 p-4">
-                        <h3 class="font-heading text-xl text-amber-100">Abenteuerfluss (IC)</h3>
-                        <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">
-                            Fokus auf In-Character-Posts für ungestörten Lesefluss.
-                        </p>
-
-                        @if ($icPosts->isEmpty())
-                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine IC-Beiträge vorhanden.</p>
-                        @else
-                            <div class="mt-4 space-y-4">
-                                @foreach ($icPosts as $post)
-                                    @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
-                                @endforeach
-                            </div>
-                        @endif
-                    </section>
-
-                    <details data-ooc-thread class="ui-card-soft border-stone-700/70 bg-neutral-900/35 p-4">
-                        <summary class="cursor-pointer list-none">
-                            <h3 class="font-heading inline text-xl text-stone-100">OOC-Kanal</h3>
-                            <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">
-                                Absprachen und Meta-Kommentare getrennt vom Abenteuerfluss.
-                            </p>
-                        </summary>
-
-                        @if ($oocPosts->isEmpty())
-                            <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
-                        @else
-                            <div class="mt-4 space-y-4">
-                                @foreach ($oocPosts as $post)
-                                    @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
-                                @endforeach
-                            </div>
-                        @endif
-                    </details>
-                </div>
-
-                <div class="mt-6">
-                    {{ $posts->links() }}
-                </div>
-            @endif
+            <div id="scene-thread-feed" class="mt-5 space-y-6">
+                @include('scenes.partials.thread-page', ['posts' => $posts, 'campaign' => $campaign, 'scene' => $scene])
+            </div>
         </section>
 
         @can('create', [App\Models\Post::class, $scene])
