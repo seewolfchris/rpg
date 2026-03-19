@@ -201,12 +201,6 @@
             <main
                 id="app-main"
                 class="mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8"
-                hx-boost="true"
-                hx-target="#app-main"
-                hx-select="#app-main"
-                hx-swap="outerHTML transition:true"
-                hx-push-url="true"
-                hx-indicator="#global-hx-indicator"
             >
                 @include('partials.flash')
 

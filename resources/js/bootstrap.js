@@ -17,7 +17,7 @@ if (csrfToken !== '') {
 if (window.htmx) {
     window.htmx.config.allowEval = false;
     window.htmx.config.historyEnabled = true;
-    window.htmx.config.globalViewTransitions = true;
+    window.htmx.config.globalViewTransitions = false;
     window.htmx.config.defaultSwapStyle = 'innerHTML';
 
     if (csrfToken !== '') {
