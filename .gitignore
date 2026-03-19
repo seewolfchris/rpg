@@ -1,5 +1,6 @@
 *.log
 .DS_Store
+*.goutputstream-*
 .env
 .env.backup
 .env.production
