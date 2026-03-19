@@ -22,7 +22,7 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
 
 - `git pull --rebase origin main`
 - Alle geplanten Aenderungen finalisieren.
-- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.22-beta`).
+- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.23-beta`).
 
 ## 2. Qualitaet lokal pruefen
 

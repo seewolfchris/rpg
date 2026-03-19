@@ -16,7 +16,10 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.22-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.23-beta`** (funktional, getestet, build-faehig)
+
+Changelog:
+- v0.23-beta: HTMX-Interaktionen – Live Read-Tracking, Bookmark/Pin OOB-Updates, GM-Bulk-Moderation ohne Reload
 
 Letzte lokale Verifikation:
 - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-19)
@@ -222,19 +225,19 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 Release-Metadaten (Version/Build/Doku) vorbereiten:
 
 ```bash
-scripts/release_prepare.sh --version v0.22-beta
+scripts/release_prepare.sh --version v0.23-beta
 ```
 
 Optional auch lokale `.env` aktualisieren:
 
 ```bash
-scripts/release_prepare.sh --version v0.22-beta --update-dotenv
+scripts/release_prepare.sh --version v0.23-beta --update-dotenv
 ```
 
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh --version v0.22-beta
+scripts/release_flow.sh --version v0.23-beta
 ```
 
 Release-Smoke automatisiert:
