@@ -2,8 +2,8 @@
 
 namespace App\Domain\Post;
 
-use App\Models\CampaignInvitation;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\PostMention;
@@ -113,6 +113,7 @@ class PostMentionNotificationService
 
                 if ($mentionRecord->wasRecentlyCreated) {
                     $newMentionNames[] = $characterName;
+
                     continue;
                 }
 

@@ -59,4 +59,3 @@ class StoreWebPushSubscriptionRequest extends FormRequest
         return (string) $this->validated('content_encoding', 'aes128gcm');
     }
 }
-

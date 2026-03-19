@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\WebPushSubscriptionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Api\WebPushSubscriptionController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
@@ -12,8 +12,8 @@ use App\Http\Controllers\CharacterProgressionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
-use App\Http\Controllers\GmProgressionController;
 use App\Http\Controllers\GmModerationController;
+use App\Http\Controllers\GmProgressionController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\NotificationController;

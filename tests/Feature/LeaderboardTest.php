@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\PointEvent;
 use App\Models\Campaign;
 use App\Models\Character;
+use App\Models\PointEvent;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;

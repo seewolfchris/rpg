@@ -114,4 +114,3 @@ class WebPushSubscriptionControllerTest extends TestCase
         ])->assertUnprocessable();
     }
 }
-

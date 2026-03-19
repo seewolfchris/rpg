@@ -1,7 +1,7 @@
 <?php
 
-use App\Support\Performance\WorldHotpathPerformanceReporter;
 use App\Support\Performance\PostsLatestByIdBenchmarker;
+use App\Support\Performance\WorldHotpathPerformanceReporter;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;

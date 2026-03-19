@@ -46,7 +46,7 @@ class PushSubscription extends BasePushSubscription
     protected static function booted(): void
     {
         static::creating(function (self $subscription): void {
-            if (! $subscription->user_id && $subscription->subscribable_type === (new User())->getMorphClass()) {
+            if (! $subscription->user_id && $subscription->subscribable_type === (new User)->getMorphClass()) {
                 $subscription->user_id = (int) $subscription->subscribable_id;
             }
 

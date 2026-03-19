@@ -88,7 +88,7 @@ class CharacterMentionNotification extends Notification
         /** @var World $world */
         $world = $campaign->world;
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Erwaehnung in einer Szene')
             ->line('Du wurdest in einem Beitrag erwaehnt.')
             ->action('Zur Szene', route('campaigns.scenes.show', [

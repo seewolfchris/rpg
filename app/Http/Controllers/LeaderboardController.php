@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Character;
 use App\Models\User;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class LeaderboardController extends Controller

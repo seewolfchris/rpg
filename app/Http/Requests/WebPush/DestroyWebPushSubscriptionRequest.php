@@ -41,4 +41,3 @@ class DestroyWebPushSubscriptionRequest extends FormRequest
         return (string) $this->validated('endpoint');
     }
 }
-

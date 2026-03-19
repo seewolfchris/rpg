@@ -6,4 +6,3 @@ return [
         'force_index_name' => env('PERF_POSTS_LATEST_BY_ID_FORCE_INDEX_NAME', 'posts_scene_id_id_idx'),
     ],
 ];
-

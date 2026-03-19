@@ -18,4 +18,3 @@ class PushSubscriptionPolicy
         return (int) $subscription->user_id === (int) $user->id;
     }
 }
-

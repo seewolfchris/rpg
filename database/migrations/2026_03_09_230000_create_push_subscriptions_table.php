@@ -42,4 +42,3 @@ return new class extends Migration
             ->dropIfExists(config('webpush.table_name'));
     }
 };
-

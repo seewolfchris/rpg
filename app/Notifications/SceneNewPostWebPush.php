@@ -92,4 +92,3 @@ class SceneNewPostWebPush extends Notification
         return [$world, $campaign, $scene];
     }
 }
-

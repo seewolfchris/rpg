@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\ApplyWorldContext;
+use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ProtectAgainstCrawlers;
 use Illuminate\Foundation\Application;

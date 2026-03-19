@@ -8,8 +8,8 @@ use App\Models\World;
 use App\Support\EncyclopediaContentRenderer;
 use App\Support\EncyclopediaEntryMetaBuilder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -19,7 +19,7 @@ class KnowledgeController extends Controller
     {
         $worlds = $world === null
             ? $this->activeWorldCatalog()
-            : new EloquentCollection();
+            : new EloquentCollection;
 
         $selectedWorldSlug = trim((string) $request->session()->get('world_slug', ''));
 
@@ -117,7 +117,7 @@ class KnowledgeController extends Controller
     private function activeWorldCatalog(): EloquentCollection
     {
         if (! Schema::hasTable('worlds')) {
-            return new EloquentCollection();
+            return new EloquentCollection;
         }
 
         $query = World::query()

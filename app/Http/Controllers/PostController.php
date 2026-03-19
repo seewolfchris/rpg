@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Post\PostModerationService;
 use App\Domain\Post\PostMentionNotificationService;
+use App\Domain\Post\PostModerationService;
 use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
@@ -14,8 +14,8 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
-use App\Support\PostContentRenderer;
 use App\Support\Gamification\PointService;
+use App\Support\PostContentRenderer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
