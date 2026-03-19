@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\World;
 use App\Support\Gamification\PointService;
 use App\Support\PostContentRenderer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -377,7 +378,19 @@ class PostController extends Controller
         $scene = $post->scene;
         /** @var Campaign $campaign */
         $campaign = $scene->campaign;
+        $bookmarkCountForNav = $this->visibleBookmarkCountForUser(auth()->user());
 
-        return view('posts._thread-item', compact('post', 'scene', 'campaign'));
+        return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
+    }
+
+    private function visibleBookmarkCountForUser(?User $user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        return (int) $user->sceneBookmarks()
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->count();
     }
 }

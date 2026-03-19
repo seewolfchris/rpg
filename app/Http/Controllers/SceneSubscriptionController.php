@@ -171,7 +171,7 @@ class SceneSubscriptionController extends Controller
         );
     }
 
-    public function markRead(World $world, Campaign $campaign, Scene $scene): RedirectResponse
+    public function markRead(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
@@ -190,16 +190,24 @@ class SceneSubscriptionController extends Controller
         if ($latestPostId > 0) {
             $subscription->markRead($latestPostId);
 
+            if ($request->header('HX-Request') === 'true') {
+                return $this->threadFeedFragment($request, $scene, $campaign, $subscription);
+            }
+
             return back()->with('status', 'Szene als gelesen markiert.');
         }
 
         $subscription->last_read_at = now();
         $subscription->save();
 
+        if ($request->header('HX-Request') === 'true') {
+            return $this->threadFeedFragment($request, $scene, $campaign, $subscription);
+        }
+
         return back()->with('status', 'Szene enthält noch keine Beiträge.');
     }
 
-    public function markUnread(World $world, Campaign $campaign, Scene $scene): RedirectResponse
+    public function markUnread(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
@@ -210,10 +218,18 @@ class SceneSubscriptionController extends Controller
             ->first();
 
         if (! $subscription) {
+            if ($request->header('HX-Request') === 'true') {
+                return $this->threadFeedFragment($request, $scene, $campaign, null);
+            }
+
             return back()->with('status', 'Szene ist nicht abonniert.');
         }
 
         $subscription->markUnread();
+
+        if ($request->header('HX-Request') === 'true') {
+            return $this->threadFeedFragment($request, $scene, $campaign, $subscription->fresh());
+        }
 
         return back()->with('status', 'Szene als ungelesen markiert.');
     }
@@ -268,5 +284,45 @@ class SceneSubscriptionController extends Controller
             ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
                 ->visibleTo($user)
                 ->where('world_id', (int) $world->id));
+    }
+
+    private function threadFeedFragment(
+        Request $request,
+        Scene $scene,
+        Campaign $campaign,
+        ?SceneSubscription $subscription,
+    ): View {
+        $user = $request->user();
+        $posts = Post::query()
+            ->where('scene_id', $scene->id)
+            ->with(Post::THREAD_PAGE_RELATIONS)
+            ->latestByIdHotpath()
+            ->paginate(Post::THREAD_POSTS_PER_PAGE)
+            ->withQueryString();
+        $latestPostId = $this->latestScenePostId($scene);
+        $unreadPostsCount = $this->unreadCountForScene($scene, $subscription, $latestPostId);
+        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
+
+        return view('scenes.partials.thread-page', compact(
+            'posts',
+            'campaign',
+            'scene',
+            'subscription',
+            'latestPostId',
+            'unreadPostsCount',
+            'canModerateScene',
+        ));
+    }
+
+    private function unreadCountForScene(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
+    {
+        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
+            return 0;
+        }
+
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
+            ->count();
     }
 }

@@ -151,6 +151,8 @@
                                 <span id="nav-bookmark-count-badge" class="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full border border-emerald-300/80 bg-emerald-500 px-1.5 text-[0.6rem] font-bold text-black">
                                     {{ $bookmarkCount > 99 ? '99+' : $bookmarkCount }}
                                 </span>
+                            @else
+                                <span id="nav-bookmark-count-badge" class="hidden"></span>
                             @endif
                         </a>
                         <a

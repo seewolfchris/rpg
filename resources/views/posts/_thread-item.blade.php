@@ -40,6 +40,20 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @can('moderate', $post)
+                <label for="bulk_post_{{ $post->id }}" class="inline-flex items-center gap-2 rounded-md border border-stone-600/80 bg-black/35 px-2.5 py-1.5 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
+                    <input
+                        id="bulk_post_{{ $post->id }}"
+                        type="checkbox"
+                        name="post_ids[]"
+                        value="{{ $post->id }}"
+                        form="thread-moderation-bulk-form"
+                        class="h-3.5 w-3.5 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60"
+                    >
+                    Bulk
+                </label>
+            @endcan
+
             <form
                 method="POST"
                 action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
@@ -380,3 +394,13 @@
         </form>
     @endcan
 </article>
+
+@if (request()->header('HX-Request') === 'true' && isset($bookmarkCountForNav))
+    @if ($bookmarkCountForNav > 0)
+        <span id="nav-bookmark-count-badge" hx-swap-oob="outerHTML" class="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full border border-emerald-300/80 bg-emerald-500 px-1.5 text-[0.6rem] font-bold text-black">
+            {{ $bookmarkCountForNav > 99 ? '99+' : $bookmarkCountForNav }}
+        </span>
+    @else
+        <span id="nav-bookmark-count-badge" hx-swap-oob="outerHTML" class="hidden"></span>
+    @endif
+@endif

@@ -82,9 +82,16 @@ class SceneController extends Controller
             ->first();
 
         $lastReadPostIdBeforeOpen = (int) ($subscription?->last_read_post_id ?? 0);
+        $jump = (string) $request->query('jump', '');
+        $jumpPostId = match ($jump) {
+            'last_read' => $lastReadPostIdBeforeOpen,
+            'latest' => $this->latestScenePostId($scene),
+            'first_unread' => $subscription ? $this->firstUnreadPostId($scene, $lastReadPostIdBeforeOpen) : 0,
+            default => 0,
+        };
 
-        if ($request->query('jump') === 'last_read' && $lastReadPostIdBeforeOpen > 0) {
-            $jumpUrl = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, [$lastReadPostIdBeforeOpen])[$lastReadPostIdBeforeOpen] ?? null;
+        if ($jumpPostId > 0) {
+            $jumpUrl = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, [$jumpPostId])[$jumpPostId] ?? null;
 
             if ($jumpUrl !== null) {
                 return redirect()->to($jumpUrl);
@@ -101,6 +108,7 @@ class SceneController extends Controller
         $newPostsSinceLastRead = $readTracking->newPostsSinceLastRead;
         $hasUnreadPosts = $readTracking->hasUnreadPosts;
         $firstUnreadPostId = $readTracking->firstUnreadPostId;
+        $unreadPostsCount = 0;
 
         $posts = $this->threadPostsPaginator($scene);
 
@@ -176,6 +184,7 @@ class SceneController extends Controller
             'canModerateScene',
             'subscription',
             'latestPostId',
+            'unreadPostsCount',
             'newPostsSinceLastRead',
             'hasUnreadPosts',
             'jumpToLastReadUrl',
@@ -192,8 +201,24 @@ class SceneController extends Controller
         $this->authorize('view', $scene);
 
         $posts = $this->threadPostsPaginator($scene);
+        $user = $request->user();
+        $subscription = SceneSubscription::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', (int) $user->id)
+            ->first();
+        $latestPostId = $this->latestScenePostId($scene);
+        $unreadPostsCount = $this->sceneUnreadPostsCount($scene, $subscription, $latestPostId);
+        $canModerateScene = $user->isGmOrAdmin() || $scene->campaign->isCoGm($user);
 
-        return view('scenes.partials.thread-page', compact('posts', 'campaign', 'scene'));
+        return view('scenes.partials.thread-page', compact(
+            'posts',
+            'campaign',
+            'scene',
+            'subscription',
+            'latestPostId',
+            'unreadPostsCount',
+            'canModerateScene',
+        ));
     }
 
     public function edit(World $world, Campaign $campaign, Scene $scene): View
@@ -316,6 +341,37 @@ class SceneController extends Controller
             ->latestByIdHotpath()
             ->paginate(Post::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
+    }
+
+    private function latestScenePostId(Scene $scene): int
+    {
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->max('id');
+    }
+
+    private function firstUnreadPostId(Scene $scene, int $lastReadPostId): int
+    {
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->when(
+                $lastReadPostId > 0,
+                fn ($query) => $query->where('id', '>', $lastReadPostId),
+            )
+            ->orderBy('id')
+            ->value('id');
+    }
+
+    private function sceneUnreadPostsCount(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
+    {
+        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
+            return 0;
+        }
+
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
+            ->count();
     }
 
     /**

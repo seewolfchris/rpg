@@ -6,6 +6,8 @@ use App\Domain\Post\PostModerationService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Post;
+use App\Models\Scene;
+use App\Models\SceneSubscription;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -62,19 +64,36 @@ class GmModerationController extends Controller
         ));
     }
 
-    public function bulkUpdate(BulkModerationRequest $request, World $world): RedirectResponse
+    public function bulkUpdate(BulkModerationRequest $request, World $world): View|RedirectResponse
     {
         $statusFilter = (string) $request->validated('status', 'pending');
         $search = trim((string) $request->validated('q', ''));
         $targetStatus = (string) $request->validated('moderation_status');
         $moderationNote = $this->normalizeModerationNote((string) $request->validated('moderation_note', ''));
         $moderator = $request->user();
+        $sceneId = (int) $request->validated('scene_id', 0);
+        $postIds = collect((array) $request->validated('post_ids', []))
+            ->map(static fn ($postId): int => (int) $postId)
+            ->filter(static fn (int $postId): bool => $postId > 0)
+            ->unique()
+            ->values();
+        $isHtmxRequest = $request->header('HX-Request') === 'true';
 
         $postsQuery = Post::query()
             ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id))
             ->with(['scene.campaign', 'user']);
 
-        $this->applyFilters($postsQuery, $statusFilter, $search);
+        if ($postIds->isNotEmpty()) {
+            $postsQuery->whereKey($postIds->all());
+        } elseif ($isHtmxRequest && $sceneId > 0) {
+            $postsQuery->whereRaw('1 = 0');
+        } else {
+            $this->applyFilters($postsQuery, $statusFilter, $search);
+        }
+
+        if ($sceneId > 0) {
+            $postsQuery->where('scene_id', $sceneId);
+        }
 
         $posts = $postsQuery->get();
         $affected = 0;
@@ -106,6 +125,10 @@ class GmModerationController extends Controller
             );
 
             $affected++;
+        }
+
+        if ($isHtmxRequest && $sceneId > 0) {
+            return $this->threadFeedFragment($request, $world, $sceneId);
         }
 
         return redirect()
@@ -174,5 +197,59 @@ class GmModerationController extends Controller
         $normalized = trim($note);
 
         return $normalized !== '' ? $normalized : null;
+    }
+
+    private function threadFeedFragment(Request $request, World $world, int $sceneId): View
+    {
+        $scene = Scene::query()
+            ->with('campaign')
+            ->findOrFail($sceneId);
+
+        $campaign = $scene->campaign;
+        abort_unless((int) $campaign->world_id === (int) $world->id, 404);
+        $this->authorize('view', $scene);
+
+        $posts = Post::query()
+            ->where('scene_id', $scene->id)
+            ->with(Post::THREAD_PAGE_RELATIONS)
+            ->latestByIdHotpath()
+            ->paginate(Post::THREAD_POSTS_PER_PAGE)
+            ->withQueryString();
+        $subscription = SceneSubscription::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', (int) $request->user()->id)
+            ->first();
+        $latestPostId = $this->latestScenePostId($scene);
+        $unreadPostsCount = $this->unreadCountForScene($scene, $subscription, $latestPostId);
+        $canModerateScene = $request->user()->isGmOrAdmin() || $campaign->isCoGm($request->user());
+
+        return view('scenes.partials.thread-page', compact(
+            'posts',
+            'campaign',
+            'scene',
+            'subscription',
+            'latestPostId',
+            'unreadPostsCount',
+            'canModerateScene',
+        ));
+    }
+
+    private function latestScenePostId(Scene $scene): int
+    {
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->max('id');
+    }
+
+    private function unreadCountForScene(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
+    {
+        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
+            return 0;
+        }
+
+        return (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
+            ->count();
     }
 }

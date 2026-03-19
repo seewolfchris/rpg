@@ -111,7 +111,9 @@ class SceneBookmarkController extends Controller
                 ->first();
 
             if ($post instanceof Post) {
-                return view('posts._thread-item', compact('post', 'scene', 'campaign'));
+                $bookmarkCountForNav = $this->visibleBookmarkCountForUser($request->user());
+
+                return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
             }
         }
 
@@ -184,5 +186,16 @@ class SceneBookmarkController extends Controller
             'scene' => $scene,
             'page' => $page,
         ]).'#post-'.$postId;
+    }
+
+    private function visibleBookmarkCountForUser(?\App\Models\User $user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        return (int) $user->sceneBookmarks()
+            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->count();
     }
 }
