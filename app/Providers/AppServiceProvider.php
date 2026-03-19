@@ -100,7 +100,7 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-        View::composer('layouts.app', function ($view): void {
+        View::composer(['layouts.app', 'layouts.auth'], function ($view): void {
             $view->with(
                 app(NavigationCounters::class)->forUser(Auth::user())
             );

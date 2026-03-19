@@ -18,6 +18,9 @@
         @php($metaDescription = trim((string) $__env->yieldContent('meta_description', 'C76-RPG ist eine asynchrone Play-by-Post Plattform mit Kampagnen, Szenen und Charakterverwaltung in mehreren Welten.')))
         @php($ogImage = asset('images/og/c76-rpg-og.png'))
         @php($pageUrl = url()->current())
+        @php($unreadNotificationsCount = (int) ($unreadNotificationsCount ?? 0))
+        @php($bookmarkCount = (int) ($bookmarkCount ?? 0))
+        @php($pendingCampaignInvitationsCount = (int) ($pendingCampaignInvitationsCount ?? 0))
         @php($csp = "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:")
         @php(
             $htmxConfig = json_encode([
