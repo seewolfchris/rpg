@@ -30,12 +30,15 @@ class BulkModerationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $postIds = collect((array) $this->input('post_ids', []))
-            ->map(static fn ($postId): int => (int) $postId)
-            ->filter(static fn (int $postId): bool => $postId > 0)
-            ->unique()
-            ->values()
-            ->all();
+        $rawPostIds = $this->input('post_ids');
+        $postIds = is_array($rawPostIds)
+            ? collect($rawPostIds)
+                ->map(static fn ($postId): int => (int) $postId)
+                ->filter(static fn (int $postId): bool => $postId > 0)
+                ->unique()
+                ->values()
+                ->all()
+            : null;
 
         $this->merge([
             'moderation_note' => trim((string) $this->input('moderation_note', '')),

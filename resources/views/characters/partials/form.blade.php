@@ -249,7 +249,7 @@
 @endphp
 
 <section class="mx-auto w-full max-w-7xl rounded-3xl border border-stone-800 bg-black/40 p-5 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8"
-    x-data="window.characterSheetForm(@js($componentPayload))"
+    x-data="characterSheetForm({{ json_encode($componentPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }})"
 >
     <header class="rounded-2xl border border-stone-800 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950/35 p-6">
         <p class="text-xs uppercase tracking-[0.2em] text-red-300/80">{{ $selectedWorldName }}</p>
@@ -460,7 +460,7 @@
             </div>
 
             <div class="mt-4 h-2 overflow-hidden rounded-full bg-stone-800/80">
-                <div class="h-full transition-all duration-200" :class="averageValid ? 'bg-emerald-500/80' : 'bg-red-500/80'" :style="`width: ${averageProgress}%`"></div>
+                <div class="h-full transition-all duration-200" :class="averageValid ? 'bg-emerald-500/80' : 'bg-red-500/80'" :style="'width: ' + averageProgress + '%'"></div>
             </div>
 
             <p class="mt-2 text-sm" :class="averageValid ? 'text-emerald-200' : 'text-red-300'">
@@ -494,7 +494,8 @@
                             min="{{ $min }}"
                             max="{{ $max }}"
                             required
-                            x-model.number="attributes.{{ $key }}"
+                            :value="attributes['{{ $key }}']"
+                            @input="setAttributeValue('{{ $key }}', $event.target.value)"
                             @readonly($isEdit)
                             class="mt-3 w-full rounded-md border border-stone-600/80 bg-stone-900/70 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                         >
@@ -505,7 +506,8 @@
                             name="{{ $key }}_note"
                             rows="2"
                             maxlength="800"
-                            x-model="attributeNotes.{{ $key }}"
+                            :value="attributeNotes['{{ $key }}'] || ''"
+                            @input="setAttributeNote('{{ $key }}', $event.target.value)"
                             class="mt-1 w-full rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-200 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                             placeholder="Wie zeigt sich {{ $label }} bei deiner Figur?"
                         ></textarea>
@@ -642,8 +644,9 @@
                         <template x-for="(entry, index) in advantages" :key="'adv-' + index">
                             <div class="flex items-center gap-2">
                                 <input
-                                    :name="`advantages[${index}]`"
-                                    x-model="advantages[index]"
+                                    :name="'advantages[' + index + ']'"
+                                    :value="advantages[index]"
+                                    @input="setTraitValue('advantages', index, $event.target.value)"
                                     type="text"
                                     maxlength="120"
                                     class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
@@ -679,8 +682,9 @@
                         <template x-for="(entry, index) in disadvantages" :key="'dis-' + index">
                             <div class="flex items-center gap-2">
                                 <input
-                                    :name="`disadvantages[${index}]`"
-                                    x-model="disadvantages[index]"
+                                    :name="'disadvantages[' + index + ']'"
+                                    :value="disadvantages[index]"
+                                    @input="setTraitValue('disadvantages', index, $event.target.value)"
                                     type="text"
                                     maxlength="120"
                                     class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30"
@@ -746,16 +750,18 @@
                     <template x-for="(entry, index) in inventory" :key="'inv-' + index">
                         <div class="grid gap-2 rounded-lg border border-stone-700/70 bg-black/25 p-3 md:grid-cols-[1fr_6.5rem_auto_auto] md:items-center">
                             <input
-                                :name="`inventory[${index}][name]`"
-                                x-model="inventory[index].name"
+                                :name="'inventory[' + index + '][name]'"
+                                :value="inventory[index].name"
+                                @input="setInventoryField(index, 'name', $event.target.value)"
                                 type="text"
                                 maxlength="180"
                                 class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30"
                                 placeholder="z. B. Seil 10m lang"
                             >
                             <input
-                                :name="`inventory[${index}][quantity]`"
-                                x-model.number="inventory[index].quantity"
+                                :name="'inventory[' + index + '][quantity]'"
+                                :value="inventory[index].quantity"
+                                @input="setInventoryField(index, 'quantity', $event.target.value)"
                                 type="number"
                                 min="1"
                                 max="999"
@@ -765,8 +771,9 @@
                             >
                             <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
                                 <input
-                                    :name="`inventory[${index}][equipped]`"
-                                    x-model="inventory[index].equipped"
+                                    :name="'inventory[' + index + '][equipped]'"
+                                    :checked="inventory[index].equipped"
+                                    @change="setInventoryField(index, 'equipped', $event.target.checked)"
                                     type="checkbox"
                                     class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-emerald-500 focus:ring-emerald-500/60"
                                 >
@@ -809,8 +816,9 @@
                                 <div class="sm:col-span-2">
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Name</label>
                                     <input
-                                        :name="`weapons[${index}][name]`"
-                                        x-model="weapon.name"
+                                        :name="'weapons[' + index + '][name]'"
+                                        :value="weapon.name"
+                                        @input="setWeaponField(index, 'name', $event.target.value)"
                                         type="text"
                                         maxlength="120"
                                         class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30"
@@ -820,8 +828,9 @@
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Angriff (%)</label>
                                     <input
-                                        :name="`weapons[${index}][attack]`"
-                                        x-model.number="weapon.attack"
+                                        :name="'weapons[' + index + '][attack]'"
+                                        :value="weapon.attack"
+                                        @input="setWeaponField(index, 'attack', $event.target.value)"
                                         type="number"
                                         min="0"
                                         max="100"
@@ -832,8 +841,9 @@
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Parade (%)</label>
                                     <input
-                                        :name="`weapons[${index}][parry]`"
-                                        x-model.number="weapon.parry"
+                                        :name="'weapons[' + index + '][parry]'"
+                                        :value="weapon.parry"
+                                        @input="setWeaponField(index, 'parry', $event.target.value)"
                                         type="number"
                                         min="0"
                                         max="100"
@@ -844,8 +854,9 @@
                                 <div class="sm:col-span-2">
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Schadenspunkte</label>
                                     <input
-                                        :name="`weapons[${index}][damage]`"
-                                        x-model.number="weapon.damage"
+                                        :name="'weapons[' + index + '][damage]'"
+                                        :value="weapon.damage"
+                                        @input="setWeaponField(index, 'damage', $event.target.value)"
                                         type="number"
                                         min="1"
                                         max="999"
@@ -893,8 +904,9 @@
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Name</label>
                                     <input
-                                        :name="`armors[${index}][name]`"
-                                        x-model="armor.name"
+                                        :name="'armors[' + index + '][name]'"
+                                        :value="armor.name"
+                                        @input="setArmorField(index, 'name', $event.target.value)"
                                         type="text"
                                         maxlength="120"
                                         class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30"
@@ -904,8 +916,9 @@
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">RS</label>
                                     <input
-                                        :name="`armors[${index}][protection]`"
-                                        x-model.number="armor.protection"
+                                        :name="'armors[' + index + '][protection]'"
+                                        :value="armor.protection"
+                                        @input="setArmorField(index, 'protection', $event.target.value)"
                                         type="number"
                                         min="0"
                                         max="99"
@@ -915,8 +928,9 @@
                                 </div>
                                 <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
                                     <input
-                                        :name="`armors[${index}][equipped]`"
-                                        x-model="armor.equipped"
+                                        :name="'armors[' + index + '][equipped]'"
+                                        :checked="armor.equipped"
+                                        @change="setArmorField(index, 'equipped', $event.target.checked)"
                                         value="1"
                                         type="checkbox"
                                         class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-sky-500 focus:ring-sky-500/60"

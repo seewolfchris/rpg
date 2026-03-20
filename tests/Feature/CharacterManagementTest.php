@@ -111,7 +111,9 @@ class CharacterManagementTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('character-sheet.global.js', false)
-            ->assertSee('window.characterSheetForm', false);
+            ->assertSee('x-data="characterSheetForm(', false)
+            ->assertDontSee('@vite/client', false)
+            ->assertDontSee(':5173', false);
     }
 
     public function test_user_can_create_character(): void

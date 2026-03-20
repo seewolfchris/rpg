@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Alpine from 'alpinejs';
+import Alpine from '@alpinejs/csp';
 import htmx from 'htmx.org';
 
 window.axios = axios;

@@ -487,6 +487,94 @@
                 return Math.max(0, this.aeBase + speciesBonus + callingFlat + percentBonus);
             },
 
+            setAttributeValue(key, value) {
+                const bounds = this.attributeBounds(key);
+                this.attributes[key] = clamp(toInt(value, bounds.min), bounds.min, bounds.max);
+            },
+
+            setAttributeNote(key, value) {
+                this.attributeNotes[key] = String(value ?? '');
+            },
+
+            setTraitValue(type, index, value) {
+                const key = type === 'disadvantages' ? 'disadvantages' : 'advantages';
+
+                if (!Array.isArray(this[key]) || index < 0 || index >= this[key].length) {
+                    return;
+                }
+
+                this[key][index] = String(value ?? '');
+            },
+
+            setInventoryField(index, field, value) {
+                const entry = this.inventory[index];
+
+                if (!entry || typeof entry !== 'object') {
+                    return;
+                }
+
+                switch (field) {
+                    case 'name':
+                        entry.name = String(value ?? '');
+                        break;
+                    case 'quantity':
+                        entry.quantity = clamp(toInt(value, 1), 1, 999);
+                        break;
+                    case 'equipped':
+                        entry.equipped = Boolean(value);
+                        break;
+                    default:
+                        break;
+                }
+            },
+
+            setWeaponField(index, field, value) {
+                const entry = this.weapons[index];
+
+                if (!entry || typeof entry !== 'object') {
+                    return;
+                }
+
+                switch (field) {
+                    case 'name':
+                        entry.name = String(value ?? '');
+                        break;
+                    case 'attack':
+                        entry.attack = clamp(toInt(value, 0), 0, 100);
+                        break;
+                    case 'parry':
+                        entry.parry = clamp(toInt(value, 0), 0, 100);
+                        break;
+                    case 'damage':
+                        entry.damage = clamp(toInt(value, 1), 1, 999);
+                        break;
+                    default:
+                        break;
+                }
+            },
+
+            setArmorField(index, field, value) {
+                const entry = this.armors[index];
+
+                if (!entry || typeof entry !== 'object') {
+                    return;
+                }
+
+                switch (field) {
+                    case 'name':
+                        entry.name = String(value ?? '');
+                        break;
+                    case 'protection':
+                        entry.protection = clamp(toInt(value, 0), 0, 99);
+                        break;
+                    case 'equipped':
+                        entry.equipped = Boolean(value);
+                        break;
+                    default:
+                        break;
+                }
+            },
+
             get traitsValid() {
                 const advantageCount = this.advantages.length;
                 const disadvantageCount = this.disadvantages.length;
