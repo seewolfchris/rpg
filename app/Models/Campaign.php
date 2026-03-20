@@ -24,6 +24,7 @@ class Campaign extends Model
         'summary',
         'lore',
         'is_public',
+        'requires_post_moderation',
         'status',
         'starts_at',
         'ends_at',
@@ -36,6 +37,7 @@ class Campaign extends Model
     {
         return [
             'is_public' => 'boolean',
+            'requires_post_moderation' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
@@ -147,5 +149,23 @@ class Campaign extends Model
     public function isCoGm(User $user): bool
     {
         return $this->hasParticipantRole($user, CampaignInvitation::ROLE_CO_GM);
+    }
+
+    public function requiresPostModeration(): bool
+    {
+        return (bool) ($this->is_public || $this->requires_post_moderation);
+    }
+
+    public function userCanPostWithoutModeration(User $user): bool
+    {
+        if ($user->isGmOrAdmin() || $this->owner_id === $user->id || $this->isCoGm($user)) {
+            return true;
+        }
+
+        if ((bool) $user->can_post_without_moderation) {
+            return true;
+        }
+
+        return $this->hasParticipantRole($user, CampaignInvitation::ROLE_TRUSTED_PLAYER);
     }
 }

@@ -18,6 +18,8 @@ class CampaignInvitation extends Model
 
     public const ROLE_PLAYER = 'player';
 
+    public const ROLE_TRUSTED_PLAYER = 'trusted_player';
+
     public const ROLE_CO_GM = 'co_gm';
 
     public $timestamps = false;

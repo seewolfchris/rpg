@@ -45,12 +45,16 @@ class PostController extends Controller
         $data = $request->validated();
         $user = $request->user();
         $isModerator = $this->canModerateScene($user, $scene);
+        $requiresApproval = $campaign->requiresPostModeration()
+            && ! $campaign->userCanPostWithoutModeration($user)
+            && ! $isModerator;
 
         $storedPost = $this->storePostService->store(
             scene: $scene,
             user: $user,
             data: $data,
             isModerator: $isModerator,
+            requiresApproval: $requiresApproval,
         );
 
         $statusMessage = 'Beitrag gespeichert.';
@@ -102,14 +106,21 @@ class PostController extends Controller
 
         $data = $request->validated();
         $user = $request->user();
+        /** @var Scene $scene */
+        $scene = $post->scene;
+        /** @var Campaign $campaign */
+        $campaign = $scene->campaign;
         $isModerator = $user->can('moderate', $post);
+        $requiresApproval = $campaign->requiresPostModeration()
+            && ! $campaign->userCanPostWithoutModeration($user)
+            && ! $isModerator;
         $previousModerationStatus = (string) $post->moderation_status;
         $moderationNote = $isModerator
             ? $this->normalizeModerationNote((string) ($data['moderation_note'] ?? ''))
             : null;
 
-        $moderationStatus = 'pending';
-        $approvedAt = null;
+        $moderationStatus = $requiresApproval ? 'pending' : 'approved';
+        $approvedAt = $requiresApproval ? null : Carbon::now();
         $approvedBy = null;
 
         if ($isModerator && isset($data['moderation_status'])) {

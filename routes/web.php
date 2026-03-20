@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminUserModerationController;
 use App\Http\Controllers\Api\WebPushSubscriptionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -360,6 +361,13 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
     Route::prefix('/admin')
         ->middleware('role:admin')
         ->group(function (): void {
+            Route::get('users/moderation', [AdminUserModerationController::class, 'index'])
+                ->name('admin.users.moderation.index');
+
+            Route::patch('users/{user}/moderation', [AdminUserModerationController::class, 'update'])
+                ->name('admin.users.moderation.update')
+                ->middleware('throttle:moderation');
+
             Route::patch('worlds/{world}/toggle-active', [WorldAdminController::class, 'toggleActive'])
                 ->name('admin.worlds.toggle-active')
                 ->middleware('throttle:moderation');

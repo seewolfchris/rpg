@@ -53,6 +53,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'can_post_without_moderation',
     ];
 
     /**
@@ -78,6 +79,7 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'points' => 'integer',
             'notification_preferences' => 'array',
+            'can_post_without_moderation' => 'boolean',
         ];
     }
 
@@ -210,6 +212,11 @@ class User extends Authenticatable
     public function isGmOrAdmin(): bool
     {
         return $this->hasAnyRole(UserRole::GM, UserRole::ADMIN);
+    }
+
+    public function canPostWithoutModeration(): bool
+    {
+        return (bool) $this->can_post_without_moderation;
     }
 
     /**

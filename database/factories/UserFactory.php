@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::PLAYER->value,
+            'can_post_without_moderation' => false,
             'remember_token' => Str::random(10),
         ];
     }
@@ -55,6 +56,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::ADMIN->value,
+        ]);
+    }
+
+    public function canPostWithoutModeration(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'can_post_without_moderation' => true,
         ]);
     }
 }

@@ -245,6 +245,93 @@ class CampaignAccessInvitationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_non_admin_cannot_assign_trusted_player_role_on_invitation(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => $player->email,
+                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            ])
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertSessionHasErrors('role');
+
+        $this->assertDatabaseMissing('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+        ]);
+    }
+
+    public function test_admin_can_assign_trusted_player_role_and_player_posts_without_moderation(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+            'requires_post_moderation' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+            'email' => $player->email,
+            'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+        ])->assertRedirect();
+
+        $invitation = CampaignInvitation::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('user_id', $player->id)
+            ->firstOrFail();
+
+        $this->assertSame(CampaignInvitation::ROLE_TRUSTED_PLAYER, $invitation->role);
+
+        $this->actingAs($player)
+            ->patch(route('campaign-invitations.accept', $invitation))
+            ->assertRedirect();
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'character_id' => $character->id,
+            'content_format' => 'plain',
+            'content' => 'Trusted Player postet ohne Moderationswarteschlange.',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('posts', [
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'moderation_status' => 'approved',
+            'approved_by' => null,
+        ]);
+    }
+
     public function test_campaign_show_filters_scenes_by_status_and_search(): void
     {
         $owner = User::factory()->gm()->create();

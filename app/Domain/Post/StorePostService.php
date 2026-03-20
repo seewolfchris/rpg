@@ -23,7 +23,7 @@ class StorePostService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function store(Scene $scene, User $user, array $data, bool $isModerator): StorePostResult
+    public function store(Scene $scene, User $user, array $data, bool $isModerator, bool $requiresApproval): StorePostResult
     {
         $meta = [];
         $icQuote = trim((string) ($data['ic_quote'] ?? ''));
@@ -31,6 +31,8 @@ class StorePostService
         if (($data['post_type'] ?? 'ooc') === 'ic' && $icQuote !== '') {
             $meta['ic_quote'] = $icQuote;
         }
+
+        $isApproved = ! $requiresApproval;
 
         $post = Post::query()->create([
             'scene_id' => $scene->id,
@@ -40,9 +42,9 @@ class StorePostService
             'content_format' => $data['content_format'],
             'content' => $data['content'],
             'meta' => $meta !== [] ? $meta : null,
-            'moderation_status' => $isModerator ? 'approved' : 'pending',
-            'approved_at' => $isModerator ? now() : null,
-            'approved_by' => $isModerator ? $user->id : null,
+            'moderation_status' => $isApproved ? 'approved' : 'pending',
+            'approved_at' => $isApproved ? now() : null,
+            'approved_by' => $isModerator && $isApproved ? $user->id : null,
         ]);
 
         $probeCreated = $this->postProbeService->createForPost(
@@ -71,6 +73,7 @@ class StorePostService
             'scene_id' => $scene->id,
             'post_id' => $post->id,
             'is_moderator' => $isModerator,
+            'requires_approval' => $requiresApproval,
             'moderation_status' => $post->moderation_status,
             'probe_created' => $probeCreated,
             'inventory_award_applied' => $inventoryAwardApplied,

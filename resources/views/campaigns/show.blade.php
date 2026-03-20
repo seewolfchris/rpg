@@ -206,6 +206,9 @@
                         class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                         <option value="player" @selected(old('role') === 'player')>Player</option>
+                        @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
+                            <option value="trusted_player" @selected(old('role') === 'trusted_player')>Trusted Player</option>
+                        @endif
                         <option value="co_gm" @selected(old('role') === 'co_gm')>Co-GM</option>
                     </select>
                     <button
@@ -234,8 +237,13 @@
                                         <span class="text-stone-500">• {{ $invitation->user->email }}</span>
                                     </p>
                                     <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
+                                        @php($roleLabel = match ($invitation->role) {
+                                            \App\Models\CampaignInvitation::ROLE_CO_GM => 'CO_GM',
+                                            \App\Models\CampaignInvitation::ROLE_TRUSTED_PLAYER => 'TRUSTED_PLAYER',
+                                            default => 'PLAYER',
+                                        })
                                         Status: {{ strtoupper($invitation->status) }}
-                                        • Rolle: {{ strtoupper($invitation->role) }}
+                                        • Rolle: {{ $roleLabel }}
                                         • von {{ $invitation->inviter?->name ?? 'System' }}
                                         • <x-relative-time :at="$invitation->created_at" />
                                     </p>

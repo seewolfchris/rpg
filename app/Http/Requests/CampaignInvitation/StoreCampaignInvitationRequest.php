@@ -20,7 +20,11 @@ class StoreCampaignInvitationRequest extends FormRequest
     {
         return [
             'email' => ['required', 'string', 'email:rfc', 'max:255', 'exists:users,email'],
-            'role' => ['required', Rule::in([CampaignInvitation::ROLE_PLAYER, CampaignInvitation::ROLE_CO_GM])],
+            'role' => ['required', Rule::in([
+                CampaignInvitation::ROLE_PLAYER,
+                CampaignInvitation::ROLE_TRUSTED_PLAYER,
+                CampaignInvitation::ROLE_CO_GM,
+            ])],
         ];
     }
 

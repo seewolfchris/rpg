@@ -28,6 +28,7 @@ class CampaignFactory extends Factory
             'summary' => fake()->optional()->paragraph(),
             'lore' => fake()->optional()->paragraphs(2, true),
             'is_public' => fake()->boolean(60),
+            'requires_post_moderation' => false,
             'status' => fake()->randomElement(['draft', 'active', 'archived']),
             'starts_at' => fake()->optional()->dateTimeBetween('-2 months', '+1 month'),
             'ends_at' => null,

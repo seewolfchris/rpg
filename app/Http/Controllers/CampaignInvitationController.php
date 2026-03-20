@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
 use App\Models\Campaign;
@@ -74,6 +75,16 @@ class CampaignInvitationController extends Controller
         }
 
         $requestedRole = (string) $request->validated('role');
+        if (
+            $requestedRole === CampaignInvitation::ROLE_TRUSTED_PLAYER
+            && ! $request->user()->hasRole(UserRole::ADMIN)
+        ) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'role' => 'Die Rolle "Trusted Player" kann nur von Admins vergeben werden.',
+                ]);
+        }
 
         $invitation = CampaignInvitation::query()->firstOrNew([
             'campaign_id' => $campaign->id,

@@ -80,7 +80,7 @@
             @enderror
         </div>
 
-        <div class="flex items-end">
+        <div class="space-y-3">
             <label class="flex items-center gap-2 text-sm text-stone-300">
                 <input
                     type="checkbox"
@@ -91,6 +91,19 @@
                 >
                 Öffentlich sichtbar
             </label>
+            <label class="flex items-center gap-2 text-sm text-stone-300">
+                <input
+                    type="checkbox"
+                    name="requires_post_moderation"
+                    value="1"
+                    @checked(old('requires_post_moderation', $campaign->requires_post_moderation ?? false))
+                    class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                >
+                Beiträge vor Veröffentlichung moderieren
+            </label>
+            @error('requires_post_moderation')
+                <p class="text-sm text-red-300">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 

@@ -35,6 +35,7 @@ class UpdateCampaignRequest extends FormRequest
             'lore' => ['nullable', 'string', 'max:15000'],
             'status' => ['required', Rule::in(['draft', 'active', 'archived'])],
             'is_public' => ['sometimes', 'boolean'],
+            'requires_post_moderation' => ['sometimes', 'boolean'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ];
@@ -48,6 +49,7 @@ class UpdateCampaignRequest extends FormRequest
         $this->merge([
             'slug' => Str::slug((string) ($slugInput ?: $titleInput)),
             'is_public' => $this->boolean('is_public'),
+            'requires_post_moderation' => $this->boolean('requires_post_moderation'),
         ]);
     }
 }
