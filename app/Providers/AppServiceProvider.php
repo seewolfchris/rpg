@@ -6,6 +6,7 @@ use App\Models\World;
 use App\Support\NavigationCounters;
 use App\Support\Observability\StructuredLogger;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
@@ -98,6 +99,27 @@ class AppServiceProvider extends ServiceProvider
                 'reason' => $event->report->getReason(),
                 'expired' => $event->report->isSubscriptionExpired(),
             ]);
+        });
+
+        Event::listen(RequestHandled::class, function (RequestHandled $event): void {
+            $response = $event->response;
+            $currentPolicy = (string) $response->headers->get('Content-Security-Policy', '');
+            $frameAncestorsDirective = "frame-ancestors 'self'";
+
+            if ($currentPolicy === '') {
+                $response->headers->set('Content-Security-Policy', $frameAncestorsDirective);
+
+                return;
+            }
+
+            if (str_contains(Str::lower($currentPolicy), 'frame-ancestors')) {
+                return;
+            }
+
+            $response->headers->set(
+                'Content-Security-Policy',
+                rtrim($currentPolicy, " \t\n\r\0\x0B;").'; '.$frameAncestorsDirective
+            );
         });
 
         View::composer(['layouts.app', 'layouts.auth'], function ($view): void {
