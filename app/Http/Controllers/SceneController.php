@@ -208,7 +208,7 @@ class SceneController extends Controller
             ->first();
         $latestPostId = $this->latestScenePostId($scene);
         $unreadPostsCount = $this->sceneUnreadPostsCount($scene, $subscription, $latestPostId);
-        $canModerateScene = $user->isGmOrAdmin() || $scene->campaign->isCoGm($user);
+        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
 
         return view('scenes.partials.thread-page', compact(
             'posts',

@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "sync:character-sheet-global": "node scripts/sync-character-sheet-global.mjs",
+        "test:htmx-safety": "node --test tests/js/htmx.security.test.mjs",
         "test:sw": "node --test tests/js/sw.offline-queue.test.mjs",
         "build": "npm run sync:character-sheet-global && vite build",
         "dev": "npm run sync:character-sheet-global && vite"

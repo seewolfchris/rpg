@@ -42,6 +42,18 @@ function patchAlpineCspFirefoxDeprecatedGlobals() {
     };
 }
 
+function filterKnownThirdPartyEvalWarning(warning, warn) {
+    if (
+        warning.code === 'EVAL'
+        && typeof warning.id === 'string'
+        && warning.id.includes('node_modules/htmx.org/dist/htmx.esm.js')
+    ) {
+        return;
+    }
+
+    warn(warning);
+}
+
 export default defineConfig({
     plugins: [
         patchAlpineCspFirefoxDeprecatedGlobals(),
@@ -59,5 +71,10 @@ export default defineConfig({
     optimizeDeps: {
         include: ['alpinejs', 'htmx.org'],
         exclude: ['@alpinejs/csp'],
+    },
+    build: {
+        rollupOptions: {
+            onwarn: filterKnownThirdPartyEvalWarning,
+        },
     },
 });

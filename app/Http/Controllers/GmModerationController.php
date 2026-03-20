@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Post\PostModerationService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\BulkModerationRequest;
+use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
@@ -205,6 +206,7 @@ class GmModerationController extends Controller
             ->with('campaign')
             ->findOrFail($sceneId);
 
+        /** @var Campaign $campaign */
         $campaign = $scene->campaign;
         abort_unless((int) $campaign->world_id === (int) $world->id, 404);
         $this->authorize('view', $scene);

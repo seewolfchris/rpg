@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\SceneBookmark\StoreSceneBookmarkRequest;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
@@ -195,7 +196,22 @@ class SceneBookmarkController extends Controller
         }
 
         return (int) $user->sceneBookmarks()
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
+                if ($user->isGmOrAdmin()) {
+                    return;
+                }
+
+                $campaignQuery->where(function (Builder $innerQuery) use ($user): void {
+                    $innerQuery
+                        ->where('is_public', true)
+                        ->orWhere('owner_id', $user->id)
+                        ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
+                            $invitationQuery
+                                ->where('user_id', $user->id)
+                                ->where('status', CampaignInvitation::STATUS_ACCEPTED);
+                        });
+                });
+            })
             ->count();
     }
 }
