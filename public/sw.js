@@ -35,7 +35,15 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(STATIC_CACHE);
-            await cache.addAll(STATIC_ASSETS);
+            await Promise.all(
+                STATIC_ASSETS.map(async (asset) => {
+                    try {
+                        await cache.add(asset);
+                    } catch {
+                        // Keep service worker install resilient if a single asset is missing.
+                    }
+                }),
+            );
             await self.skipWaiting();
         })(),
     );
@@ -66,10 +74,7 @@ self.addEventListener('fetch', (event) => {
     if (event.request.mode === 'navigate') {
         if (isOfflineReadablePath(requestUrl.pathname)) {
             event.respondWith(networkFirst(event.request, PAGE_CACHE, true));
-            return;
         }
-
-        event.respondWith(networkOnlyWithOfflineFallback(event.request));
         return;
     }
 
