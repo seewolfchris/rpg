@@ -3,6 +3,25 @@
 Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampagnen/Szenen, Post-Moderation, GM-Proben, Benachrichtigungen, Gamification und PWA-Basis.  
 `Chroniken der Asche` bleibt als Startwelt erhalten, ist jetzt aber nur eine von mehreren Welten.
 
+## Releases
+
+**Standard-Flow: `scripts/release_flow.sh vX.Y-beta --world <slug> --archive`**
+
+Kurzvarianten:
+- Lokal ohne Git-Write: `scripts/release_flow.sh vX.Y-beta --dry-run --iter 500 --archive`
+- Ohne Perf-Gate: `scripts/release_flow.sh vX.Y-beta --skip-perf`
+
+Wichtige Regeln:
+- Version muss dem Format `vX.Y`, `vX.Y-beta` oder `vX.Y-rcN` entsprechen.
+- `--world <slug>` ist Pflicht fuer echte Perf-Laeufe (wenn weder `--dry-run` noch `--skip-perf` gesetzt ist).
+- Perf-Gate schreibt immer `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
+- Mit `--archive` wird zusaetzlich ein UTC-Archiv geschrieben:
+  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-YYYYMMDDTHHMMSSZ.md`
+- Runtime-Hint bleibt report-basiert (keine automatische `.env`-Mutation):
+  - Normalfall (echtes Median/P99): `Median <=95%` und `P99 <=110%` gegen Vorfenster.
+  - Fallback (`avg->Median`, `p95->P99`): strengere Schwellen `<=90%` und `<=105%`.
+- Roter Perf-Status ist report-only. Non-zero Exit nur bei technischen Fehlern.
+
 ## Dokumentations-Uebersicht
 
 - Projekt-Quickstart und Betrieb: `README.md`
@@ -187,7 +206,7 @@ Das Skript schreibt:
 - den datierten Laufreport (Default: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`)
 - den jeweils aktuellen Vergleichsreport (`docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`, inkl. Delta zum letzten Lauf)
 
-Release-Perf-Gate (Ampel fuer `default`-Szenario):
+Release-Perf-Gate (wird vom Standard-Flow aufgerufen):
 
 ```bash
 scripts/release_perf_gate.sh
@@ -197,7 +216,8 @@ Das Skript:
 - fuehrt den Benchmark-Recheck aus
 - bewertet Delta gegen Schwellwerte (GRUEN/GELB/ROT)
 - schreibt `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
-- liefert Exit Code `1` bei `ROT` (Release-Blocker), sonst `0`
+- archiviert optional nach `PERF_GATE_ARCHIVE_OUT`, wenn gesetzt
+- liefert non-zero nur bei technischen Fehlern
 
 Optionaler Runtime-Toggle fuer den MySQL-Hotpath `posts.latest_by_id`:
 
@@ -237,7 +257,7 @@ scripts/release_prepare.sh --version v0.23-beta --update-dotenv
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh --version v0.23-beta
+scripts/release_flow.sh v0.23-beta --world chroniken-der-asche --archive
 ```
 
 Release-Smoke automatisiert:

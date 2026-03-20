@@ -109,14 +109,16 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
 3. Bei Fehlern `request_id` notieren und Incident-Ablauf starten.
 
 ## Release-Vorbereitung
-1. Bevorzugt kompletter Ablauf:
-   - `scripts/release_flow.sh --version vX.XX-beta`
-2. Einzelbausteine bei Bedarf:
-   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
-   - `scripts/release_perf_gate.sh`
-3. Optionaler Runtime-Hint fuer `posts.latest_by_id` nur bei stabil messbarem Vorteil:
-   - `.env`: `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
-4. Wenn Gate `ROT` ist: Hotpath analysieren, Baseline/Datensatz pruefen, danach erneut laufen lassen.
+1. Siehe `README.md` unter `## Releases` fuer den aktuellen Standard-Flow.
+2. Standard-Aufruf:
+   - `scripts/release_flow.sh vX.Y-beta --world <slug> --archive`
+3. Varianten:
+   - Dry-Run: `scripts/release_flow.sh vX.Y-beta --dry-run --iter 500 --archive`
+   - Ohne Perf-Gate: `scripts/release_flow.sh vX.Y-beta --skip-perf`
+4. Perf-Gate Verhalten:
+   - `ROT` ist report-only; non-zero Exit nur bei technischen Fehlern.
+   - Runtime-Hint wird nicht automatisch in `.env` geschrieben.
+   - Hint-Entscheidung kommt aus `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 
 ## Phase-A Stabilitaetschecks
 - `scripts/release_phase_a_stability_check.sh` benoetigt `node` (JS-Draft-Tests).

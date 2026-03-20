@@ -4,17 +4,7 @@ Ziel: Jeder Release laeuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 ## 0. Empfohlener One-Command-Flow
 
-Fuer Standard-Releases zuerst immer:
-
-```bash
-scripts/release_flow.sh --version vX.XX-beta
-```
-
-Das Skript fuehrt in fixer Reihenfolge aus:
-- `release_prepare.sh`
-- lokale Quality Gates (Analyse, Tests, SW-Tests, Build)
-- `release_perf_gate.sh`
-- `release_smoke.sh` (artisan mode)
+Siehe README.md ## Releases fuer aktuellen Standard-Flow.
 
 Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
 
@@ -156,12 +146,12 @@ $PHP_BIN artisan config:cache
 - Report pruefen auf Index-Nutzung der Hotpaths (`posts`, `scene_subscriptions`, `campaign_invitations`).
 - Empfohlen fuer `posts.latest_by_id` (inkl. Ampel-Gate):
   - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
-  - Optionaler Runtime-Hint (nur bei stabil messbarem Vorteil): `.env` -> `PERF_POSTS_LATEST_BY_ID_FORCE_INDEX=true`
+  - Runtime-Hint kommt aus dem Gate-Report (`FORCE_INDEX=1/0`), keine automatische `.env`-Mutation.
   - Gate-Report pruefen: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
   - Ampel-Interpretation:
     - `GRUEN`: weiter im Release-Flow.
     - `GELB`: weiter moeglich, aber Delta beobachten.
-    - `ROT`: Hotpath zuerst analysieren, dann erneut messen.
+    - `ROT`: report-only Signal, Skript bleibt nur bei technischen Fehlern non-zero.
 - Fallback ohne Gate:
   - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
   - Fallback direkt via Artisan:
