@@ -54,6 +54,16 @@ class World extends Model
         return $this->hasMany(EncyclopediaCategory::class);
     }
 
+    public function speciesOptions(): HasMany
+    {
+        return $this->hasMany(WorldSpecies::class);
+    }
+
+    public function callingOptions(): HasMany
+    {
+        return $this->hasMany(WorldCalling::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

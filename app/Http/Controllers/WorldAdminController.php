@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\World\StoreWorldRequest;
 use App\Http\Requests\World\UpdateWorldRequest;
 use App\Models\World;
+use App\Support\WorldCharacterOptionTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -30,16 +31,36 @@ class WorldAdminController extends Controller
 
     public function store(StoreWorldRequest $request): RedirectResponse
     {
-        World::query()->create($request->validated());
+        $world = World::query()->create($request->validated());
 
         return redirect()
-            ->route('admin.worlds.index')
-            ->with('status', 'Welt erstellt.');
+            ->route('admin.worlds.edit', $world)
+            ->with('status', 'Welt erstellt. Bitte jetzt eine Charakter-Vorlage importieren.');
     }
 
     public function edit(World $world): View
     {
-        return view('worlds.admin.edit', compact('world'));
+        $speciesOptions = $world->speciesOptions()
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+        $callingOptions = $world->callingOptions()
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+
+        $templateService = app(WorldCharacterOptionTemplateService::class);
+        $templateOptions = $templateService->templateSelectOptions();
+        $defaultTemplateKey = $templateService->inferTemplateKeyForWorld($world)
+            ?? (array_key_first($templateOptions) ?? '');
+
+        return view('worlds.admin.edit', compact(
+            'world',
+            'speciesOptions',
+            'callingOptions',
+            'templateOptions',
+            'defaultTemplateKey',
+        ));
     }
 
     public function update(UpdateWorldRequest $request, World $world): RedirectResponse

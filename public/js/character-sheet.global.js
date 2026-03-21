@@ -153,9 +153,11 @@
 
     function characterSheetForm(payload = {}) {
         return {
-            config: payload.config ?? {},
+            defaultConfig: payload.config ?? {},
+            worldConfigs: payload.worldConfigs ?? {},
             isEdit: Boolean(payload.isEdit),
             attributeKeys: Array.isArray(payload.attributeKeys) ? payload.attributeKeys : [],
+            worldId: String(payload.initial?.worldId ?? ''),
 
             origin: String(payload.initial?.origin ?? ''),
             species: String(payload.initial?.species ?? ''),
@@ -177,25 +179,21 @@
             armors: [],
 
             init() {
+                if (!this.worldId || !this.worldConfigs?.[this.worldId]) {
+                    this.worldId = Object.keys(this.worldConfigs ?? {})[0] ?? '';
+                }
+
                 this.advantages = withMinimumEmptyRows(payload.initial?.advantages ?? [], this.traitsMin);
                 this.disadvantages = withMinimumEmptyRows(payload.initial?.disadvantages ?? [], this.traitsMin);
                 this.inventory = withMinimumInventoryRows(payload.initial?.inventory ?? [], this.inventoryMin);
                 this.weapons = withMinimumWeaponRows(payload.initial?.weapons ?? [], this.weaponsMin);
                 this.armors = withMinimumArmorRows(payload.initial?.armors ?? [], this.armorsMin);
 
-                if (!this.species) {
-                    this.species = Object.keys(this.speciesOptions)[0] ?? '';
-                }
-
-                if (!this.calling) {
-                    this.calling = Object.keys(this.callingOptions)[0] ?? '';
-                }
-
                 if (!this.origin) {
                     this.origin = Object.keys(this.originOptions)[0] ?? '';
                 }
 
-                this.enforceOriginSpeciesConstraint();
+                this.enforceWorldSelections();
 
                 this.attributeKeys.forEach((key) => {
                     const min = this.attributeBounds(key).min;
@@ -209,7 +207,22 @@
                     this.$watch('origin', () => {
                         this.enforceOriginSpeciesConstraint();
                     });
+
+                    this.$watch('worldId', () => {
+                        this.enforceWorldSelections();
+                    });
                 }
+            },
+
+            get config() {
+                const worldKey = String(this.worldId ?? '');
+                const worldConfig = this.worldConfigs?.[worldKey];
+
+                if (worldConfig && typeof worldConfig === 'object') {
+                    return worldConfig;
+                }
+
+                return this.defaultConfig ?? {};
             },
 
             get originOptions() {
@@ -253,19 +266,59 @@
             },
 
             enforceOriginSpeciesConstraint() {
-                const allowed = this.allowedSpeciesForOrigin();
-
-                if (!allowed || allowed.length === 0) {
+                const availableSpecies = Object.keys(this.speciesOptions);
+                if (availableSpecies.length === 0) {
+                    this.species = '';
                     return;
                 }
 
-                if (!allowed.includes(String(this.species))) {
-                    this.species = allowed[0];
+                const allowed = this.allowedSpeciesForOrigin();
+
+                if (!allowed || allowed.length === 0) {
+                    if (!availableSpecies.includes(String(this.species))) {
+                        this.species = availableSpecies[0];
+                    }
+
+                    return;
+                }
+
+                const constrainedAllowed = allowed.filter((speciesKey) => availableSpecies.includes(speciesKey));
+                const effectiveAllowed = constrainedAllowed.length > 0 ? constrainedAllowed : availableSpecies;
+
+                if (!effectiveAllowed.includes(String(this.species))) {
+                    this.species = effectiveAllowed[0];
                 }
             },
 
             get visibleSpeciesEntries() {
-                return Object.entries(this.speciesOptions).filter(([speciesKey]) => this.isSpeciesAllowed(speciesKey));
+                return Object.entries(this.speciesOptions)
+                    .filter(([speciesKey]) => this.isSpeciesAllowed(speciesKey))
+                    .map(([key, meta]) => ({
+                        key,
+                        meta: meta ?? {},
+                    }));
+            },
+
+            get visibleCallingEntries() {
+                return Object.entries(this.callingOptions).map(([key, meta]) => ({
+                    key,
+                    meta: meta ?? {},
+                }));
+            },
+
+            enforceWorldSelections() {
+                const availableCallingKeys = Object.keys(this.callingOptions);
+
+                this.enforceOriginSpeciesConstraint();
+
+                if (availableCallingKeys.length === 0) {
+                    this.calling = '';
+                    return;
+                }
+
+                if (!availableCallingKeys.includes(String(this.calling))) {
+                    this.calling = availableCallingKeys[0];
+                }
             },
 
             get selectedSpecies() {

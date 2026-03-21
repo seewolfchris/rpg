@@ -4,6 +4,7 @@ namespace App\Http\Requests\Character;
 
 use App\Models\World;
 use App\Support\CharacterInventoryService;
+use App\Support\CharacterSheetResolver;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -27,8 +28,8 @@ abstract class CharacterSheetRequest extends FormRequest
      */
     protected function baseRules(): array
     {
-        $speciesKeys = array_keys((array) data_get($this->sheet(), 'species', []));
-        $callingKeys = array_keys((array) data_get($this->sheet(), 'callings', []));
+        $speciesKeys = $this->allowedSpeciesKeys();
+        $callingKeys = $this->allowedCallingKeys();
         $originKeys = array_keys((array) data_get($this->sheet(), 'origins', []));
         $statusKeys = array_keys((array) config('characters.statuses', []));
         $traitMin = (int) data_get($this->sheet(), 'traits.min', 1);
@@ -182,12 +183,51 @@ abstract class CharacterSheetRequest extends FormRequest
     protected function sheet(): array
     {
         if ($this->sheetConfig === []) {
+            $worldId = $this->resolveSheetWorldId();
             /** @var array<string, mixed> $config */
-            $config = config('character_sheet', []);
+            $config = app(CharacterSheetResolver::class)->resolveForWorldId($worldId);
             $this->sheetConfig = $config;
         }
 
         return $this->sheetConfig;
+    }
+
+    protected function resolveSheetWorldId(): int
+    {
+        $worldId = (int) $this->input('world_id', 0);
+
+        if ($worldId > 0) {
+            return $worldId;
+        }
+
+        $routeCharacter = $this->route('character');
+        if ($routeCharacter !== null && is_numeric($routeCharacter->world_id ?? null)) {
+            return (int) $routeCharacter->world_id;
+        }
+
+        return World::resolveDefaultId();
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function allowedSpeciesKeys(): array
+    {
+        /** @var list<string> $keys */
+        $keys = array_keys((array) data_get($this->sheet(), 'species', []));
+
+        return $keys;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function allowedCallingKeys(): array
+    {
+        /** @var list<string> $keys */
+        $keys = array_keys((array) data_get($this->sheet(), 'callings', []));
+
+        return $keys;
     }
 
     /**

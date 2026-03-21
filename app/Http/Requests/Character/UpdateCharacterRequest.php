@@ -42,6 +42,56 @@ class UpdateCharacterRequest extends CharacterSheetRequest
         });
     }
 
+    /**
+     * @return list<string>
+     */
+    protected function allowedSpeciesKeys(): array
+    {
+        $keys = parent::allowedSpeciesKeys();
+        $character = $this->route('character');
+
+        if (! $character instanceof Character) {
+            return $keys;
+        }
+
+        $incomingWorldId = (int) $this->input('world_id', (int) $character->world_id);
+
+        if ($incomingWorldId === (int) $character->world_id) {
+            $existingSpecies = (string) $character->species;
+
+            if ($existingSpecies !== '' && ! in_array($existingSpecies, $keys, true)) {
+                $keys[] = $existingSpecies;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function allowedCallingKeys(): array
+    {
+        $keys = parent::allowedCallingKeys();
+        $character = $this->route('character');
+
+        if (! $character instanceof Character) {
+            return $keys;
+        }
+
+        $incomingWorldId = (int) $this->input('world_id', (int) $character->world_id);
+
+        if ($incomingWorldId === (int) $character->world_id) {
+            $existingCalling = (string) $character->calling;
+
+            if ($existingCalling !== '' && ! in_array($existingCalling, $keys, true)) {
+                $keys[] = $existingCalling;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
     private function resolveExistingAttributeValue(Character $character, string $attributeKey): int
     {
         $current = $character->{$attributeKey};

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CharacterSheetResolver;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,13 @@ use Illuminate\Support\Str;
 class Character extends Model
 {
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $resolvedSheetCache = null;
+
+    private ?int $resolvedSheetWorldId = null;
 
     /**
      * @var list<string>
@@ -265,9 +273,19 @@ class Character extends Model
      */
     private function characterSheet(): array
     {
-        $sheet = config('character_sheet', []);
+        $worldId = (int) ($this->world_id ?? World::resolveDefaultId());
 
-        return is_array($sheet) ? $sheet : [];
+        if ($this->resolvedSheetCache !== null && $this->resolvedSheetWorldId === $worldId) {
+            return $this->resolvedSheetCache;
+        }
+
+        /** @var array<string, mixed> $sheet */
+        $sheet = app(CharacterSheetResolver::class)->resolveForWorldId($worldId);
+
+        $this->resolvedSheetCache = $sheet;
+        $this->resolvedSheetWorldId = $worldId;
+
+        return $sheet;
     }
 
     private function convertLegacyValueToPercent(int $legacyValue): int

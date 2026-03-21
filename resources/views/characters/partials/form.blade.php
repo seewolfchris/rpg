@@ -1,5 +1,52 @@
 @php
-    $sheet = config('character_sheet', []);
+    $character = $character ?? null;
+    $isEdit = $mode === 'edit';
+    $worldOptions = isset($worlds)
+        ? collect($worlds)
+        : \App\Models\World::query()->active()->ordered()->get(['id', 'name', 'slug']);
+    $sheetResolver = app(\App\Support\CharacterSheetResolver::class);
+    $worldConfigs = $sheetResolver->resolveForWorlds($worldOptions);
+
+    $selectedWorldId = (int) old(
+        'world_id',
+        $character?->world_id
+            ?? ($selectedWorld->id ?? $worldOptions->first()?->id ?? \App\Models\World::resolveDefaultId())
+    );
+
+    if (! array_key_exists($selectedWorldId, $worldConfigs)) {
+        $selectedWorldId = (int) (array_key_first($worldConfigs) ?? 0);
+    }
+
+    $sheet = $selectedWorldId > 0
+        ? (array) ($worldConfigs[$selectedWorldId] ?? $sheetResolver->resolveForWorldId($selectedWorldId))
+        : (array) config('character_sheet', []);
+
+    if ($isEdit && $character && (int) $character->world_id === $selectedWorldId) {
+        $legacySpeciesKey = trim((string) $character->species);
+        $legacyCallingKey = trim((string) $character->calling);
+
+        if ($legacySpeciesKey !== '' && ! array_key_exists($legacySpeciesKey, (array) data_get($sheet, 'species', []))) {
+            $sheet['species'][$legacySpeciesKey] = [
+                'label' => 'Legacy: '.str_replace('_', ' ', ucfirst($legacySpeciesKey)),
+                'description' => 'Diese Spezies ist in der Welt nicht mehr aktiv, bleibt fuer diesen bestehenden Charakter aber gueltig.',
+                'modifiers' => [],
+                'le_bonus' => 0,
+                'ae_bonus' => 0,
+            ];
+        }
+
+        if ($legacyCallingKey !== '' && ! array_key_exists($legacyCallingKey, (array) data_get($sheet, 'callings', []))) {
+            $sheet['callings'][$legacyCallingKey] = [
+                'label' => 'Legacy: '.str_replace('_', ' ', ucfirst($legacyCallingKey)),
+                'description' => 'Diese Berufung ist in der Welt nicht mehr aktiv, bleibt fuer diesen bestehenden Charakter aber gueltig.',
+                'minimums' => [],
+                'bonuses' => ['attributes' => []],
+                'custom' => false,
+            ];
+        }
+
+        $worldConfigs[$selectedWorldId] = $sheet;
+    }
 
     $attributeMeta = (array) data_get($sheet, 'attributes', []);
     $attributeKeys = array_keys($attributeMeta);
@@ -19,16 +66,6 @@
     $defaultSpecies = array_key_exists('mensch', $speciesOptions) ? 'mensch' : (array_key_first($speciesOptions) ?? '');
     $defaultCalling = array_key_exists('abenteurer', $callingOptions) ? 'abenteurer' : (array_key_first($callingOptions) ?? '');
 
-    $character = $character ?? null;
-    $isEdit = $mode === 'edit';
-    $worldOptions = isset($worlds)
-        ? collect($worlds)
-        : \App\Models\World::query()->active()->ordered()->get(['id', 'name', 'slug']);
-    $selectedWorldId = (int) old(
-        'world_id',
-        $character?->world_id
-            ?? ($selectedWorld->id ?? $worldOptions->first()?->id ?? \App\Models\World::resolveDefaultId())
-    );
     $selectedWorldName = (string) ($worldOptions->firstWhere('id', $selectedWorldId)->name ?? 'C76-RPG');
 
     $selectedOrigin = (string) old('origin', $character?->origin ?? $defaultOrigin);
@@ -225,9 +262,11 @@
 
     $componentPayload = [
         'config' => $sheet,
+        'worldConfigs' => $worldConfigs,
         'isEdit' => $isEdit,
         'attributeKeys' => $attributeKeys,
         'initial' => [
+            'worldId' => (string) $selectedWorldId,
             'origin' => $selectedOrigin,
             'species' => $selectedSpecies,
             'calling' => $selectedCalling,
@@ -317,6 +356,7 @@
                             id="world_id"
                             name="world_id"
                             required
+                            x-model="worldId"
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                         >
                             @foreach ($worldOptions as $worldOption)
@@ -425,18 +465,21 @@
             </p>
 
             <div class="mt-4 grid gap-3 lg:grid-cols-3">
-                @foreach ($speciesOptions as $speciesKey => $species)
+                <template x-if="visibleSpeciesEntries.length === 0">
+                    <article class="rounded-xl border border-amber-700/70 bg-amber-950/30 p-4 text-sm text-amber-100">
+                        Für diese Welt sind aktuell keine Spezies aktiviert. Bitte im Welt-Admin eine Vorlage importieren oder Einträge anlegen.
+                    </article>
+                </template>
+                <template x-for="entry in visibleSpeciesEntries" :key="entry.key">
                     <label class="rounded-xl border border-stone-700/80 bg-black/40 p-4 transition"
-                        x-show="isSpeciesAllowed('{{ $speciesKey }}')"
-                        x-cloak
-                        :class="species === '{{ $speciesKey }}' ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
+                        :class="species === entry.key ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
                     >
-                        <input class="sr-only" type="radio" name="species" value="{{ $speciesKey }}" x-model="species" @checked($selectedSpecies === $speciesKey)>
-                        <h3 class="font-heading text-lg text-stone-100">{{ $species['label'] }}</h3>
-                        <p class="mt-2 text-sm leading-relaxed text-stone-300">{{ $species['description'] ?? 'Keine Beschreibung in der Konfiguration.' }}</p>
-                        <p class="mt-3 text-xs uppercase tracking-widest text-red-200/90" x-text="formatSpeciesModifiers('{{ $speciesKey }}')"></p>
+                        <input class="sr-only" type="radio" name="species" :value="entry.key" x-model="species">
+                        <h3 class="font-heading text-lg text-stone-100" x-text="entry.meta.label || entry.key"></h3>
+                        <p class="mt-2 text-sm leading-relaxed text-stone-300" x-text="entry.meta.description || 'Keine Beschreibung in der Konfiguration.'"></p>
+                        <p class="mt-3 text-xs uppercase tracking-widest text-red-200/90" x-text="formatSpeciesModifiers(entry.key)"></p>
                     </label>
-                @endforeach
+                </template>
             </div>
         </section>
 
@@ -522,15 +565,20 @@
                 <p class="mt-2 text-sm text-stone-300">Mindestwerte werden gegen deine effektiven Attribute (inkl. Spezies) geprüft.</p>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    @foreach ($callingOptions as $callingKey => $calling)
+                    <template x-if="visibleCallingEntries.length === 0">
+                        <article class="rounded-xl border border-amber-700/70 bg-amber-950/30 p-4 text-sm text-amber-100">
+                            Für diese Welt sind aktuell keine Berufungen aktiviert. Bitte im Welt-Admin eine Vorlage importieren oder Einträge anlegen.
+                        </article>
+                    </template>
+                    <template x-for="entry in visibleCallingEntries" :key="entry.key">
                         <label class="rounded-xl border border-stone-700/80 bg-black/40 p-4 transition"
-                            :class="calling === '{{ $callingKey }}' ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
+                            :class="calling === entry.key ? 'border-red-500/70 bg-red-500/10' : 'hover:border-stone-500'"
                         >
-                            <input class="sr-only" type="radio" name="calling" value="{{ $callingKey }}" x-model="calling" @checked($selectedCalling === $callingKey)>
-                            <h3 class="font-heading text-lg text-stone-100">{{ $calling['label'] }}</h3>
-                            <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-300">{{ $calling['description'] }}</p>
+                            <input class="sr-only" type="radio" name="calling" :value="entry.key" x-model="calling">
+                            <h3 class="font-heading text-lg text-stone-100" x-text="entry.meta.label || entry.key"></h3>
+                            <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-300" x-text="entry.meta.description || 'Keine Beschreibung vorhanden.'"></p>
                         </label>
-                    @endforeach
+                    </template>
                 </div>
 
                 <div class="mt-5 rounded-xl border border-stone-700/80 bg-black/45 p-4">

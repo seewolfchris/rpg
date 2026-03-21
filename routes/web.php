@@ -24,6 +24,7 @@ use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
 use App\Http\Controllers\WorldAdminController;
+use App\Http\Controllers\WorldCharacterOptionsAdminController;
 use App\Http\Controllers\WorldController;
 use App\Models\Campaign;
 use App\Models\Post;
@@ -375,6 +376,44 @@ Route::middleware('auth')->scopeBindings()->group(function () use ($resolveWorld
             Route::patch('worlds/{world}/move/{direction}', [WorldAdminController::class, 'move'])
                 ->where('direction', 'up|down')
                 ->name('admin.worlds.move')
+                ->middleware('throttle:moderation');
+
+            Route::post('worlds/{world}/character-options/import-template', [WorldCharacterOptionsAdminController::class, 'importTemplate'])
+                ->name('admin.worlds.character-options.import-template')
+                ->middleware('throttle:moderation');
+
+            Route::post('worlds/{world}/species-options', [WorldCharacterOptionsAdminController::class, 'storeSpecies'])
+                ->name('admin.worlds.species-options.store')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/species-options/{speciesOption}', [WorldCharacterOptionsAdminController::class, 'updateSpecies'])
+                ->name('admin.worlds.species-options.update')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/species-options/{speciesOption}/toggle', [WorldCharacterOptionsAdminController::class, 'toggleSpecies'])
+                ->name('admin.worlds.species-options.toggle')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/species-options/{speciesOption}/move/{direction}', [WorldCharacterOptionsAdminController::class, 'moveSpecies'])
+                ->where('direction', 'up|down')
+                ->name('admin.worlds.species-options.move')
+                ->middleware('throttle:moderation');
+
+            Route::post('worlds/{world}/calling-options', [WorldCharacterOptionsAdminController::class, 'storeCalling'])
+                ->name('admin.worlds.calling-options.store')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/calling-options/{callingOption}', [WorldCharacterOptionsAdminController::class, 'updateCalling'])
+                ->name('admin.worlds.calling-options.update')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/calling-options/{callingOption}/toggle', [WorldCharacterOptionsAdminController::class, 'toggleCalling'])
+                ->name('admin.worlds.calling-options.toggle')
+                ->middleware('throttle:moderation');
+
+            Route::patch('worlds/{world}/calling-options/{callingOption}/move/{direction}', [WorldCharacterOptionsAdminController::class, 'moveCalling'])
+                ->where('direction', 'up|down')
+                ->name('admin.worlds.calling-options.move')
                 ->middleware('throttle:moderation');
 
             Route::resource('worlds', WorldAdminController::class)

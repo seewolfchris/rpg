@@ -8,6 +8,7 @@ use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use App\Models\World;
 use App\Support\CharacterInventoryService;
+use App\Support\CharacterSheetResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -17,9 +18,15 @@ use Illuminate\View\View;
 
 class CharacterController extends Controller
 {
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    private array $sheetCacheByWorldId = [];
+
     public function __construct(
         private readonly CharacterInventoryService $inventoryService,
         private readonly CharacterProgressionService $progressionService,
+        private readonly CharacterSheetResolver $characterSheetResolver,
     ) {}
 
     public function index(Request $request): View
@@ -227,7 +234,11 @@ class CharacterController extends Controller
      */
     private function backfillLegacyCharacterData(array $data, ?Character $character = null): array
     {
-        $sheet = (array) config('character_sheet', []);
+        $characterWorldId = $character instanceof Character
+            ? $character->world_id
+            : null;
+        $worldId = (int) ($data['world_id'] ?? $characterWorldId ?? World::resolveDefaultId());
+        $sheet = $this->sheetForWorldId($worldId);
         $origins = (array) Arr::get($sheet, 'origins', []);
         $speciesOptions = (array) Arr::get($sheet, 'species', []);
         $callingOptions = (array) Arr::get($sheet, 'callings', []);
@@ -307,6 +318,18 @@ class CharacterController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sheetForWorldId(int $worldId): array
+    {
+        if (! array_key_exists($worldId, $this->sheetCacheByWorldId)) {
+            $this->sheetCacheByWorldId[$worldId] = $this->characterSheetResolver->resolveForWorldId($worldId);
+        }
+
+        return $this->sheetCacheByWorldId[$worldId];
     }
 
     private function convertLegacyValueToPercent(int $legacyValue): int

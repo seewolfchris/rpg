@@ -466,8 +466,8 @@ class CharacterManagementTest extends TestCase
         $content = $response->getContent();
 
         $this->assertMatchesRegularExpression('/name="origin" value="native_vhaltor"[^>]*checked/', $content);
-        $this->assertMatchesRegularExpression('/name="species" value="elf"[^>]*checked/', $content);
-        $this->assertMatchesRegularExpression('/name="calling" value="gelehrter"[^>]*checked/', $content);
+        $this->assertStringContainsString('"species":"elf"', html_entity_decode($content));
+        $this->assertStringContainsString('"calling":"gelehrter"', html_entity_decode($content));
     }
 
     public function test_user_can_update_own_character(): void

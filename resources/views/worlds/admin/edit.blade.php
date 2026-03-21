@@ -19,4 +19,12 @@
             ])
         </form>
     </section>
+
+    @include('worlds.admin._character_options', [
+        'world' => $world,
+        'speciesOptions' => $speciesOptions,
+        'callingOptions' => $callingOptions,
+        'templateOptions' => $templateOptions,
+        'defaultTemplateKey' => $defaultTemplateKey,
+    ])
 @endsection
