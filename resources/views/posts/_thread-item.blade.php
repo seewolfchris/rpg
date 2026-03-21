@@ -1,20 +1,28 @@
-<article id="post-{{ $post->id }}" class="rounded-xl border border-stone-800 bg-neutral-900/60 p-5">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-            <p class="text-sm text-stone-200">
+@php
+    $isIcPost = $post->post_type === 'ic';
+    $isOocPost = $post->post_type === 'ooc';
+    $postContentClass = $isIcPost
+        ? 'mx-auto max-w-[78ch] text-[1.03rem] leading-8 text-stone-100 sm:text-[1.08rem] [&_blockquote]:my-6 [&_blockquote]:rounded-xl [&_blockquote]:border-amber-700/45 [&_blockquote]:bg-amber-900/10 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:italic [&_blockquote]:text-amber-100 [&_p]:my-0 [&_p+p]:mt-5'
+        : 'max-w-[84ch] text-[0.96rem] leading-7 text-stone-200 [&_blockquote]:my-4 [&_blockquote]:rounded-lg [&_blockquote]:border-stone-600/70 [&_blockquote]:bg-black/30 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-stone-200 [&_p]:my-0 [&_p+p]:mt-4';
+@endphp
+
+<article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" class="thread-post {{ $isIcPost ? 'thread-post-ic' : 'thread-post-ooc' }} rounded-xl border p-5 sm:p-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0 flex-1">
+            <p class="{{ $isIcPost ? 'text-base text-stone-100 sm:text-lg' : 'text-sm text-stone-200' }}">
                 <span class="font-semibold">{{ $post->user->name }}</span>
                 <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
             </p>
 
             @if ($post->character)
-                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">
+                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300/95">
                     Charakter: {{ $post->character->name }}
                 </p>
             @endif
 
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
-                    {{ strtoupper($post->post_type) }}
+                    {{ $isOocPost ? 'Meta' : strtoupper($post->post_type) }}
                 </span>
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
                     {{ match ($post->moderation_status) {
@@ -39,7 +47,7 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
             @can('moderate', $post)
                 <label for="bulk_post_{{ $post->id }}" class="inline-flex items-center gap-2 rounded-md border border-stone-600/80 bg-black/35 px-2.5 py-1.5 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
                     <input
@@ -133,11 +141,11 @@
         </div>
     </div>
 
-    <div class="mt-4 max-w-[75ch] break-words leading-relaxed text-stone-200 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+    <div class="thread-post-content mt-4 break-words {{ $postContentClass }} [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
         @php($postMeta = is_array($post->meta) ? $post->meta : [])
         @php($icQuote = trim((string) ($postMeta['ic_quote'] ?? '')))
         @if ($post->post_type === 'ic' && $icQuote !== '')
-            <blockquote class="mb-4 rounded-lg border border-amber-700/50 bg-amber-900/10 px-4 py-3 text-sm italic text-amber-100">
+            <blockquote class="mb-5 rounded-xl border border-amber-600/50 bg-amber-900/10 px-5 py-4 text-base italic leading-relaxed text-amber-100">
                 „{{ $icQuote }}“
             </blockquote>
         @endif

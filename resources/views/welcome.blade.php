@@ -42,9 +42,29 @@
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
     </head>
-    <body class="min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
+    <body class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
         @php($registerUrl = Route::has('register') ? route('register') : url('/register'))
         @php($loginUrl = Route::has('login') ? route('login') : url('/login'))
+        @php(
+            $landingTeasers = [
+                '„Das letzte Licht im Turm verlosch, und niemand erinnerte sich, wer dort oben Wache hatte.“',
+                '„Sie legte den Dolch auf den Tisch und sagte nur: Heute Nacht schuldet mir die Stadt eine Antwort.“',
+                '„Als die Glocke dreizehn schlug, wusste jeder in der Gasse, dass der Frieden vorbei war.“',
+                '„Er lächelte, obwohl sein Schatten in die falsche Richtung fiel.“',
+                '„Der Brief war verbrannt, aber ein Satz blieb lesbar: Wenn du das liest, sind wir schon zu spät.“',
+            ]
+        )
+        @php($randomTeaser = $landingTeasers[array_rand($landingTeasers)])
+        @php(
+            $worldSnippets = [
+                'Zwischen flackernden Fackeln wartet eine Entscheidung, die niemand zurücknehmen kann.',
+                'Eine Tür steht offen, obwohl sie gestern noch zugemauert war.',
+                'Aus der Ferne trägt der Wind ein Gerücht, das nur heute wahr sein könnte.',
+                'Jemand hat den Namen deiner Figur bereits in das Protokoll von morgen geschrieben.',
+                'Im Nebenraum endet ein Schwur genau in dem Moment, in dem du eintrittst.',
+                'Der Rat schweigt, aber die Wachen greifen bereits zu den Klingen.',
+            ]
+        )
 
         <div class="relative isolate overflow-x-clip">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.35),_transparent_44%),radial-gradient(circle_at_82%_28%,_rgba(90,66,129,0.18),_transparent_36%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
@@ -76,82 +96,100 @@
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-10 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-2 md:items-center md:gap-12 lg:gap-14 lg:pb-24">
+            <main class="mx-auto grid w-full max-w-6xl gap-9 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-center md:gap-12 lg:gap-14 lg:pb-24">
                 <section class="md:pr-2">
-                    <p class="mb-4 text-xs uppercase tracking-[0.12em] text-amber-400/80 sm:text-sm sm:tracking-[0.18em]">
-                        Jede Legende beginnt mit einer Entscheidung.
+                    <p class="mb-3 text-xs uppercase tracking-[0.16em] text-amber-300/85 sm:text-sm">
+                        Letzter Satz einer laufenden Szene
                     </p>
-                    <h1 class="mb-6 font-heading text-2xl leading-tight text-stone-100 sm:text-4xl lg:text-5xl">
-                        Wähle deine Welt.<br class="hidden sm:block">Schreibe Geschichte.
+                    <blockquote class="rounded-2xl border border-amber-700/45 bg-amber-900/10 px-5 py-4 text-base italic leading-relaxed text-amber-100 shadow-lg shadow-black/25 sm:text-lg">
+                        {{ $randomTeaser }}
+                    </blockquote>
+
+                    <h1 class="mt-6 font-heading text-3xl leading-tight text-stone-100 sm:text-4xl lg:text-5xl">
+                        Betrete eine Welt.<br class="hidden sm:block">Schreibe weiter, wo andere aufgehört haben.
                     </h1>
-                    <div class="font-body max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
+
+                    <div class="font-body mt-5 max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
                         <p>
-                            Ein Charakter tritt aus der Dunkelheit.<br>
-                            Eine Gruppe formt sich.<br>
-                            Eine Welt öffnet ihre Tore.
+                            In jeder Kampagne wartet bereits ein offener Konflikt.
+                            In jeder Szene liegt ein Satz, der auf deine Figur wartet.
                         </p>
                         <p>
-                            Auf C76-RPG entstehen Geschichten nicht nur - sie werden gelebt.
-                            Charaktere, Kampagnen, Szenen und Lore verschmelzen zu einem lebendigen Play-by-Post-Universum.
-                        </p>
-                        <p>
-                            Neue Welten warten. Geheimnisse liegen verborgen.
-                            Abenteuer beginnen mit dem ersten Satz.
+                            C76-RPG verbindet Charaktere, Szenen und Lore zu einem Schreibraum,
+                            der sich wie ein Roman liest und wie ein Rollenspiel atmet.
                         </p>
                     </div>
 
-                    <div class="mt-8 flex flex-wrap items-center gap-4">
+                    <div class="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
                         @guest
                             <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex px-6 py-3 text-sm">
-                                Jetzt registrieren
+                                Jetzt eintreten
                             </a>
                             <a href="{{ $loginUrl }}" class="ui-btn inline-flex px-6 py-3 text-sm">
-                                Zum Login
+                                Bereits registriert
                             </a>
                         @else
                             <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex px-6 py-3 text-sm">
-                                Zum Dashboard
+                                Zurück ins Dashboard
                             </a>
                         @endguest
                         <a href="#welten" class="ui-btn ui-btn-danger inline-flex px-6 py-3 text-sm">
-                            Welten auswählen
+                            Betrete eine Welt
                         </a>
                     </div>
                 </section>
 
-                <section class="relative flex items-center justify-center md:justify-end">
-                    <img
-                        src="{{ asset('images/hero-placeholder.svg') }}"
-                        alt="C76-RPG Logo"
-                        class="mx-auto aspect-square h-auto w-full max-w-[20rem] object-contain sm:max-w-[24rem] md:max-w-[28rem] lg:max-w-[34rem] xl:max-w-[38rem]"
-                        loading="lazy"
-                    >
+                <section class="relative">
+                    <figure class="landing-hero-figure group relative overflow-hidden rounded-3xl border border-stone-700/70 bg-black/40 shadow-2xl shadow-black/35">
+                        <img
+                            src="{{ asset('images/og/c76-rpg-og.png') }}"
+                            alt="Atmosphärische Vorschau auf das C76-RPG Universum"
+                            class="landing-hero-image h-[18rem] w-full object-cover sm:h-[22rem] lg:h-[28rem]"
+                            loading="lazy"
+                        >
+                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent"></div>
+                        <figcaption class="absolute inset-x-0 bottom-0 p-4 text-sm leading-relaxed text-stone-100 sm:p-5 sm:text-base">
+                            „Die Szene läuft bereits. Du setzt den nächsten Satz.“
+                        </figcaption>
+                    </figure>
                 </section>
             </main>
 
             <section id="welten" class="mx-auto w-full max-w-6xl px-5 pb-20 sm:px-8">
-                <div class="mb-6 flex items-center justify-between gap-3">
-                    <h2 class="font-heading text-3xl text-stone-100">Verfügbare Welten</h2>
+                <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Weltenübersicht</p>
+                        <h2 class="font-heading text-3xl text-stone-100">Betrete eine Welt</h2>
+                    </div>
                     <a href="{{ route('worlds.index') }}" class="ui-btn">Alle Welten</a>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     @forelse ($worlds as $world)
-                        <article class="rounded-2xl border border-stone-800 bg-neutral-900/60 p-5">
+                        @php($snippetSource = trim((string) ($world->tagline ?: $world->description ?: 'Eine neue Szene beginnt, sobald du den ersten Beitrag setzt.')))
+                        @php($worldSnippet = \Illuminate\Support\Str::limit($snippetSource, 150))
+                        @php($hoverSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
+                        <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80">
                             <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
                             @if ($world->tagline)
                                 <p class="mt-2 text-sm text-amber-200">{{ $world->tagline }}</p>
                             @endif
-                            <p class="mt-3 text-sm text-stone-300">{{ $world->description ?: 'Keine Beschreibung hinterlegt.' }}</p>
-                            <p class="mt-3 text-xs uppercase tracking-widest text-stone-500">{{ $world->campaigns_count }} Kampagnen</p>
+                            <p class="mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
+
+                            <p class="landing-world-snippet mt-3 rounded-lg border border-amber-700/40 bg-amber-900/10 px-3 py-2 text-xs italic leading-relaxed text-amber-100 opacity-100 transition duration-300 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
+                                {{ $hoverSnippet }}
+                            </p>
+
+                            <p class="mt-4 text-xs uppercase tracking-widest text-stone-500">{{ $world->campaigns_count }} Kampagnen</p>
+
                             <div class="mt-4 flex flex-wrap gap-2">
                                 <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn inline-flex">Welt ansehen</a>
                                 @auth
-                                    <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Kampagnen öffnen</a>
+                                    <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt betreten</a>
                                 @else
                                     <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
                                         @csrf
-                                        <button type="submit" class="ui-btn ui-btn-accent inline-flex">Aktivieren</button>
+                                        <button type="submit" class="ui-btn ui-btn-accent inline-flex">Welt betreten</button>
                                     </form>
                                 @endauth
                             </div>

@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-19  
+Stand: 2026-03-21  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -23,7 +23,7 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.23-beta`**.
+- Laufende Versionslinie: **`v0.24-beta`**.
 - Verifikation lokal (letzter Lauf):
   - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (2026-03-19)
   - `node --test tests/js/*.mjs` -> **8 passed** (2026-03-19)

@@ -35,10 +35,10 @@ Wichtige Regeln:
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.23-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.24-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
-- v0.23-beta: HTMX-Interaktionen – Live Read-Tracking, Bookmark/Pin OOB-Updates, GM-Bulk-Moderation ohne Reload
+- v0.24-beta: Finaler Immersion-Polish – Landing-Hero mit Szenen-Teaser, romanhafter Thread-Lesemodus, konsistente World/Character-Cards, globale Typografie-/Spacing-Glättung
 
 Letzte lokale Verifikation:
 - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-19)
@@ -246,19 +246,19 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 Release-Metadaten (Version/Build/Doku) vorbereiten:
 
 ```bash
-scripts/release_prepare.sh --version v0.23-beta
+scripts/release_prepare.sh --version v0.24-beta
 ```
 
 Optional auch lokale `.env` aktualisieren:
 
 ```bash
-scripts/release_prepare.sh --version v0.23-beta --update-dotenv
+scripts/release_prepare.sh --version v0.24-beta --update-dotenv
 ```
 
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh v0.23-beta --world chroniken-der-asche --archive
+scripts/release_flow.sh v0.24-beta --world chroniken-der-asche --archive
 ```
 
 Release-Smoke automatisiert:

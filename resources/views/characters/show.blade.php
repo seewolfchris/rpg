@@ -86,7 +86,7 @@
     @endphp
 
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Charakterbogen</p>
                 <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $character->name }}</h1>
@@ -98,7 +98,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <a
                     href="{{ route('characters.edit', $character) }}"
-                    class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                    class="ui-btn inline-flex"
                 >
                     Bearbeiten
                 </a>
@@ -107,7 +107,7 @@
                     @method('DELETE')
                     <button
                         type="submit"
-                        class="rounded-md border border-red-700/80 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
+                        class="ui-btn ui-btn-danger inline-flex"
                     >
                         Löschen
                     </button>
@@ -116,7 +116,7 @@
         </div>
 
         <div class="grid gap-6 lg:grid-cols-[20rem_1fr]">
-            <aside class="space-y-4 rounded-xl border border-stone-800 bg-neutral-900/70 p-4">
+            <aside class="ui-card-soft space-y-4 rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4">
                 <img
                     src="{{ $character->avatarUrl() }}"
                     alt="Porträt von {{ $character->name }}"
@@ -128,9 +128,9 @@
                 </p>
 
                 <div class="grid gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
-                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2">Herkunft: {{ $originLabel }}</p>
-                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2">Spezies: {{ $speciesLabel }}</p>
-                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2">Berufung: {{ $callingLabel }}</p>
+                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2 break-words">Herkunft: {{ $originLabel }}</p>
+                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2 break-words">Spezies: {{ $speciesLabel }}</p>
+                    <p class="rounded border border-stone-700/80 bg-black/35 px-3 py-2 break-words">Berufung: {{ $callingLabel }}</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 text-sm text-stone-200">
@@ -150,7 +150,7 @@
                 </div>
             </aside>
 
-            <article class="space-y-5 rounded-xl border border-stone-800 bg-black/45 p-6">
+            <article class="ui-card-soft space-y-5 rounded-xl border border-stone-800/85 bg-black/45 p-5 sm:p-6">
                 <section class="rounded-lg border border-emerald-700/60 bg-emerald-950/15 p-4">
                     <h2 class="font-heading text-2xl text-emerald-100">Entwicklung</h2>
                     <p class="mt-2 text-sm text-emerald-200/90">
@@ -255,7 +255,7 @@
                         @if (is_array($character->advantages) && count($character->advantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
                                 @foreach ($character->advantages as $advantage)
-                                    <li>- {{ $advantage }}</li>
+                                    <li class="break-words">- {{ $advantage }}</li>
                                 @endforeach
                             </ul>
                         @else
@@ -268,7 +268,7 @@
                         @if (is_array($character->disadvantages) && count($character->disadvantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-red-100/90">
                                 @foreach ($character->disadvantages as $disadvantage)
-                                    <li>- {{ $disadvantage }}</li>
+                                    <li class="break-words">- {{ $disadvantage }}</li>
                                 @endforeach
                             </ul>
                         @else
@@ -283,7 +283,7 @@
                         @if ($inventoryEntries->isNotEmpty())
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
                                 @foreach ($inventoryEntries as $inventoryEntry)
-                                    <li>
+                                    <li class="break-words">
                                         - {{ $inventoryEntry['quantity'] }}x {{ $inventoryEntry['name'] }}
                                         @if ($inventoryEntry['equipped'])
                                             <span class="text-xs uppercase tracking-[0.08em] text-emerald-300">(ausgerüstet)</span>
@@ -339,7 +339,7 @@
                             </p>
                             <ul class="mt-2 space-y-1 text-sm text-sky-100/90">
                                 @foreach ($armorEntries as $armor)
-                                    <li>
+                                    <li class="break-words">
                                         - {{ data_get($armor, 'name', '-') }} (RS {{ data_get($armor, 'protection', 0) }})
                                         @if ((bool) data_get($armor, 'equipped', false))
                                             <span class="text-xs uppercase tracking-[0.08em] text-sky-300">(ausgerüstet)</span>
@@ -440,7 +440,7 @@
 
         <a
             href="{{ route('characters.index') }}"
-            class="inline-flex rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="ui-btn inline-flex"
         >
             Zurück zur Übersicht
         </a>

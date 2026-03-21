@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
     <head>
-        @php($appVersion = (string) config('app.version', 'v0.23-beta'))
+        @php($appVersion = (string) config('app.version', 'v0.24-beta'))
         @php($appBuild = (string) config('app.build', ''))
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -61,7 +61,7 @@
         @endif
     </head>
     <body
-        class="min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased"
+        class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased"
         hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'
     >
         <div class="relative isolate min-h-screen overflow-x-clip">
@@ -70,7 +70,7 @@
                 Laden ...
             </div>
 
-            <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <a href="{{ route('home') }}" class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]">
                     C76-RPG
                 </a>
@@ -210,7 +210,7 @@
 
             <main
                 id="app-main"
-                class="mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8"
+                class="app-main-shell mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8"
             >
                 @include('partials.flash')
 

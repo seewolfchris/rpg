@@ -36,28 +36,30 @@
     @endphp
 
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <div class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Charakterverwaltung (GM-Ansicht)' : 'Deine Charaktere' }}</p>
-                <h1 class="font-heading text-3xl text-stone-100">Charaktere</h1>
-                <p class="mt-2 text-stone-300">
-                    {{ $isGmView
-                        ? 'Verwalte Charaktere aller Spieler im gewählten Weltenkontext.'
-                        : 'Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren in der gewählten Welt.' }}
-                </p>
-            </div>
+        <div class="ui-card p-6 sm:p-8">
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Charakterverwaltung (GM-Ansicht)' : 'Deine Charaktere' }}</p>
+                    <h1 class="font-heading break-words text-3xl text-stone-100">Charaktere</h1>
+                    <p class="mt-2 break-words text-sm leading-relaxed text-stone-300 sm:text-base">
+                        {{ $isGmView
+                            ? 'Verwalte Charaktere aller Spieler im gewählten Weltenkontext.'
+                            : 'Verwalte Herkunft, Spezies, Berufung und d100-Eigenschaften deiner Figuren in der gewählten Welt.' }}
+                    </p>
+                </div>
 
-            <a
-                href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null]) }}"
-                class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
-            >
-                Neuer Charakter
-            </a>
+                <a
+                    href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null]) }}"
+                    class="ui-btn ui-btn-accent inline-flex"
+                >
+                    Neuer Charakter
+                </a>
+            </div>
         </div>
 
-        <form method="GET" action="{{ route('characters.index') }}" class="flex flex-wrap items-end gap-3 rounded-xl border border-stone-800 bg-neutral-900/45 p-4">
+        <form method="GET" action="{{ route('characters.index') }}" class="ui-card-soft flex flex-wrap items-end gap-3 p-4 sm:p-5">
             <div>
-                <label for="world" class="mb-2 block text-xs uppercase tracking-widest text-stone-400">Weltfilter</label>
+                <label for="world" class="mb-2 block text-xs uppercase tracking-[0.1em] text-stone-400">Weltfilter</label>
                 <select
                     id="world"
                     name="world"
@@ -71,7 +73,7 @@
                     </select>
             </div>
             <div>
-                <label for="status" class="mb-2 block text-xs uppercase tracking-widest text-stone-400">Statusfilter</label>
+                <label for="status" class="mb-2 block text-xs uppercase tracking-[0.1em] text-stone-400">Statusfilter</label>
                 <select
                     id="status"
                     name="status"
@@ -87,7 +89,7 @@
             </div>
             <button type="submit" class="ui-btn inline-flex">Anwenden</button>
             @if ($selectedWorld)
-                <span class="rounded-full border border-amber-500/60 px-3 py-2 text-xs uppercase tracking-widest text-amber-200">
+                <span class="rounded-full border border-amber-500/60 px-3 py-2 text-xs uppercase tracking-[0.1em] text-amber-200">
                     Aktiv: {{ $selectedWorld->name }}
                 </span>
             @endif
@@ -109,19 +111,19 @@
                         $statusLabel = (string) ($statusMeta['label'] ?? ucfirst($statusKey));
                         $statusBadgeClass = (string) ($statusMeta['badge_class'] ?? 'border-stone-600/80 bg-stone-900/35 text-stone-200');
                     @endphp
-                    <article class="overflow-hidden rounded-xl border border-stone-800 bg-neutral-900/65 shadow-lg shadow-black/30">
+                    <article class="ui-card-soft rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4 shadow-lg shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/55">
                         <img
                             src="{{ $character->avatarUrl() }}"
                             alt="Porträt von {{ $character->name }}"
-                            class="h-48 w-full object-cover"
+                            class="h-48 w-full rounded-lg object-cover"
                             loading="lazy"
                         >
 
-                        <div class="space-y-3 p-4">
-                            <div>
-                                <h2 class="font-heading text-xl text-stone-100">{{ $character->name }}</h2>
+                        <div class="space-y-3 pt-4">
+                            <div class="min-w-0">
+                                <h2 class="font-heading break-words text-xl text-stone-100">{{ $character->name }}</h2>
                                 @if ($character->epithet)
-                                    <p class="text-sm text-amber-300/90">{{ $character->epithet }}</p>
+                                    <p class="break-words text-sm leading-relaxed text-amber-300/90">{{ $character->epithet }}</p>
                                 @endif
                                 @if ($isGmView && $character->relationLoaded('user') && $character->user)
                                     <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">Spieler: <span class="text-stone-200">{{ $character->user->name }}</span></p>
@@ -129,14 +131,14 @@
                             </div>
 
                             <div class="space-y-1 text-xs uppercase tracking-[0.08em] text-stone-400">
-                                <p>Welt: <span class="text-stone-200">{{ $character->world?->name ?? '-' }}</span></p>
+                                <p class="break-words">Welt: <span class="text-stone-200">{{ $character->world?->name ?? '-' }}</span></p>
                                 <p>
                                     Status:
                                     <span class="ml-1 inline-flex rounded border px-1.5 py-0.5 text-[0.62rem] tracking-[0.08em] {{ $statusBadgeClass }}">{{ $statusLabel }}</span>
                                 </p>
-                                <p>Herkunft: <span class="text-stone-200">{{ $originLabel }}</span></p>
-                                <p>Spezies: <span class="text-stone-200">{{ $speciesLabel }}</span></p>
-                                <p>Berufung: <span class="text-stone-200">{{ $callingLabel }}</span></p>
+                                <p class="break-words">Herkunft: <span class="text-stone-200">{{ $originLabel }}</span></p>
+                                <p class="break-words">Spezies: <span class="text-stone-200">{{ $speciesLabel }}</span></p>
+                                <p class="break-words">Berufung: <span class="text-stone-200">{{ $callingLabel }}</span></p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 text-xs text-stone-300">
@@ -155,7 +157,7 @@
 
                             <a
                                 href="{{ route('characters.show', $character) }}"
-                                class="inline-flex rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                class="ui-btn inline-flex"
                             >
                                 Details
                             </a>
