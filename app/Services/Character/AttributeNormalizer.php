@@ -1,0 +1,368 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Character;
+
+use App\Http\Requests\Character\StoreCharacterRequest;
+use App\Http\Requests\Character\UpdateCharacterRequest;
+use App\Models\Character;
+use App\Models\World;
+use App\Support\CharacterInventoryService;
+use App\Support\CharacterSheetResolver;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
+
+class AttributeNormalizer
+{
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    private array $sheetCacheByWorldId = [];
+
+    public function __construct(
+        private readonly CharacterInventoryService $inventoryService,
+        private readonly CharacterSheetResolver $characterSheetResolver,
+    ) {}
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ModelNotFoundException
+     * @throws ValidationException
+     */
+    public function normalizeForCreate(StoreCharacterRequest $request): array
+    {
+        $data = array_merge($request->validated(), $request->derivedPools());
+        unset($data['avatar'], $data['remove_avatar']);
+
+        $data = $this->backfillLegacyCharacterData($data);
+        $data = $this->sanitizePoolState($data);
+        $this->assertNormalizedPools($data);
+
+        return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ModelNotFoundException
+     * @throws ValidationException
+     */
+    public function normalizeForUpdate(UpdateCharacterRequest $request, Character $character): array
+    {
+        $data = array_merge($request->validated(), $request->derivedPools());
+        unset($data['avatar'], $data['remove_avatar']);
+
+        $data = $this->backfillLegacyCharacterData($data, $character);
+        $data = $this->sanitizePoolState($data, $character);
+        $this->assertNormalizedPools($data);
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     *
+     * @throws ModelNotFoundException
+     */
+    private function backfillLegacyCharacterData(array $data, ?Character $character = null): array
+    {
+        $characterWorldId = $character instanceof Character
+            ? (int) $character->world_id
+            : null;
+        $worldId = (int) ($data['world_id'] ?? $characterWorldId ?? World::resolveDefaultId());
+        $resolvedWorld = World::query()->findOrFail($worldId);
+        $sheet = $this->sheetForWorldId((int) $resolvedWorld->id);
+        $origins = (array) Arr::get($sheet, 'origins', []);
+        $speciesOptions = (array) Arr::get($sheet, 'species', []);
+        $callingOptions = (array) Arr::get($sheet, 'callings', []);
+        $legacyMap = (array) Arr::get($sheet, 'legacy_column_map', []);
+
+        $defaultOrigin = array_key_exists('native_vhaltor', $origins)
+            ? 'native_vhaltor'
+            : (array_key_first($origins) ?? null);
+        $defaultSpecies = array_key_exists('mensch', $speciesOptions)
+            ? 'mensch'
+            : (array_key_first($speciesOptions) ?? null);
+        $defaultCalling = array_key_exists('abenteurer', $callingOptions)
+            ? 'abenteurer'
+            : (array_key_first($callingOptions) ?? null);
+
+        $characterOrigin = $character instanceof Character
+            ? $character->origin
+            : null;
+        $characterSpecies = $character instanceof Character
+            ? $character->species
+            : null;
+        $characterCalling = $character instanceof Character
+            ? $character->calling
+            : null;
+
+        $data['origin'] = (string) ($data['origin'] ?? $characterOrigin ?? $defaultOrigin ?? '');
+        $data['species'] = (string) ($data['species'] ?? $characterSpecies ?? $defaultSpecies ?? '');
+        $data['calling'] = (string) ($data['calling'] ?? $characterCalling ?? $defaultCalling ?? '');
+
+        foreach ([
+            'calling_custom_name',
+            'calling_custom_description',
+            'concept',
+            'gm_secret',
+            'world_connection',
+            'gm_note',
+            'mu_note',
+            'kl_note',
+            'in_note',
+            'ch_note',
+            'ff_note',
+            'ge_note',
+            'ko_note',
+            'kk_note',
+        ] as $key) {
+            if (! array_key_exists($key, $data) && $character) {
+                $data[$key] = $character->{$key};
+            }
+        }
+
+        foreach ($legacyMap as $legacyColumn => $attributeKey) {
+            if (! array_key_exists($attributeKey, $data) || $data[$attributeKey] === null) {
+                if ($character && $character->{$attributeKey} !== null) {
+                    $data[$attributeKey] = (int) $character->{$attributeKey};
+                } elseif ($character && $character->{$legacyColumn} !== null) {
+                    $data[$attributeKey] = $this->convertLegacyValueToPercent((int) $character->{$legacyColumn});
+                }
+            }
+
+            if (array_key_exists($attributeKey, $data) && $data[$attributeKey] !== null) {
+                $data[$legacyColumn] = (int) $data[$attributeKey];
+            }
+        }
+
+        $characterAdvantages = $character instanceof Character ? $character->advantages : [];
+        $characterDisadvantages = $character instanceof Character ? $character->disadvantages : [];
+        $characterInventory = $character instanceof Character ? $character->inventory : [];
+        $characterWeapons = $character instanceof Character ? $character->weapons : [];
+        $characterArmors = $character instanceof Character ? $character->armors : [];
+
+        $data['advantages'] = is_array($data['advantages'] ?? null)
+            ? array_values($data['advantages'])
+            : $characterAdvantages;
+        $data['disadvantages'] = is_array($data['disadvantages'] ?? null)
+            ? array_values($data['disadvantages'])
+            : $characterDisadvantages;
+        $data['inventory'] = $this->inventoryService->normalize(
+            is_array($data['inventory'] ?? null)
+                ? $data['inventory']
+                : $characterInventory
+        );
+        $data['weapons'] = is_array($data['weapons'] ?? null)
+            ? $this->sanitizeWeapons($data['weapons'])
+            : $this->sanitizeWeapons($characterWeapons);
+        $data['armors'] = is_array($data['armors'] ?? null)
+            ? $this->sanitizeArmors($data['armors'])
+            : $this->sanitizeArmors($characterArmors);
+
+        foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
+            if (! array_key_exists($poolKey, $data) && $character) {
+                $data[$poolKey] = $character->{$poolKey};
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function sanitizePoolState(array $data, ?Character $character = null): array
+    {
+        foreach (['le', 'ae'] as $prefix) {
+            $maxKey = $prefix.'_max';
+            $currentKey = $prefix.'_current';
+
+            $maxValue = max(0, (int) ($data[$maxKey] ?? 0));
+            $existingCurrent = $character?->{$currentKey};
+
+            $data[$maxKey] = $maxValue;
+            $data[$currentKey] = $existingCurrent === null
+                ? $maxValue
+                : $this->clampInt((int) $existingCurrent, 0, $maxValue);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     *
+     * @throws ValidationException
+     */
+    private function assertNormalizedPools(array $data): void
+    {
+        $errors = [];
+
+        foreach (['le', 'ae'] as $prefix) {
+            $maxKey = $prefix.'_max';
+            $currentKey = $prefix.'_current';
+
+            if (! array_key_exists($maxKey, $data)) {
+                $errors[$maxKey] = 'Pool max value is missing.';
+            }
+
+            if (! array_key_exists($currentKey, $data)) {
+                $errors[$currentKey] = 'Pool current value is missing.';
+            }
+
+            $maxValue = (int) ($data[$maxKey] ?? 0);
+            $currentValue = (int) ($data[$currentKey] ?? 0);
+
+            if ($maxValue < 0) {
+                $errors[$maxKey] = 'Pool max value must be >= 0.';
+            }
+
+            if ($currentValue < 0 || $currentValue > $maxValue) {
+                $errors[$currentKey] = 'Pool current value must be between 0 and max.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sheetForWorldId(int $worldId): array
+    {
+        if (! array_key_exists($worldId, $this->sheetCacheByWorldId)) {
+            $this->sheetCacheByWorldId[$worldId] = $this->characterSheetResolver->resolveForWorldId($worldId);
+        }
+
+        return $this->sheetCacheByWorldId[$worldId];
+    }
+
+    private function convertLegacyValueToPercent(int $legacyValue): int
+    {
+        $converted = $legacyValue <= 20
+            ? (int) round($legacyValue * 5)
+            : $legacyValue;
+
+        return (int) max(30, min(60, $converted));
+    }
+
+    private function clampInt(int $value, int $min, int $max): int
+    {
+        return max($min, min($value, $max));
+    }
+
+    /**
+     * @return array<int, array{name: string, attack: int, parry: int, damage: int}>
+     */
+    private function sanitizeWeapons(mixed $weapons): array
+    {
+        if (! is_array($weapons)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($weapons as $weapon) {
+            if (! is_array($weapon)) {
+                continue;
+            }
+
+            $name = trim((string) ($weapon['name'] ?? ''));
+            $damage = $this->normalizeWeaponDamageValue($weapon['damage'] ?? null);
+            $attack = (int) ($weapon['attack'] ?? 0);
+            $parry = (int) ($weapon['parry'] ?? 0);
+
+            if ($name === '' || $damage <= 0) {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'attack' => max(0, min(100, $attack)),
+                'parry' => max(0, min(100, $parry)),
+                'damage' => $damage,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @return array<int, array{name: string, protection: int, equipped: bool}>
+     */
+    private function sanitizeArmors(mixed $armors): array
+    {
+        if (! is_array($armors)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($armors as $armor) {
+            if (! is_array($armor) && ! is_string($armor)) {
+                continue;
+            }
+
+            if (is_string($armor)) {
+                $name = trim($armor);
+                $protection = 0;
+                $equipped = false;
+            } else {
+                $name = trim((string) ($armor['name'] ?? $armor['item'] ?? ''));
+                $protection = (int) ($armor['protection'] ?? $armor['rs'] ?? 0);
+                $equipped = (bool) ($armor['equipped'] ?? false);
+            }
+
+            if ($name === '') {
+                continue;
+            }
+
+            $normalized[] = [
+                'name' => $name,
+                'protection' => max(0, min(99, $protection)),
+                'equipped' => $equipped,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeWeaponDamageValue(mixed $value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return max(1, min(999, (int) $value));
+        }
+
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return 0;
+        }
+
+        if (preg_match('/^(\d+)\s*[wWdD]\s*(\d+)\s*([+-]\s*\d+)?$/', $raw, $matches) === 1) {
+            $count = (int) $matches[1];
+            $faces = (int) $matches[2];
+            $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
+            $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
+
+            return max(1, min(999, $estimated));
+        }
+
+        if (preg_match('/-?\d+/', $raw, $matches) === 1) {
+            return max(1, min(999, (int) $matches[0]));
+        }
+
+        return 0;
+    }
+}
