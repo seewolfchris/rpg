@@ -49,6 +49,7 @@ Letzte lokale Verifikation:
 Enthalten:
 - Auth: Registrierung/Login/Logout (Breeze-Style, Blade)
 - Charaktersystem: CRUD, Eigenschaften, Biografie, Avatar-Upload, Ownership-Checks
+  - Create-Flow via `CreateCharacterAction` + `AttributeNormalizer` + `AvatarService` (transactional, after-commit Avatar-Finalisierung)
 - Kampagnen/Szenen: Erstellung, Sichtbarkeit, Filter, Rollen (Owner/Co-GM/Player)
 - Posts: IC/OOC, Markdown/BBCode/Plain, Spoiler, Edit-History (Revisionen)
 - Moderation: Ausstehend/Freigegeben/Abgelehnt, Audit-Log, GM-Queue, Bulk-Aktionen

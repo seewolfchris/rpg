@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-21  
+Stand: 2026-03-22  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -78,6 +78,12 @@ Repository-Branch: `main`
   - `app/Domain/Post/*`
   - `app/Domain/Scene/*`
   - `app/Domain/Campaign/CampaignParticipantResolver.php`
+- Character-Create-Flow ist in Action/Services aufgeteilt:
+  - `app/Actions/Character/CreateCharacterAction.php` (Transaktion, Inventory-Audit, after-commit Avatar-Finalisierung)
+  - `app/Services/Character/AttributeNormalizer.php` (Backfill + Sanitizing + Pool-Normalisierung)
+  - `app/Services/Character/AvatarService.php` (Stage/Finalize/Cleanup)
+  - `app/Exceptions/CharacterCreationFailedException.php` (expliziter Fehlerpfad)
+  - `CharacterController::store()` delegiert nur noch an die Action
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 
