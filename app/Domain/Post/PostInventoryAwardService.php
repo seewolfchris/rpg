@@ -3,6 +3,8 @@
 namespace App\Domain\Post;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
+use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -22,6 +24,8 @@ class PostInventoryAwardService
     /**
      * @param  array<string, mixed>  $data
      * @return array{character_id: int, character_name: string, item: string, quantity: int, equipped: bool}|null
+     *
+     * @throws PostInventoryAwardInvariantViolationException
      */
     public function applyForPost(
         Post $post,
@@ -30,6 +34,20 @@ class PostInventoryAwardService
         bool $isModerator,
         User $user,
     ): ?array {
+        if ((int) $post->scene_id !== (int) $scene->id) {
+            throw PostInventoryAwardInvariantViolationException::postSceneMismatch((int) $post->scene_id, (int) $scene->id);
+        }
+
+        /** @var Campaign|null $campaign */
+        $campaign = $scene->campaign;
+        if (! $campaign instanceof Campaign) {
+            throw PostInventoryAwardInvariantViolationException::missingSceneCampaign((int) $scene->id);
+        }
+
+        if ((int) $scene->campaign_id !== (int) $campaign->id) {
+            throw PostInventoryAwardInvariantViolationException::sceneCampaignMismatch((int) $scene->campaign_id, (int) $campaign->id);
+        }
+
         $awardEnabled = (bool) ($data['inventory_award_enabled'] ?? false);
         if (! $awardEnabled || ! $isModerator) {
             return null;
@@ -44,28 +62,44 @@ class PostInventoryAwardService
             return null;
         }
 
-        $participantUserIds = $this->campaignParticipantResolver->participantUserIds($scene->campaign);
+        $participantUserIds = $this->campaignParticipantResolver->participantUserIds($campaign);
+        $campaignId = (int) $campaign->id;
+        $campaignWorldId = (int) $campaign->world_id;
 
         $award = DB::transaction(function () use (
             $post,
             $targetCharacterId,
             $participantUserIds,
+            $campaignId,
+            $campaignWorldId,
             $item,
             $quantity,
             $equipped,
             $user,
             $scene,
-        ): ?array {
+        ): array {
             $targetCharacter = Character::query()
                 ->lockForUpdate()
                 ->find($targetCharacterId);
 
             if (! $targetCharacter) {
-                return null;
+                throw PostInventoryAwardInvariantViolationException::targetCharacterMissing($targetCharacterId);
             }
 
             if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
-                return null;
+                throw PostInventoryAwardInvariantViolationException::targetCharacterNotParticipant(
+                    characterId: (int) $targetCharacter->id,
+                    targetUserId: (int) $targetCharacter->user_id,
+                    campaignId: $campaignId,
+                );
+            }
+
+            if ((int) $targetCharacter->world_id !== $campaignWorldId) {
+                throw PostInventoryAwardInvariantViolationException::targetCharacterWorldMismatch(
+                    characterId: (int) $targetCharacter->id,
+                    characterWorldId: (int) $targetCharacter->world_id,
+                    campaignWorldId: $campaignWorldId,
+                );
             }
 
             $beforeInventory = $this->inventoryService->normalize($targetCharacter->inventory ?? []);
@@ -108,17 +142,15 @@ class PostInventoryAwardService
             return $awardMeta;
         });
 
-        if ($award !== null) {
-            $this->logger->info('inventory.post_award_applied', [
-                'user_id' => $user->id,
-                'scene_id' => $scene->id,
-                'post_id' => $post->id,
-                'character_id' => $award['character_id'],
-                'item' => $award['item'],
-                'quantity' => $award['quantity'],
-                'equipped' => $award['equipped'],
-            ]);
-        }
+        $this->logger->info('inventory.post_award_applied', [
+            'user_id' => $user->id,
+            'scene_id' => $scene->id,
+            'post_id' => $post->id,
+            'character_id' => $award['character_id'],
+            'item' => $award['item'],
+            'quantity' => $award['quantity'],
+            'equipped' => $award['equipped'],
+        ]);
 
         return $award;
     }

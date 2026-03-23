@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Character;
 
 use App\Actions\Character\CreateCharacterAction;
+use App\Exceptions\CharacterCreationFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Models\Character;
 use App\Models\User;
@@ -158,6 +159,66 @@ class CreateCharacterActionTest extends TestCase
             'action' => 'add',
             'item_name' => 'Seil 10m lang',
             'quantity' => 1,
+        ]);
+    }
+
+    public function test_it_keeps_character_when_avatar_finalization_fails_after_commit(): void
+    {
+        $user = User::factory()->create();
+        $request = new StoreCharacterRequestFake(fakeUser: $user);
+        $normalizedData = $this->normalizedCharacterData();
+        $stagedAvatar = [
+            'disk' => 'public',
+            'staged_path' => 'character-avatars/staged/test-avatar.png',
+            'extension' => 'png',
+        ];
+
+        $attributeNormalizer = $this->createMock(AttributeNormalizer::class);
+        $attributeNormalizer->expects($this->once())
+            ->method('normalizeForCreate')
+            ->with($request)
+            ->willReturn($normalizedData);
+        app()->instance(AttributeNormalizer::class, $attributeNormalizer);
+
+        $avatarService = $this->createMock(AvatarService::class);
+        $avatarService->expects($this->once())
+            ->method('stageFromRequest')
+            ->with($request)
+            ->willReturn($stagedAvatar);
+        $avatarService->expects($this->once())
+            ->method('finalizeForCharacter')
+            ->willThrowException(new CharacterCreationFailedException('Avatar finalization failed.'));
+        $avatarService->expects($this->never())
+            ->method('discardStageIfPresent');
+        app()->instance(AvatarService::class, $avatarService);
+
+        $inventoryService = $this->createMock(CharacterInventoryService::class);
+        $inventoryService->expects($this->once())
+            ->method('normalize')
+            ->willReturn([]);
+        $inventoryService->expects($this->once())
+            ->method('diff')
+            ->with([], [])
+            ->willReturn([]);
+        $inventoryService->expects($this->once())
+            ->method('log')
+            ->with(
+                $this->callback(static fn (Character $character): bool => $character->exists),
+                $this->equalTo((int) $user->id),
+                $this->equalTo('character_sheet_create'),
+                $this->equalTo([]),
+                $this->isNull(),
+                $this->callback(static fn (array $context): bool => isset($context['character_id'])),
+            );
+        app()->instance(CharacterInventoryService::class, $inventoryService);
+
+        $character = app(CreateCharacterAction::class)->execute($request);
+
+        $this->assertInstanceOf(Character::class, $character);
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'user_id' => $user->id,
+            'avatar_path' => null,
         ]);
     }
 

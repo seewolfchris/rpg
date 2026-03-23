@@ -3,9 +3,25 @@
 namespace App\Support;
 
 use App\Models\DiceRoll;
+use Closure;
 
 class ProbeRoller
 {
+    /**
+     * @var Closure(): int
+     */
+    private Closure $rollGenerator;
+
+    /**
+     * @param  (callable(): int)|null  $rollGenerator
+     */
+    public function __construct(?callable $rollGenerator = null)
+    {
+        $this->rollGenerator = $rollGenerator !== null
+            ? Closure::fromCallable($rollGenerator)
+            : static fn (): int => random_int(1, 100);
+    }
+
     /**
      * @return array{mode: string, rolls: array<int, int>, kept_roll: int, modifier: int, total: int, critical_success: bool, critical_failure: bool}
      */
@@ -29,8 +45,8 @@ class ProbeRoller
             'kept_roll' => $keptRoll,
             'modifier' => $modifier,
             'total' => $total,
-            'critical_success' => $keptRoll === 100,
-            'critical_failure' => $keptRoll === 1,
+            'critical_success' => $keptRoll === 1,
+            'critical_failure' => $keptRoll === 100,
         ];
     }
 
@@ -48,6 +64,8 @@ class ProbeRoller
 
     private function rollValue(): int
     {
-        return random_int(1, 100);
+        $rolled = ($this->rollGenerator)();
+
+        return max(1, min(100, $rolled));
     }
 }

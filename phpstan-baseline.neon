@@ -7,12 +7,6 @@ parameters:
 			path: app/Domain/Campaign/CampaignParticipantResolver.php
 
 		-
-			message: '#^Parameter \#1 \$campaign of method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) expects App\\Models\\Campaign, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Domain/Post/PostInventoryAwardService.php
-
-		-
 			message: '#^Property App\\Models\\Character\:\:\$inventory \(string\|null\) does not accept array\<int, array\<string, bool\|int\|string\>\>\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -29,12 +23,6 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: app/Domain/Post/PostModerationService.php
-
-		-
-			message: '#^Parameter \#1 \$campaign of method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) expects App\\Models\\Campaign, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Domain/Post/PostProbeService.php
 
 		-
 			message: '#^Property App\\Models\\Post\:\:\$meta \(string\|null\) does not accept array\<string, array\<string, int\>\>\.$#'

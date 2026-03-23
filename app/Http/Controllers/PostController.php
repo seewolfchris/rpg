@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\PostModerationService;
+use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
+use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
 use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
@@ -49,13 +51,24 @@ class PostController extends Controller
             && ! $campaign->userCanPostWithoutModeration($user)
             && ! $isModerator;
 
-        $storedPost = $this->storePostService->store(
-            scene: $scene,
-            user: $user,
-            data: $data,
-            isModerator: $isModerator,
-            requiresApproval: $requiresApproval,
-        );
+        try {
+            $storedPost = $this->storePostService->store(
+                scene: $scene,
+                user: $user,
+                data: $data,
+                isModerator: $isModerator,
+                requiresApproval: $requiresApproval,
+            );
+        } catch (PostProbeInvariantViolationException|PostInventoryAwardInvariantViolationException $exception) {
+            report($exception);
+
+            return redirect()
+                ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]))
+                ->withInput()
+                ->withErrors([
+                    $exception->field() => $exception->getMessage(),
+                ]);
+        }
 
         $statusMessage = 'Beitrag gespeichert.';
 

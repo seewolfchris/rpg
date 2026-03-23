@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Domain\Scene\SceneInventoryQuickActionService;
 use App\Domain\Scene\ScenePostAnchorUrlService;
 use App\Domain\Scene\SceneReadTrackingService;
@@ -284,12 +285,23 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
-        $result = $this->sceneInventoryQuickActionService->execute(
-            campaign: $campaign,
-            scene: $scene,
-            actorUserId: (int) auth()->id(),
-            data: $request->validated(),
-        );
+        try {
+            $result = $this->sceneInventoryQuickActionService->execute(
+                campaign: $campaign,
+                scene: $scene,
+                actorUserId: (int) auth()->id(),
+                data: $request->validated(),
+            );
+        } catch (SceneInventoryQuickActionInvariantViolationException $exception) {
+            report($exception);
+
+            return redirect()
+                ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#inventory-quick-action')
+                ->withInput()
+                ->withErrors([
+                    $exception->field() => $exception->getMessage(),
+                ]);
+        }
 
         if (($result['status'] ?? '') === 'item_not_found') {
             return redirect()

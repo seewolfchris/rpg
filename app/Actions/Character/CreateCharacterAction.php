@@ -63,7 +63,13 @@ class CreateCharacterAction
 
                 if ($stagedAvatar !== null) {
                     $this->db->connection()->afterCommit(
-                        fn () => $this->avatarService->finalizeForCharacter($stagedAvatar, $character)
+                        function () use ($stagedAvatar, $character): void {
+                            try {
+                                $this->avatarService->finalizeForCharacter($stagedAvatar, $character);
+                            } catch (Throwable $throwable) {
+                                report($throwable);
+                            }
+                        }
                     );
                 }
 

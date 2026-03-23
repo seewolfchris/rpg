@@ -2,6 +2,8 @@
 
 namespace App\Domain\Scene;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Scene;
@@ -14,20 +16,35 @@ class SceneInventoryQuickActionService
     public function __construct(
         private readonly CharacterInventoryService $inventoryService,
         private readonly StructuredLogger $logger,
+        private readonly CampaignParticipantResolver $campaignParticipantResolver,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{status: string, message?: string}
+     * @return array{
+     *     status: string,
+     *     message?: string
+     * }
+     *
+     * @throws SceneInventoryQuickActionInvariantViolationException
      */
     public function execute(Campaign $campaign, Scene $scene, int $actorUserId, array $data): array
     {
+        if ((int) $scene->campaign_id !== (int) $campaign->id) {
+            throw SceneInventoryQuickActionInvariantViolationException::sceneCampaignMismatch(
+                sceneCampaignId: (int) $scene->campaign_id,
+                campaignId: (int) $campaign->id,
+            );
+        }
+
         $characterId = (int) $data['inventory_action_character_id'];
         $actionType = (string) $data['inventory_action_type'];
         $item = trim((string) $data['inventory_action_item']);
         $quantity = max(1, min(999, (int) ($data['inventory_action_quantity'] ?? 1)));
         $equipped = (bool) ($data['inventory_action_equipped'] ?? false);
         $note = trim((string) ($data['inventory_action_note'] ?? ''));
+        $participantUserIds = $this->campaignParticipantResolver->participantUserIds($campaign);
+        $campaignWorldId = (int) $campaign->world_id;
 
         $result = DB::transaction(function () use (
             $characterId,
@@ -36,6 +53,8 @@ class SceneInventoryQuickActionService
             $quantity,
             $equipped,
             $note,
+            $participantUserIds,
+            $campaignWorldId,
             $campaign,
             $scene,
             $actorUserId
@@ -45,7 +64,23 @@ class SceneInventoryQuickActionService
                 ->find($characterId);
 
             if (! $character) {
-                return ['status' => 'missing_character'];
+                throw SceneInventoryQuickActionInvariantViolationException::targetCharacterMissing($characterId);
+            }
+
+            if (! $participantUserIds->contains((int) $character->user_id)) {
+                throw SceneInventoryQuickActionInvariantViolationException::targetCharacterNotParticipant(
+                    characterId: (int) $character->id,
+                    targetUserId: (int) $character->user_id,
+                    campaignId: (int) $campaign->id,
+                );
+            }
+
+            if ((int) $character->world_id !== $campaignWorldId) {
+                throw SceneInventoryQuickActionInvariantViolationException::targetCharacterWorldMismatch(
+                    characterId: (int) $character->id,
+                    characterWorldId: (int) $character->world_id,
+                    campaignWorldId: $campaignWorldId,
+                );
             }
 
             $beforeInventory = $this->inventoryService->normalize($character->inventory ?? []);

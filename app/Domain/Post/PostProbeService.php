@@ -3,6 +3,8 @@
 namespace App\Domain\Post;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
+use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -21,6 +23,8 @@ class PostProbeService
 
     /**
      * @param  array<string, mixed>  $data
+     *
+     * @throws PostProbeInvariantViolationException
      */
     public function createForPost(
         Post $post,
@@ -29,6 +33,20 @@ class PostProbeService
         Scene $scene,
         bool $isModerator,
     ): bool {
+        if ((int) $post->scene_id !== (int) $scene->id) {
+            throw PostProbeInvariantViolationException::postSceneMismatch((int) $post->scene_id, (int) $scene->id);
+        }
+
+        /** @var Campaign|null $campaign */
+        $campaign = $scene->campaign;
+        if (! $campaign instanceof Campaign) {
+            throw PostProbeInvariantViolationException::missingSceneCampaign((int) $scene->id);
+        }
+
+        if ((int) $scene->campaign_id !== (int) $campaign->id) {
+            throw PostProbeInvariantViolationException::sceneCampaignMismatch((int) $scene->campaign_id, (int) $campaign->id);
+        }
+
         $probeEnabled = (bool) ($data['probe_enabled'] ?? false);
         if (! $probeEnabled || ! $isModerator) {
             return false;
@@ -52,7 +70,9 @@ class PostProbeService
             return false;
         }
 
-        $participantUserIds = $this->campaignParticipantResolver->participantUserIds($scene->campaign);
+        $participantUserIds = $this->campaignParticipantResolver->participantUserIds($campaign);
+        $campaignId = (int) $campaign->id;
+        $campaignWorldId = (int) $campaign->world_id;
         $requestedLeDelta = (int) ($data['probe_le_delta'] ?? 0);
         $requestedAeDelta = (int) ($data['probe_ae_delta'] ?? 0);
 
@@ -62,6 +82,8 @@ class PostProbeService
             $user,
             $targetCharacterId,
             $participantUserIds,
+            $campaignId,
+            $campaignWorldId,
             $probeAttributeKey,
             $rolled,
             $explanation,
@@ -73,11 +95,23 @@ class PostProbeService
                 ->find($targetCharacterId);
 
             if (! $targetCharacter) {
-                return ['created' => false];
+                throw PostProbeInvariantViolationException::targetCharacterMissing($targetCharacterId);
             }
 
             if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
-                return ['created' => false];
+                throw PostProbeInvariantViolationException::targetCharacterNotParticipant(
+                    characterId: (int) $targetCharacter->id,
+                    targetUserId: (int) $targetCharacter->user_id,
+                    campaignId: $campaignId,
+                );
+            }
+
+            if ((int) $targetCharacter->world_id !== $campaignWorldId) {
+                throw PostProbeInvariantViolationException::targetCharacterWorldMismatch(
+                    characterId: (int) $targetCharacter->id,
+                    characterWorldId: (int) $targetCharacter->world_id,
+                    campaignWorldId: $campaignWorldId,
+                );
             }
 
             $effectiveAttributes = (array) ($targetCharacter->effective_attributes ?? []);
@@ -142,7 +176,6 @@ class PostProbeService
             }
 
             return [
-                'created' => true,
                 'character_id' => (int) $targetCharacter->id,
                 'probe_target_value' => $probeTargetValue,
                 'probe_success' => (bool) $probeSucceeded,
@@ -152,10 +185,6 @@ class PostProbeService
                 'applied_ae_delta' => $appliedAeDelta,
             ];
         });
-
-        if (! ($result['created'] ?? false)) {
-            return false;
-        }
 
         $this->logger->info('probe.post_applied', [
             'user_id' => $user->id,
