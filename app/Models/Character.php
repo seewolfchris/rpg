@@ -83,6 +83,7 @@ class Character extends Model
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'world_id' => 'integer',
             'status' => 'string',
             'mu' => 'integer',

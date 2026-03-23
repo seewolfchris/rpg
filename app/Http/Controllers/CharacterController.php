@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Character\CreateCharacterAction;
+use App\Actions\Character\DeleteCharacterAction;
 use App\Domain\Character\CharacterProgressionService;
+use App\Exceptions\CharacterDeletionFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use App\Models\World;
 use App\Services\Character\AttributeNormalizer;
 use App\Support\CharacterInventoryService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +25,7 @@ class CharacterController extends Controller
         private readonly CharacterInventoryService $inventoryService,
         private readonly CharacterProgressionService $progressionService,
         private readonly CreateCharacterAction $createCharacterAction,
+        private readonly DeleteCharacterAction $deleteCharacterAction,
         private readonly AttributeNormalizer $attributeNormalizer,
     ) {}
 
@@ -175,11 +179,19 @@ class CharacterController extends Controller
     {
         $this->ensureOwnership($character);
 
-        if ($character->avatar_path) {
-            Storage::disk('public')->delete($character->avatar_path);
-        }
+        try {
+            $this->deleteCharacterAction->execute($character);
+        } catch (ModelNotFoundException) {
+            return redirect()
+                ->route('characters.index')
+                ->with('status', 'Charakter war bereits gelöscht.');
+        } catch (CharacterDeletionFailedException $exception) {
+            report($exception);
 
-        $character->delete();
+            return redirect()
+                ->route('characters.index')
+                ->with('error', 'Charakter konnte nicht gelöscht werden.');
+        }
 
         return redirect()
             ->route('characters.index')
@@ -188,7 +200,7 @@ class CharacterController extends Controller
 
     private function ensureOwnership(Character $character): void
     {
-        abort_unless($character->user_id === auth()->id(), 403);
+        abort_unless((int) $character->user_id === (int) auth()->id(), 403);
     }
 
     private function ensureCanManageCharacter(Character $character): void
@@ -196,7 +208,7 @@ class CharacterController extends Controller
         $user = auth()->user();
 
         abort_unless(
-            $character->user_id === $user->id || $user->isGmOrAdmin(),
+            (int) $character->user_id === (int) $user->id || $user->isGmOrAdmin(),
             403
         );
     }

@@ -4,8 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\Character;
 use App\Models\CharacterInventoryLog;
+use App\Models\CharacterProgressionEvent;
+use App\Models\Campaign;
+use App\Models\DiceRoll;
+use App\Models\Post;
+use App\Models\PostMention;
+use App\Models\PostRevision;
+use App\Models\Scene;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CharacterManagementTest extends TestCase
@@ -674,5 +683,135 @@ class CharacterManagementTest extends TestCase
 
         $response->assertRedirect(route('characters.index'));
         $this->assertDatabaseMissing('characters', ['id' => $character->id]);
+    }
+
+    public function test_deleting_character_hard_removes_or_detaches_all_related_records(): void
+    {
+        Storage::fake('public');
+
+        $world = World::resolveDefault();
+        $owner = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'world_id' => $world->id,
+            'status' => 'active',
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+        ]);
+
+        $avatarPath = 'character-avatars/delete-target.jpg';
+        Storage::disk('public')->put($avatarPath, 'avatar');
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+            'world_id' => $world->id,
+            'name' => 'Delete Target',
+            'avatar_path' => $avatarPath,
+            ...$this->persistedAttributes(),
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $owner->id,
+            'character_id' => $character->id,
+        ]);
+
+        $postRevision = PostRevision::query()->create([
+            'post_id' => $post->id,
+            'version' => 1,
+            'editor_id' => $owner->id,
+            'character_id' => $character->id,
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'content' => 'Revision',
+            'meta' => null,
+            'moderation_status' => 'approved',
+            'created_at' => now(),
+        ]);
+
+        $diceRoll = DiceRoll::query()->create([
+            'scene_id' => $scene->id,
+            'post_id' => $post->id,
+            'user_id' => $owner->id,
+            'character_id' => $character->id,
+            'roll_mode' => DiceRoll::MODE_NORMAL,
+            'modifier' => 0,
+            'label' => 'Probe',
+            'probe_attribute_key' => 'mu',
+            'probe_target_value' => 40,
+            'probe_is_success' => true,
+            'rolls' => [40],
+            'kept_roll' => 40,
+            'total' => 40,
+            'applied_le_delta' => 0,
+            'applied_ae_delta' => 0,
+            'resulting_le_current' => 40,
+            'resulting_ae_current' => 0,
+            'is_critical_success' => false,
+            'is_critical_failure' => false,
+            'created_at' => now(),
+        ]);
+
+        CharacterInventoryLog::query()->create([
+            'character_id' => $character->id,
+            'actor_user_id' => $owner->id,
+            'source' => 'test',
+            'action' => 'add',
+            'item_name' => 'Heiltrank',
+            'quantity' => 1,
+            'equipped' => false,
+            'note' => null,
+            'context' => ['reason' => 'test'],
+            'created_at' => now(),
+        ]);
+
+        CharacterProgressionEvent::query()->create([
+            'character_id' => $character->id,
+            'actor_user_id' => $gm->id,
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'event_type' => CharacterProgressionEvent::EVENT_XP_MILESTONE,
+            'xp_delta' => 25,
+            'level_before' => 1,
+            'level_after' => 1,
+            'ap_delta' => 0,
+            'attribute_deltas' => null,
+            'reason' => 'Test',
+            'meta' => null,
+            'created_at' => now(),
+        ]);
+
+        PostMention::query()->create([
+            'post_id' => $post->id,
+            'mentioned_user_id' => $owner->id,
+            'mentioned_character_id' => $character->id,
+            'mentioned_character_name' => $character->name,
+        ]);
+
+        $response = $this->actingAs($owner)->delete(route('characters.destroy', $character));
+
+        $response->assertRedirect(route('characters.index'));
+        $this->assertDatabaseMissing('characters', ['id' => $character->id]);
+        $this->assertDatabaseHas('posts', ['id' => $post->id, 'character_id' => null]);
+        $this->assertDatabaseHas('post_revisions', ['id' => $postRevision->id, 'character_id' => null]);
+        $this->assertDatabaseHas('dice_rolls', ['id' => $diceRoll->id, 'character_id' => null]);
+        $this->assertDatabaseMissing('post_mentions', ['mentioned_character_id' => $character->id]);
+        $this->assertDatabaseMissing('character_inventory_logs', ['character_id' => $character->id]);
+        $this->assertDatabaseMissing('character_progression_events', ['character_id' => $character->id]);
+        Storage::disk('public')->assertMissing($avatarPath);
+
+        $this->actingAs($owner)
+            ->get(route('characters.show', ['character' => $character->id]))
+            ->assertNotFound();
+
+        $this->actingAs($owner)
+            ->get(route('characters.index'))
+            ->assertOk()
+            ->assertDontSeeText('Delete Target');
     }
 }
