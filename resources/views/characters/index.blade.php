@@ -155,12 +155,21 @@
                                 <div class="rounded border border-sky-700/70 bg-sky-950/25 px-2 py-1">AE {{ $character->ae_current ?? 0 }}/{{ $character->ae_max ?? 0 }}</div>
                             </div>
 
-                            <a
-                                href="{{ route('characters.show', $character) }}"
-                                class="ui-btn inline-flex"
-                            >
-                                Details
-                            </a>
+                            <div class="flex flex-wrap gap-2">
+                                <a
+                                    href="{{ route('characters.show', $character) }}"
+                                    class="ui-btn inline-flex"
+                                >
+                                    Details
+                                </a>
+                                @if ((int) $character->user_id === (int) auth()->id() || $isGmView)
+                                    <form method="POST" action="{{ route('characters.destroy', $character) }}" onsubmit="return confirm('Diesen Charakter wirklich löschen?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="ui-btn ui-btn-danger inline-flex">Löschen</button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
                     </article>
                 @endforeach

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Character\CharacterProgressionService;
 use App\Models\Character;
 use App\Models\CharacterInventoryLog;
 use App\Models\CharacterProgressionEvent;
@@ -419,7 +420,7 @@ class CharacterManagementTest extends TestCase
         );
     }
 
-    public function test_gm_cannot_delete_other_users_character(): void
+    public function test_gm_can_delete_other_users_character(): void
     {
         $owner = User::factory()->create();
         $gm = User::factory()->gm()->create();
@@ -430,9 +431,30 @@ class CharacterManagementTest extends TestCase
 
         $this->actingAs($gm)
             ->delete(route('characters.destroy', $character))
-            ->assertForbidden();
+            ->assertRedirect(route('characters.index'));
 
-        $this->assertDatabaseHas('characters', ['id' => $character->id]);
+        $this->assertDatabaseMissing('characters', ['id' => $character->id]);
+    }
+
+    public function test_show_redirects_when_character_details_cannot_be_loaded(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $gm->id,
+        ]);
+
+        $progressionService = \Mockery::mock(CharacterProgressionService::class);
+        $progressionService
+            ->shouldReceive('describe')
+            ->once()
+            ->andThrow(new \RuntimeException('Legacy payload is malformed.'));
+        $this->app->instance(CharacterProgressionService::class, $progressionService);
+
+        $response = $this->actingAs($gm)->get(route('characters.show', $character));
+
+        $response->assertRedirect(route('characters.index'));
+        $response->assertSessionHas('error', 'Charakterdetails konnten nicht geladen werden.');
     }
 
     public function test_character_edit_form_prefills_existing_sheet_values(): void

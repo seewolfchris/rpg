@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Throwable;
 
 class CharacterController extends Controller
 {
@@ -85,18 +86,27 @@ class CharacterController extends Controller
             ->with('status', 'Charakter erstellt.');
     }
 
-    public function show(Character $character): View
+    public function show(Character $character): View|RedirectResponse
     {
         $this->ensureCanManageCharacter($character);
-        $inventoryLogs = $character->inventoryLogs()
-            ->with('actor:id,name')
-            ->limit(25)
-            ->get();
-        $progressionEvents = $character->progressionEvents()
-            ->with(['actorUser:id,name', 'campaign:id,title', 'scene:id,title'])
-            ->limit(20)
-            ->get();
-        $progressionState = $this->progressionService->describe($character);
+
+        try {
+            $inventoryLogs = $character->inventoryLogs()
+                ->with('actor:id,name')
+                ->limit(25)
+                ->get();
+            $progressionEvents = $character->progressionEvents()
+                ->with(['actorUser:id,name', 'campaign:id,title', 'scene:id,title'])
+                ->limit(20)
+                ->get();
+            $progressionState = $this->progressionService->describe($character);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('characters.index')
+                ->with('error', 'Charakterdetails konnten nicht geladen werden.');
+        }
 
         return view('characters.show', compact('character', 'inventoryLogs', 'progressionEvents', 'progressionState'));
     }
@@ -177,7 +187,7 @@ class CharacterController extends Controller
 
     public function destroy(Character $character): RedirectResponse
     {
-        $this->ensureOwnership($character);
+        $this->ensureCanDeleteCharacter($character);
 
         try {
             $this->deleteCharacterAction->execute($character);
@@ -198,9 +208,14 @@ class CharacterController extends Controller
             ->with('status', 'Charakter gelöscht.');
     }
 
-    private function ensureOwnership(Character $character): void
+    private function ensureCanDeleteCharacter(Character $character): void
     {
-        abort_unless((int) $character->user_id === (int) auth()->id(), 403);
+        $user = auth()->user();
+
+        abort_unless(
+            (int) $character->user_id === (int) $user->id || $user->isGmOrAdmin(),
+            403
+        );
     }
 
     private function ensureCanManageCharacter(Character $character): void
