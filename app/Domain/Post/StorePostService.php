@@ -8,16 +8,17 @@ use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Support\Gamification\PointService;
 use App\Support\Observability\StructuredLogger;
+use Illuminate\Database\DatabaseManager;
 
 class StorePostService
 {
     public function __construct(
         private readonly PostProbeService $postProbeService,
         private readonly PostInventoryAwardService $postInventoryAwardService,
-        private readonly ScenePostNotificationService $scenePostNotificationService,
-        private readonly PostMentionNotificationService $postMentionNotificationService,
+        private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
         private readonly PointService $pointService,
         private readonly StructuredLogger $logger,
+        private readonly DatabaseManager $db,
     ) {}
 
     /**
@@ -33,40 +34,60 @@ class StorePostService
         }
 
         $isApproved = ! $requiresApproval;
+        $post = null;
+        $probeCreated = false;
+        $inventoryAwardApplied = false;
 
-        $post = Post::query()->create([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-            'character_id' => $data['post_type'] === 'ic' ? $data['character_id'] : null,
-            'post_type' => $data['post_type'],
-            'content_format' => $data['content_format'],
-            'content' => $data['content'],
-            'meta' => $meta !== [] ? $meta : null,
-            'moderation_status' => $isApproved ? 'approved' : 'pending',
-            'approved_at' => $isApproved ? now() : null,
-            'approved_by' => $isModerator && $isApproved ? $user->id : null,
-        ]);
+        $this->db->transaction(function () use (
+            $scene,
+            $user,
+            $data,
+            $isModerator,
+            $isApproved,
+            $meta,
+            &$post,
+            &$probeCreated,
+            &$inventoryAwardApplied,
+        ): void {
+            $post = Post::query()->create([
+                'scene_id' => $scene->id,
+                'user_id' => $user->id,
+                'character_id' => $data['post_type'] === 'ic' ? $data['character_id'] : null,
+                'post_type' => $data['post_type'],
+                'content_format' => $data['content_format'],
+                'content' => $data['content'],
+                'meta' => $meta !== [] ? $meta : null,
+                'moderation_status' => $isApproved ? 'approved' : 'pending',
+                'approved_at' => $isApproved ? now() : null,
+                'approved_by' => $isModerator && $isApproved ? $user->id : null,
+            ]);
 
-        $probeCreated = $this->postProbeService->createForPost(
-            post: $post,
-            data: $data,
-            user: $user,
-            scene: $scene,
-            isModerator: $isModerator,
-        );
+            $probeCreated = $this->postProbeService->createForPost(
+                post: $post,
+                data: $data,
+                user: $user,
+                scene: $scene,
+                isModerator: $isModerator,
+            );
 
-        $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
-            post: $post,
-            data: $data,
-            scene: $scene,
-            isModerator: $isModerator,
-            user: $user,
-        ) !== null;
+            $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
+                post: $post,
+                data: $data,
+                scene: $scene,
+                isModerator: $isModerator,
+                user: $user,
+            ) !== null;
 
-        $this->ensureAuthorSubscription($post, $user);
-        $this->pointService->syncApprovedPost($post);
-        $notificationResult = $this->scenePostNotificationService->notifySceneParticipants($post, $user);
-        $mentionRecipientCount = $this->postMentionNotificationService->notifyMentions($post, $user);
+            $this->ensureAuthorSubscription($post, $user);
+            $this->pointService->syncApprovedPost($post);
+        });
+
+        if (! $post instanceof Post) {
+            throw new \RuntimeException('Post creation failed unexpectedly.');
+        }
+
+        $notificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $user, 'store_post');
+        $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $user, 'store_post');
 
         $this->logger->info('post.created', [
             'user_id' => $user->id,

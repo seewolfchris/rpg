@@ -2,6 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Post\PostMentionNotificationService;
+use App\Domain\Post\PostProbeService;
+use App\Domain\Post\ScenePostNotificationService;
+use App\Jobs\Post\RetryPostMentionNotificationsJob;
+use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
@@ -12,6 +17,8 @@ use App\Models\Scene;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use RuntimeException;
 use Tests\TestCase;
 
 class CampaignScenePostWorkflowTest extends TestCase
@@ -885,4 +892,99 @@ class CampaignScenePostWorkflowTest extends TestCase
         $response->assertSessionHasErrors('inventory_action_character_id');
         $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
     }
+
+    public function test_store_post_rolls_back_when_probe_service_throws(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $character = Character::factory()->create([
+            'user_id' => $gm->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $probeService = $this->createMock(PostProbeService::class);
+        $probeService->expects($this->once())
+            ->method('createForPost')
+            ->willThrowException(new RuntimeException('Probe service failed.'));
+        $this->app->instance(PostProbeService::class, $probeService);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $character->id,
+            'content' => str_repeat('Transaktion muss bei Probe-Fehler komplett rollen. ', 2),
+        ]);
+
+        $response->assertStatus(500);
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('scene_subscriptions', 0);
+        $this->assertDatabaseCount('point_events', 0);
+    }
+
+    public function test_store_post_succeeds_when_notification_services_throw(): void
+    {
+        Queue::fake();
+
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $sceneNotificationService = $this->createMock(ScenePostNotificationService::class);
+        $sceneNotificationService->expects($this->once())
+            ->method('notifySceneParticipants')
+            ->willThrowException(new RuntimeException('Notification dispatch failed.'));
+        $this->app->instance(ScenePostNotificationService::class, $sceneNotificationService);
+
+        $mentionNotificationService = $this->createMock(PostMentionNotificationService::class);
+        $mentionNotificationService->expects($this->once())
+            ->method('notifyMentions')
+            ->willThrowException(new RuntimeException('Mention dispatch failed.'));
+        $this->app->instance(PostMentionNotificationService::class, $mentionNotificationService);
+
+        $response = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $playerCharacter->id,
+            'content' => str_repeat('Der Beitrag bleibt trotz Notification-Fehler bestehen. ', 2),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('posts', 1);
+        $this->assertDatabaseCount('scene_subscriptions', 1);
+        Queue::assertPushed(RetryScenePostNotificationsJob::class, 1);
+        Queue::assertPushed(RetryPostMentionNotificationsJob::class, 1);
+    }
+
 }
