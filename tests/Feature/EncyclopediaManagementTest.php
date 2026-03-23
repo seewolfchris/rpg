@@ -297,7 +297,10 @@ class EncyclopediaManagementTest extends TestCase
     {
         $gm = User::factory()->gm()->create();
 
-        $categories = EncyclopediaCategory::query()->take(2)->get();
+        $categories = EncyclopediaCategory::query()
+            ->with('world')
+            ->take(2)
+            ->get();
         $categoryA = $categories->get(0);
         $categoryB = $categories->get(1);
 

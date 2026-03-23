@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -13,6 +16,8 @@ concurrency:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    env:
+      WORLD_DEFAULT_SLUG: chroniken-der-asche
 
     steps:
       - name: Checkout
@@ -22,7 +27,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: mbstring, pdo_sqlite, sqlite3, dom, fileinfo
+          extensions: mbstring, pdo_sqlite, sqlite3, dom, fileinfo, gd
           coverage: none
 
       - name: Setup Node
@@ -40,6 +45,8 @@ jobs:
       - name: Prepare environment
         run: |
           cp .env.example .env
+          mkdir -p database
+          touch database/database.sqlite
           php artisan key:generate
 
       - name: Run static analysis
