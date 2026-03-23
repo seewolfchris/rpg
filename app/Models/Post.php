@@ -37,6 +37,7 @@ class Post extends Model
      * @var list<string>
      */
     public const THREAD_PAGE_RELATIONS = [
+        'scene.campaign',
         'user',
         'character',
         'approvedBy',

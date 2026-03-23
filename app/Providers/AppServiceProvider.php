@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\World;
 use App\Support\NavigationCounters;
 use App\Support\Observability\StructuredLogger;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
@@ -32,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading(! app()->isProduction());
+
         URL::defaults([
             'world' => World::defaultSlug(),
         ]);

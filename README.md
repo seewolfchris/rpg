@@ -300,8 +300,13 @@ SMOKE_MODE=artisan scripts/release_smoke.sh
 - Offline-Post-Queue nutzt IndexedDB und Sync/Fallback-Trigger.
 - Bei `419` versucht der Service Worker automatisch ein Re-Signing (neuer CSRF-Token + aktuelle Form-Action) und sendet den Queue-Post erneut.
 - Bei `401`/`419`/`429` werden Queue-Eintraege nicht verworfen, sondern mit Backoff (`retry_count`, `next_retry_at`) geplant.
+- Bei `4xx` (ausser `401`/`419`/`429`) wandern Queue-Eintraege in `postDeadLetters` statt verworfen zu werden.
+- Bei `5xx` (oder Netzwerkfehler `status=0`) erfolgen max. `5` Retries; danach wandert der Eintrag in `postDeadLetters`.
+- Dead-Letter-Eintraege speichern ein kurzes `error_summary` (z. B. `Text zu kurz` oder `Server-Fehler (500)`), das im UI vor dem Import angezeigt wird.
+- Service Worker wird versionsgebunden registriert (`/sw.js?v=<APP_VERSION>-<APP_BUILD>`), Cache-Namen sind versionsbasiert.
 - Relevante Service-Worker-Events fuer die UI:
   - `POST_SYNC_AUTH_RETRY`: Re-Signing erfolgreich, erneuter Sendeversuch startet.
+  - `POST_SYNC_DEAD_LETTERED`: Queue-Eintrag wurde mit `error_summary` in Entwuerfe/Fehler verschoben.
   - `POST_SYNC_RETRY_SCHEDULED`: Retry mit naechstem Zeitpunkt geplant.
   - `POST_SYNC_AUTH_REQUIRED`: Session/CSRF nicht erneuerbar, Nutzeraktion (Login) erforderlich.
 

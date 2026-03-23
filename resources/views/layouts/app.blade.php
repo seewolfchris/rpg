@@ -3,11 +3,13 @@
     <head>
         @php($appVersion = (string) config('app.version', 'v0.24-beta'))
         @php($appBuild = (string) config('app.build', ''))
+        @php($swVersion = $appBuild !== '' ? $appVersion.'-'.$appBuild : $appVersion)
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#0f0f14">
         <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
+        <meta name="sw-version" content="{{ $swVersion }}">
         <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="googlebot" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="bingbot" content="{{ config('privacy.x_robots_tag') }}">

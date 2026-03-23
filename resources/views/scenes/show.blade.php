@@ -439,6 +439,10 @@
                 <p class="mt-2 text-xs text-stone-500">
                     Offline-Modus: Beiträge werden lokal gequeued und bei wiederhergestellter Verbindung automatisch synchronisiert.
                 </p>
+                <div
+                    id="offline-dead-letter-panel"
+                    class="mt-4 hidden rounded-lg border border-amber-700/45 bg-black/25 p-4"
+                ></div>
                 <form
                     method="POST"
                     action="{{ route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"

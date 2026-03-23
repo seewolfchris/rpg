@@ -165,24 +165,26 @@
             @endif
         </section>
 
-        <details data-ooc-thread class="thread-meta-channel ui-card-soft border-stone-700/75 bg-neutral-900/45 p-4 sm:p-5">
-            <summary class="cursor-pointer list-none">
-                <h3 class="font-heading inline text-xl text-stone-100">Meta-Kanal (OOC)</h3>
-                <p class="mt-1 text-xs uppercase tracking-[0.1em] text-stone-400">
-                    Absprachen, Regiehinweise und kurze Klärungen außerhalb der Szene.
-                </p>
-            </summary>
+        @if ($scene->allow_ooc)
+            <details data-ooc-thread class="thread-meta-channel ui-card-soft border-stone-700/75 bg-neutral-900/45 p-4 sm:p-5">
+                <summary class="cursor-pointer list-none">
+                    <h3 class="font-heading inline text-xl text-stone-100">Meta-Kanal (OOC)</h3>
+                    <p class="mt-1 text-xs uppercase tracking-[0.1em] text-stone-400">
+                        Absprachen, Regiehinweise und kurze Klärungen außerhalb der Szene.
+                    </p>
+                </summary>
 
-            @if ($oocPosts->isEmpty())
-                <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
-            @else
-                <div id="scene-thread-ooc-list-{{ $posts->currentPage() }}" class="mt-4 space-y-4">
-                    @foreach ($oocPosts as $post)
-                        @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
-                    @endforeach
-                </div>
-            @endif
-        </details>
+                @if ($oocPosts->isEmpty())
+                    <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
+                @else
+                    <div id="scene-thread-ooc-list-{{ $posts->currentPage() }}" class="mt-4 space-y-4">
+                        @foreach ($oocPosts as $post)
+                            @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
+                        @endforeach
+                    </div>
+                @endif
+            </details>
+        @endif
     </div>
 @endif
 

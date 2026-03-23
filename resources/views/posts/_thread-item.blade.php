@@ -83,7 +83,7 @@
                 @if ($post->is_pinned)
                     <form
                         method="POST"
-                        action="{{ route('posts.unpin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                        action="{{ route('posts.unpin', ['world' => $campaign->world, 'post' => $post]) }}"
                         hx-target="#post-{{ $post->id }}"
                         hx-swap="outerHTML"
                         class="contents"
@@ -100,7 +100,7 @@
                 @else
                     <form
                         method="POST"
-                        action="{{ route('posts.pin', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                        action="{{ route('posts.pin', ['world' => $campaign->world, 'post' => $post]) }}"
                         hx-target="#post-{{ $post->id }}"
                         hx-swap="outerHTML"
                         class="contents"
@@ -119,7 +119,7 @@
 
             @can('update', $post)
                 <a
-                    href="{{ route('posts.edit', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+                    href="{{ route('posts.edit', ['world' => $campaign->world, 'post' => $post]) }}"
                     class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Bearbeiten
@@ -127,7 +127,7 @@
             @endcan
 
             @can('delete', $post)
-                <form method="POST" action="{{ route('posts.destroy', ['world' => $post->scene->campaign->world, 'post' => $post]) }}" onsubmit="return confirm('Beitrag wirklich löschen?');">
+                <form method="POST" action="{{ route('posts.destroy', ['world' => $campaign->world, 'post' => $post]) }}" onsubmit="return confirm('Beitrag wirklich löschen?');">
                     @csrf
                     @method('DELETE')
                     <button
@@ -162,7 +162,7 @@
                 @php($currentCount = (int) ($reactionCounts[$reactionKey] ?? 0))
                 @php($hasReacted = in_array($reactionKey, $currentUserReactionKeys, true))
                 @if ($hasReacted)
-                    <form method="POST" action="{{ route('posts.reactions.destroy', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                    <form method="POST" action="{{ route('posts.reactions.destroy', ['world' => $campaign->world, 'post' => $post]) }}">
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="emoji" value="{{ $reactionKey }}">
@@ -174,7 +174,7 @@
                         </button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('posts.reactions.store', ['world' => $post->scene->campaign->world, 'post' => $post]) }}">
+                    <form method="POST" action="{{ route('posts.reactions.store', ['world' => $campaign->world, 'post' => $post]) }}">
                         @csrf
                         <input type="hidden" name="emoji" value="{{ $reactionKey }}">
                         <button
@@ -369,7 +369,7 @@
     @can('moderate', $post)
         <form
             method="POST"
-            action="{{ route('posts.moderate', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+            action="{{ route('posts.moderate', ['world' => $campaign->world, 'post' => $post]) }}"
             class="mt-4 flex flex-wrap items-start gap-2 sm:items-center"
             hx-target="#post-{{ $post->id }}"
             hx-swap="outerHTML"

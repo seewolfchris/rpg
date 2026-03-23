@@ -156,6 +156,135 @@ test('syncQueuedPosts schedules retry and requests auth when re-signing requires
     assert.equal(nextRetryAtMs - nowMs, 45_000);
 });
 
+test('syncQueuedPosts moves 422 responses to dead-letter and continues with next item', async () => {
+    const submitRequests = [];
+
+    const harness = await createServiceWorkerHarness({
+        queueItems: [
+            createQueuedPost({
+                id: 11,
+                url: POSTS_URL,
+                source_url: SOURCE_URL,
+                source_path: SCENE_PATH,
+                token: 'token-11',
+            }),
+            createQueuedPost({
+                id: 12,
+                url: POSTS_URL,
+                source_url: SOURCE_URL,
+                source_path: SCENE_PATH,
+                token: 'token-12',
+            }),
+        ],
+        fetchImpl: async (input, init) => {
+            const method = String(init?.method || 'GET').toUpperCase();
+
+            if (method !== 'POST') {
+                throw new Error(`Unexpected fetch request: ${method} ${resolveUrl(input)}`);
+            }
+
+            const body = formDataToObject(init?.body);
+            submitRequests.push(body.content);
+
+            if (String(body.content || '').includes('Queued post 11')) {
+                return new Response(
+                    JSON.stringify({
+                        message: 'Die angegebenen Daten sind ungültig.',
+                        errors: {
+                            content: ['Text zu kurz'],
+                        },
+                    }),
+                    {
+                        status: 422,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    },
+                );
+            }
+
+            return new Response('ok', { status: 200 });
+        },
+    });
+
+    await harness.context.syncQueuedPosts();
+
+    assert.deepEqual(
+        harness.eventTypes(),
+        [
+            'POST_SYNC_STARTED',
+            'POST_SYNC_DEAD_LETTERED',
+            'POST_SYNC_SUCCESS',
+            'POST_SYNC_FINISHED',
+        ],
+    );
+    assert.equal(harness.queue.length, 0);
+    assert.equal(harness.deadLetters.length, 1);
+    assert.equal(harness.deadLetters[0].source_queue_id, 11);
+    assert.equal(harness.deadLetters[0].error_summary, 'Text zu kurz');
+    assert.deepEqual(submitRequests, ['Queued post 11', 'Queued post 12']);
+});
+
+test('syncQueuedPosts retries 500 responses five times, then dead-letters and continues', async () => {
+    const nowMs = Date.parse('2026-03-12T00:00:00.000Z');
+    let failingAttempts = 0;
+    let successfulAttempts = 0;
+
+    const harness = await createServiceWorkerHarness({
+        queueItems: [
+            createQueuedPost({
+                id: 21,
+                url: POSTS_URL,
+                source_url: SOURCE_URL,
+                source_path: SCENE_PATH,
+                token: 'token-21',
+            }),
+            createQueuedPost({
+                id: 22,
+                url: POSTS_URL,
+                source_url: SOURCE_URL,
+                source_path: SCENE_PATH,
+                token: 'token-22',
+            }),
+        ],
+        dateNowMs: nowMs,
+        randomValue: 0,
+        fetchImpl: async (input, init) => {
+            const method = String(init?.method || 'GET').toUpperCase();
+
+            if (method !== 'POST') {
+                throw new Error(`Unexpected fetch request: ${method} ${resolveUrl(input)}`);
+            }
+
+            const body = formDataToObject(init?.body);
+            const content = String(body.content || '');
+
+            if (content.includes('Queued post 21')) {
+                failingAttempts += 1;
+                return new Response('Internal Server Error', { status: 500 });
+            }
+
+            successfulAttempts += 1;
+            return new Response('ok', { status: 200 });
+        },
+    });
+
+    for (let cycle = 0; cycle < 6; cycle += 1) {
+        await harness.context.syncQueuedPosts();
+        harness.advanceTime(900_000);
+    }
+
+    assert.equal(failingAttempts, 6);
+    assert.equal(successfulAttempts, 1);
+    assert.equal(harness.queue.length, 0);
+    assert.equal(harness.deadLetters.length, 1);
+    assert.equal(harness.deadLetters[0].source_queue_id, 21);
+    assert.equal(harness.deadLetters[0].last_error_status, 500);
+    assert.equal(harness.deadLetters[0].error_summary, 'Server-Fehler (500)');
+    assert.ok(harness.eventTypes().includes('POST_SYNC_DEAD_LETTERED'));
+    assert.ok(harness.eventTypes().includes('POST_SYNC_SUCCESS'));
+});
+
 function createQueuedPost({ id, url, source_url, source_path, token }) {
     return {
         id,
@@ -176,8 +305,10 @@ function createQueuedPost({ id, url, source_url, source_path, token }) {
 async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue = 0.1234, dateNowMs = null }) {
     const scriptSource = await readFile(SERVICE_WORKER_PATH, 'utf8');
     const queueState = deepClone(queueItems);
+    const deadLetterState = [];
     const emittedEvents = [];
-    const DateClass = createDateClass(dateNowMs);
+    const dateState = { nowMs: dateNowMs };
+    const DateClass = createDateClass(dateState);
     const MathObject = Object.create(Math);
     MathObject.random = () => randomValue;
 
@@ -244,6 +375,17 @@ async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue =
 
         queueState.push(normalizedItem);
     };
+    context.putDeadLetter = async (item) => {
+        const nextId = deadLetterState.reduce((maxId, entry) => Math.max(maxId, Number(entry.id || 0)), 0) + 1;
+        const normalizedItem = deepClone({
+            ...item,
+            id: nextId,
+        });
+
+        deadLetterState.push(normalizedItem);
+
+        return normalizedItem;
+    };
     context.notifyClients = async (type, payload = {}) => {
         emittedEvents.push({
             type,
@@ -254,22 +396,30 @@ async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue =
     return {
         context,
         queue: queueState,
+        deadLetters: deadLetterState,
         events: emittedEvents,
         eventTypes() {
             return emittedEvents.map((event) => event.type);
         },
+        advanceTime(milliseconds) {
+            if (dateState.nowMs === null) {
+                return;
+            }
+
+            dateState.nowMs += Number(milliseconds || 0);
+        },
     };
 }
 
-function createDateClass(fixedNowMs) {
-    if (fixedNowMs === null) {
+function createDateClass(state) {
+    if (state.nowMs === null) {
         return Date;
     }
 
     return class FakeDate extends Date {
         constructor(...args) {
             if (args.length === 0) {
-                super(fixedNowMs);
+                super(state.nowMs);
                 return;
             }
 
@@ -277,7 +427,7 @@ function createDateClass(fixedNowMs) {
         }
 
         static now() {
-            return fixedNowMs;
+            return state.nowMs;
         }
     };
 }

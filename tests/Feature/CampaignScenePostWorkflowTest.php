@@ -696,7 +696,7 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $response->assertOk()
             ->assertSeeText('Abenteuerfluss (IC)')
-            ->assertSeeText('OOC-Kanal')
+            ->assertSeeText('Meta-Kanal (OOC)')
             ->assertSeeText('IC-Text am roten Tor mit Blutmondschein.')
             ->assertSeeText('OOC-Abstimmung fuer die naechste Runde.');
     }

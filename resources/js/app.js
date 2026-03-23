@@ -1,6 +1,13 @@
 import './bootstrap';
 import { characterSheetForm, registerCharacterSheetComponent } from './character-sheet';
 import {
+    DEAD_LETTER_MERGE_APPEND,
+    DEAD_LETTER_MERGE_CANCEL,
+    DEAD_LETTER_MERGE_REPLACE,
+    hasEditorContent,
+    mergeDeadLetterContent,
+} from './offline-dead-letter.mjs';
+import {
     createPostDraftStorageKey,
     hasPostDraftContent,
     normalizePostDraftForRestore,
@@ -9,8 +16,11 @@ import {
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
 const QUEUE_STORE_NAME = 'postQueue';
+const DEAD_LETTER_STORE_NAME = 'postDeadLetters';
 const SYNC_TAG_POSTS = 'pbp-sync-posts';
 const OFFLINE_POST_FORM_SELECTOR = 'form[data-offline-post-form]';
+const OFFLINE_POST_CONTENT_SELECTOR = `${OFFLINE_POST_FORM_SELECTOR} textarea[name="content"]`;
+const OFFLINE_DEAD_LETTER_PANEL_ID = 'offline-dead-letter-panel';
 const CACHEABLE_LINK_SELECTOR = 'a[href*="/campaigns/"][href*="/scenes/"], a[href*="/characters/"]';
 const PWA_INSTALL_BUTTON_SELECTOR = '[data-pwa-install-button]';
 const BROWSER_NOTIFICATION_ROOT_SELECTOR = '[data-browser-notifications]';
@@ -41,6 +51,8 @@ document.addEventListener('htmx:afterSwap', (event) => {
 
     setupSceneThreadReadingMode();
     setupPostEditorEnhancements();
+    setupOfflinePostQueue();
+    void renderDeadLetterPanel();
 });
 
 const bootApplication = async () => {
@@ -50,6 +62,7 @@ const bootApplication = async () => {
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();
     setupServiceWorkerMessageHandling();
+    await renderDeadLetterPanel();
 
     swRegistration = await registerServiceWorker();
     await warmOfflineReadingCache();
@@ -317,7 +330,8 @@ async function registerServiceWorker() {
     }
 
     try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        const versionTag = encodeURIComponent(resolveServiceWorkerVersionTag());
+        const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}`);
         const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
 
         if (readyRegistration) {
@@ -330,6 +344,22 @@ async function registerServiceWorker() {
 
         return null;
     }
+}
+
+function resolveServiceWorkerVersionTag() {
+    const swVersionNode = document.querySelector('meta[name="sw-version"]');
+
+    if (swVersionNode instanceof HTMLMetaElement && swVersionNode.content.trim() !== '') {
+        return swVersionNode.content.trim();
+    }
+
+    const appVersionNode = document.querySelector('meta[name="application-version"]');
+
+    if (appVersionNode instanceof HTMLMetaElement && appVersionNode.content.trim() !== '') {
+        return appVersionNode.content.trim();
+    }
+
+    return 'dev';
 }
 
 function setupPwaInstallPrompt() {
@@ -395,6 +425,16 @@ function setupOfflinePostQueue() {
     }
 
     postForms.forEach((form) => {
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        if (form.dataset.offlineQueueBound === '1') {
+            return;
+        }
+
+        form.dataset.offlineQueueBound = '1';
+
         form.addEventListener('submit', async (event) => {
             if (navigator.onLine) {
                 return;
@@ -443,8 +483,10 @@ function setupServiceWorkerMessageHandling() {
             return;
         }
 
-        if (data.type === 'POST_SYNC_DROPPED') {
-            showSyncNotice('Ein Offline-Beitrag konnte wegen Validierung nicht gesendet werden und wurde verworfen.', 'warning');
+        if (data.type === 'POST_SYNC_DEAD_LETTERED') {
+            const summary = String(data.payload?.errorSummary || 'Synchronisierung fehlgeschlagen.');
+            showSyncNotice(`Offline-Beitrag in Entwürfe/Fehler verschoben: ${summary}`, 'warning');
+            void renderDeadLetterPanel();
             return;
         }
 
@@ -486,6 +528,7 @@ function setupServiceWorkerMessageHandling() {
             }
 
             showSyncNotice('Offline-Queue erfolgreich synchronisiert.', 'success');
+            void renderDeadLetterPanel();
         }
     });
 }
@@ -1043,6 +1086,234 @@ async function queuePostSubmission(form) {
     });
 }
 
+async function renderDeadLetterPanel() {
+    const panel = document.getElementById(OFFLINE_DEAD_LETTER_PANEL_ID);
+
+    if (!(panel instanceof HTMLElement)) {
+        return;
+    }
+
+    let deadLetters = [];
+
+    try {
+        deadLetters = await getDeadLetters();
+    } catch (error) {
+        console.error('Could not load dead-letter entries:', error);
+        showSyncNotice('Entwürfe/Fehler konnten nicht geladen werden.', 'warning');
+        return;
+    }
+
+    if (!deadLetters.length) {
+        panel.classList.add('hidden');
+        panel.innerHTML = '';
+        return;
+    }
+
+    panel.classList.remove('hidden');
+    panel.innerHTML = '';
+
+    const heading = document.createElement('p');
+    heading.className = 'text-xs uppercase tracking-[0.08em] text-amber-300';
+    heading.textContent = 'Offline-Entwürfe mit Fehler';
+    panel.appendChild(heading);
+
+    const list = document.createElement('div');
+    list.className = 'mt-3 space-y-3';
+    panel.appendChild(list);
+
+    deadLetters.forEach((deadLetter) => {
+        list.appendChild(buildDeadLetterEntryElement(deadLetter));
+    });
+}
+
+function buildDeadLetterEntryElement(deadLetter) {
+    const element = document.createElement('article');
+    element.className = 'rounded-lg border border-amber-700/45 bg-black/30 p-3';
+
+    const errorSummary = String(deadLetter.error_summary || 'Synchronisierung fehlgeschlagen.');
+    const contentPreview = buildDeadLetterPreview(extractQueuedPostContent(deadLetter.entries));
+
+    const summaryNode = document.createElement('p');
+    summaryNode.className = 'text-xs uppercase tracking-[0.08em] text-amber-200';
+    summaryNode.textContent = `Fehlgeschlagen wegen: ${errorSummary}`;
+    element.appendChild(summaryNode);
+
+    const previewNode = document.createElement('p');
+    previewNode.className = 'mt-2 text-sm text-stone-300';
+    previewNode.textContent = contentPreview;
+    element.appendChild(previewNode);
+
+    const actions = document.createElement('div');
+    actions.className = 'mt-3 flex flex-wrap items-center gap-2';
+    element.appendChild(actions);
+
+    const importButton = document.createElement('button');
+    importButton.type = 'button';
+    importButton.className = 'rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100 transition hover:bg-emerald-900/35';
+    importButton.textContent = 'In Editor übernehmen';
+    importButton.addEventListener('click', async () => {
+        await importDeadLetterIntoEditor(deadLetter);
+    });
+    actions.appendChild(importButton);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'rounded-md border border-stone-600/80 bg-black/35 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-stone-200 transition hover:border-stone-400';
+    removeButton.textContent = 'Entfernen';
+    removeButton.addEventListener('click', async () => {
+        await deleteDeadLetterById(deadLetter.id);
+        await renderDeadLetterPanel();
+        showSyncNotice('Fehler-Entwurf entfernt.', 'warning');
+    });
+    actions.appendChild(removeButton);
+
+    return element;
+}
+
+async function importDeadLetterIntoEditor(deadLetter) {
+    const editor = document.querySelector(OFFLINE_POST_CONTENT_SELECTOR);
+
+    if (!(editor instanceof HTMLTextAreaElement)) {
+        showSyncNotice('Kein Post-Editor gefunden. Öffne zuerst das Schreibfeld.', 'warning');
+        return;
+    }
+
+    const incomingContent = extractQueuedPostContent(deadLetter.entries);
+
+    if (!hasEditorContent(incomingContent)) {
+        showSyncNotice('Dieser Fehler-Entwurf enthält keinen Textinhalt.', 'warning');
+        return;
+    }
+
+    let mergeMode = DEAD_LETTER_MERGE_REPLACE;
+
+    if (hasEditorContent(editor.value)) {
+        mergeMode = await promptDeadLetterMergeMode();
+
+        if (mergeMode === DEAD_LETTER_MERGE_CANCEL) {
+            return;
+        }
+    }
+
+    editor.value = mergeDeadLetterContent(editor.value, incomingContent, mergeMode);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    editor.focus();
+
+    await deleteDeadLetterById(deadLetter.id);
+    await renderDeadLetterPanel();
+
+    if (mergeMode === DEAD_LETTER_MERGE_APPEND) {
+        showSyncNotice('Fehler-Entwurf wurde an den aktuellen Editor-Inhalt angehängt.', 'success');
+        return;
+    }
+
+    showSyncNotice('Fehler-Entwurf in den Editor übernommen.', 'success');
+}
+
+function promptDeadLetterMergeMode() {
+    return new Promise((resolve) => {
+        if (!(document.body instanceof HTMLBodyElement)) {
+            resolve(DEAD_LETTER_MERGE_CANCEL);
+            return;
+        }
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'w-full max-w-md rounded-xl border border-stone-600/80 bg-neutral-900 p-4 text-stone-100 shadow-2xl';
+        backdrop.appendChild(dialog);
+
+        const title = document.createElement('p');
+        title.className = 'font-semibold text-stone-100';
+        title.textContent = 'Editor enthält bereits Text';
+        dialog.appendChild(title);
+
+        const description = document.createElement('p');
+        description.className = 'mt-2 text-sm text-stone-300';
+        description.textContent = 'Wie soll der Fehler-Entwurf übernommen werden?';
+        dialog.appendChild(description);
+
+        const actions = document.createElement('div');
+        actions.className = 'mt-4 flex flex-wrap gap-2';
+        dialog.appendChild(actions);
+
+        const appendButton = document.createElement('button');
+        appendButton.type = 'button';
+        appendButton.className = 'rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100';
+        appendButton.textContent = 'Anhängen (Empfohlen)';
+        actions.appendChild(appendButton);
+
+        const replaceButton = document.createElement('button');
+        replaceButton.type = 'button';
+        replaceButton.className = 'rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-amber-100';
+        replaceButton.textContent = 'Ersetzen';
+        actions.appendChild(replaceButton);
+
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.className = 'rounded-md border border-stone-600/80 bg-black/35 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-stone-200';
+        cancelButton.textContent = 'Abbrechen';
+        actions.appendChild(cancelButton);
+
+        const cleanup = (mode) => {
+            document.removeEventListener('keydown', handleEscape);
+            backdrop.remove();
+            resolve(mode);
+        };
+
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') {
+                cleanup(DEAD_LETTER_MERGE_CANCEL);
+            }
+        };
+
+        appendButton.addEventListener('click', () => cleanup(DEAD_LETTER_MERGE_APPEND));
+        replaceButton.addEventListener('click', () => cleanup(DEAD_LETTER_MERGE_REPLACE));
+        cancelButton.addEventListener('click', () => cleanup(DEAD_LETTER_MERGE_CANCEL));
+        backdrop.addEventListener('click', (event) => {
+            if (event.target === backdrop) {
+                cleanup(DEAD_LETTER_MERGE_CANCEL);
+            }
+        });
+
+        document.body.appendChild(backdrop);
+        document.addEventListener('keydown', handleEscape);
+    });
+}
+
+function buildDeadLetterPreview(content) {
+    const normalized = String(content || '').trim();
+
+    if (normalized === '') {
+        return 'Kein Textinhalt verfügbar.';
+    }
+
+    if (normalized.length <= 140) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, 140)} …`;
+}
+
+function extractQueuedPostContent(entries) {
+    if (!Array.isArray(entries)) {
+        return '';
+    }
+
+    for (const entry of entries) {
+        if (!Array.isArray(entry) || entry.length !== 2) {
+            continue;
+        }
+
+        if (entry[0] === 'content') {
+            return String(entry[1] ?? '');
+        }
+    }
+
+    return '';
+}
+
 function openQueueDatabase() {
     return new Promise((resolve, reject) => {
         if (!('indexedDB' in window)) {
@@ -1050,7 +1321,7 @@ function openQueueDatabase() {
             return;
         }
 
-        const request = indexedDB.open(QUEUE_DB_NAME, 1);
+        const request = indexedDB.open(QUEUE_DB_NAME, 2);
 
         request.onupgradeneeded = () => {
             const database = request.result;
@@ -1061,10 +1332,70 @@ function openQueueDatabase() {
                     autoIncrement: true,
                 });
             }
+
+            if (!database.objectStoreNames.contains(DEAD_LETTER_STORE_NAME)) {
+                database.createObjectStore(DEAD_LETTER_STORE_NAME, {
+                    keyPath: 'id',
+                    autoIncrement: true,
+                });
+            }
         };
 
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error || new Error('Could not open offline queue database.'));
+    });
+}
+
+async function getDeadLetters() {
+    const database = await openQueueDatabase();
+
+    return new Promise((resolve, reject) => {
+        const transaction = database.transaction(DEAD_LETTER_STORE_NAME, 'readonly');
+        const store = transaction.objectStore(DEAD_LETTER_STORE_NAME);
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const result = Array.isArray(request.result) ? request.result : [];
+            result.sort((left, right) => {
+                const leftTs = Date.parse(String(left.dead_lettered_at || ''));
+                const rightTs = Date.parse(String(right.dead_lettered_at || ''));
+
+                if (Number.isFinite(leftTs) && Number.isFinite(rightTs)) {
+                    return rightTs - leftTs;
+                }
+
+                return Number(right.id || 0) - Number(left.id || 0);
+            });
+            resolve(result);
+        };
+        request.onerror = () => reject(request.error || new Error('Could not read dead-letter entries.'));
+
+        transaction.oncomplete = () => {
+            database.close();
+        };
+    });
+}
+
+async function deleteDeadLetterById(id) {
+    const numericId = Number(id || 0);
+
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+        return;
+    }
+
+    const database = await openQueueDatabase();
+
+    await new Promise((resolve, reject) => {
+        const transaction = database.transaction(DEAD_LETTER_STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(DEAD_LETTER_STORE_NAME);
+        const request = store.delete(numericId);
+
+        request.onsuccess = () => resolve(undefined);
+        request.onerror = () => reject(request.error || new Error('Could not delete dead-letter entry.'));
+
+        transaction.oncomplete = () => {
+            database.close();
+        };
     });
 }
 

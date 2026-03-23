@@ -55,6 +55,9 @@ scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short
     - `.env.example`: `APP_VERSION=vX.XX-beta`
   - Optional:
     - `.env`: `APP_BUILD=<kurzer commit hash>`
+  - Hinweis Service Worker:
+    - SW wird mit `/sw.js?v=<APP_VERSION>-<APP_BUILD>` registriert.
+    - Bei Versionssprung immer `APP_VERSION` (und idealerweise `APP_BUILD`) mitziehen, damit alte SW-Caches sicher invalidiert werden.
 
 ## 3b. Web Push (aktiv seit `v0.20-beta`)
 
@@ -114,6 +117,9 @@ $PHP_BIN artisan config:cache
 - Globale Wissensseiten laden (`/wissen`, `/wissen/enzyklopaedie`), `/hilfe` liefert `302` auf `/wissen`.
 - Kampagnen-/Szenen-Legacy-Pfade ohne Weltsegment liefern `301` auf den Weltkontext.
 - Charakter-Erstellung laedt ohne JS-Fehler.
+- Offline-Queue-Fehlerpfad pruefen (kurz):
+  - Validierungsfehler (`422`) erzeugt einen Eintrag im Bereich "Offline-Entwuerfe mit Fehler".
+  - UI zeigt `error_summary` (z. B. `Text zu kurz`) und erlaubt "In Editor uebernehmen" (Anhaengen/Ersetzen/Abbrechen).
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
 

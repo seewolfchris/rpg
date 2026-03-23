@@ -1,14 +1,19 @@
-const STATIC_CACHE = 'chroniken-static-v8';
-const PAGE_CACHE = 'chroniken-pages-v6';
-const CONTENT_CACHE = 'chroniken-content-v6';
+const CACHE_VERSION_TAG = resolveCacheVersionTag();
+const STATIC_CACHE = `chroniken-static-${CACHE_VERSION_TAG}`;
+const PAGE_CACHE = `chroniken-pages-${CACHE_VERSION_TAG}`;
+const CONTENT_CACHE = `chroniken-content-${CACHE_VERSION_TAG}`;
 const QUEUE_DB_NAME = 'chroniken-pbp';
 const QUEUE_STORE_NAME = 'postQueue';
+const DEAD_LETTER_STORE_NAME = 'postDeadLetters';
 const SYNC_TAG_POSTS = 'pbp-sync-posts';
 const OFFLINE_URL = '/offline.html';
 const RETRY_MIN_DELAY_MS = 5 * 1000;
 const RETRY_BASE_DELAY_MS = 30 * 1000;
 const RETRY_MAX_DELAY_MS = 15 * 60 * 1000;
 const RETRY_JITTER_RATIO = 0.2;
+const MAX_SERVER_RETRIES = 5;
+
+let activePostSyncPromise = null;
 
 const STATIC_ASSETS = [
     '/',
@@ -30,6 +35,21 @@ const STATIC_ASSETS = [
     '/js/character-sheet.global.js',
     '/js/alpinejs-3.14.8.min.js',
 ];
+
+function resolveCacheVersionTag() {
+    try {
+        const parsed = new URL(self.location.href);
+        const rawVersion = parsed.searchParams.get('v') || 'dev';
+        const normalizedVersion = rawVersion
+            .trim()
+            .replace(/[^A-Za-z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        return normalizedVersion !== '' ? normalizedVersion : 'dev';
+    } catch {
+        return 'dev';
+    }
+}
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -55,10 +75,25 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches
             .keys()
-            .then((keys) => Promise.all(keys.filter((key) => !allowedCaches.includes(key)).map((key) => caches.delete(key))))
+            .then((keys) => Promise.all(
+                keys
+                    .filter((key) => isManagedCacheKey(key) && !allowedCaches.includes(key))
+                    .map((key) => caches.delete(key))
+            ))
             .then(() => self.clients.claim()),
     );
 });
+
+function isManagedCacheKey(key) {
+    return (
+        typeof key === 'string'
+        && (
+            key.startsWith('chroniken-static-')
+            || key.startsWith('chroniken-pages-')
+            || key.startsWith('chroniken-content-')
+        )
+    );
+}
 
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') {
@@ -109,13 +144,13 @@ self.addEventListener('message', (event) => {
     }
 
     if (data.type === 'SYNC_POSTS_NOW') {
-        event.waitUntil(syncQueuedPosts());
+        event.waitUntil(runQueuedPostsSync());
     }
 });
 
 self.addEventListener('sync', (event) => {
     if (event.tag === SYNC_TAG_POSTS) {
-        event.waitUntil(syncQueuedPosts());
+        event.waitUntil(runQueuedPostsSync());
     }
 });
 
@@ -385,6 +420,18 @@ async function cacheProvidedUrls(urls) {
     );
 }
 
+function runQueuedPostsSync() {
+    if (activePostSyncPromise) {
+        return activePostSyncPromise;
+    }
+
+    activePostSyncPromise = syncQueuedPosts().finally(() => {
+        activePostSyncPromise = null;
+    });
+
+    return activePostSyncPromise;
+}
+
 async function syncQueuedPosts() {
     const queuedPosts = (await getQueuedPosts()).sort((left, right) => Number(left.id || 0) - Number(right.id || 0));
 
@@ -520,7 +567,7 @@ async function submitQueuedPost(item) {
     const csrfToken = findFormEntryValue(item.entries, '_token');
     const headers = {
         'X-Requested-With': 'XMLHttpRequest',
-        Accept: 'text/html, application/xhtml+xml',
+        Accept: 'application/json, text/html, application/xhtml+xml',
     };
 
     if (csrfToken) {
@@ -902,14 +949,18 @@ function decodeHtmlAttribute(value) {
 
 async function handleFailedQueuedPost(item, attempt) {
     const status = Number(attempt?.status || 0);
+    const isClientError = status >= 400 && status < 500 && status !== 401 && status !== 419 && status !== 429;
+    const isServerError = status === 0 || status >= 500;
 
-    if (status >= 400 && status < 500 && status !== 401 && status !== 419 && status !== 429) {
-        await deleteQueuedPost(item.id);
-        notifyClients('POST_SYNC_DROPPED', {
-            id: item.id,
-            url: item.url,
-            status,
-        });
+    if (isClientError) {
+        await moveQueuedPostToDeadLetter(item, attempt, status);
+        return true;
+    }
+
+    const currentRetryCount = Math.max(0, Number(item.retry_count || 0));
+
+    if (isServerError && currentRetryCount >= MAX_SERVER_RETRIES) {
+        await moveQueuedPostToDeadLetter(item, attempt, status);
         return true;
     }
 
@@ -929,6 +980,110 @@ async function handleFailedQueuedPost(item, attempt) {
     }
 
     return false;
+}
+
+async function moveQueuedPostToDeadLetter(item, attempt, status) {
+    const deadLetter = await buildDeadLetterEntry(item, attempt, status);
+    const storedDeadLetter = await putDeadLetter(deadLetter);
+
+    await deleteQueuedPost(item.id);
+
+    notifyClients('POST_SYNC_DEAD_LETTERED', {
+        id: item.id,
+        deadLetterId: storedDeadLetter.id,
+        url: item.url,
+        status,
+        errorSummary: storedDeadLetter.error_summary,
+    });
+}
+
+async function buildDeadLetterEntry(item, attempt, status) {
+    const errorSummary = await buildErrorSummary(status, attempt);
+    const nowIso = new Date().toISOString();
+
+    return {
+        source_queue_id: Number(item.id || 0) || null,
+        url: item.url || null,
+        method: item.method || 'POST',
+        entries: normalizeQueueEntries(item.entries),
+        queued_at: typeof item.queued_at === 'string' ? item.queued_at : null,
+        dead_lettered_at: nowIso,
+        last_error_status: status || null,
+        last_error_reason: attempt?.reason || null,
+        error_summary: errorSummary,
+    };
+}
+
+async function buildErrorSummary(status, attempt) {
+    const validationSummary = status === 422
+        ? await extractFirstValidationMessage(attempt?.response || null)
+        : null;
+
+    if (validationSummary) {
+        return validationSummary;
+    }
+
+    if (status >= 500) {
+        return `Server-Fehler (${status})`;
+    }
+
+    if (status === 403) {
+        return 'Zugriff verweigert (403)';
+    }
+
+    if (status === 404) {
+        return 'Ressource nicht gefunden (404)';
+    }
+
+    if (status >= 400 && status < 500) {
+        return `Client-Fehler (${status})`;
+    }
+
+    if (status > 0) {
+        return `Synchronisierung fehlgeschlagen (${status})`;
+    }
+
+    return 'Synchronisierung fehlgeschlagen (unknown)';
+}
+
+async function extractFirstValidationMessage(response) {
+    if (!response || typeof response.clone !== 'function') {
+        return null;
+    }
+
+    let payload = null;
+
+    try {
+        payload = await response.clone().json();
+    } catch {
+        payload = null;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+        return null;
+    }
+
+    const errors = payload.errors;
+
+    if (errors && typeof errors === 'object') {
+        for (const messages of Object.values(errors)) {
+            if (!Array.isArray(messages)) {
+                continue;
+            }
+
+            for (const message of messages) {
+                if (typeof message === 'string' && message.trim() !== '') {
+                    return message.trim();
+                }
+            }
+        }
+    }
+
+    if (typeof payload.message === 'string' && payload.message.trim() !== '') {
+        return payload.message.trim();
+    }
+
+    return null;
 }
 
 async function scheduleQueuedPostRetry(item, details = {}) {
@@ -1035,13 +1190,20 @@ function notifyClients(type, payload = {}) {
 
 function openQueueDatabase() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(QUEUE_DB_NAME, 1);
+        const request = indexedDB.open(QUEUE_DB_NAME, 2);
 
         request.onupgradeneeded = () => {
             const database = request.result;
 
             if (!database.objectStoreNames.contains(QUEUE_STORE_NAME)) {
                 database.createObjectStore(QUEUE_STORE_NAME, {
+                    keyPath: 'id',
+                    autoIncrement: true,
+                });
+            }
+
+            if (!database.objectStoreNames.contains(DEAD_LETTER_STORE_NAME)) {
+                database.createObjectStore(DEAD_LETTER_STORE_NAME, {
                     keyPath: 'id',
                     autoIncrement: true,
                 });
@@ -1102,6 +1264,28 @@ async function putQueuedPost(item) {
 
         request.onsuccess = () => resolve(undefined);
         request.onerror = () => reject(request.error || new Error('Unable to update queue entry.'));
+
+        transaction.oncomplete = () => {
+            database.close();
+        };
+    });
+}
+
+async function putDeadLetter(item) {
+    const database = await openQueueDatabase();
+
+    return new Promise((resolve, reject) => {
+        const transaction = database.transaction(DEAD_LETTER_STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(DEAD_LETTER_STORE_NAME);
+        const request = store.add(item);
+
+        request.onsuccess = () => {
+            resolve({
+                ...item,
+                id: Number(request.result || 0),
+            });
+        };
+        request.onerror = () => reject(request.error || new Error('Unable to write dead-letter entry.'));
 
         transaction.oncomplete = () => {
             database.close();
