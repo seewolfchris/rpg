@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-22  
+Stand: 2026-03-23  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -26,8 +26,9 @@ Repository-Branch: `main`
 - Laufende Versionslinie: **`v0.24-beta`**.
 - Verifikation lokal (letzter Lauf):
   - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (2026-03-19)
+  - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
   - `node --test tests/js/*.mjs` -> **8 passed** (2026-03-19)
-  - `composer analyse` -> **keine Fehler** (2026-03-19)
+  - `composer analyse` -> **keine Fehler** (2026-03-23)
   - `npm run build` -> **gruen** (2026-03-19)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
@@ -47,6 +48,7 @@ Repository-Branch: `main`
 | Wissenszentrum / Enzyklopaedie | Stabil | Oeffentliche Seiten + GM/Admin-Redaktion |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
 | PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. 419-Re-Signing + Retry-Backoff |
+| Domänen-Invarianten + Retry-Resilienz | Stabil | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry fuer Notification-Fehler |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 
 ## 3) Multi-Welt-Umstellung (neu)
@@ -78,6 +80,11 @@ Repository-Branch: `main`
   - `app/Domain/Post/*`
   - `app/Domain/Scene/*`
   - `app/Domain/Campaign/CampaignParticipantResolver.php`
+- Harte Invarianten fuer Probe-/Inventar-Flows:
+  - Service-seitig durchgesetzt ueber domänenspezifische Exceptions (`PostProbeInvariantViolationException`, `PostInventoryAwardInvariantViolationException`, `SceneInventoryQuickActionInvariantViolationException`)
+  - Controller mappen Invariant-Fehler in validierungsnahe User-Fehlermeldungen (statt 500)
+- Benachrichtigungs-Resilienz:
+  - `PostNotificationOrchestrator` mit sofortigem Versuch + Queue-Retry-Fallback (`RetryScenePostNotificationsJob`, `RetryPostMentionNotificationsJob`)
 - Character-Create-Flow ist in Action/Services aufgeteilt:
   - `app/Actions/Character/CreateCharacterAction.php` (Transaktion, Inventory-Audit, after-commit Avatar-Finalisierung)
   - `app/Services/Character/AttributeNormalizer.php` (Backfill + Sanitizing + Pool-Normalisierung)

@@ -39,11 +39,13 @@ Stand: **Release-Beta `v0.24-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
 - v0.24-beta: Finaler Immersion-Polish – Landing-Hero mit Szenen-Teaser, romanhafter Thread-Lesemodus, konsistente World/Character-Cards, globale Typografie-/Spacing-Glättung
+- v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
 Letzte lokale Verifikation:
 - `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-19)
+- `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (Stand: 2026-03-23)
 - `node --test tests/js/*.mjs` -> **8 passed** (Stand: 2026-03-19)
-- `composer analyse` -> **keine Fehler** (Stand: 2026-03-19)
+- `composer analyse` -> **keine Fehler** (Stand: 2026-03-23)
 - `npm run build` -> **gruen** (Stand: 2026-03-19)
 
 Enthalten:

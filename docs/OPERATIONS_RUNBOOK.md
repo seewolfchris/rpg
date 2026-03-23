@@ -12,6 +12,12 @@ Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden B
   - `inventory.post_award_applied`
   - `inventory.scene_quick_action_applied`
   - `post.created`
+  - `post.scene_notifications_failed`
+  - `post.mention_notifications_failed`
+  - `post.scene_notifications_retry_succeeded`
+  - `post.mention_notifications_retry_succeeded`
+  - `post.scene_notifications_retry_exhausted`
+  - `post.mention_notifications_retry_exhausted`
   - `webpush.subscription_upserted`
   - `webpush.subscription_deleted`
   - `webpush.scene_post_sent`
@@ -39,6 +45,21 @@ grep -E "webpush\\.(subscription_upserted|subscription_deleted|scene_post_sent|d
 
 Hinweis:
 - `webpush.delivery_failed` mit Status `404` oder `410` fuehrt zur automatischen Loeschung der ungueltigen Subscription.
+
+## Notification-Retry-Queue Schnellcheck
+Wenn Szenen-/Mention-Benachrichtigungen ausfallen:
+
+1. Queue-Worker pruefen (database-queue):
+   - `php artisan queue:work --queue=default --tries=4`
+2. Fehlgeschlagene Jobs pruefen:
+   - `php artisan queue:failed`
+3. Falls noetig erneut anstossen:
+   - `php artisan queue:retry all`
+
+Log-Hinweise:
+- Erstfehler im Request: `post.scene_notifications_failed` / `post.mention_notifications_failed`
+- Erfolgreicher Retry: `post.*_retry_succeeded`
+- Endgueltig ausgeschopft: `post.*_retry_exhausted`
 
 ## Offline-Post-Queue Schnellcheck
 Wenn Offline-Posts nicht synchronisiert werden:

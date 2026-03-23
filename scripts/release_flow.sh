@@ -10,9 +10,9 @@ Usage:
   scripts/release_flow.sh <version> [--world <slug>] [--iter <n>] [--archive] [--dry-run] [--skip-perf] [--help]
 
 Examples:
-  scripts/release_flow.sh v0.23-beta --world chroniken-der-asche --archive
-  scripts/release_flow.sh v0.23 --skip-perf
-  scripts/release_flow.sh v0.23-beta --dry-run --iter 500 --archive
+  scripts/release_flow.sh v0.24-beta --world chroniken-der-asche --archive
+  scripts/release_flow.sh v0.24 --skip-perf
+  scripts/release_flow.sh v0.24-beta --dry-run --iter 500 --archive
 
 Description:
   Standard-Release-Flow (endet vor Deploy):
