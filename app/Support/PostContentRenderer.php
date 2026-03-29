@@ -73,9 +73,9 @@ class PostContentRenderer
                     ? $spoilerInnerHtml
                     : '<p class="text-stone-400 italic">Kein Inhalt.</p>';
 
-                $htmlParts[] = '<details class="my-3 rounded-md border border-stone-700/80 bg-black/35 p-3">'
-                    .'<summary class="cursor-pointer text-xs uppercase tracking-[0.08em] text-amber-300">Spoiler</summary>'
-                    .'<div class="mt-3">'.$spoilerInnerHtml.'</div>'
+                $htmlParts[] = '<details data-post-spoiler class="my-3 rounded-md border border-stone-700/80 bg-black/35 p-3">'
+                    .'<summary class="spoiler-summary cursor-pointer text-xs uppercase tracking-[0.08em] text-amber-300">Spoiler</summary>'
+                    .'<div class="spoiler-panel mt-3">'.$spoilerInnerHtml.'</div>'
                     .'</details>';
 
                 continue;

@@ -35,9 +35,10 @@ Wichtige Regeln:
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.24-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.25-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
+- v0.25-beta (2026-03-29): Immersion-Upgrade Phasen 1-4 abgeschlossen (World-Theme-Resolver + CSS-Variablen am Root, erweiterter Romanmodus inkl. Fullscreen/Progress-Lesezeichen/Shortcut-Navigation, Hero-/Card-Parallax-light mit reduced-motion-Fallback, PWA-Offline-/Queue-Narrativ, DE-first Sprachkonsistenz und Fokus-/Scroll-Polish)
 - v0.24-beta: Finaler Immersion-Polish – Landing-Hero mit Szenen-Teaser, romanhafter Thread-Lesemodus, konsistente World/Character-Cards, globale Typografie-/Spacing-Glättung
 - v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
@@ -249,19 +250,19 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 Release-Metadaten (Version/Build/Doku) vorbereiten:
 
 ```bash
-scripts/release_prepare.sh --version v0.24-beta
+scripts/release_prepare.sh --version v0.25-beta
 ```
 
 Optional auch lokale `.env` aktualisieren:
 
 ```bash
-scripts/release_prepare.sh --version v0.24-beta --update-dotenv
+scripts/release_prepare.sh --version v0.25-beta --update-dotenv
 ```
 
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh v0.24-beta --world chroniken-der-asche --archive
+scripts/release_flow.sh v0.25-beta --world chroniken-der-asche --archive
 ```
 
 Release-Smoke automatisiert:

@@ -153,7 +153,7 @@ class SceneReadTrackingTest extends TestCase
             ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
 
         $response->assertOk();
-        $response->assertSee('Zum letzten Read');
+        $response->assertSee('Zum letzten Lesepunkt');
         $response->assertSee('page=2#post-'.$readCheckpointPost->id, false);
     }
 

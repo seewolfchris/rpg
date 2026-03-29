@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    class="h-full {{ data_get($activeWorldTheme ?? [], 'html_class') }}"
+    data-world-slug="{{ $activeWorldSlug ?? \App\Models\World::defaultSlug() }}"
+    data-world-theme="{{ data_get($activeWorldTheme ?? [], 'theme_key', 'default') }}"
+    @if ((string) data_get($activeWorldTheme ?? [], 'css_variable_style', '') !== '')
+        style="{{ data_get($activeWorldTheme ?? [], 'css_variable_style', '') }}"
+    @endif
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="C76-RPG ist eine asynchrone Multi-Welt Play-by-Post Plattform mit Kampagnen, Szenen und Charakterverwaltung.">
-        <meta name="theme-color" content="#0f0f14">
+        <meta name="theme-color" content="{{ data_get($activeWorldTheme ?? [], 'theme_color', '#0f0f14') }}">
         <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="googlebot" content="{{ config('privacy.x_robots_tag') }}">
         <meta name="bingbot" content="{{ config('privacy.x_robots_tag') }}">
@@ -42,7 +50,11 @@
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
     </head>
-    <body class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased">
+    <body
+        class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased {{ data_get($activeWorldTheme ?? [], 'body_class') }}"
+        data-world-slug="{{ $activeWorldSlug ?? \App\Models\World::defaultSlug() }}"
+        data-world-theme="{{ data_get($activeWorldTheme ?? [], 'theme_key', 'default') }}"
+    >
         @php($registerUrl = Route::has('register') ? route('register') : url('/register'))
         @php($loginUrl = Route::has('login') ? route('login') : url('/login'))
         @php(
@@ -67,7 +79,7 @@
         )
 
         <div class="relative isolate overflow-x-clip">
-            <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.35),_transparent_44%),radial-gradient(circle_at_82%_28%,_rgba(90,66,129,0.18),_transparent_36%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
+            <div class="app-atmosphere pointer-events-none absolute inset-0 -z-10"></div>
 
             <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <div class="font-heading break-words text-xl tracking-[0.12em] text-amber-300 sm:text-2xl sm:tracking-[0.20em]">
@@ -87,11 +99,11 @@
                         </a>
                     @else
                         <a href="{{ $loginUrl }}" class="ui-btn ui-btn-accent inline-flex !rounded-full sm:tracking-[0.14em]">
-                            Login
+                            Anmelden
                         </a>
                     @endauth
                     <div class="ui-badge inline-flex !rounded-full sm:tracking-[0.14em]">
-                        Multi-World Beta
+                        Multi-Welt Beta
                     </div>
                 </div>
             </header>
@@ -139,16 +151,18 @@
                     </div>
                 </section>
 
-                <section class="relative">
+                <section class="relative" data-parallax-scene>
                     <figure class="landing-hero-figure group relative overflow-hidden rounded-3xl border border-stone-700/70 bg-black/40 shadow-2xl shadow-black/35">
                         <img
                             src="{{ asset('images/og/c76-rpg-og.png') }}"
                             alt="Atmosphärische Vorschau auf das C76-RPG Universum"
                             class="landing-hero-image h-[18rem] w-full object-cover sm:h-[22rem] lg:h-[28rem]"
+                            data-parallax-layer
+                            data-parallax-depth="0.035"
                             loading="lazy"
                         >
-                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent"></div>
-                        <figcaption class="absolute inset-x-0 bottom-0 p-4 text-sm leading-relaxed text-stone-100 sm:p-5 sm:text-base">
+                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" data-parallax-layer data-parallax-depth="0.02"></div>
+                        <figcaption class="absolute inset-x-0 bottom-0 p-4 text-sm leading-relaxed text-stone-100 sm:p-5 sm:text-base" data-parallax-layer data-parallax-depth="0.015">
                             „Die Szene läuft bereits. Du setzt den nächsten Satz.“
                         </figcaption>
                     </figure>
@@ -164,12 +178,12 @@
                     <a href="{{ route('worlds.index') }}" class="ui-btn">Alle Welten</a>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
                     @forelse ($worlds as $world)
                         @php($snippetSource = trim((string) ($world->tagline ?: $world->description ?: 'Eine neue Szene beginnt, sobald du den ersten Beitrag setzt.')))
                         @php($worldSnippet = \Illuminate\Support\Str::limit($snippetSource, 150))
                         @php($hoverSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
-                        <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80">
+                        <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80" data-parallax-layer data-parallax-depth="0.018">
                             <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
                             @if ($world->tagline)
                                 <p class="mt-2 text-sm text-amber-200">{{ $world->tagline }}</p>

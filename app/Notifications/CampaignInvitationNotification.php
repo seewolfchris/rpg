@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\CampaignInvitation;
 use App\Models\User;
 use App\Models\World;
+use App\Support\PushNarrativeTextResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -65,17 +66,33 @@ class CampaignInvitationNotification extends Notification
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         $payload = $this->toArray($notifiable);
+        $campaign = $this->invitation->campaign;
+        $inviterName = $this->invitation->inviter?->name ?? 'Ein Spielleiter';
         $worldId = $this->worldId();
         $worldSlug = $this->worldSlug($worldId);
         $actionUrl = route('campaign-invitations.index');
+        $narrative = app(PushNarrativeTextResolver::class)->resolve(
+            kind: 'campaign_invitation',
+            worldSlug: $worldSlug,
+            context: [
+                'inviter' => $inviterName,
+                'campaign' => $campaign->title,
+                'role' => $this->invitation->role,
+            ],
+            fallback: [
+                'title' => 'Neue Kampagneneinladung',
+                'body' => (string) data_get($payload, 'message', 'Neue Einladung'),
+                'action_label' => 'Einladungen',
+            ],
+        );
 
         return (new WebPushMessage)
-            ->title('Neue Kampagneneinladung')
-            ->body((string) data_get($payload, 'message', 'Neue Einladung'))
+            ->title($narrative['title'])
+            ->body($narrative['body'])
             ->icon((string) config('webpush.defaults.icon', '/images/icons/icon-192.png'))
             ->badge((string) config('webpush.defaults.badge', '/images/icons/icon-96.png'))
             ->tag('campaign-invitation-'.(int) data_get($payload, 'invitation_id', 0))
-            ->action('Einladungen', 'open_invitations')
+            ->action($narrative['action_label'], 'open_invitations')
             ->data([
                 'kind' => 'campaign_invitation',
                 'invitationId' => (int) data_get($payload, 'invitation_id', 0),

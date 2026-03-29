@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
+use App\Support\PushNarrativeTextResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -87,14 +88,30 @@ class PostModerationStatusNotification extends Notification
             'campaign' => $campaign,
             'scene' => $scene,
         ]).'#post-'.$this->post->id;
+        $narrative = app(PushNarrativeTextResolver::class)->resolve(
+            kind: 'post_moderation',
+            worldSlug: (string) $world->slug,
+            context: [
+                'status' => $this->newStatus,
+                'previous_status' => $this->previousStatus,
+                'moderator' => $this->moderator->name,
+                'campaign' => $campaign->title,
+                'scene' => $scene->title,
+            ],
+            fallback: [
+                'title' => 'Moderationsstatus geaendert',
+                'body' => 'Dein Beitrag wurde auf "'.$this->newStatus.'" gesetzt.',
+                'action_label' => 'Beitrag oeffnen',
+            ],
+        );
 
         return (new WebPushMessage)
-            ->title('Moderationsstatus geaendert')
-            ->body('Dein Beitrag wurde auf "'.$this->newStatus.'" gesetzt.')
+            ->title($narrative['title'])
+            ->body($narrative['body'])
             ->icon((string) config('webpush.defaults.icon', '/images/icons/icon-192.png'))
             ->badge((string) config('webpush.defaults.badge', '/images/icons/icon-96.png'))
             ->tag('post-moderation-'.$this->post->id)
-            ->action('Beitrag oeffnen', 'open_post')
+            ->action($narrative['action_label'], 'open_post')
             ->data([
                 'kind' => 'post_moderation',
                 'postId' => (int) $this->post->id,

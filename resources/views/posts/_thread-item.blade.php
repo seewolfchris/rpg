@@ -6,8 +6,8 @@
         : 'max-w-[84ch] text-[0.96rem] leading-7 text-stone-200 [&_blockquote]:my-4 [&_blockquote]:rounded-lg [&_blockquote]:border-stone-600/70 [&_blockquote]:bg-black/30 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-stone-200 [&_p]:my-0 [&_p+p]:mt-4';
 @endphp
 
-<article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" class="thread-post {{ $isIcPost ? 'thread-post-ic' : 'thread-post-ooc' }} rounded-xl border p-5 sm:p-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
+<article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" data-reading-post-anchor tabindex="-1" class="thread-post {{ $isIcPost ? 'thread-post-ic' : 'thread-post-ooc' }} rounded-xl border p-5 sm:p-6">
+    <div class="thread-post-meta flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0 flex-1">
             <p class="{{ $isIcPost ? 'text-base text-stone-100 sm:text-lg' : 'text-sm text-stone-200' }}">
                 <span class="font-semibold">{{ $post->user->name }}</span>
@@ -58,7 +58,7 @@
                         form="thread-moderation-bulk-form"
                         class="h-3.5 w-3.5 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60"
                     >
-                    Bulk
+                    Sammel
                 </label>
             @endcan
 
@@ -75,7 +75,7 @@
                     type="submit"
                     class="rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-900/35"
                 >
-                    Bookmark
+                    Lesezeichen
                 </button>
             </form>
 
@@ -94,7 +94,7 @@
                             type="submit"
                             class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-200 transition hover:bg-amber-900/35"
                         >
-                            Unpin
+                            Pin lösen
                         </button>
                     </form>
                 @else
@@ -111,7 +111,7 @@
                             type="submit"
                             class="rounded-md border border-amber-600/70 bg-amber-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-200 transition hover:bg-amber-900/35"
                         >
-                            Pin
+                            Anpinnen
                         </button>
                     </form>
                 @endif
@@ -141,7 +141,7 @@
         </div>
     </div>
 
-    <div class="thread-post-content mt-4 break-words {{ $postContentClass }} [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+    <div class="thread-post-content narrative-flow mt-4 break-words {{ $postContentClass }} [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
         @php($postMeta = is_array($post->meta) ? $post->meta : [])
         @php($icQuote = trim((string) ($postMeta['ic_quote'] ?? '')))
         @if ($post->post_type === 'ic' && $icQuote !== '')
@@ -195,7 +195,7 @@
         @php($probeAttributeKey = (string) ($post->diceRoll->probe_attribute_key ?? ''))
         @php($probeAttributeLabel = $probeAttributeKey !== '' ? (string) data_get($probeAttributeConfig, $probeAttributeKey.'.label', strtoupper($probeAttributeKey)) : null)
         @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Bestanden' : 'Nicht bestanden'))
-        <section class="mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
+        <section class="dice-roll-visual mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
             <p class="text-xs uppercase tracking-widest text-amber-300">GM-Probe</p>
             <p class="mt-2 text-sm text-stone-200">{{ $post->diceRoll->label }}</p>
 
@@ -222,6 +222,12 @@
                         Ergebnis: {{ $probeOutcomeLabel }}
                     </span>
                 @endif
+            </div>
+
+            <div class="dice-roll-track mt-3">
+                @foreach ($probeRolls as $probeRoll)
+                    <span class="dice-roll-chip" style="--dice-index: {{ $loop->index }};">W{{ $probeRoll }}</span>
+                @endforeach
             </div>
 
             <p class="mt-3 text-sm text-stone-200">
@@ -302,7 +308,7 @@
 
             <ol class="mt-3 space-y-3">
                 @foreach ($post->revisions as $revision)
-                    <li class="rounded-md border border-stone-800/70 bg-neutral-900/50 p-3">
+                    <li class="revision-ink-entry rounded-md border border-stone-800/70 bg-neutral-900/50 p-3">
                         <p class="text-xs uppercase tracking-[0.08em] text-stone-500">
                             v{{ $revision->version }}
                             • <x-relative-time :at="$revision->created_at" />
@@ -311,7 +317,7 @@
                                 • bearbeitet von {{ $revision->editor->name }}
                             @endif
                         </p>
-                        <div class="mt-2 break-words text-sm leading-relaxed text-stone-300 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
+                        <div class="revision-ink-content mt-2 break-words text-sm leading-relaxed text-stone-300 [&_a]:text-amber-300 [&_a]:underline [&_blockquote]:border-l [&_blockquote]:border-stone-700 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-black/50 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border [&_pre]:border-stone-800 [&_pre]:bg-black/50 [&_pre]:p-3">
                             {!! $revision->renderedContent() !!}
                         </div>
                     </li>

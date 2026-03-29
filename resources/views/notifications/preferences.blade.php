@@ -28,7 +28,7 @@
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="post_moderation_database" value="1" @checked(data_get($preferences, 'post_moderation.database')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
-                            In-App
+                            Im Spiel
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="post_moderation_mail" value="1" @checked(data_get($preferences, 'post_moderation.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
@@ -49,7 +49,7 @@
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="scene_new_post_database" value="1" @checked(data_get($preferences, 'scene_new_post.database')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
-                            In-App
+                            Im Spiel
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="scene_new_post_mail" value="1" @checked(data_get($preferences, 'scene_new_post.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
@@ -70,7 +70,7 @@
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="campaign_invitation_database" value="1" @checked(data_get($preferences, 'campaign_invitation.database')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
-                            In-App
+                            Im Spiel
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="campaign_invitation_mail" value="1" @checked(data_get($preferences, 'campaign_invitation.mail')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
@@ -91,7 +91,7 @@
                     <div class="mt-3 flex flex-wrap gap-4">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="character_mention_database" value="1" @checked(data_get($preferences, 'character_mention.database', true)) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
-                            In-App
+                            Im Spiel
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="character_mention_mail" value="1" @checked(data_get($preferences, 'character_mention.mail', false)) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60">
@@ -112,7 +112,7 @@
                     href="{{ route('notifications.index') }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
-                    Zur Inbox
+                    Zum Posteingang
                 </a>
             </div>
         </form>

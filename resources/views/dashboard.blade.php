@@ -36,7 +36,7 @@
         <section class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">In-App Tutorial</p>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Tutorial im Spiel</p>
                     <h2 class="mt-1 font-heading text-2xl text-stone-100">Erste Schritte</h2>
                     <p class="mt-2 text-sm text-stone-300">
                         Fortschritt: {{ $tutorialCompletedCount }} / {{ $tutorialTotal }} abgeschlossen
@@ -117,7 +117,7 @@
             <article class="ui-card-soft p-4 !border-amber-700/40 !bg-amber-900/10">
                 <h2 class="font-heading text-lg text-amber-100">Ungelesene Szenen</h2>
                 <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beiträgen.</p>
-                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Bookmarks: {{ $bookmarkCount }}</p>
+                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Lesezeichen: {{ $bookmarkCount }}</p>
                 <a
                     href="{{ route('scene-subscriptions.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-accent mt-4"
@@ -128,7 +128,7 @@
                     href="{{ route('bookmarks.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-success mt-2"
                 >
-                    Zu Bookmarks
+                    Zu Lesezeichen
                 </a>
             </article>
         </div>

@@ -16,7 +16,7 @@
                     href="{{ route('gm.index') }}"
                     class="ui-btn"
                 >
-                    Zum GM Hub
+                    Zum GM-Bereich
                 </a>
             </div>
 
@@ -75,7 +75,7 @@
                 <input type="hidden" name="q" value="{{ $search }}">
 
                 <p class="text-xs uppercase tracking-[0.08em] text-stone-500">
-                    Bulk-Aktion auf aktuellen Filter anwenden
+                    Sammelaktion auf aktuellen Filter anwenden
                 </p>
 
                 <div class="grid gap-3 md:grid-cols-[auto_1fr_auto]">
@@ -101,7 +101,7 @@
                         type="submit"
                         class="ui-btn ui-btn-accent"
                     >
-                        Bulk ausführen
+                        Sammelaktion ausführen
                     </button>
                 </div>
             </form>

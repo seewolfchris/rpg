@@ -10,7 +10,7 @@
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Dashboard</p>
                     <h1 class="font-heading text-3xl text-stone-100">Szenen-Abos</h1>
                     <p class="mt-3 text-sm text-stone-300">
-                        Verwalte alle abonnierten Szenen zentral, inkl. Filter und Bulk-Aktionen.
+                        Verwalte alle abonnierten Szenen zentral, inkl. Filter und Sammelaktionen.
                     </p>
                 </div>
 
@@ -18,7 +18,7 @@
                     href="{{ route('notifications.index') }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
-                    Zur Inbox
+                    Zum Posteingang
                 </a>
             </div>
 
@@ -75,7 +75,7 @@
                 <input type="hidden" name="status" value="{{ $status }}">
                 <input type="hidden" name="q" value="{{ $search }}">
 
-                <label for="bulk_action" class="text-xs uppercase tracking-[0.08em] text-stone-400">Bulk</label>
+                <label for="bulk_action" class="text-xs uppercase tracking-[0.08em] text-stone-400">Sammelaktion</label>
                 <select
                     id="bulk_action"
                     name="bulk_action"
@@ -124,7 +124,7 @@
                                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
                                             Posts: {{ $subscribedScene->posts_count }}
                                             @if ($subscription->last_read_at)
-                                                • Letzter Read: <x-relative-time :at="$subscription->last_read_at" />
+                                                • Letzter Lesepunkt: <x-relative-time :at="$subscription->last_read_at" />
                                             @endif
                                         </p>
                                     </div>
@@ -144,7 +144,7 @@
                                                 type="submit"
                                                 class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                             >
-                                                {{ $subscription->is_muted ? 'Unmute' : 'Mute' }}
+                                                {{ $subscription->is_muted ? 'Stumm aufheben' : 'Stumm schalten' }}
                                             </button>
                                         </form>
 
@@ -179,7 +179,7 @@
                                                 type="submit"
                                                 class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                                             >
-                                                Unfollow
+                                                Entfolgen
                                             </button>
                                         </form>
                                     </div>

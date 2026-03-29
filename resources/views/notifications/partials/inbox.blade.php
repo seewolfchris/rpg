@@ -13,7 +13,7 @@
         @endif
     @endif
 
-    <h2 class="font-heading text-xl text-stone-100">Inbox</h2>
+    <h2 class="font-heading text-xl text-stone-100">Posteingang</h2>
 
     @if ($notifications->isEmpty())
         <p class="mt-4 text-sm text-stone-400">Keine Benachrichtigungen vorhanden.</p>

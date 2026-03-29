@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
+use App\Support\PushNarrativeTextResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
@@ -41,20 +42,36 @@ class SceneNewPostWebPush extends Notification
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         [$world, $campaign, $scene] = $this->resolveContext();
+        $excerpt = Str::limit(trim($this->post->content), 110);
 
         $actionUrl = route('campaigns.scenes.show', [
             'world' => $world,
             'campaign' => $campaign,
             'scene' => $scene,
         ]).'#post-'.$this->post->id;
+        $narrative = app(PushNarrativeTextResolver::class)->resolve(
+            kind: 'scene_new_post',
+            worldSlug: (string) $world->slug,
+            context: [
+                'author' => $this->author->name,
+                'campaign' => $campaign->title,
+                'scene' => $scene->title,
+                'excerpt' => $excerpt,
+            ],
+            fallback: [
+                'title' => 'Neue Szene-Aktivitaet',
+                'body' => $this->author->name.' schrieb in "'.$scene->title.'": '.$excerpt,
+                'action_label' => 'Zur Szene',
+            ],
+        );
 
         return (new WebPushMessage)
-            ->title('Neue Szene-Aktivitaet')
-            ->body($this->author->name.' schrieb in "'.$scene->title.'": '.Str::limit(trim($this->post->content), 110))
+            ->title($narrative['title'])
+            ->body($narrative['body'])
             ->icon((string) config('webpush.defaults.icon', '/images/icons/icon-192.png'))
             ->badge((string) config('webpush.defaults.badge', '/images/icons/icon-96.png'))
             ->tag('scene-new-post-'.$scene->id)
-            ->action('Zur Szene', 'open_scene')
+            ->action($narrative['action_label'], 'open_scene')
             ->data([
                 'kind' => 'scene_new_post',
                 'postId' => (int) $this->post->id,

@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Bookmarks | C76-RPG')
+@section('title', 'Lesezeichen | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
@@ -8,7 +8,7 @@
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Persönliche Navigation</p>
-                    <h1 class="font-heading text-3xl text-stone-100">Szenen-Bookmarks</h1>
+                    <h1 class="font-heading text-3xl text-stone-100">Szenen-Lesezeichen</h1>
                     <p class="mt-3 text-sm text-stone-300">Gespeicherte Marker: <span class="font-semibold text-amber-200">{{ $totalCount }}</span></p>
                 </div>
 
@@ -42,7 +42,7 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($bookmarks->isEmpty())
-                <p class="text-sm text-stone-400">Keine Bookmarks für den gewählten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Lesezeichen für den gewählten Filter.</p>
             @else
                 <div class="space-y-3">
                     @foreach ($bookmarks as $bookmark)

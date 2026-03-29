@@ -1,12 +1,12 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Hub | C76-RPG')
+@section('title', 'GM-Bereich | C76-RPG')
 
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Game Master Bereich</p>
-            <h1 class="font-heading text-3xl text-stone-100">GM Hub</h1>
+            <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Spielleitungsbereich</p>
+            <h1 class="font-heading text-3xl text-stone-100">GM-Bereich</h1>
             <p class="font-body mt-3 text-stone-300">
                 Zentrale Werkzeuge für Moderation und Verwaltung.
             </p>

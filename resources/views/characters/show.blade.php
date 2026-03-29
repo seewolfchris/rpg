@@ -85,7 +85,7 @@
         };
     @endphp
 
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="character-living-document mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Charakterbogen</p>
@@ -116,7 +116,7 @@
         </div>
 
         <div class="grid gap-6 lg:grid-cols-[20rem_1fr]">
-            <aside class="ui-card-soft space-y-4 rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4">
+            <aside class="character-paper-panel ui-card-soft space-y-4 rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4">
                 <img
                     src="{{ $character->avatarUrl() }}"
                     alt="Porträt von {{ $character->name }}"
@@ -150,7 +150,7 @@
                 </div>
             </aside>
 
-            <article class="ui-card-soft space-y-5 rounded-xl border border-stone-800/85 bg-black/45 p-5 sm:p-6">
+            <article class="character-paper-panel ui-card-soft space-y-5 rounded-xl border border-stone-800/85 bg-black/45 p-5 sm:p-6">
                 <section class="rounded-lg border border-emerald-700/60 bg-emerald-950/15 p-4">
                     <h2 class="font-heading text-2xl text-emerald-100">Entwicklung</h2>
                     <p class="mt-2 text-sm text-emerald-200/90">

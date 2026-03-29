@@ -239,6 +239,14 @@ class ImmersionReadabilityFeatureTest extends TestCase
             ->assertSeeText('Diese Szene folgt auf:')
             ->assertSeeText($previousScene->title)
             ->assertSee('data-scene-thread-reading-mode', false)
+            ->assertSee('data-reading-mode-toggle', false)
+            ->assertSee('data-reading-mode-fullscreen', false)
+            ->assertSee('data-reading-post-anchor', false)
+            ->assertSee('data-reading-progress-bookmark', false)
+            ->assertSee('data-reading-progress-bar', false)
+            ->assertSee('data-reading-mode-chrome', false)
+            ->assertSee('id="offline-queue-status-panel"', false)
+            ->assertSeeText('Tasten im Romanmodus:')
             ->assertSee('data-ooc-thread', false)
             ->assertDontSee('data-draft-key="scene-'.$scene->id.'-user-'.$gm->id.'-new"', false)
             ->assertDontSee('data-ooc-thread open', false);
@@ -296,6 +304,50 @@ class ImmersionReadabilityFeatureTest extends TestCase
         $invalidResponse->assertSessionHasErrors('ic_quote');
     }
 
+    public function test_post_store_sets_immersive_feedback_for_ic_and_ooc_submissions(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'allow_ooc' => true,
+        ]);
+        $character = Character::factory()->create([
+            'user_id' => $gm->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $icResponse = $this->actingAs($gm)->post(
+            route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            [
+                'post_type' => 'ic',
+                'character_id' => $character->id,
+                'content_format' => 'markdown',
+                'content' => 'Die Laternen schwankten im Wind.',
+                'ic_quote' => 'Wir haben nur diesen Versuch.',
+            ],
+        );
+
+        $icResponse->assertRedirect();
+        $icResponse->assertSessionHas('post_feedback.kind', 'ic');
+
+        $oocResponse = $this->actingAs($gm)->post(
+            route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            [
+                'post_type' => 'ooc',
+                'content_format' => 'plain',
+                'content' => 'OOC: Zeitfenster passt für mich.',
+            ],
+        );
+
+        $oocResponse->assertRedirect();
+        $oocResponse->assertSessionHas('post_feedback.kind', 'ooc');
+    }
+
     public function test_markdown_preview_endpoint_uses_sanitized_renderer_output(): void
     {
         config(['features.wave3.editor_preview' => true]);
@@ -316,6 +368,7 @@ class ImmersionReadabilityFeatureTest extends TestCase
 
         $this->assertStringContainsString('<strong>Feuer</strong>', $html);
         $this->assertStringContainsString('<details', $html);
+        $this->assertStringContainsString('data-post-spoiler', $html);
         $this->assertStringNotContainsString('<script>', $html);
     }
 

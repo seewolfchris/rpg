@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#0f0f14">
+        <meta name="theme-color" content="#18110f">
         <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, max-snippet:0, max-image-preview:none, max-video-preview:0">
         <title>Offline | C76-RPG</title>
         <style>
@@ -33,6 +33,18 @@
 
             :root {
                 color-scheme: dark;
+                --world-bg-top: rgba(188, 104, 52, 0.42);
+                --world-bg-mid: rgba(104, 58, 34, 0.3);
+                --world-bg-bottom: #090708;
+                --world-glow-primary: rgba(199, 117, 62, 0.4);
+                --world-glow-secondary: rgba(128, 72, 44, 0.24);
+                --world-texture-ink: rgba(255, 236, 198, 0.08);
+                --world-texture-shadow: rgba(0, 0, 0, 0.35);
+                --world-texture-opacity: 0.56;
+            }
+
+            * {
+                box-sizing: border-box;
             }
 
             body {
@@ -40,59 +52,344 @@
                 min-height: 100vh;
                 display: grid;
                 place-items: center;
-                padding: 2rem;
-                background: radial-gradient(circle at top, #342211 0%, #0b0b0f 45%, #040405 100%);
+                padding: clamp(1.25rem, 0.8rem + 2vw, 2.5rem);
                 color: #e7e5e4;
                 font-family: 'DM Serif Text', serif;
-                text-align: center;
+                line-height: 1.65;
+                background:
+                    radial-gradient(circle at top, var(--world-glow-primary), transparent 42%),
+                    radial-gradient(circle at 84% 20%, var(--world-glow-secondary), transparent 32%),
+                    linear-gradient(to bottom, var(--world-bg-mid), var(--world-bg-bottom));
+            }
+
+            body::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                opacity: var(--world-texture-opacity);
+                background:
+                    repeating-linear-gradient(122deg, var(--world-texture-ink) 0 1px, transparent 1px 8px),
+                    radial-gradient(circle at 12% 10%, var(--world-texture-shadow), transparent 42%),
+                    radial-gradient(circle at 88% 84%, var(--world-texture-shadow), transparent 40%);
+                mix-blend-mode: soft-light;
             }
 
             main {
-                max-width: 34rem;
-                border: 1px solid rgba(120, 113, 108, 0.55);
-                background: rgba(0, 0, 0, 0.45);
-                border-radius: 1rem;
-                padding: 2rem;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+                position: relative;
+                width: min(100%, 44rem);
+                border-radius: 1.1rem;
+                border: 1px solid rgba(180, 148, 108, 0.45);
+                background: rgba(6, 6, 8, 0.62);
+                padding: clamp(1.2rem, 0.8rem + 2vw, 2.2rem);
+                box-shadow: 0 22px 44px rgba(0, 0, 0, 0.46);
+                backdrop-filter: blur(7px);
+            }
+
+            .kicker {
+                margin: 0;
+                font-size: 0.72rem;
+                letter-spacing: 0.13em;
+                text-transform: uppercase;
+                font-family: 'DM Mono', monospace;
+                color: rgba(252, 211, 77, 0.9);
             }
 
             h1 {
-                margin-top: 0;
-                font-size: 1.8rem;
+                margin: 0.55rem 0 0;
+                font-family: 'Goldman', sans-serif;
+                font-size: clamp(1.35rem, 1.15rem + 1vw, 2rem);
                 letter-spacing: 0.08em;
                 text-transform: uppercase;
-                font-family: 'Goldman', sans-serif;
+                color: #fde68a;
             }
 
             p {
-                line-height: 1.6;
+                margin: 1rem 0 0;
                 color: #d6d3d1;
             }
 
-            .meta {
-                margin-top: 1.2rem;
+            .meta-grid {
+                margin-top: 1.25rem;
+                display: grid;
+                gap: 0.65rem;
+            }
+
+            .meta-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: baseline;
+                gap: 0.55rem;
                 font-family: 'DM Mono', monospace;
                 font-size: 0.75rem;
                 letter-spacing: 0.06em;
                 text-transform: uppercase;
-                color: #a8a29e;
             }
 
-            a {
-                color: #fbbf24;
+            .meta-label {
+                color: rgba(168, 162, 158, 0.88);
+            }
+
+            .meta-value {
+                color: rgba(245, 245, 244, 0.95);
+            }
+
+            .actions {
+                margin-top: 1.4rem;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.65rem;
+            }
+
+            .action-link,
+            .action-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.3rem;
+                border-radius: 0.65rem;
+                border: 1px solid rgba(245, 158, 11, 0.5);
+                padding: 0.55rem 0.9rem;
+                font-family: 'DM Mono', monospace;
+                font-size: 0.74rem;
+                letter-spacing: 0.07em;
+                text-transform: uppercase;
+                text-decoration: none;
+                color: #fde68a;
+                background: rgba(146, 64, 14, 0.2);
+                transition: background-color 180ms ease;
+            }
+
+            .action-link:hover,
+            .action-button:hover {
+                background: rgba(146, 64, 14, 0.34);
+            }
+
+            .action-button {
+                cursor: pointer;
+            }
+
+            .action-link.secondary {
+                border-color: rgba(120, 113, 108, 0.65);
+                background: rgba(8, 8, 10, 0.45);
+                color: #e7e5e4;
+            }
+
+            .network {
+                margin-top: 1.15rem;
+                font-family: 'DM Mono', monospace;
+                font-size: 0.75rem;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: rgba(167, 243, 208, 0.9);
+            }
+
+            .network.offline {
+                color: rgba(252, 211, 77, 0.95);
+            }
+
+            @media (max-width: 40rem) {
+                body {
+                    align-items: start;
+                }
+
+                main {
+                    margin-top: 0.4rem;
+                }
             }
         </style>
     </head>
     <body>
         <main>
-            <h1>C76-RPG ist offline</h1>
+            <p class="kicker">Offline-Protokoll</p>
+            <h1>Die Taverne ist verlassen</h1>
             <p>
-                Du kannst weiterhin bereits gecachte Szenen und Charakterblaetter lesen. Neue Beitraege aus Szenen werden offline vorgemerkt und beim naechsten Online-Moment automatisch gesendet.
+                Der Wind drueckt gegen die Fenster, aber dein letzter Text bleibt erhalten.
+                Bereits gecachte Szenen und Charakterseiten bleiben lesbar.
+                Neue Beitraege werden als Briefe vorgemerkt und zugestellt, sobald die Verbindung zurueckkehrt.
             </p>
-            <p>
-                <a href="/">Zur Startseite</a>
-            </p>
-            <p class="meta">C76-RPG · Offline-Modus aktiv</p>
+
+            <div class="meta-grid">
+                <p class="meta-row">
+                    <span class="meta-label">Welt</span>
+                    <span class="meta-value" id="offline-world-label">Chroniken der Asche</span>
+                </p>
+                <p class="meta-row">
+                    <span class="meta-label">Pfad</span>
+                    <span class="meta-value" id="offline-source-path">/</span>
+                </p>
+            </div>
+
+            <p class="network offline" id="offline-network-state">Keine Verbindung. Briefe bleiben im Reisebeutel.</p>
+
+            <div class="actions">
+                <button type="button" class="action-button" id="offline-retry-button">Erneut versuchen</button>
+                <a href="/" class="action-link secondary">Zur Startseite</a>
+            </div>
         </main>
+
+        <script>
+            (function () {
+                const themeProfiles = {
+                    default: {
+                        label: 'Standardwelt',
+                        color: '#0f0f14',
+                        cssVariables: {
+                            '--world-bg-top': 'rgba(166, 100, 38, 0.34)',
+                            '--world-bg-mid': 'rgba(70, 53, 36, 0.2)',
+                            '--world-bg-bottom': '#020202',
+                            '--world-glow-primary': 'rgba(166, 100, 38, 0.3)',
+                            '--world-glow-secondary': 'rgba(90, 66, 129, 0.16)',
+                            '--world-texture-ink': 'rgba(255, 244, 214, 0.06)',
+                            '--world-texture-shadow': 'rgba(0, 0, 0, 0.24)',
+                            '--world-texture-opacity': '0.46',
+                        },
+                    },
+                    'chroniken-der-asche': {
+                        label: 'Chroniken der Asche',
+                        color: '#18110f',
+                        cssVariables: {
+                            '--world-bg-top': 'rgba(188, 104, 52, 0.44)',
+                            '--world-bg-mid': 'rgba(104, 58, 34, 0.3)',
+                            '--world-bg-bottom': '#090708',
+                            '--world-glow-primary': 'rgba(199, 117, 62, 0.42)',
+                            '--world-glow-secondary': 'rgba(128, 72, 44, 0.24)',
+                            '--world-texture-ink': 'rgba(255, 236, 198, 0.08)',
+                            '--world-texture-shadow': 'rgba(0, 0, 0, 0.34)',
+                            '--world-texture-opacity': '0.56',
+                        },
+                    },
+                };
+
+                const query = new URLSearchParams(window.location.search);
+                const explicitPath = normalizePath(query.get('path'));
+                const inferredPath = normalizePath(window.location.pathname);
+                const activePath = explicitPath || inferredPath || '/';
+                const worldSlug = detectWorldSlug(query, activePath);
+                const profile = themeProfiles[worldSlug] || themeProfiles.default;
+                const root = document.documentElement;
+
+                root.dataset.worldSlug = worldSlug;
+                root.dataset.worldTheme = worldSlug in themeProfiles ? worldSlug : 'default';
+
+                for (const [name, value] of Object.entries(profile.cssVariables)) {
+                    root.style.setProperty(name, String(value));
+                }
+
+                const worldLabel = document.getElementById('offline-world-label');
+                if (worldLabel) {
+                    worldLabel.textContent = profile.label;
+                }
+
+                const sourcePath = document.getElementById('offline-source-path');
+                if (sourcePath) {
+                    sourcePath.textContent = activePath;
+                }
+
+                const themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta && profile.color) {
+                    themeMeta.setAttribute('content', profile.color);
+                }
+
+                try {
+                    window.localStorage.setItem('c76:last-world-slug', worldSlug);
+                } catch {
+                    // Ignore storage limitations in privacy/offline modes.
+                }
+
+                const retryButton = document.getElementById('offline-retry-button');
+                if (retryButton) {
+                    retryButton.addEventListener('click', () => {
+                        window.location.reload();
+                    });
+                }
+
+                const networkState = document.getElementById('offline-network-state');
+                const updateNetworkState = () => {
+                    if (!networkState) {
+                        return;
+                    }
+
+                    if (navigator.onLine) {
+                        networkState.textContent = 'Verbindung erkannt. Du kannst den Pfad jetzt erneut laden.';
+                        networkState.classList.remove('offline');
+                        return;
+                    }
+
+                    networkState.textContent = 'Keine Verbindung. Briefe bleiben im Reisebeutel.';
+                    networkState.classList.add('offline');
+                };
+
+                updateNetworkState();
+                window.addEventListener('online', updateNetworkState);
+                window.addEventListener('offline', updateNetworkState);
+            })();
+
+            function detectWorldSlug(query, activePath) {
+                const fromQuery = normalizeSlug(query.get('world'));
+                if (fromQuery !== null) {
+                    return fromQuery;
+                }
+
+                const match = activePath.match(/^\/w\/([^/]+)/);
+                if (match && match[1]) {
+                    const fromPath = normalizeSlug(decodeSafe(match[1]));
+                    if (fromPath !== null) {
+                        return fromPath;
+                    }
+                }
+
+                try {
+                    const fromStorage = normalizeSlug(window.localStorage.getItem('c76:last-world-slug'));
+                    if (fromStorage !== null) {
+                        return fromStorage;
+                    }
+                } catch {
+                    // Ignore storage limitations in privacy/offline modes.
+                }
+
+                return 'chroniken-der-asche';
+            }
+
+            function normalizePath(value) {
+                if (typeof value !== 'string') {
+                    return null;
+                }
+
+                const cleaned = value.trim();
+
+                if (cleaned === '') {
+                    return null;
+                }
+
+                return cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+            }
+
+            function normalizeSlug(value) {
+                if (typeof value !== 'string') {
+                    return null;
+                }
+
+                const cleaned = value.trim().toLowerCase();
+
+                if (cleaned === '') {
+                    return null;
+                }
+
+                if (/^[a-z0-9-]+$/.test(cleaned) !== true) {
+                    return null;
+                }
+
+                return cleaned;
+            }
+
+            function decodeSafe(value) {
+                try {
+                    return decodeURIComponent(value);
+                } catch {
+                    return value;
+                }
+            }
+        </script>
     </body>
 </html>

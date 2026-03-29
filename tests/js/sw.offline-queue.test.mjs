@@ -11,6 +11,34 @@ const SOURCE_URL = `${APP_ORIGIN}${SCENE_PATH}`;
 const POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}`;
 const RESIGNED_POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}?signature=fresh`;
 
+test('resolveOfflineFallbackUrl adds world and path context for scene routes', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+
+    const fallbackUrl = harness.context.resolveOfflineFallbackUrl(new Request(SOURCE_URL));
+
+    assert.equal(
+        fallbackUrl,
+        '/offline.html?world=chroniken-der-asche&path=%2Fw%2Fchroniken-der-asche%2Fcampaigns%2F1%2Fscenes%2F1',
+    );
+});
+
+test('resolveOfflineFallbackUrl keeps default world context for non-world routes', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+
+    const fallbackUrl = harness.context.resolveOfflineFallbackUrl(new Request(`${APP_ORIGIN}/characters/42`));
+
+    assert.equal(
+        fallbackUrl,
+        '/offline.html?world=chroniken-der-asche&path=%2Fcharacters%2F42',
+    );
+});
+
 test('syncQueuedPosts retries a 419 post after re-signing and clears queue', async () => {
     let submitAttempt = 0;
     const submitRequests = [];

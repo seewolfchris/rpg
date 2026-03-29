@@ -31,7 +31,7 @@
     <section id="scene-thread-live-controls" class="ui-card-soft border-amber-700/35 bg-black/25 p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-xs uppercase tracking-[0.08em] text-stone-300">
-                Read-Tracking
+                Lesefortschritt
                 <span id="scene-thread-unread-count" class="ml-2 rounded border border-amber-700/60 bg-amber-900/20 px-2 py-0.5 text-[0.65rem] text-amber-200">
                     Ungelesen: {{ $unreadPostsCount }}
                 </span>
@@ -50,7 +50,7 @@
                         href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene, 'jump' => 'last_read']) }}"
                         class="ui-btn !px-3 !py-1.5 !text-[0.68rem]"
                     >
-                        Letzter Read
+                        Letzter Lesepunkt
                     </a>
                 @endif
             </div>
@@ -134,11 +134,11 @@
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                 >
                 <button type="submit" class="ui-btn ui-btn-accent !px-3 !py-1.5 !text-[0.68rem]">
-                    Bulk Moderation
+                    Sammelmoderation
                 </button>
             </form>
             <p class="mt-2 text-[0.68rem] uppercase tracking-[0.08em] text-stone-500">
-                Auswahl erfolgt pro Post über die Checkbox "Bulk".
+                Auswahl erfolgt pro Post über die Checkbox "Sammel".
             </p>
         @endif
     </section>
@@ -157,7 +157,7 @@
             @if ($icPosts->isEmpty())
                 <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine IC-Beiträge vorhanden.</p>
             @else
-                <div id="scene-thread-ic-list-{{ $posts->currentPage() }}" class="mt-5 space-y-5">
+                <div id="scene-thread-ic-list-{{ $posts->currentPage() }}" class="mt-5 space-y-5" data-reading-post-list>
                     @foreach ($icPosts as $post)
                         @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
                     @endforeach
@@ -177,7 +177,7 @@
                 @if ($oocPosts->isEmpty())
                     <p class="mt-4 text-sm text-stone-400">Auf dieser Seite sind keine OOC-Beiträge vorhanden.</p>
                 @else
-                    <div id="scene-thread-ooc-list-{{ $posts->currentPage() }}" class="mt-4 space-y-4">
+                    <div id="scene-thread-ooc-list-{{ $posts->currentPage() }}" class="mt-4 space-y-4" data-reading-post-list>
                         @foreach ($oocPosts as $post)
                             @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
                         @endforeach

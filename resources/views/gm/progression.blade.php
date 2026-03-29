@@ -18,11 +18,11 @@
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM Progression</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM-Entwicklung</p>
                     <h1 class="font-heading text-3xl text-stone-100">Charakterentwicklung</h1>
                     <p class="mt-2 text-sm text-stone-300">Vergib XP-Meilensteine oder Korrekturen für Kampagnen-Charaktere.</p>
                 </div>
-                <a href="{{ route('gm.index') }}" class="ui-btn">Zum GM Hub</a>
+                <a href="{{ route('gm.index') }}" class="ui-btn">Zum GM-Bereich</a>
             </div>
         </div>
 

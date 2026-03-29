@@ -80,9 +80,21 @@ class PostController extends Controller
             $statusMessage = 'Beitrag und Inventar-Fund gespeichert.';
         }
 
+        $postType = (string) ($data['post_type'] ?? 'ic');
+        $postFeedback = [
+            'kind' => $postType === 'ooc' ? 'ooc' : 'ic',
+            'title' => $postType === 'ooc'
+                ? 'Meta-Kanal aktualisiert'
+                : 'Szenenabschnitt fortgeschrieben',
+            'note' => $postType === 'ooc'
+                ? 'Absprachen wurden im Meta-Kanal verankert.'
+                : 'Die Erzählung fließt weiter im Abenteuerkanal.',
+        ];
+
         return redirect()
             ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$storedPost->post->id)
-            ->with('status', $statusMessage);
+            ->with('status', $statusMessage)
+            ->with('post_feedback', $postFeedback);
     }
 
     public function edit(World $world, Post $post): View

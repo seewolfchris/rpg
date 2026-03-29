@@ -7,7 +7,7 @@
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">In-App</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Im Spiel</p>
                     <h1 class="font-heading text-3xl text-stone-100">Benachrichtigungen</h1>
                     <p class="mt-2 text-sm text-stone-300">
                         Ungelesen: <span id="notifications-unread-count" class="font-semibold text-amber-200">{{ $unreadCount }}</span>
@@ -110,7 +110,7 @@
                                                 type="submit"
                                                 class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                             >
-                                                {{ $subscription->is_muted ? 'Unmute' : 'Mute' }}
+                                                {{ $subscription->is_muted ? 'Stumm aufheben' : 'Stumm schalten' }}
                                             </button>
                                         </form>
 
@@ -121,7 +121,7 @@
                                                 type="submit"
                                                 class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                                             >
-                                                Unfollow
+                                                Entfolgen
                                             </button>
                                         </form>
                                     </div>

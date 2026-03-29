@@ -45,9 +45,9 @@
                         Stimmung: {{ $sceneMoodLabel }}
                     </span>
                     @if ($scene->allow_ooc)
-                        <span class="ui-badge !rounded !border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300">OOC ON</span>
+                        <span class="ui-badge !rounded !border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300">OOC aktiv</span>
                     @else
-                        <span class="ui-badge !rounded !border-red-700/60 !bg-red-900/20 !text-red-300">OOC OFF</span>
+                        <span class="ui-badge !rounded !border-red-700/60 !bg-red-900/20 !text-red-300">OOC aus</span>
                     @endif
                     <span class="ui-badge !rounded">
                         Follower: {{ $scene->subscriptions_count }}
@@ -124,8 +124,8 @@
                 </section>
             @endif
 
-            <div class="ui-card-soft mt-6 space-y-3 p-4">
-                <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Aktionen</p>
+            <div class="ui-card-soft mt-6 space-y-3 p-4" data-reading-mode-chrome>
+                <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Werkzeuge</p>
                 <div class="flex flex-wrap items-center gap-3">
                 @if ($jumpToLatestPostUrl)
                     <a
@@ -140,7 +140,7 @@
                         href="{{ $jumpToLastReadUrl }}"
                         class="ui-btn"
                     >
-                        Zum letzten Read
+                        Zum letzten Lesepunkt
                     </a>
                 @endif
                 @if ($jumpToFirstUnreadUrl)
@@ -156,7 +156,7 @@
                         href="{{ $bookmarkJumpUrl }}"
                         class="ui-btn ui-btn-success"
                     >
-                        Zum Bookmark
+                        Zum Lesezeichen
                     </a>
                 @endif
                 @can('create', [App\Models\Post::class, $scene])
@@ -232,14 +232,14 @@
                         name="label"
                         maxlength="80"
                         value="{{ old('label', $userBookmark?->label) }}"
-                        placeholder="Bookmark-Label (optional)"
+                        placeholder="Lesezeichen-Label (optional)"
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 sm:w-48"
                     >
                     <button
                         type="submit"
                         class="ui-btn ui-btn-success"
                     >
-                        {{ $userBookmark ? 'Bookmark aktualisieren' : 'Bookmark setzen' }}
+                        {{ $userBookmark ? 'Lesezeichen aktualisieren' : 'Lesezeichen setzen' }}
                     </button>
                 </form>
 
@@ -251,7 +251,7 @@
                             type="submit"
                             class="ui-btn ui-btn-danger"
                         >
-                            Bookmark löschen
+                            Lesezeichen löschen
                         </button>
                     </form>
                 @endif
@@ -285,7 +285,7 @@
                 </p>
             @elseif ($subscription && $subscription->last_read_at)
                 <p class="mt-4 text-xs uppercase tracking-[0.08em] text-stone-500">
-                    Letzter Read-Checkpoint: <x-relative-time :at="$subscription->last_read_at" />
+                    Letzter Lesepunkt: <x-relative-time :at="$subscription->last_read_at" />
                 </p>
             @endif
             @error('post_id')
@@ -297,7 +297,7 @@
         </div>
 
         @if ($canModerateScene)
-            <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8">
+            <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8" data-reading-mode-chrome>
                 <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
                 <p class="mt-2 text-sm text-emerald-200/90">
                     Gegenstände direkt in der Szene hinzufügen oder entfernen, ohne den Charakterbogen zu öffnen.
@@ -427,6 +427,50 @@
         @endif
 
         <section class="ui-card p-6 sm:p-8" data-scene-thread-reading-mode data-scene-id="{{ $scene->id }}">
+            <header class="reading-chapter-header ui-card-soft mb-5 border-amber-700/35 bg-black/30 p-4 sm:p-5">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-[0.68rem] uppercase tracking-[0.12em] text-amber-300/85">
+                            Kapitel {{ str_pad((string) max(1, (int) $scene->position), 2, '0', STR_PAD_LEFT) }}
+                        </p>
+                        <h2 class="mt-1 font-heading text-2xl text-amber-100">{{ $scene->title }}</h2>
+                        <p class="mt-1 text-sm text-stone-300">{{ $campaign->title }} · Stimmung: {{ $sceneMoodLabel }}</p>
+                        <p class="mt-2 text-[0.68rem] uppercase tracking-[0.1em] text-stone-400">
+                            Tasten im Romanmodus: <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">N</kbd> nächster Post · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">P</kbd> vorheriger Post · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">Esc</kbd> beendet
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            class="ui-btn"
+                            data-reading-mode-toggle
+                            data-state-off="Romanmodus starten"
+                            data-state-on="Romanmodus beenden"
+                            aria-pressed="false"
+                        >
+                            Romanmodus starten
+                        </button>
+                        <button
+                            type="button"
+                            class="ui-btn ui-btn-accent"
+                            data-reading-mode-fullscreen
+                        >
+                            Vollbild
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <aside
+                class="reading-progress-bookmark"
+                data-reading-progress-bookmark
+                aria-hidden="true"
+            >
+                <p class="reading-progress-label" data-reading-progress-value>Post 1 / 1</p>
+                <p class="reading-progress-percent" data-reading-progress-percent>0 %</p>
+                <div class="reading-progress-ribbon">
+                    <span class="reading-progress-ribbon-fill" data-reading-progress-bar></span>
+                </div>
+            </aside>
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
             <div id="scene-thread-feed" class="mt-5 space-y-6">
                 @include('scenes.partials.thread-page', ['posts' => $posts, 'campaign' => $campaign, 'scene' => $scene])
@@ -434,14 +478,20 @@
         </section>
 
         @can('create', [App\Models\Post::class, $scene])
-            <section id="new-post-form" class="ui-card p-6 sm:p-8">
+            <section id="new-post-form" class="ui-card p-6 sm:p-8" data-reading-mode-chrome>
                 <h2 class="font-heading text-2xl text-stone-100">Neuer Beitrag</h2>
                 <p class="mt-2 text-xs text-stone-500">
-                    Offline-Modus: Beiträge werden lokal gequeued und bei wiederhergestellter Verbindung automatisch synchronisiert.
+                    Offline-Modus: Briefe werden lokal vorgemerkt und bei wiederhergestellter Verbindung automatisch zugestellt.
                 </p>
+                <div
+                    id="offline-queue-status-panel"
+                    class="mt-4 hidden rounded-lg border border-amber-700/45 bg-black/25 p-4"
+                    aria-live="polite"
+                ></div>
                 <div
                     id="offline-dead-letter-panel"
                     class="mt-4 hidden rounded-lg border border-amber-700/45 bg-black/25 p-4"
+                    aria-live="polite"
                 ></div>
                 <form
                     method="POST"

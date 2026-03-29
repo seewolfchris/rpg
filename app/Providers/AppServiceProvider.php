@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Models\World;
 use App\Support\NavigationCounters;
 use App\Support\Observability\StructuredLogger;
-use Illuminate\Database\Eloquent\Model;
+use App\Support\PushNarrativeTextResolver;
+use App\Support\WorldThemeResolver;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(NavigationCounters::class);
+        $this->app->scoped(PushNarrativeTextResolver::class);
+        $this->app->scoped(WorldThemeResolver::class);
     }
 
     /**
@@ -125,10 +129,22 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        View::composer(['layouts.app', 'layouts.auth'], function ($view): void {
-            $view->with(
-                app(NavigationCounters::class)->forUser(Auth::user())
-            );
+        View::composer(['layouts.app', 'layouts.auth', 'welcome'], function ($view): void {
+            $request = request();
+            $activeWorldSlug = (string) $request->attributes->get('active_world_slug', World::defaultSlug());
+            $activeWorldTheme = $request->attributes->get('active_world_theme');
+
+            if (! is_array($activeWorldTheme)) {
+                $activeWorldTheme = app(WorldThemeResolver::class)->resolve($activeWorldSlug);
+            }
+
+            $view->with(array_merge(
+                app(NavigationCounters::class)->forUser(Auth::user()),
+                [
+                    'activeWorldSlug' => $activeWorldSlug,
+                    'activeWorldTheme' => $activeWorldTheme,
+                ],
+            ));
         });
     }
 }

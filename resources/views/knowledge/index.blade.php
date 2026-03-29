@@ -41,7 +41,7 @@
                 <p class="text-xs uppercase tracking-widest text-amber-300">Einsteigerpfad</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Wie spielt man?</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
-                    In 7 Schritten vom ersten Login bis zum ersten IC-Post in Ich-Perspektive.
+                    In 7 Schritten von der ersten Anmeldung bis zum ersten IC-Post in Ich-Perspektive.
                 </p>
                 <a
                     href="{{ $howToPlayUrl }}"

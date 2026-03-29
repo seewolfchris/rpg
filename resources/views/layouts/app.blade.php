@@ -1,13 +1,21 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    class="h-full {{ data_get($activeWorldTheme ?? [], 'html_class') }}"
+    data-world-slug="{{ $activeWorldSlug ?? \App\Models\World::defaultSlug() }}"
+    data-world-theme="{{ data_get($activeWorldTheme ?? [], 'theme_key', 'default') }}"
+    @if ((string) data_get($activeWorldTheme ?? [], 'css_variable_style', '') !== '')
+        style="{{ data_get($activeWorldTheme ?? [], 'css_variable_style', '') }}"
+    @endif
+>
     <head>
-        @php($appVersion = (string) config('app.version', 'v0.24-beta'))
+        @php($appVersion = (string) config('app.version', 'v0.25-beta'))
         @php($appBuild = (string) config('app.build', ''))
         @php($swVersion = $appBuild !== '' ? $appVersion.'-'.$appBuild : $appVersion)
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#0f0f14">
+        <meta name="theme-color" content="{{ data_get($activeWorldTheme ?? [], 'theme_color', '#0f0f14') }}">
         <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
         <meta name="sw-version" content="{{ $swVersion }}">
         <meta name="robots" content="{{ config('privacy.x_robots_tag') }}">
@@ -63,11 +71,13 @@
         @endif
     </head>
     <body
-        class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased"
+        class="app-shell min-h-full overflow-x-clip bg-neutral-950 text-stone-200 antialiased {{ data_get($activeWorldTheme ?? [], 'body_class') }}"
+        data-world-slug="{{ $activeWorldSlug ?? \App\Models\World::defaultSlug() }}"
+        data-world-theme="{{ data_get($activeWorldTheme ?? [], 'theme_key', 'default') }}"
         hx-headers='{"X-CSRF-TOKEN":"{{ csrf_token() }}"}'
     >
         <div class="relative isolate min-h-screen overflow-x-clip">
-            <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(166,100,38,0.34),_transparent_44%),radial-gradient(circle_at_82%_28%,_rgba(90,66,129,0.18),_transparent_36%),linear-gradient(to_bottom,_#0a0a0f,_#020202)]"></div>
+            <div class="app-atmosphere pointer-events-none absolute inset-0 -z-10"></div>
             <div id="global-hx-indicator" hx-indicator class="pointer-events-none fixed right-4 top-4 z-50 rounded-md border border-amber-600/60 bg-black/75 px-3 py-1 text-xs uppercase tracking-[0.12em] text-amber-200">
                 Laden ...
             </div>
@@ -148,7 +158,7 @@
                             href="{{ route('bookmarks.index') }}"
                             class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
-                            Bookmarks
+                            Lesezeichen
                             @if ($bookmarkCount > 0)
                                 <span id="nav-bookmark-count-badge" class="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full border border-emerald-300/80 bg-emerald-500 px-1.5 text-[0.6rem] font-bold text-black">
                                     {{ $bookmarkCount > 99 ? '99+' : $bookmarkCount }}
@@ -173,7 +183,7 @@
                                 href="{{ route('gm.index') }}"
                                 class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
                             >
-                                GM Hub
+                                GM-Bereich
                             </a>
                         @endif
                         @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
@@ -181,7 +191,7 @@
                                 href="{{ route('admin.users.moderation.index') }}"
                                 class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
                             >
-                                Admin User
+                                Admin-Nutzer
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">
@@ -190,7 +200,7 @@
                                 type="submit"
                                 class="rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                             >
-                                Logout
+                                Abmelden
                             </button>
                         </form>
                     @else
@@ -198,7 +208,7 @@
                             href="{{ route('login') }}"
                             class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
-                            Login
+                            Anmelden
                         </a>
                         <a
                             href="{{ route('register') }}"
@@ -227,19 +237,13 @@
                         ->values()
                         ->all()
                 )
-                @php($activeWorldContext = request()->route('world'))
-                @php(
-                    $activeWorldSlug = $activeWorldContext instanceof \App\Models\World
-                        ? $activeWorldContext->slug
-                        : (session('world_slug') ?: \App\Models\World::defaultSlug())
-                )
                 <div
                     data-browser-notifications
                     data-subscribe-url="{{ route('api.webpush.subscribe') }}"
                     data-unsubscribe-url="{{ route('api.webpush.unsubscribe') }}"
                     data-enabled-kinds='@json($browserNotificationKinds)'
                     data-app-name="{{ config('app.name', 'C76-RPG') }}"
-                    data-world-slug="{{ $activeWorldSlug }}"
+                    data-world-slug="{{ $activeWorldSlug ?? \App\Models\World::defaultSlug() }}"
                     data-vapid-public-key="{{ config('webpush.vapid.public_key') }}"
                     class="hidden"
                     aria-hidden="true"

@@ -311,6 +311,86 @@ function isBuildAssetPath(pathname) {
     return pathname.startsWith('/build/');
 }
 
+function resolveOfflineFallbackUrl(request) {
+    const pathname = resolveRequestPathname(request);
+    const worldSlug = resolveOfflineWorldSlug(pathname);
+
+    return `${OFFLINE_URL}?world=${encodeURIComponent(worldSlug)}&path=${encodeURIComponent(pathname)}`;
+}
+
+function resolveRequestPathname(request) {
+    if (request instanceof Request) {
+        try {
+            return new URL(request.url).pathname || '/';
+        } catch {
+            return '/';
+        }
+    }
+
+    if (typeof request === 'string') {
+        try {
+            return new URL(request, self.location.origin).pathname || '/';
+        } catch {
+            return '/';
+        }
+    }
+
+    return '/';
+}
+
+function resolveOfflineWorldSlug(pathname) {
+    if (typeof pathname !== 'string') {
+        return 'chroniken-der-asche';
+    }
+
+    const worldMatch = pathname.match(/^\/w\/([^/]+)/);
+
+    if (!worldMatch || !worldMatch[1]) {
+        return 'chroniken-der-asche';
+    }
+
+    try {
+        return decodeURIComponent(worldMatch[1]) || 'chroniken-der-asche';
+    } catch {
+        return worldMatch[1];
+    }
+}
+
+async function resolveOfflineFallbackResponse(request) {
+    const fallbackUrl = resolveOfflineFallbackUrl(request);
+    const cachedFallback = await caches.match(fallbackUrl, {
+        ignoreSearch: true,
+    });
+
+    if (cachedFallback) {
+        return cachedFallback;
+    }
+
+    return Response.error();
+}
+
+async function matchCacheEntry(cache, request) {
+    if (shouldIgnoreSearchForRequest(request)) {
+        return cache.match(request, {
+            ignoreSearch: true,
+        });
+    }
+
+    return cache.match(request);
+}
+
+function shouldIgnoreSearchForRequest(request) {
+    try {
+        const requestUrl = request instanceof Request
+            ? new URL(request.url)
+            : new URL(String(request || ''), self.location.origin);
+
+        return requestUrl.pathname === OFFLINE_URL;
+    } catch {
+        return false;
+    }
+}
+
 async function networkFirst(request, cacheName, fallbackToOffline) {
     const cache = await caches.open(cacheName);
 
@@ -323,14 +403,14 @@ async function networkFirst(request, cacheName, fallbackToOffline) {
 
         return networkResponse;
     } catch {
-        const cached = await cache.match(request);
+        const cached = await matchCacheEntry(cache, request);
 
         if (cached) {
             return cached;
         }
 
         if (fallbackToOffline) {
-            return caches.match(OFFLINE_URL);
+            return resolveOfflineFallbackResponse(request);
         }
 
         return Response.error();
@@ -339,7 +419,7 @@ async function networkFirst(request, cacheName, fallbackToOffline) {
 
 async function staleWhileRevalidate(request, cacheName, fallbackToOffline) {
     const cache = await caches.open(cacheName);
-    const cached = await cache.match(request);
+    const cached = await matchCacheEntry(cache, request);
 
     const networkPromise = fetch(request)
         .then(async (response) => {
@@ -363,7 +443,7 @@ async function staleWhileRevalidate(request, cacheName, fallbackToOffline) {
     }
 
     if (fallbackToOffline) {
-        return caches.match(OFFLINE_URL);
+        return resolveOfflineFallbackResponse(request);
     }
 
     return Response.error();
@@ -373,7 +453,7 @@ async function networkOnlyWithOfflineFallback(request) {
     try {
         return await fetch(request);
     } catch {
-        return (await caches.match(OFFLINE_URL)) || Response.error();
+        return resolveOfflineFallbackResponse(request);
     }
 }
 

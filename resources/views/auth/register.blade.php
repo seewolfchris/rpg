@@ -85,7 +85,7 @@
 
         <p class="mt-6 text-sm text-stone-300">
             Bereits registriert?
-            <a href="{{ route('login') }}" class="font-semibold text-amber-300 hover:text-amber-200">Zum Login</a>
+            <a href="{{ route('login') }}" class="font-semibold text-amber-300 hover:text-amber-200">Zur Anmeldung</a>
         </p>
     </section>
 @endsection

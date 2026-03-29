@@ -3,7 +3,7 @@
     $canInlineEdit = auth()->id() === (int) $character->user_id || auth()->user()?->isGmOrAdmin();
 @endphp
 
-<section id="character-inline-editor" class="space-y-4 rounded-lg border border-stone-700/70 bg-black/30 p-4" x-data="{ editing: false }">
+<section id="character-inline-editor" class="character-narrative-dossier space-y-4 rounded-lg border border-stone-700/70 bg-black/30 p-4" x-data="{ editing: false }">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <h2 class="font-heading text-2xl text-stone-100">Narrative Kerndaten</h2>
         @if ($canInlineEdit)
@@ -27,7 +27,7 @@
 
         <section class="mt-4">
             <h3 class="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Biografie</h3>
-            <div class="mt-2 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
+            <div class="character-manuscript-text mt-2 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
         </section>
 
         @if ($character->concept || $character->world_connection || $character->gm_secret || $character->gm_note)

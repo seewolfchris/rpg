@@ -41,7 +41,7 @@
 
         <p class="mt-6 text-sm text-stone-300">
             Zurück zum
-            <a href="{{ route('login') }}" class="font-semibold text-amber-300 hover:text-amber-200">Login</a>
+            <a href="{{ route('login') }}" class="font-semibold text-amber-300 hover:text-amber-200">Anmelden</a>
         </p>
     </section>
 @endsection

@@ -60,9 +60,12 @@
                 <option value="ic" @selected($currentType === 'ic')>IC</option>
                 <option value="ooc" @selected($currentType === 'ooc')>OOC</option>
             </select>
-            <p class="mt-2 text-xs leading-relaxed text-stone-500">
-                IC-Standard: Ich-Perspektive (1. Person), als schreibt dein Held selbst.
-            </p>
+            <p
+                class="mt-2 text-xs leading-relaxed text-stone-500"
+                x-text="postType === 'ic'
+                    ? 'IC-Übergang: Szene-Fokus mit Figurensprache und klaren Handlungsimpulsen.'
+                    : 'OOC-Übergang: kurze Meta-Abstimmung außerhalb der In-Character-Erzählung.'"
+            ></p>
             @error('post_type')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror
