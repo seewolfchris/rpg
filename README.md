@@ -26,6 +26,7 @@ Wichtige Regeln:
 
 - Projekt-Quickstart und Betrieb: `README.md`
 - Umsetzungsplan in klaren Sprints: `ROADMAP.md`
+- Immersion-Architektur (Phasen 1-4 + JS-Modulregeln): `docs/IMMERSION-ARCHITEKTUR.md`
 - Master-Handbuch (fachliche Gesamtuebersicht): `docs/PROJEKT-ÜBERSICHT.md`
 - Release-Ablauf (Version + Deploy): `docs/RELEASE-CHECKLISTE.md`
 - Operations-Runbook (Incident + Logs): `docs/OPERATIONS_RUNBOOK.md`

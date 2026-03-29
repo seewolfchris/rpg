@@ -6,6 +6,7 @@ Repository-Branch: `main`
 ## Quicklinks
 - Einstieg und Setup: `README.md`
 - Gesamt-Roadmap: `ROADMAP.md`
+- Immersion-Architektur: `docs/IMMERSION-ARCHITEKTUR.md`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
 - Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
