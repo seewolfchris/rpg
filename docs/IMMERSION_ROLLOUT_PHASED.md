@@ -1,5 +1,11 @@
 # Immersion Rollout (Phased)
 
+Status: abgeschlossen (Phasen A-C), Stand 2026-03-29.
+
+Hinweis:
+- Dieses Dokument bleibt als Rollout-Playbook erhalten.
+- Fuer den aktuellen technischen Ist-Stand siehe `docs/IMMERSION-ARCHITEKTUR.md`.
+
 ## Ziel
 Gestufter Release fuer Immersion-Features mit geringem Risiko:
 - Phase A: DB + Welle 1/2 UI

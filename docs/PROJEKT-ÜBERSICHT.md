@@ -9,13 +9,13 @@ Repository-Branch: `main`
 - Immersion-Architektur: `docs/IMMERSION-ARCHITEKTUR.md`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`
-- Performance-Pass: `docs/PERFORMANCE-PASS-2026-03-09.md`
+- Performance-Pass (Referenzlauf): `docs/PERFORMANCE-PASS-2026-03-09.md`
 - Performance Staging/Prod: `docs/PERFORMANCE-PASS-STAGING-PROD.md`
-- Benchmark `posts.latest_by_id`: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
+- Benchmark `posts.latest_by_id` (letzter datierter Lauf): `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-20.md`
 - Benchmark `posts.latest_by_id` Latest/Deltas: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
 - Benchmark `posts.latest_by_id` Gate/Ampel: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
 - Benchmark `posts.latest_by_id` Staging/Prod: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
-- Smoke-Report lokal: `docs/SMOKE-PASS-2026-03-09.md`
+- Smoke-Report lokal (Referenzlauf): `docs/SMOKE-PASS-2026-03-09.md`
 - Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
@@ -33,7 +33,6 @@ Repository-Branch: `main`
   - `npm run build` -> **gruen** (2026-03-19)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
-  - Aktueller CI-Lauf auf `main` ist gruen
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
 
 ## 2) Produktstatus nach Bereichen
@@ -142,7 +141,8 @@ Repository-Branch: `main`
   - `php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Fallback/Raw)
   - Automatischer Vergleichsreport: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
   - Automatischer Gate-Report: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
-  - Lokale Baseline: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md`
+  - Baseline im aktuellen Delta-Report: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-17.md`
+  - Letzter datierter Lauf: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-20.md`
   - Prod-Benchmark dokumentiert: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
   - Ergebnis Prod: `FORCE INDEX posts_scene_id_id_idx` im Sample schneller als Default (avg/p95), beide Pfade aber bereits im Sub-Millisekundenbereich
 
