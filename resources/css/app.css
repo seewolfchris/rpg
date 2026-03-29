@@ -427,14 +427,19 @@
 
     .landing-hero-figure {
         box-shadow: 0 30px 60px rgb(0 0 0 / 40%);
+        isolation: isolate;
+        overflow: clip;
     }
 
     .landing-hero-image {
-        transition: transform 380ms ease;
+        display: block;
+        transition: filter 260ms ease;
     }
 
-    .landing-hero-figure:hover .landing-hero-image {
-        transform: scale(1.03);
+    @media (hover: hover) {
+        .landing-hero-figure:hover .landing-hero-image {
+            filter: saturate(1.08) brightness(1.03);
+        }
     }
 
     .landing-world-card {
