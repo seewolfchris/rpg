@@ -1,70 +1,55 @@
 # Grundregeln
 
-Die Szene lebt von Spannung, nicht von Textmenge.  
-Schreib so, dass andere sofort einen Aufhaenger finden.
+Ich komme in die Szene, atme sie ein, und setze einen klaren Impuls.  
+Nicht die Textmenge traegt das Spiel, sondern der Moment, an dem jemand reagieren will.
 
 ## 1. Spielfluss
 
-Du postest asynchron. Das ist kein Nachteil, das ist Rhythmus.  
-Lies die letzten Beitraege sauber. Setz dann einen klaren Impuls.
+Wir spielen asynchron. Das ist kein Warten, das ist Takt.  
+Ich lese sauber nach, hoere den Unterton, und schreibe so, dass der naechste Zug moeglich wird.
 
-Ein guter Post:
-
-- zeigt eine konkrete Handlung
-- laesst Reaktion zu
-- schiebt die Szene weiter
+Wenn ich poste, passiert etwas Konkretes.  
+Ich lasse Raum fuer Antwort.  
+Ich schiebe die Szene vorwaerts.
 
 ## 2. IC und OOC
 
-IC bleibt in der Welt. OOC bleibt als Meta-Hinweis markiert.
+Im IC bleibe ich in der Welt.  
+OOC bleibt sichtbar getrennt, kurz und klar.
 
-IC-Beispiel:
+Ich schreibe zum Beispiel:
 
-> Ich taste mit der Linken nach dem kalten Metall, halte den Atem an und warte auf das erste Knacken.
+> Ich taste mit der Linken nach dem kalten Metall. Mein Atem stockt. Beim ersten Knacken halte ich still.
 
-OOC-Beispiel:
+Und wenn ich kurz raus muss:
 
-> OOC: Ich antworte heute spaet, bitte ohne mich weiterspringen.
+> OOC: Ich antworte spaet. Springt bitte nicht ueber meine Figur.
 
-Fix:
-
-- Keine OOC-Saetze mitten im IC-Absatz.
-- Kein Godmodding.
-- Keine Entscheidungen fuer fremde Figuren.
+Ich entscheide nie fuer fremde Figuren.  
+Ich zerreisse IC nicht mit Meta-Saetzen mitten im Absatz.
 
 ## 3. Prozentproben (d100)
 
-Proben sind gezielte Scharniere, keine Dauermechanik.
+Proben sind Scharniere. Kein Dauerrauschen.
 
-Fix:
+Proben werden nur durch GM oder Co-GM ausgeloest.  
+Wenn eine Probe startet, nennt die Spielleitung Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator im selben Impuls.  
+Ich schreibe keine eigenen Wuerfelergebnisse als Fakten in die Szene.
 
-- **Proben werden nur durch GM oder Co-GM ausgelöst.**
-- Jede Probe startet mit **Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator**.
-- Spieler setzen keine eigenen Wuerfelergebnisse als Fakten.
-- **Das Ergebnis wird automatisch berechnet**: `(Wurf + Modifikator) <= Zielwert`.
-
-Wenn die Probe faellt, bleibt sie Teil der Erzaehlung.  
-Sie ersetzt kein Spiel, sie schaerft es.
+Die Rechnung bleibt klar: `(Wurf + Modifikator) <= Zielwert`.  
+Dann zaehlt nicht nur, ob es klappt. Dann zaehlt, was es mit uns macht.
 
 ## 4. Moderation
 
-Moderation schuetzt Ton und Tempo.
+Moderation schuetzt Ton und Tempo, nicht Eitelkeit.  
+Ein Beitrag steht kurz auf `pending`, dann auf `approved` oder `rejected`.
 
-Status:
-
-- `pending`
-- `approved`
-- `rejected`
-
-Ein `rejected` ist kein Endpunkt.  
-Es ist der Moment fuer den besseren zweiten Wurf im Text.
+`rejected` ist kein Ende.  
+Es ist der zweite Anlauf, diesmal mit mehr Praezision.
 
 ## 5. Safety und Fair Play
 
-Spiel hart in der Szene, bleib sauber im Umgang.
-
-Fix:
-
-- Trigger sichtbar markieren.
-- Grenzen respektieren.
-- OOC-Konflikte OOC klaeren.
+Ich spiele hart in der Szene und sauber im Umgang.  
+Ich markiere Trigger sichtbar.  
+Ich respektiere Grenzen ohne Diskussion im Feuer.  
+OOC-Konflikte klaeren wir OOC, ruhig und direkt.

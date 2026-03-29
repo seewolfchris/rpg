@@ -90,6 +90,13 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
     Route::get('/wissen/regelwerk', [KnowledgeController::class, 'rules'])
         ->name('knowledge.rules');
 
+    Route::get('/wissen/weltueberblick', [KnowledgeController::class, 'worldOverview'])
+        ->name('knowledge.world-overview');
+
+    Route::get('/wissen/lore/{category?}', [KnowledgeController::class, 'worldLore'])
+        ->where('category', '[a-z0-9\\-]+')
+        ->name('knowledge.lore');
+
     Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia'])
         ->name('knowledge.encyclopedia');
 

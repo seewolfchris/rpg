@@ -73,7 +73,7 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.encyclopedia', ['world' => $world]))
             ->assertOk()
             ->assertSeeText('Enzyklopädie · '.$world->name)
-            ->assertSeeText('Zeitalter der Sonnenkronen');
+            ->assertSeeText('Einträge sichtbar');
     }
 
     public function test_rules_page_uses_gm_only_probe_wording_without_d20_legacy(): void
@@ -81,9 +81,42 @@ class HelpPageTest extends TestCase
         $response = $this->get(route('knowledge.global.rules'));
 
         $response->assertOk()
-            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgelöst.')
+            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgeloest.')
             ->assertSeeText('Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator')
-            ->assertSeeText('Das Ergebnis wird automatisch berechnet')
+            ->assertSeeText('Die Rechnung bleibt klar')
             ->assertDontSeeText('d20');
+    }
+
+    public function test_world_markdown_preview_routes_return_404_when_feature_is_disabled(): void
+    {
+        $world = $this->defaultWorld();
+        config()->set('content.world_markdown_preview', false);
+
+        $this->get(route('knowledge.world-overview', ['world' => $world]))
+            ->assertNotFound();
+
+        $this->get(route('knowledge.lore', ['world' => $world]))
+            ->assertNotFound();
+    }
+
+    public function test_world_markdown_preview_routes_are_accessible_when_feature_is_enabled(): void
+    {
+        $world = $this->defaultWorld();
+        config()->set('content.world_markdown_preview', true);
+
+        $this->get(route('knowledge.world-overview', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Weltueberblick (Markdown)')
+            ->assertSeeText('Chroniken der Asche');
+
+        $this->get(route('knowledge.lore', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Welt-Lore (Markdown)')
+            ->assertSeeText('Lore-Index');
+
+        $this->get(route('knowledge.lore', ['world' => $world, 'category' => 'zeitalter']))
+            ->assertOk()
+            ->assertSeeText('Zeitalter')
+            ->assertSeeText('Der Aschenfall');
     }
 }

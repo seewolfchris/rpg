@@ -20,44 +20,152 @@ class EncyclopediaManagementTest extends TestCase
             ->firstOrFail();
     }
 
-    public function test_public_encyclopedia_shows_seeded_content(): void
+    /**
+     * @return array{
+     *     chroniken: EncyclopediaCategory,
+     *     machtbloecke: EncyclopediaCategory,
+     *     regionen: EncyclopediaCategory,
+     *     zeitalterEntry: EncyclopediaEntry,
+     *     machtEntry: EncyclopediaEntry,
+     *     regionEntry: EncyclopediaEntry
+     * }
+     */
+    private function encyclopediaFixture(World $world): array
+    {
+        $chroniken = EncyclopediaCategory::query()->firstOrCreate(
+            [
+                'world_id' => $world->id,
+                'slug' => 'chroniken-fixture',
+            ],
+            [
+                'name' => 'Chroniken',
+                'summary' => 'Zeitlinien und Bruchkanten.',
+                'position' => 10,
+                'is_public' => true,
+            ],
+        );
+
+        $machtbloecke = EncyclopediaCategory::query()->firstOrCreate(
+            [
+                'world_id' => $world->id,
+                'slug' => 'machtbloecke-fixture',
+            ],
+            [
+                'name' => 'Machtbloecke',
+                'summary' => 'Wer zieht die Faeden.',
+                'position' => 20,
+                'is_public' => true,
+            ],
+        );
+
+        $regionen = EncyclopediaCategory::query()->firstOrCreate(
+            [
+                'world_id' => $world->id,
+                'slug' => 'regionen-fixture',
+            ],
+            [
+                'name' => 'Regionen',
+                'summary' => 'Orte mit Narben und Chancen.',
+                'position' => 30,
+                'is_public' => true,
+            ],
+        );
+
+        $zeitalterEntry = EncyclopediaEntry::query()->firstOrCreate(
+            [
+                'encyclopedia_category_id' => $chroniken->id,
+                'slug' => 'der-erste-funken-fixture',
+            ],
+            [
+                'title' => 'Der Erste Funken',
+                'excerpt' => 'Der Abend, an dem der Himmel aufriss.',
+                'content' => 'Mit dem ersten Funken begann das neue Zeitalter der Asche.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 10,
+                'published_at' => now(),
+            ],
+        );
+
+        $machtEntry = EncyclopediaEntry::query()->firstOrCreate(
+            [
+                'encyclopedia_category_id' => $machtbloecke->id,
+                'slug' => 'haus-vom-staubkamm-fixture',
+            ],
+            [
+                'title' => 'Haus vom Staubkamm',
+                'excerpt' => 'Ein Netzwerk aus Schulden und Zeichen.',
+                'content' => 'Der Staubkammkodex bindet Namen, Kredite und Klingen.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 20,
+                'published_at' => now(),
+            ],
+        );
+
+        $regionEntry = EncyclopediaEntry::query()->firstOrCreate(
+            [
+                'encyclopedia_category_id' => $regionen->id,
+                'slug' => 'aschebucht-nord-fixture',
+            ],
+            [
+                'title' => 'Aschebucht Nord',
+                'excerpt' => 'Grauer Hafen, schwarzes Wasser.',
+                'content' => 'In Aschebucht Nord zahlt jeder Windstoss einen Preis.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 30,
+                'published_at' => now(),
+            ],
+        );
+
+        return [
+            'chroniken' => $chroniken,
+            'machtbloecke' => $machtbloecke,
+            'regionen' => $regionen,
+            'zeitalterEntry' => $zeitalterEntry,
+            'machtEntry' => $machtEntry,
+            'regionEntry' => $regionEntry,
+        ];
+    }
+
+    public function test_public_encyclopedia_shows_fixture_content(): void
     {
         $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
 
         $this->get(route('knowledge.encyclopedia', ['world' => $world]))
             ->assertOk()
             ->assertSeeText('Enzyklopädie · '.$world->name)
-            ->assertSeeText('Zeitalter der Sonnenkronen')
+            ->assertSeeText($fixture['zeitalterEntry']->title)
             ->assertSeeText('Mehr lesen');
     }
 
     public function test_public_encyclopedia_filters_by_query_and_category(): void
     {
         $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
 
         $this->get(route('knowledge.encyclopedia', [
             'world' => $world,
-            'q' => 'Schattenhaeuser',
+            'q' => 'Staubkammkodex',
         ]))
             ->assertOk()
-            ->assertSeeText('Schattenhaeuser von Nerez')
-            ->assertDontSeeText('Zeitalter der Sonnenkronen');
+            ->assertSeeText($fixture['machtEntry']->title)
+            ->assertDontSeeText($fixture['zeitalterEntry']->title);
 
         $this->get(route('knowledge.encyclopedia', [
             'world' => $world,
-            'k' => 'regionen',
+            'k' => $fixture['regionen']->slug,
         ]))
             ->assertOk()
-            ->assertSeeText('Aschelande')
-            ->assertDontSeeText('Schattenhaeuser von Nerez');
+            ->assertSeeText($fixture['regionEntry']->title)
+            ->assertDontSeeText($fixture['machtEntry']->title);
     }
 
     public function test_public_entry_detail_route_renders_published_content(): void
     {
-        $entry = EncyclopediaEntry::query()
-            ->where('status', EncyclopediaEntry::STATUS_PUBLISHED)
-            ->with('category')
-            ->firstOrFail();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $entry = $fixture['zeitalterEntry']->fresh('category');
+        $this->assertNotNull($entry);
 
         $this->get(route('knowledge.encyclopedia.entry', [
             'world' => $entry->category->world,
@@ -72,14 +180,16 @@ class EncyclopediaManagementTest extends TestCase
 
     public function test_public_entry_detail_shows_extracted_cross_links_when_markdown_contains_them(): void
     {
-        $category = EncyclopediaCategory::query()->firstOrFail();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
 
         $entry = EncyclopediaEntry::query()->create([
             'encyclopedia_category_id' => $category->id,
             'title' => 'Verweisknoten',
             'slug' => 'verweisknoten',
             'excerpt' => 'Testet Querverlinkungen.',
-            'content' => 'Siehe [Aschelande](/wissen/enzyklopaedie/regionen/aschelande) und [Der Aschenfall](/wissen/enzyklopaedie/zeitalter/der-aschenfall).',
+            'content' => 'Siehe [Aschebucht Nord](/wissen/enzyklopaedie/'.$fixture['regionen']->slug.'/'.$fixture['regionEntry']->slug.') und [Der Erste Funken](/wissen/enzyklopaedie/'.$fixture['chroniken']->slug.'/'.$fixture['zeitalterEntry']->slug.').',
             'status' => EncyclopediaEntry::STATUS_PUBLISHED,
             'position' => 77,
             'published_at' => now(),
@@ -92,23 +202,20 @@ class EncyclopediaManagementTest extends TestCase
         ]))
             ->assertOk()
             ->assertSeeText('Querverlinkungen')
-            ->assertSeeText('Aschelande')
-            ->assertSeeText('Der Aschenfall');
+            ->assertSeeText('Aschebucht Nord')
+            ->assertSeeText('Der Erste Funken');
     }
 
     public function test_public_entry_detail_returns_404_for_category_slug_mismatch(): void
     {
-        $entry = EncyclopediaEntry::query()
-            ->where('status', EncyclopediaEntry::STATUS_PUBLISHED)
-            ->with('category')
-            ->firstOrFail();
-
-        $mismatchingCategory = EncyclopediaCategory::query()
-            ->where('id', '!=', $entry->encyclopedia_category_id)
-            ->firstOrFail();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $entry = $fixture['zeitalterEntry']->fresh('category');
+        $mismatchingCategory = $fixture['machtbloecke'];
+        $this->assertNotNull($entry);
 
         $this->get(route('knowledge.encyclopedia.entry', [
-            'world' => $mismatchingCategory->world,
+            'world' => $world,
             'categorySlug' => $mismatchingCategory->slug,
             'entrySlug' => $entry->slug,
         ]))
@@ -202,7 +309,9 @@ class EncyclopediaManagementTest extends TestCase
 
     public function test_draft_and_archived_entries_are_hidden_on_public_index_and_detail(): void
     {
-        $category = EncyclopediaCategory::query()->firstOrFail();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['chroniken'];
 
         $draft = EncyclopediaEntry::query()->create([
             'encyclopedia_category_id' => $category->id,
@@ -248,7 +357,9 @@ class EncyclopediaManagementTest extends TestCase
 
     public function test_game_relevance_box_is_only_visible_when_data_exists(): void
     {
-        $category = EncyclopediaCategory::query()->firstOrFail();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['chroniken'];
 
         $withRelevance = EncyclopediaEntry::query()->create([
             'encyclopedia_category_id' => $category->id,
@@ -296,13 +407,11 @@ class EncyclopediaManagementTest extends TestCase
     public function test_entry_edit_route_returns_404_for_category_mismatch(): void
     {
         $gm = User::factory()->gm()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
 
-        $categories = EncyclopediaCategory::query()
-            ->with('world')
-            ->take(2)
-            ->get();
-        $categoryA = $categories->get(0);
-        $categoryB = $categories->get(1);
+        $categoryA = $fixture['chroniken'];
+        $categoryB = $fixture['machtbloecke'];
 
         $this->assertNotNull($categoryA);
         $this->assertNotNull($categoryB);

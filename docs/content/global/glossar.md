@@ -3,60 +3,57 @@
 ## IC
 
 In Character.  
-Alles, was deine Figur denkt, sagt oder tut.
+Hier spreche ich mit der Stimme meiner Figur.
 
 ## OOC
 
 Out of Character.  
-Meta-Ebene fuer Absprachen, Termine, Rueckfragen.
+Hier klaeren wir Absprachen, Zeit und Meta.
 
 ## GM
 
 Game Master.  
-Fuehrt Konflikte, setzt Proben, haelt den Rahmen stabil.
+Der GM haelt den Rahmen, setzt Proben und fuehrt Konflikte durch den Nebel.
 
 ## Co-GM
 
 Unterstuetzt die Spielleitung in derselben Kampagne.  
-Kann Proben und Moderation uebernehmen.
+Wenn der Takt kippt, uebernimmt der Co-GM Probe und Moderation.
 
 ## Szene
 
-Der konkrete Spielraum eines Konflikts.  
-Hier wird geschrieben, reagiert, entschieden.
+Der Ort, an dem es knistert.  
+Hier schreibe ich Handlung, Antwort und Konsequenz.
 
 ## Thread
 
-Die Folge von Beitraegen innerhalb einer Szene.  
+Die Spur aus aufeinanderfolgenden Beitraegen.  
 Ein Thread lebt von Anschluss, nicht von Monolog.
 
 ## Moderation
 
 Pruefung und Freigabe von Beitraegen.  
-Dient Qualitaet und Spielfluss.
+Moderation schuetzt Spielfluss und Ton.
 
 ## Blutpforte
 
 Ein gefaehrlicher Uebergang mit Preis.  
-Niemals nur Kulisse.
+Nie nur Kulisse, immer Risiko.
 
 ## Aschesiegel
 
 Zeichen fuer Bindung, Herkunft oder Schuld.  
-Oft klein im Text, gross in der Folge.
+Klein auf der Haut, gross in der Folge.
 
 ## Ziel-Held
 
 Die Figur, auf die eine Probe oder Auswirkung zeigt.  
-Ohne klaren Ziel-Held wird jede Regel unscharf.
+Ohne klaren Ziel-Held wird jede Probe unscharf.
 
 ## Pending / Approved / Rejected
 
-Status in der Moderationskette.
-
-- Pending: wartet auf Pruefung
-- Approved: ist freigegeben
-- Rejected: braucht Ueberarbeitung
+Drei Zeichen in der Moderationskette.  
+`pending` wartet. `approved` traegt. `rejected` fordert Ueberarbeitung.
 
 ## Weltkontext
 
