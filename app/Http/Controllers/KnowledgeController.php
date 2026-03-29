@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class KnowledgeController extends Controller
@@ -33,7 +34,9 @@ class KnowledgeController extends Controller
 
     public function rules(?World $world = null): View
     {
-        return view('knowledge.rules', compact('world'));
+        $rulebookSections = $this->loadGlobalRulebookSections();
+
+        return view('knowledge.rules', compact('world', 'rulebookSections'));
     }
 
     public function encyclopedia(Request $request, ?World $world = null): View
@@ -134,6 +137,39 @@ class KnowledgeController extends Controller
             'slug',
             'tagline',
             'description',
+        ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function loadGlobalRulebookSections(): array
+    {
+        return [
+            'grundregeln' => $this->renderRulebookMarkdown('grundregeln.md'),
+            'glossar' => $this->renderRulebookMarkdown('glossar.md'),
+            'abkuerzungen' => $this->renderRulebookMarkdown('abkuerzungen.md'),
+        ];
+    }
+
+    private function renderRulebookMarkdown(string $filename): string
+    {
+        $path = base_path('docs/content/global/'.$filename);
+
+        if (! is_file($path)) {
+            return '<p class="text-stone-400 italic">Regelwerksinhalt fehlt.</p>';
+        }
+
+        $markdown = trim((string) file_get_contents($path));
+
+        if ($markdown === '') {
+            return '<p class="text-stone-400 italic">Regelwerksinhalt ist leer.</p>';
+        }
+
+        return (string) Str::markdown($markdown, [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+            'max_nesting_level' => 20,
         ]);
     }
 

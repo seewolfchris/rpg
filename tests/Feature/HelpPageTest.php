@@ -39,7 +39,9 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.global.rules'))
             ->assertOk()
             ->assertSeeText('Regelwerk')
-            ->assertSeeText('Prozentproben (d100)');
+            ->assertSeeText('Prozentproben (d100)')
+            ->assertSeeText('Glossar')
+            ->assertSeeText('Abkuerzungen');
 
         $this->get(route('knowledge.global.encyclopedia'))
             ->assertOk()
@@ -64,7 +66,9 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.rules', ['world' => $world]))
             ->assertOk()
             ->assertSeeText('Regelwerk')
-            ->assertSeeText('Prozentproben (d100)');
+            ->assertSeeText('Prozentproben (d100)')
+            ->assertSeeText('Glossar')
+            ->assertSeeText('Abkuerzungen');
 
         $this->get(route('knowledge.encyclopedia', ['world' => $world]))
             ->assertOk()
