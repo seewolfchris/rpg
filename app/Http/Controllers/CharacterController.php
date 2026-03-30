@@ -4,20 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Actions\Character\CreateCharacterAction;
 use App\Actions\Character\DeleteCharacterAction;
+use App\Actions\Character\UpdateCharacterAction;
 use App\Domain\Character\CharacterProgressionService;
 use App\Exceptions\CharacterDeletionFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use App\Models\World;
-use App\Services\Character\AttributeNormalizer;
-use App\Support\CharacterInventoryService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
@@ -25,11 +21,10 @@ use Throwable;
 class CharacterController extends Controller
 {
     public function __construct(
-        private readonly CharacterInventoryService $inventoryService,
         private readonly CharacterProgressionService $progressionService,
         private readonly CreateCharacterAction $createCharacterAction,
         private readonly DeleteCharacterAction $deleteCharacterAction,
-        private readonly AttributeNormalizer $attributeNormalizer,
+        private readonly UpdateCharacterAction $updateCharacterAction,
     ) {}
 
     public function index(Request $request): View
@@ -126,65 +121,8 @@ class CharacterController extends Controller
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse
     {
         $this->ensureCanManageCharacter($character);
-        $previousInventory = $this->inventoryService->normalize($character->inventory ?? []);
-        $data = $this->attributeNormalizer->normalizeForUpdate($request, $character);
-        $stagedAvatar = $this->stageAvatarUpload($request);
-        $replaceAvatar = $stagedAvatar !== null;
-        $removeAvatar = $request->boolean('remove_avatar');
-        $previousAvatarPath = is_string($character->avatar_path) && $character->avatar_path !== ''
-            ? $character->avatar_path
-            : null;
 
-        try {
-            DB::transaction(function () use (
-                $character,
-                $data,
-                $previousInventory,
-                $replaceAvatar,
-                $removeAvatar,
-                $previousAvatarPath,
-                $stagedAvatar
-            ): void {
-                $character->fill($data);
-
-                if ($removeAvatar && ! $replaceAvatar) {
-                    $character->avatar_path = null;
-                }
-
-                $character->save();
-
-                $nextInventory = $this->inventoryService->normalize($character->inventory ?? []);
-                $this->inventoryService->log(
-                    character: $character,
-                    actorUserId: (int) auth()->id(),
-                    source: 'character_sheet_update',
-                    operations: $this->inventoryService->diff($previousInventory, $nextInventory),
-                    context: ['character_id' => $character->id],
-                );
-
-                if ($replaceAvatar) {
-                    DB::afterCommit(function () use ($character, $stagedAvatar, $previousAvatarPath): void {
-                        if ($stagedAvatar === null) {
-                            return;
-                        }
-
-                        $this->finalizeAvatarReplacement($character, $stagedAvatar, $previousAvatarPath);
-                    });
-
-                    return;
-                }
-
-                if ($removeAvatar && $previousAvatarPath !== null) {
-                    DB::afterCommit(function () use ($previousAvatarPath): void {
-                        $this->deletePublicFile($previousAvatarPath);
-                    });
-                }
-            });
-        } catch (Throwable $exception) {
-            $this->discardStagedAvatar($stagedAvatar);
-
-            throw $exception;
-        }
+        $this->updateCharacterAction->execute($request, $character);
 
         return redirect()
             ->route('characters.show', $character)
@@ -262,107 +200,5 @@ class CharacterController extends Controller
                 && ((int) $character->user_id === (int) $user->id || $user->isGmOrAdmin()),
             403
         );
-    }
-
-    /**
-     * @return array{disk: string, staged_path: string, extension: string}|null
-     */
-    private function stageAvatarUpload(Request $request): ?array
-    {
-        if (! $request->hasFile('avatar')) {
-            return null;
-        }
-
-        $file = $request->file('avatar');
-        if ($file === null) {
-            return null;
-        }
-
-        $stagedPath = $file->store('character-avatars/staged', 'public');
-        if (! is_string($stagedPath) || trim($stagedPath) === '') {
-            throw new \RuntimeException('Avatar-Upload konnte nicht zwischengespeichert werden.');
-        }
-
-        $extension = strtolower((string) $file->extension());
-
-        return [
-            'disk' => 'public',
-            'staged_path' => $stagedPath,
-            'extension' => $extension !== '' ? $extension : 'jpg',
-        ];
-    }
-
-    /**
-     * @param  array{disk: string, staged_path: string, extension: string}|null  $stagedAvatar
-     */
-    private function discardStagedAvatar(?array $stagedAvatar): void
-    {
-        if ($stagedAvatar === null) {
-            return;
-        }
-
-        $disk = Storage::disk($stagedAvatar['disk']);
-        $stagedPath = $stagedAvatar['staged_path'];
-
-        if ($disk->exists($stagedPath)) {
-            $disk->delete($stagedPath);
-        }
-    }
-
-    /**
-     * @param  array{disk: string, staged_path: string, extension: string}  $stagedAvatar
-     */
-    private function finalizeAvatarReplacement(Character $character, array $stagedAvatar, ?string $previousAvatarPath): void
-    {
-        $disk = Storage::disk($stagedAvatar['disk']);
-        $stagedPath = $stagedAvatar['staged_path'];
-        $finalPath = 'character-avatars/'.$character->id.'-'.Str::uuid().'.'.$stagedAvatar['extension'];
-
-        try {
-            if (! $disk->exists($stagedPath)) {
-                throw new \RuntimeException('Zwischengespeicherter Avatar fehlt bei Finalisierung.');
-            }
-
-            if (! $disk->move($stagedPath, $finalPath)) {
-                throw new \RuntimeException('Zwischengespeicherter Avatar konnte nicht finalisiert werden.');
-            }
-
-            $updated = $character->newQuery()
-                ->whereKey($character->getKey())
-                ->update(['avatar_path' => $finalPath]);
-
-            if ($updated !== 1) {
-                throw new \RuntimeException('Avatar-Pfad konnte nach Finalisierung nicht persistiert werden.');
-            }
-
-            $character->avatar_path = $finalPath;
-
-            if (
-                is_string($previousAvatarPath)
-                && $previousAvatarPath !== ''
-                && $previousAvatarPath !== $finalPath
-            ) {
-                $this->deletePublicFile($previousAvatarPath);
-            }
-        } catch (Throwable $exception) {
-            if ($disk->exists($stagedPath)) {
-                $disk->delete($stagedPath);
-            }
-
-            if ($disk->exists($finalPath)) {
-                $disk->delete($finalPath);
-            }
-
-            report($exception);
-        }
-    }
-
-    private function deletePublicFile(string $path): void
-    {
-        $disk = Storage::disk('public');
-
-        if ($disk->exists($path)) {
-            $disk->delete($path);
-        }
     }
 }
