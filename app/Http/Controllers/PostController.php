@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Post\PostMentionNotificationService;
+use App\Actions\Post\UpdatePostAction;
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
@@ -23,8 +23,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -36,7 +34,7 @@ class PostController extends Controller
         private readonly PointService $pointService,
         private readonly StorePostService $storePostService,
         private readonly PostModerationService $postModerationService,
-        private readonly PostMentionNotificationService $postMentionNotificationService,
+        private readonly UpdatePostAction $updatePostAction,
     ) {}
 
     public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -131,82 +129,18 @@ class PostController extends Controller
 
         $data = $request->validated();
         $user = $this->authenticatedUser($request);
-        /** @var Scene $scene */
-        $scene = $post->scene;
-        /** @var Campaign $campaign */
-        $campaign = $scene->campaign;
-        $isModerator = $user->can('moderate', $post);
-        $requiresApproval = $campaign->requiresPostModeration()
-            && ! $campaign->userCanPostWithoutModeration($user)
-            && ! $isModerator;
-        $previousModerationStatus = (string) $post->moderation_status;
-        $moderationNote = $isModerator
-            ? $this->normalizeModerationNote((string) ($data['moderation_note'] ?? ''))
-            : null;
-
-        $moderationStatus = $requiresApproval ? 'pending' : 'approved';
-        $approvedAt = $requiresApproval ? null : Carbon::now();
-        $approvedBy = null;
-
-        if ($isModerator && isset($data['moderation_status'])) {
-            $moderationStatus = $data['moderation_status'];
-
-            if ($moderationStatus === 'approved') {
-                $approvedAt = Carbon::now();
-                $approvedBy = $user->id;
-            }
-        }
-
-        $nextCharacterId = $data['post_type'] === 'ic'
-            ? (int) $data['character_id']
-            : null;
-        /** @var array<string, mixed> $nextMeta */
-        $nextMeta = (array) ($post->meta ?? []);
-        $nextIcQuote = trim((string) ($data['ic_quote'] ?? ''));
-
-        if ($data['post_type'] === 'ic' && $nextIcQuote !== '') {
-            $nextMeta['ic_quote'] = $nextIcQuote;
-        } else {
-            unset($nextMeta['ic_quote']);
-        }
-
-        $normalizedNextMeta = $nextMeta !== [] ? $nextMeta : null;
-
-        $hasContentChange = $this->hasTrackedChanges($post, [
-            'character_id' => $nextCharacterId,
-            'post_type' => $data['post_type'],
-            'content_format' => $data['content_format'],
-            'content' => $data['content'],
-            'meta' => $normalizedNextMeta,
-        ]);
-
-        if ($hasContentChange) {
-            $this->createRevisionSnapshot($post, $user);
-        }
-
-        $post->update([
-            'character_id' => $nextCharacterId,
-            'post_type' => $data['post_type'],
-            'content_format' => $data['content_format'],
-            'content' => $data['content'],
-            'meta' => $normalizedNextMeta,
-            'moderation_status' => $moderationStatus,
-            'approved_at' => $approvedAt,
-            'approved_by' => $approvedBy,
-            'is_edited' => $hasContentChange ? true : $post->is_edited,
-            'edited_at' => $hasContentChange ? now() : $post->edited_at,
-        ]);
-
-        $this->postModerationService->synchronize(
-            post: $post,
-            moderator: $isModerator ? $user : null,
-            previousStatus: $previousModerationStatus,
-            moderationNote: $moderationNote,
-        );
-
-        if ($hasContentChange) {
-            $this->postMentionNotificationService->notifyMentions($post, $user);
-        }
+        /** @var array{
+         *   post_type: string,
+         *   character_id?: mixed,
+         *   content_format: string,
+         *   content: string,
+         *   ic_quote?: mixed,
+         *   moderation_status?: mixed,
+         *   moderation_note?: mixed
+         * } $updateData
+         */
+        $updateData = $data;
+        $this->updatePostAction->execute($post, $user, $updateData);
 
         $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
@@ -334,44 +268,6 @@ class PostController extends Controller
             'status' => 'ok',
             'html' => $html,
         ]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    private function hasTrackedChanges(Post $post, array $attributes): bool
-    {
-        foreach ($attributes as $key => $value) {
-            if ($post->{$key} !== $value) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function createRevisionSnapshot(Post $post, User $editor): void
-    {
-        DB::transaction(function () use ($post, $editor): void {
-            $lockedPost = Post::query()
-                ->whereKey($post->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $nextVersion = ((int) $lockedPost->revisions()->max('version')) + 1;
-
-            $lockedPost->revisions()->create([
-                'version' => $nextVersion,
-                'editor_id' => $editor->id,
-                'character_id' => $lockedPost->character_id,
-                'post_type' => $lockedPost->post_type,
-                'content_format' => $lockedPost->content_format,
-                'content' => $lockedPost->content,
-                'meta' => $lockedPost->meta,
-                'moderation_status' => $lockedPost->moderation_status,
-                'created_at' => now(),
-            ]);
-        }, 3);
     }
 
     private function canModerateScene(User $user, Scene $scene): bool

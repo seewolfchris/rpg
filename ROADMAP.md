@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-18
+Stand: 2026-03-30
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -39,9 +39,20 @@ Stand: 2026-03-18
 | B | Weltkontext-Routing `/w/{world}/...` + Legacy-`301` + Konsistenzhaertung | Erledigt |
 | C | UX/Branding auf `C76-RPG`, Weltkatalog, Weltgetrennte Wissensbasis | Erledigt |
 
+## Paket 3 - Architektur-Konsolidierung (laufend)
+| Slice | Fokus | Status |
+|---|---|---|
+| A1 | Analyse-Haertung (PHPStan Level 5 -> 8) | Erledigt |
+| A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
+| A2.2 | `SceneController` entkoppeln | Offen |
+| A2.3 | `CharacterController` entkoppeln | Offen |
+
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
 - Domaenenservices: `app/Domain/Post/*`, `app/Domain/Scene/*`, `app/Domain/Campaign/CampaignParticipantResolver.php`
+- Post-Update-Action:
+  - `app/Actions/Post/UpdatePostAction.php`
+  - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -74,11 +85,11 @@ Stand: 2026-03-18
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
-## Aktueller Verifikationsstand (2026-03-18)
-- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions**
+## Aktueller Verifikationsstand (2026-03-30)
+- `php artisan test --without-tty --do-not-cache-result` -> **236 passed, 1159 assertions**
 - `node --test tests/js/*.mjs` -> **8 passed**
 - `npm run build` -> **gruen**
-- `composer analyse` -> **keine Fehler**
+- `composer analyse` -> **keine Fehler (PHPStan Level 8)**
 - GitHub Actions (`main`) -> **gruen**
 
 ## Compliance und Betrieb
