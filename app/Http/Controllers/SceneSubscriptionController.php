@@ -234,6 +234,9 @@ class SceneSubscriptionController extends Controller
         return back()->with('status', 'Szene als ungelesen markiert.');
     }
 
+    /**
+     * @param  Builder<SceneSubscription>  $query
+     */
     private function applyFilters(Builder $query, string $status, string $search): void
     {
         if ($status === 'active') {
@@ -277,6 +280,9 @@ class SceneSubscriptionController extends Controller
             ->count();
     }
 
+    /**
+     * @return Builder<SceneSubscription>
+     */
     private function visibleSubscriptionsQuery(User $user, World $world): Builder
     {
         return SceneSubscription::query()

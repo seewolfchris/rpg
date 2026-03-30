@@ -406,6 +406,9 @@ class SceneController extends Controller
         }
     }
 
+    /**
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, Post>
+     */
     private function threadPostsPaginator(Scene $scene): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         return Post::query()

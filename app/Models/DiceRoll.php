@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DiceRoll extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     public const MODE_NORMAL = 'normal';
@@ -72,21 +73,33 @@ class DiceRoll extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Scene, $this>
+     */
     public function scene(): BelongsTo
     {
         return $this->belongsTo(Scene::class);
     }
 
+    /**
+     * @return BelongsTo<Post, $this>
+     */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Character, $this>
+     */
     public function character(): BelongsTo
     {
         return $this->belongsTo(Character::class);

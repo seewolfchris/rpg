@@ -102,6 +102,9 @@ class BulkModeratePostsAction
         return new BulkModeratePostsResult(affected: $affected);
     }
 
+    /**
+     * @param  Builder<Post>  $query
+     */
     private function applyFilters(Builder $query, string $status, string $search): void
     {
         if ($status !== 'all') {

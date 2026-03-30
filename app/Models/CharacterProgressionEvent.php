@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CharacterProgressionEvent extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     public const EVENT_XP_MILESTONE = 'xp_milestone';
@@ -55,21 +56,33 @@ class CharacterProgressionEvent extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Character, $this>
+     */
     public function character(): BelongsTo
     {
         return $this->belongsTo(Character::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function actorUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
     }
 
+    /**
+     * @return BelongsTo<Campaign, $this>
+     */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
     }
 
+    /**
+     * @return BelongsTo<Scene, $this>
+     */
     public function scene(): BelongsTo
     {
         return $this->belongsTo(Scene::class);

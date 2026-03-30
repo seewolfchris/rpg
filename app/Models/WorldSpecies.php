@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorldSpecies extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     /**
@@ -44,6 +45,9 @@ class WorldSpecies extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<World, $this>
+     */
     public function world(): BelongsTo
     {
         return $this->belongsTo(World::class);

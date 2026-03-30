@@ -135,6 +135,9 @@ class GmModerationController extends Controller
         return view('gm.partials.probe-result', compact('post', 'roll', 'modifier', 'total', 'outcome'));
     }
 
+    /**
+     * @param  Builder<Post>  $query
+     */
     private function applyFilters(Builder $query, string $status, string $search): void
     {
         if ($status !== 'all') {

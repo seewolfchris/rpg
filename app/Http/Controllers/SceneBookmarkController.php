@@ -52,7 +52,7 @@ class SceneBookmarkController extends Controller
             });
         }
 
-        /** @var LengthAwarePaginator<SceneBookmark> $bookmarks */
+        /** @var LengthAwarePaginator<int, SceneBookmark> $bookmarks */
         $bookmarks = $bookmarksQuery
             ->paginate(20)
             ->withQueryString();

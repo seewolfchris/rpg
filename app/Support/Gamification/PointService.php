@@ -5,6 +5,7 @@ namespace App\Support\Gamification;
 use App\Models\PointEvent;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -87,7 +88,10 @@ class PointService
         });
     }
 
-    private function eventQuery(Post $post)
+    /**
+     * @return Builder<PointEvent>
+     */
+    private function eventQuery(Post $post): Builder
     {
         return PointEvent::query()
             ->where('user_id', $post->user_id)

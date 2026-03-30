@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 
 class Character extends Model
 {
+    /** @use HasFactory<\Database\Factories\CharacterFactory> */
     use HasFactory;
 
     /**
@@ -132,31 +133,49 @@ class Character extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<World, $this>
+     */
     public function world(): BelongsTo
     {
         return $this->belongsTo(World::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return HasMany<Post, $this>
+     */
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
+    /**
+     * @return HasMany<DiceRoll, $this>
+     */
     public function diceRolls(): HasMany
     {
         return $this->hasMany(DiceRoll::class);
     }
 
+    /**
+     * @return HasMany<CharacterInventoryLog, $this>
+     */
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(CharacterInventoryLog::class)->latest('created_at');
     }
 
+    /**
+     * @return HasMany<CharacterProgressionEvent, $this>
+     */
     public function progressionEvents(): HasMany
     {
         return $this->hasMany(CharacterProgressionEvent::class)->latest('created_at');
@@ -171,6 +190,9 @@ class Character extends Model
         return asset('images/character-placeholder.svg');
     }
 
+    /**
+     * @return Attribute<array<string, int>, array<string, int>>
+     */
     protected function effectiveAttributes(): Attribute
     {
         return Attribute::make(
