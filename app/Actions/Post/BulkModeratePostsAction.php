@@ -8,6 +8,7 @@ use App\Domain\Post\PostModerationScope;
 use App\Domain\Post\PostModerationService;
 use App\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Builder;
 
 class BulkModeratePostsAction
@@ -15,6 +16,7 @@ class BulkModeratePostsAction
     public function __construct(
         private readonly PostModerationService $postModerationService,
         private readonly PostModerationScope $postModerationScope,
+        private readonly DatabaseManager $db,
     ) {}
 
     /**
@@ -58,40 +60,44 @@ class BulkModeratePostsAction
             }
         }
 
-        $affected = 0;
+        $affected = $this->db->transaction(function () use ($posts, $input): int {
+            $affected = 0;
 
-        foreach ($posts as $post) {
-            if (! $input->moderator->can('moderate', $post)) {
-                throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
+            foreach ($posts as $post) {
+                if (! $input->moderator->can('moderate', $post)) {
+                    throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
+                }
+
+                $previousStatus = (string) $post->moderation_status;
+
+                if ($previousStatus === $input->targetStatus && $input->moderationNote === null) {
+                    continue;
+                }
+
+                $post->moderation_status = $input->targetStatus;
+
+                if ($input->targetStatus === 'approved') {
+                    $post->approved_at = now()->toDateTimeString();
+                    $post->approved_by = $input->moderator->id;
+                } else {
+                    $post->approved_at = null;
+                    $post->approved_by = null;
+                }
+
+                $post->save();
+
+                $this->postModerationService->synchronize(
+                    post: $post,
+                    moderator: $input->moderator,
+                    previousStatus: $previousStatus,
+                    moderationNote: $input->moderationNote,
+                );
+
+                $affected++;
             }
 
-            $previousStatus = (string) $post->moderation_status;
-
-            if ($previousStatus === $input->targetStatus && $input->moderationNote === null) {
-                continue;
-            }
-
-            $post->moderation_status = $input->targetStatus;
-
-            if ($input->targetStatus === 'approved') {
-                $post->approved_at = now()->toDateTimeString();
-                $post->approved_by = $input->moderator->id;
-            } else {
-                $post->approved_at = null;
-                $post->approved_by = null;
-            }
-
-            $post->save();
-
-            $this->postModerationService->synchronize(
-                post: $post,
-                moderator: $input->moderator,
-                previousStatus: $previousStatus,
-                moderationNote: $input->moderationNote,
-            );
-
-            $affected++;
-        }
+            return $affected;
+        });
 
         return new BulkModeratePostsResult(affected: $affected);
     }

@@ -19,12 +19,6 @@ parameters:
 			path: app/Domain/Post/PostInventoryAwardService.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Domain/Post/PostModerationService.php
-
-		-
 			message: '#^Property App\\Models\\Post\:\:\$meta \(string\|null\) does not accept array\<string, array\<string, int\>\>\.$#'
 			identifier: assign.propertyType
 			count: 1

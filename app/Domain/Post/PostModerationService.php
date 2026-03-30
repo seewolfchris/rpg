@@ -1,17 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\Post;
 
 use App\Models\Post;
 use App\Models\PostModerationLog;
 use App\Models\User;
-use App\Notifications\PostModerationStatusNotification;
 use App\Support\Gamification\PointService;
 use App\Support\Observability\StructuredLogger;
+use Throwable;
 
 class PostModerationService
 {
     public function __construct(
+        private readonly PostModerationNotificationDispatcher $postModerationNotificationDispatcher,
         private readonly PointService $pointService,
         private readonly StructuredLogger $logger,
     ) {}
@@ -36,14 +39,24 @@ class PostModerationService
             ]);
 
             if ($moderator && $post->user_id !== $moderator->id) {
-                $post->loadMissing(['scene.campaign', 'user']);
-                $post->user->notify(new PostModerationStatusNotification(
-                    post: $post,
-                    moderator: $moderator,
-                    previousStatus: $previousStatus,
-                    newStatus: $newStatus,
-                    moderationNote: $moderationNote,
-                ));
+                try {
+                    $this->postModerationNotificationDispatcher->dispatch(
+                        post: $post,
+                        moderator: $moderator,
+                        previousStatus: $previousStatus,
+                        newStatus: $newStatus,
+                        moderationNote: $moderationNote,
+                    );
+                } catch (Throwable $throwable) {
+                    $this->logger->info('moderation.post_notification_dispatch_failed', [
+                        'user_id' => $moderator->id,
+                        'scene_id' => $post->scene_id,
+                        'post_id' => $post->id,
+                        'previous_status' => $previousStatus,
+                        'new_status' => $newStatus,
+                        'error' => $throwable->getMessage(),
+                    ]);
+                }
             }
 
             $this->logger->info('moderation.post_status_changed', [
