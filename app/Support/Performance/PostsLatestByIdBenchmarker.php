@@ -203,19 +203,24 @@ class PostsLatestByIdBenchmarker
             ->limit(5)
             ->get();
 
-        $sceneIds = $rows
-            ->pluck('id')
-            ->map(static fn ($value): int => (int) $value)
-            ->values()
-            ->all();
+        $sceneIds = [];
+        foreach ($rows as $row) {
+            $sceneId = (int) ($row->id ?? 0);
+            if ($sceneId > 0) {
+                $sceneIds[] = $sceneId;
+            }
+        }
 
         if ($sceneIds !== []) {
             return $sceneIds;
         }
 
         $fallbackSceneId = DB::table('scenes')->orderBy('id')->value('id');
+        $resolvedFallbackSceneId = is_numeric($fallbackSceneId)
+            ? max(1, (int) $fallbackSceneId)
+            : 1;
 
-        return [is_numeric($fallbackSceneId) ? (int) $fallbackSceneId : 1];
+        return [$resolvedFallbackSceneId];
     }
 
     private function supportsForceIndex(string $driver): bool

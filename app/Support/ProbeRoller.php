@@ -31,6 +31,7 @@ class ProbeRoller
             ? $mode
             : DiceRoll::MODE_NORMAL;
 
+        /** @var non-empty-array<int, int> $rolls */
         $rolls = [$this->rollValue()];
         if (in_array($normalizedMode, [DiceRoll::MODE_ADVANTAGE, DiceRoll::MODE_DISADVANTAGE], true)) {
             $rolls[] = $this->rollValue();
@@ -51,7 +52,7 @@ class ProbeRoller
     }
 
     /**
-     * @param  array<int, int>  $rolls
+     * @param  non-empty-array<int, int>  $rolls
      */
     private function resolveKeptRoll(string $mode, array $rolls): int
     {

@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
+use InvalidArgumentException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -47,6 +48,10 @@ class SceneNewPostNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        if (! $notifiable instanceof User) {
+            throw new InvalidArgumentException('Scene new post mail notification requires a User notifiable.');
+        }
+
         [$world, $campaign, $scene] = $this->resolveContext();
 
         $actionUrl = route('campaigns.scenes.show', [

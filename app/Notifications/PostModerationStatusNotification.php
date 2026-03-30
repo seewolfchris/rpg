@@ -8,6 +8,7 @@ use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
 use App\Support\PushNarrativeTextResolver;
+use InvalidArgumentException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -56,6 +57,10 @@ class PostModerationStatusNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        if (! $notifiable instanceof User) {
+            throw new InvalidArgumentException('Post moderation mail notification requires a User notifiable.');
+        }
+
         [$world, $campaign, $scene] = $this->resolveContext();
 
         $mailMessage = (new MailMessage)

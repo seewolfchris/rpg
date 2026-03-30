@@ -362,6 +362,7 @@ class WorldHotpathPerformanceReporter
     private function collectMySqlIndexes(string $table): array
     {
         $indexRows = DB::select('SHOW INDEX FROM `'.$table.'`');
+        /** @var array<string, array{name: string, unique: bool, columns: array<int, string>}> $grouped */
         $grouped = [];
 
         foreach ($indexRows as $indexRow) {
@@ -385,11 +386,16 @@ class WorldHotpathPerformanceReporter
         $result = [];
         foreach ($grouped as $index) {
             ksort($index['columns']);
-            $index['columns'] = array_values(array_filter(
+            $columns = array_values(array_filter(
                 $index['columns'],
                 static fn (string $column): bool => $column !== ''
             ));
-            $result[] = $index;
+
+            $result[] = [
+                'name' => $index['name'],
+                'unique' => $index['unique'],
+                'columns' => $columns,
+            ];
         }
 
         return $result;
