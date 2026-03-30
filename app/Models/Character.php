@@ -128,7 +128,7 @@ class Character extends Model
     {
         static::creating(function (Character $character): void {
             if (! $character->world_id) {
-                $character->world_id = World::resolveDefaultId();
+                $character->world_id = max(0, World::resolveDefaultId());
             }
         });
     }

@@ -48,7 +48,7 @@ class Campaign extends Model
     {
         static::creating(function (Campaign $campaign): void {
             if (! $campaign->world_id) {
-                $campaign->world_id = World::resolveDefaultId();
+                $campaign->world_id = max(0, World::resolveDefaultId());
             }
         });
     }

@@ -79,7 +79,8 @@ class CharacterProgressionService
                     continue;
                 }
 
-                if (! $participantUserIds->contains((int) $character->user_id)) {
+                $characterUserId = $this->nonNegativeInt((int) $character->user_id);
+                if ($characterUserId < 1 || ! $participantUserIds->contains($characterUserId)) {
                     $errors['awards.'.$index.'.character_id'] = 'Der Ziel-Charakter ist kein aktiver Teilnehmer dieser Kampagne.';
 
                     continue;
@@ -107,22 +108,22 @@ class CharacterProgressionService
                 /** @var Character $character */
                 $character = $characters->get($characterId);
 
-                $currentXp = max(0, (int) $character->xp_total);
-                $currentLevel = max(1, (int) $character->level);
-                $currentUnspent = max(0, (int) $character->attribute_points_unspent);
+                $currentXp = $this->nonNegativeInt((int) $character->xp_total);
+                $currentLevel = $this->positiveInt((int) $character->level);
+                $currentUnspent = $this->nonNegativeInt((int) $character->attribute_points_unspent);
 
-                $nextXp = max(0, $currentXp + $xpDelta);
-                $nextLevel = $this->levelForXp($nextXp);
+                $nextXp = $this->nonNegativeInt($currentXp + $xpDelta);
+                $nextLevel = $this->positiveInt($this->levelForXp($nextXp));
                 if (! $this->allowLevelDown()) {
-                    $nextLevel = max($currentLevel, $nextLevel);
+                    $nextLevel = $this->positiveInt(max($currentLevel, $nextLevel));
                 }
 
-                $gainedLevels = max(0, $nextLevel - $currentLevel);
-                $apGain = $gainedLevels * $this->attributePointsPerLevel();
+                $gainedLevels = $this->nonNegativeInt($nextLevel - $currentLevel);
+                $apGain = $this->nonNegativeInt($gainedLevels * $this->attributePointsPerLevel());
 
                 $character->xp_total = $nextXp;
-                $character->level = $nextLevel;
-                $character->attribute_points_unspent = $currentUnspent + $apGain;
+                $character->level = $this->nonNegativeInt($nextLevel);
+                $character->attribute_points_unspent = $this->nonNegativeInt($currentUnspent + $apGain);
                 $character->save();
 
                 CharacterProgressionEvent::query()->create([
@@ -208,7 +209,7 @@ class CharacterProgressionService
             }
 
             $totalPoints = array_sum($allocations);
-            $unspentPoints = max(0, (int) $lockedCharacter->attribute_points_unspent);
+            $unspentPoints = $this->nonNegativeInt((int) $lockedCharacter->attribute_points_unspent);
 
             if ($totalPoints > $unspentPoints) {
                 throw ValidationException::withMessages([
@@ -216,10 +217,10 @@ class CharacterProgressionService
                 ]);
             }
 
-            $currentLevel = max(1, (int) $lockedCharacter->level);
+            $currentLevel = $this->positiveInt((int) $lockedCharacter->level);
             $attributeCap = $this->attributeCap();
             $perLevelAttributeCap = $this->attributePerLevelCap();
-            $maxSpentPerAttribute = max(0, $currentLevel - 1) * $perLevelAttributeCap;
+            $maxSpentPerAttribute = $this->nonNegativeInt(($currentLevel - 1) * $perLevelAttributeCap);
             $historicalSpent = $this->historicalAttributeSpendTotals($lockedCharacter->id);
             $legacyMap = $this->legacyColumnMap();
             $baseAttributes = $this->resolveBaseAttributes($lockedCharacter);
@@ -261,15 +262,18 @@ class CharacterProgressionService
             }
 
             $derivedPools = $this->calculateDerivedPools($lockedCharacter, $nextAttributes);
-            $lockedCharacter->le_max = $derivedPools['le_max'];
-            $lockedCharacter->ae_max = $derivedPools['ae_max'];
+            $leMax = $this->nonNegativeInt((int) $derivedPools['le_max']);
+            $aeMax = $this->nonNegativeInt((int) $derivedPools['ae_max']);
+
+            $lockedCharacter->le_max = $leMax;
+            $lockedCharacter->ae_max = $aeMax;
             $lockedCharacter->le_current = $lockedCharacter->le_current === null
-                ? $derivedPools['le_max']
-                : $this->clampInt((int) $lockedCharacter->le_current, 0, $derivedPools['le_max']);
+                ? $leMax
+                : $this->nonNegativeInt($this->clampInt((int) $lockedCharacter->le_current, 0, $leMax));
             $lockedCharacter->ae_current = $lockedCharacter->ae_current === null
-                ? $derivedPools['ae_max']
-                : $this->clampInt((int) $lockedCharacter->ae_current, 0, $derivedPools['ae_max']);
-            $lockedCharacter->attribute_points_unspent = $unspentPoints - $totalPoints;
+                ? $aeMax
+                : $this->nonNegativeInt($this->clampInt((int) $lockedCharacter->ae_current, 0, $aeMax));
+            $lockedCharacter->attribute_points_unspent = $this->nonNegativeInt($unspentPoints - $totalPoints);
             $lockedCharacter->save();
 
             CharacterProgressionEvent::query()->create([
@@ -642,6 +646,22 @@ class CharacterProgressionService
     private function clampInt(int $value, int $min, int $max): int
     {
         return max($min, min($value, $max));
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    private function nonNegativeInt(int $value): int
+    {
+        return max(0, $value);
+    }
+
+    /**
+     * @return int<1, max>
+     */
+    private function positiveInt(int $value): int
+    {
+        return max(1, $value);
     }
 
     private function convertLegacyValueToPercent(int $legacyValue): int

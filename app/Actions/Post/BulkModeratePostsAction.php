@@ -24,6 +24,9 @@ class BulkModeratePostsAction
      */
     public function execute(BulkModeratePostsInput $input): BulkModeratePostsResult
     {
+        /** @var int<0, max> $moderatorId */
+        $moderatorId = max(0, (int) $input->moderator->id);
+
         if (! $this->postModerationScope->canAccessWorldQueue($input->moderator, $input->world)) {
             throw new AuthorizationException('Du darfst in dieser Welt keine Bulk-Moderation ausführen.');
         }
@@ -60,7 +63,7 @@ class BulkModeratePostsAction
             }
         }
 
-        $affected = $this->db->transaction(function () use ($posts, $input): int {
+        $affected = $this->db->transaction(function () use ($posts, $input, $moderatorId): int {
             $affected = 0;
 
             foreach ($posts as $post) {
@@ -78,7 +81,7 @@ class BulkModeratePostsAction
 
                 if ($input->targetStatus === 'approved') {
                     $post->approved_at = now()->toDateTimeString();
-                    $post->approved_by = $input->moderator->id;
+                    $post->approved_by = $moderatorId;
                 } else {
                     $post->approved_at = null;
                     $post->approved_by = null;

@@ -250,13 +250,15 @@ class PostController extends Controller
         $status = $request->validated('moderation_status');
         $moderationNote = $this->normalizeModerationNote((string) $request->validated('moderation_note', ''));
         $user = $request->user();
+        /** @var int<0, max> $moderatorId */
+        $moderatorId = max(0, (int) $user->id);
         $previousModerationStatus = (string) $post->moderation_status;
 
         $post->moderation_status = $status;
 
         if ($status === 'approved') {
             $post->approved_at = now();
-            $post->approved_by = $user->id;
+            $post->approved_by = $moderatorId;
         } else {
             $post->approved_at = null;
             $post->approved_by = null;
@@ -286,7 +288,8 @@ class PostController extends Controller
 
         $post->is_pinned = true;
         $post->pinned_at = now();
-        $post->pinned_by = auth()->id();
+        $pinnedById = auth()->id();
+        $post->pinned_by = $pinnedById === null ? null : max(0, (int) $pinnedById);
         $post->save();
 
         if ($request->header('HX-Request') === 'true') {

@@ -42,20 +42,22 @@ class CreateCharacterAction
 
         try {
             $stagedAvatar = $this->avatarService->stageFromRequest($request);
+            /** @var int<0, max> $authenticatedUserId */
+            $authenticatedUserId = max(0, (int) $user->id);
 
-            $character = $this->db->transaction(function () use ($request, $user, $stagedAvatar): Character {
+            $character = $this->db->transaction(function () use ($request, $stagedAvatar, $authenticatedUserId): Character {
                 $data = $this->attributeNormalizer->normalizeForCreate($request);
                 $data['avatar_path'] = null;
 
                 $character = new Character($data);
-                $character->user_id = (int) $user->id;
+                $character->user_id = $authenticatedUserId;
                 $character->saveOrFail();
 
                 $normalizedInventory = $this->inventoryService->normalize($character->inventory ?? []);
                 $operations = $this->inventoryService->diff([], $normalizedInventory);
                 $this->inventoryService->log(
                     character: $character,
-                    actorUserId: (int) $user->id,
+                    actorUserId: $authenticatedUserId,
                     source: 'character_sheet_create',
                     operations: $operations,
                     context: ['character_id' => $character->id],
