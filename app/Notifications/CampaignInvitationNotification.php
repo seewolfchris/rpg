@@ -6,6 +6,7 @@ use App\Models\CampaignInvitation;
 use App\Models\User;
 use App\Models\World;
 use App\Support\PushNarrativeTextResolver;
+use InvalidArgumentException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -51,8 +52,12 @@ class CampaignInvitationNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        if (! $notifiable instanceof User) {
+            throw new InvalidArgumentException('CampaignInvitationNotification expects a User notifiable for mail channel.');
+        }
+
         $campaign = $this->invitation->campaign;
-        $inviterName = $this->invitation->inviter?->name ?? 'Ein Spielleiter';
+        $inviterName = $this->inviterName();
 
         return (new MailMessage)
             ->subject('Neue Kampagneneinladung')
@@ -67,7 +72,7 @@ class CampaignInvitationNotification extends Notification
     {
         $payload = $this->toArray($notifiable);
         $campaign = $this->invitation->campaign;
-        $inviterName = $this->invitation->inviter?->name ?? 'Ein Spielleiter';
+        $inviterName = $this->inviterName();
         $worldId = $this->worldId();
         $worldSlug = $this->worldSlug($worldId);
         $actionUrl = route('campaign-invitations.index');
@@ -117,7 +122,7 @@ class CampaignInvitationNotification extends Notification
         return [
             'kind' => 'campaign_invitation',
             'title' => 'Neue Kampagneneinladung',
-            'message' => ($this->invitation->inviter?->name ?? 'Ein Spielleiter')
+            'message' => $this->inviterName()
                 .' hat dich zu "'.$campaign->title.'" eingeladen.',
             'action_url' => route('campaign-invitations.index'),
             'campaign_id' => $campaign->id,
@@ -152,5 +157,14 @@ class CampaignInvitationNotification extends Notification
         return is_string($worldSlug) && $worldSlug !== ''
             ? $worldSlug
             : $defaultSlug;
+    }
+
+    private function inviterName(): string
+    {
+        if ($this->invitation->invited_by === null) {
+            return 'Ein Spielleiter';
+        }
+
+        return $this->invitation->inviter->name;
     }
 }

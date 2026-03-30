@@ -216,16 +216,15 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->name('posts.reactions.destroy');
 
         Route::get('/gm/moderation', [GmModerationController::class, 'index'])
-            ->middleware('role:gm,admin')
             ->name('gm.moderation.index');
 
         Route::patch('/gm/moderation/bulk', [GmModerationController::class, 'bulkUpdate'])
-            ->middleware(['role:gm,admin', 'throttle:moderation'])
+            ->middleware('throttle:moderation')
             ->name('gm.moderation.bulk-update');
 
         Route::post('/gm/moderation/{post}/probe', [GmModerationController::class, 'probe'])
             ->withoutScopedBindings()
-            ->middleware(['role:gm,admin', 'throttle:moderation'])
+            ->middleware('throttle:moderation')
             ->name('gm.moderation.probe');
 
         Route::get('/gm/progression', [GmProgressionController::class, 'index'])

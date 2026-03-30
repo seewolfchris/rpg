@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Domain\Post\PostModerationService;
+use App\Actions\Post\BulkModeratePostsAction;
+use App\Actions\Post\BulkModeratePostsInput;
+use App\Domain\Post\PostModerationScope;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Campaign;
@@ -20,18 +22,21 @@ class GmModerationController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
-        private readonly PostModerationService $postModerationService,
+        private readonly BulkModeratePostsAction $bulkModeratePostsAction,
+        private readonly PostModerationScope $postModerationScope,
     ) {}
 
     public function index(Request $request, World $world): View
     {
+        $user = $request->user();
+        abort_unless($user && $this->postModerationScope->canAccessWorldQueue($user, $world), 403);
+
         $status = in_array((string) $request->query('status', 'pending'), ['all', 'pending', 'approved', 'rejected'], true)
             ? (string) $request->query('status', 'pending')
             : 'pending';
         $search = trim((string) $request->query('q', ''));
 
-        $baseQuery = Post::query()
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id));
+        $baseQuery = $this->postModerationScope->baseQuery($user, $world);
 
         $postsQuery = (clone $baseQuery)
             ->with(['scene.campaign', 'scene', 'user', 'character', 'approvedBy', 'latestModerationLog.moderator'])
@@ -67,11 +72,13 @@ class GmModerationController extends Controller
 
     public function bulkUpdate(BulkModerationRequest $request, World $world): View|RedirectResponse
     {
+        $moderator = $request->user();
+        abort_unless($moderator !== null, 403);
+
         $statusFilter = (string) $request->validated('status', 'pending');
         $search = trim((string) $request->validated('q', ''));
         $targetStatus = (string) $request->validated('moderation_status');
         $moderationNote = $this->normalizeModerationNote((string) $request->validated('moderation_note', ''));
-        $moderator = $request->user();
         $sceneId = (int) $request->validated('scene_id', 0);
         $postIds = collect((array) $request->validated('post_ids', []))
             ->map(static fn ($postId): int => (int) $postId)
@@ -80,53 +87,17 @@ class GmModerationController extends Controller
             ->values();
         $isHtmxRequest = $request->header('HX-Request') === 'true';
 
-        $postsQuery = Post::query()
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->where('world_id', (int) $world->id))
-            ->with(['scene.campaign', 'user']);
-
-        if ($postIds->isNotEmpty()) {
-            $postsQuery->whereKey($postIds->all());
-        } elseif ($isHtmxRequest && $sceneId > 0) {
-            $postsQuery->whereRaw('1 = 0');
-        } else {
-            $this->applyFilters($postsQuery, $statusFilter, $search);
-        }
-
-        if ($sceneId > 0) {
-            $postsQuery->where('scene_id', $sceneId);
-        }
-
-        $posts = $postsQuery->get();
-        $affected = 0;
-
-        foreach ($posts as $post) {
-            $previousStatus = (string) $post->moderation_status;
-
-            if ($previousStatus === $targetStatus && ! $moderationNote) {
-                continue;
-            }
-
-            $post->moderation_status = $targetStatus;
-
-            if ($targetStatus === 'approved') {
-                $post->approved_at = now();
-                $post->approved_by = $moderator->id;
-            } else {
-                $post->approved_at = null;
-                $post->approved_by = null;
-            }
-
-            $post->save();
-
-            $this->postModerationService->synchronize(
-                post: $post,
-                moderator: $moderator,
-                previousStatus: $previousStatus,
-                moderationNote: $moderationNote,
-            );
-
-            $affected++;
-        }
+        $result = $this->bulkModeratePostsAction->execute(new BulkModeratePostsInput(
+            world: $world,
+            moderator: $moderator,
+            statusFilter: $statusFilter,
+            search: $search,
+            targetStatus: $targetStatus,
+            moderationNote: $moderationNote,
+            sceneId: $sceneId,
+            postIds: $postIds,
+            isHtmxRequest: $isHtmxRequest,
+        ));
 
         if ($isHtmxRequest && $sceneId > 0) {
             return $this->threadFeedFragment($request, $world, $sceneId);
@@ -138,13 +109,14 @@ class GmModerationController extends Controller
                 'status' => $statusFilter,
                 'q' => $search !== '' ? $search : null,
             ])
-            ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Posts: '.$affected.'.');
+            ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Posts: '.$result->affected.'.');
     }
 
     public function probe(Request $request, World $world, Post $post): View
     {
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
+        $this->authorize('moderate', $post);
 
         $data = $request->validate([
             'modifier' => ['nullable', 'integer', 'between:-20,20'],

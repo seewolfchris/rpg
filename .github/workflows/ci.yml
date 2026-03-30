@@ -58,8 +58,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Run service worker tests
-        run: npm run test:sw
+      - name: Run frontend JS tests
+        run: npm run test:js
 
       - name: Build frontend assets
         run: npm run build

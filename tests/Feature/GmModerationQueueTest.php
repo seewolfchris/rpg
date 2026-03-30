@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -23,6 +24,139 @@ class GmModerationQueueTest extends TestCase
         $response = $this->actingAs($player)->get(route('gm.moderation.index'));
 
         $response->assertForbidden();
+    }
+
+    public function test_co_gm_can_access_queue_only_for_assigned_campaigns(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $coGm = User::factory()->create();
+        $foreignOwner = User::factory()->gm()->create();
+        $author = User::factory()->create();
+
+        $ownCampaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $ownCampaign->id,
+            'user_id' => $coGm->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $ownScene = Scene::factory()->create([
+            'campaign_id' => $ownCampaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $foreignScene = Scene::factory()->create([
+            'campaign_id' => $foreignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        Post::factory()->create([
+            'scene_id' => $ownScene->id,
+            'user_id' => $author->id,
+            'content' => 'COGM-EIGEN',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+        ]);
+        Post::factory()->create([
+            'scene_id' => $foreignScene->id,
+            'user_id' => $author->id,
+            'content' => 'COGM-FREMD',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($coGm)->get(route('gm.moderation.index', [
+            'status' => 'all',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('COGM-EIGEN');
+        $response->assertDontSee('COGM-FREMD');
+    }
+
+    public function test_co_gm_cannot_bulk_moderate_post_outside_assigned_campaigns(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $coGm = User::factory()->create();
+        $foreignOwner = User::factory()->gm()->create();
+        $author = User::factory()->create();
+
+        $ownCampaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $ownCampaign->id,
+            'user_id' => $coGm->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
+        $foreignScene = Scene::factory()->create([
+            'campaign_id' => $foreignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $foreignPost = Post::factory()->create([
+            'scene_id' => $foreignScene->id,
+            'user_id' => $author->id,
+            'content' => 'AUSSERHALB-SCOPE',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $response = $this->actingAs($coGm)
+            ->patch(route('gm.moderation.bulk-update'), [
+                'status' => 'all',
+                'q' => '',
+                'moderation_status' => 'approved',
+                'moderation_note' => 'Unberechtigter Versuch',
+                'post_ids' => [$foreignPost->id],
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $foreignPost->id,
+            'moderation_status' => 'pending',
+            'approved_by' => null,
+        ]);
     }
 
     public function test_gm_can_filter_queue_by_status_and_search_term(): void

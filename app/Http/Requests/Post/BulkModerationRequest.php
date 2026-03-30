@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Domain\Post\PostModerationScope;
+use App\Models\World;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +11,17 @@ class BulkModerationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        $user = $this->user();
+        if (! $user) {
+            return false;
+        }
+
+        $world = $this->route('world');
+        if (! $world instanceof World) {
+            return false;
+        }
+
+        return app(PostModerationScope::class)->canAccessWorldQueue($user, $world);
     }
 
     /**

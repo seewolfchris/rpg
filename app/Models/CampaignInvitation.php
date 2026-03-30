@@ -6,6 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $campaign_id
+ * @property int $user_id
+ * @property int|null $invited_by
+ * @property string $status
+ * @property string $role
+ * @property-read Campaign $campaign
+ * @property-read User $user
+ * @property-read User|null $inviter
+ */
 class CampaignInvitation extends Model
 {
     use HasFactory;
@@ -50,16 +60,25 @@ class CampaignInvitation extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Campaign, $this>
+     */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
