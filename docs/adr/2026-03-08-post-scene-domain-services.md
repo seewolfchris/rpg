@@ -20,6 +20,7 @@ Wir verschieben Domänenlogik in klar getrennte Services und lassen Controller n
 - `App\Actions\Scene\BuildSceneThreadPageDataAction` (Follow-up 2026-03-30, entkoppelt Scene threadPage-Fragmentlogik)
 - `App\Actions\Character\UpdateCharacterAction` (Follow-up 2026-03-30, entkoppelt Character-Update-Write-Flow aus dem Controller)
 - `App\Actions\Character\UpdateCharacterInlineAction` (Follow-up 2026-03-30, entkoppelt Character-inlineUpdate-Flow inkl. HTMX-Response-Grenze)
+- `App\Actions\Character\BuildCharacterShowDataAction` (Follow-up 2026-03-31, entkoppelt Character-Detaildaten-Aufbereitung aus dem Controller)
 - `App\Domain\Scene\SceneReadTrackingService`
 - `App\Domain\Scene\ScenePostAnchorUrlService`
 - `App\Domain\Scene\SceneInventoryQuickActionService`

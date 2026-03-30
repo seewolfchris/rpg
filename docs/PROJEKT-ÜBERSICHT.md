@@ -26,7 +26,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **246 passed, 1237 assertions** (2026-03-30)
+  - `php artisan test --without-tty --do-not-cache-result` -> **247 passed, 1249 assertions** (2026-03-30)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
   - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-30)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-30)
@@ -109,6 +109,11 @@ Repository-Branch: `main`
   - `app/Actions/Character/UpdateCharacterInlineResult.php` (Response-Grenze HTMX-Fragment vs. Redirect)
   - `CharacterController::inlineUpdate()` delegiert auf die Action
   - Unit-Absicherung: `tests/Unit/Actions/Character/UpdateCharacterInlineActionTest.php`
+- Character-Show-Flow ist teilweise entkoppelt:
+  - `app/Actions/Character/BuildCharacterShowDataAction.php` (Inventory-Logs, Progression-Events, Progression-State fuer Detailseite)
+  - `app/Actions/Character/CharacterShowData.php` (typsicheres Ergebnisobjekt fuer Character-Detailansicht)
+  - `CharacterController::show()` delegiert auf die Action und behält Fehler-Mapping bei
+  - Unit-Absicherung: `tests/Unit/Actions/Character/BuildCharacterShowDataActionTest.php`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 

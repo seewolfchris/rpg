@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Character\BuildCharacterShowDataAction;
 use App\Actions\Character\CreateCharacterAction;
 use App\Actions\Character\DeleteCharacterAction;
 use App\Actions\Character\UpdateCharacterAction;
 use App\Actions\Character\UpdateCharacterInlineAction;
-use App\Domain\Character\CharacterProgressionService;
 use App\Exceptions\CharacterDeletionFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
@@ -21,7 +21,7 @@ use Throwable;
 class CharacterController extends Controller
 {
     public function __construct(
-        private readonly CharacterProgressionService $progressionService,
+        private readonly BuildCharacterShowDataAction $buildCharacterShowDataAction,
         private readonly CreateCharacterAction $createCharacterAction,
         private readonly DeleteCharacterAction $deleteCharacterAction,
         private readonly UpdateCharacterAction $updateCharacterAction,
@@ -90,15 +90,7 @@ class CharacterController extends Controller
         $this->ensureCanManageCharacter($character);
 
         try {
-            $inventoryLogs = $character->inventoryLogs()
-                ->with('actor:id,name')
-                ->limit(25)
-                ->get();
-            $progressionEvents = $character->progressionEvents()
-                ->with(['actorUser:id,name', 'campaign:id,title', 'scene:id,title'])
-                ->limit(20)
-                ->get();
-            $progressionState = $this->progressionService->describe($character);
+            $showData = $this->buildCharacterShowDataAction->execute($character);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -107,7 +99,12 @@ class CharacterController extends Controller
                 ->with('error', 'Charakterdetails konnten nicht geladen werden.');
         }
 
-        return view('characters.show', compact('character', 'inventoryLogs', 'progressionEvents', 'progressionState'));
+        return view('characters.show', [
+            'character' => $showData->character,
+            'inventoryLogs' => $showData->inventoryLogs,
+            'progressionEvents' => $showData->progressionEvents,
+            'progressionState' => $showData->progressionState,
+        ]);
     }
 
     public function edit(Character $character): View
