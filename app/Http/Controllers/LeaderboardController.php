@@ -26,7 +26,7 @@ class LeaderboardController extends Controller
             ->limit(100)
             ->get();
 
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
 
         $rank = User::query()
             ->where(function ($query) use ($user): void {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
 use App\Models\Campaign;
 use App\Models\SceneSubscription;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,15 +16,18 @@ class NotificationController extends Controller
 {
     public function preferences(Request $request): View
     {
-        $preferences = $request->user()->resolvedNotificationPreferences();
+        $user = $this->authenticatedUser($request);
+        $preferences = $user->resolvedNotificationPreferences();
 
         return view('notifications.preferences', compact('preferences'));
     }
 
     public function updatePreferences(UpdateNotificationPreferencesRequest $request): RedirectResponse
     {
-        $user = $request->user();
-        $user->notification_preferences = $request->preferences();
+        $user = $this->authenticatedUser($request);
+        $user->forceFill([
+            'notification_preferences' => $request->preferences(),
+        ]);
         $user->save();
 
         return redirect()
@@ -33,7 +37,7 @@ class NotificationController extends Controller
 
     public function index(Request $request): View
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
 
         $notifications = $user->notifications()
             ->latest()
@@ -64,7 +68,7 @@ class NotificationController extends Controller
 
     public function read(Request $request, string $notificationId): View|RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $notification = $user
             ->notifications()
             ->whereKey($notificationId)
@@ -131,7 +135,7 @@ class NotificationController extends Controller
 
     public function readAll(Request $request): View|RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
 
         $user
             ->unreadNotifications()
@@ -144,7 +148,7 @@ class NotificationController extends Controller
         return back()->with('status', 'Alle Benachrichtigungen als gelesen markiert.');
     }
 
-    private function renderInboxPanel(Request $request, \App\Models\User $user): View
+    private function renderInboxPanel(Request $request, User $user): View
     {
         $notifications = $user->notifications()
             ->latest()

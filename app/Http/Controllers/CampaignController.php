@@ -23,7 +23,7 @@ class CampaignController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
 
         $campaigns = Campaign::query()
             ->forWorld($world)
@@ -48,8 +48,9 @@ class CampaignController extends Controller
 
     public function store(StoreCampaignRequest $request, World $world): RedirectResponse
     {
+        $user = $this->authenticatedUser($request);
         $data = $request->validated();
-        $data['owner_id'] = auth()->id();
+        $data['owner_id'] = $user->id;
         $data['world_id'] = $world->id;
 
         $campaign = Campaign::query()->create($data);
@@ -63,7 +64,7 @@ class CampaignController extends Controller
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
 
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
 
         $sceneStatus = in_array((string) $request->query('scene_status', 'all'), ['all', 'open', 'closed', 'archived'], true)
             ? (string) $request->query('scene_status', 'all')

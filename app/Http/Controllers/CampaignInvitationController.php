@@ -22,6 +22,8 @@ class CampaignInvitationController extends Controller
 
     public function index(Request $request): View
     {
+        $user = $this->authenticatedUser($request);
+
         $status = in_array((string) $request->query('status', CampaignInvitation::STATUS_PENDING), [
             'all',
             CampaignInvitation::STATUS_PENDING,
@@ -32,7 +34,7 @@ class CampaignInvitationController extends Controller
             : CampaignInvitation::STATUS_PENDING;
 
         $invitationsQuery = CampaignInvitation::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->with(['campaign.owner', 'campaign.world', 'inviter'])
             ->when($status !== 'all', fn ($query) => $query->where('status', $status));
 
@@ -49,7 +51,7 @@ class CampaignInvitationController extends Controller
             ->withQueryString();
 
         $pendingCount = CampaignInvitation::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('status', CampaignInvitation::STATUS_PENDING)
             ->count();
 
@@ -59,8 +61,9 @@ class CampaignInvitationController extends Controller
     public function store(StoreCampaignInvitationRequest $request, World $world, Campaign $campaign): RedirectResponse
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
+        $user = $this->authenticatedUser($request);
 
-        if (! $this->canManageInvitations($request->user(), $campaign)) {
+        if (! $this->canManageInvitations($user, $campaign)) {
             abort(403);
         }
 
@@ -77,7 +80,7 @@ class CampaignInvitationController extends Controller
         $requestedRole = (string) $request->validated('role');
         if (
             $requestedRole === CampaignInvitation::ROLE_TRUSTED_PLAYER
-            && ! $request->user()->hasRole(UserRole::ADMIN)
+            && ! $user->hasRole(UserRole::ADMIN)
         ) {
             return back()
                 ->withInput()
@@ -94,7 +97,7 @@ class CampaignInvitationController extends Controller
         $isNew = ! $invitation->exists;
         $wasAccepted = $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
 
-        $invitation->invited_by = $request->user()->id;
+        $invitation->invited_by = $user->id;
         $invitation->role = $requestedRole;
 
         if (! $wasAccepted) {
@@ -127,7 +130,8 @@ class CampaignInvitationController extends Controller
 
     public function accept(Request $request, CampaignInvitation $invitation): RedirectResponse
     {
-        $this->ensureUserOwnsInvitation($request->user(), $invitation);
+        $user = $this->authenticatedUser($request);
+        $this->ensureUserOwnsInvitation($user, $invitation);
 
         if ($invitation->status !== CampaignInvitation::STATUS_PENDING) {
             return redirect()
@@ -154,7 +158,8 @@ class CampaignInvitationController extends Controller
 
     public function decline(Request $request, CampaignInvitation $invitation): RedirectResponse
     {
-        $this->ensureUserOwnsInvitation($request->user(), $invitation);
+        $user = $this->authenticatedUser($request);
+        $this->ensureUserOwnsInvitation($user, $invitation);
 
         if ($invitation->status !== CampaignInvitation::STATUS_PENDING) {
             return redirect()
@@ -175,8 +180,9 @@ class CampaignInvitationController extends Controller
     public function destroy(Request $request, World $world, Campaign $campaign, CampaignInvitation $invitation): RedirectResponse
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
+        $user = $this->authenticatedUser($request);
 
-        if (! $this->canManageInvitations($request->user(), $campaign)) {
+        if (! $this->canManageInvitations($user, $campaign)) {
             abort(403);
         }
 

@@ -22,7 +22,7 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): View
     {
-        $user = auth()->user();
+        $user = $this->authenticatedUser($request);
         $worlds = World::query()
             ->active()
             ->ordered()
@@ -58,7 +58,7 @@ class DashboardController extends Controller
             ->leftJoinSub($latestPostsPerScene, 'latest_posts', function ($join): void {
                 $join->on('scene_subscriptions.scene_id', '=', 'latest_posts.scene_id');
             })
-            ->where('scene_subscriptions.user_id', auth()->id())
+            ->where('scene_subscriptions.user_id', $user->id)
             ->whereNotNull('latest_posts.latest_post_id')
             ->where(function ($query): void {
                 $query->whereNull('scene_subscriptions.last_read_post_id')
