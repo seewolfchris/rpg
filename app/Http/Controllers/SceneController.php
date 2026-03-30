@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Scene\BuildSceneThreadPageDataAction;
 use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Domain\Scene\SceneInventoryQuickActionService;
@@ -35,6 +36,7 @@ class SceneController extends Controller
         private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
         private readonly SceneInventoryQuickActionService $sceneInventoryQuickActionService,
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
+        private readonly BuildSceneThreadPageDataAction $buildSceneThreadPageDataAction,
     ) {}
 
     public function create(World $world, Campaign $campaign): View
@@ -229,25 +231,22 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
-        $posts = $this->threadPostsPaginator($scene);
         $user = $this->authenticatedUser($request);
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
-        $latestPostId = $this->latestScenePostId($scene);
-        $unreadPostsCount = $this->sceneUnreadPostsCount($scene, $subscription, $latestPostId);
-        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
+        $threadPageData = $this->buildSceneThreadPageDataAction->execute(
+            scene: $scene,
+            campaign: $campaign,
+            user: $user,
+        );
 
-        return view('scenes.partials.thread-page', compact(
-            'posts',
-            'campaign',
-            'scene',
-            'subscription',
-            'latestPostId',
-            'unreadPostsCount',
-            'canModerateScene',
-        ));
+        return view('scenes.partials.thread-page', [
+            'posts' => $threadPageData->posts,
+            'campaign' => $campaign,
+            'scene' => $scene,
+            'subscription' => $threadPageData->subscription,
+            'latestPostId' => $threadPageData->latestPostId,
+            'unreadPostsCount' => $threadPageData->unreadPostsCount,
+            'canModerateScene' => $threadPageData->canModerateScene,
+        ]);
     }
 
     public function edit(World $world, Campaign $campaign, Scene $scene): View
@@ -436,18 +435,6 @@ class SceneController extends Controller
             )
             ->orderBy('id')
             ->value('id');
-    }
-
-    private function sceneUnreadPostsCount(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
-    {
-        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
-            return 0;
-        }
-
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
-            ->count();
     }
 
     private function canModerateScene(User $user, Campaign $campaign): bool

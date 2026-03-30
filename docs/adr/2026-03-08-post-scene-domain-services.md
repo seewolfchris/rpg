@@ -17,6 +17,7 @@ Wir verschieben Domänenlogik in klar getrennte Services und lassen Controller n
 - `App\Domain\Post\PostModerationService`
 - `App\Domain\Post\ScenePostNotificationService`
 - `App\Actions\Post\UpdatePostAction` (Follow-up 2026-03-30, entkoppelt Post-Update-Write-Flow aus dem Controller)
+- `App\Actions\Scene\BuildSceneThreadPageDataAction` (Follow-up 2026-03-30, entkoppelt Scene threadPage-Fragmentlogik)
 - `App\Domain\Scene\SceneReadTrackingService`
 - `App\Domain\Scene\ScenePostAnchorUrlService`
 - `App\Domain\Scene\SceneInventoryQuickActionService`

@@ -26,7 +26,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **238 passed, 1184 assertions** (2026-03-30)
+  - `php artisan test --without-tty --do-not-cache-result` -> **240 passed, 1193 assertions** (2026-03-30)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
   - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-30)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-30)
@@ -95,6 +95,11 @@ Repository-Branch: `main`
   - `app/Actions/Post/UpdatePostAction.php` (Moderationsentscheidung, Revisionssnapshot, Mention-Dispatch)
   - `PostController::update()` delegiert auf die Action
   - Unit-Absicherung: `tests/Unit/Actions/Post/UpdatePostActionTest.php`
+- Scene-ThreadPage-Flow ist teilweise entkoppelt:
+  - `app/Actions/Scene/BuildSceneThreadPageDataAction.php` (Paginator, Subscription-Lookup, Unread-Berechnung, Moderationsflag)
+  - `app/Actions/Scene/SceneThreadPageData.php` (typsicheres Ergebnisobjekt fuer das Thread-Fragment)
+  - `SceneController::threadPage()` delegiert auf die Action
+  - Unit-Absicherung: `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 

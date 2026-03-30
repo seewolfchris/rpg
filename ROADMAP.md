@@ -44,7 +44,7 @@ Stand: 2026-03-30
 |---|---|---|
 | A1 | Analyse-Haertung (PHPStan Level 5 -> 8) | Erledigt |
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
-| A2.2 | `SceneController` entkoppeln | Offen |
+| A2.2 | `SceneController` entkoppeln | In Arbeit (threadPage delegiert auf Action) |
 | A2.3 | `CharacterController` entkoppeln | Offen |
 
 ## Implementierte Kernartefakte
@@ -53,6 +53,10 @@ Stand: 2026-03-30
 - Post-Update-Action:
   - `app/Actions/Post/UpdatePostAction.php`
   - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
+- Scene-ThreadPage-Action:
+  - `app/Actions/Scene/BuildSceneThreadPageDataAction.php`
+  - `app/Actions/Scene/SceneThreadPageData.php`
+  - `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -86,7 +90,7 @@ Stand: 2026-03-30
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-30)
-- `php artisan test --without-tty --do-not-cache-result` -> **238 passed, 1184 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **240 passed, 1193 assertions**
 - `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
