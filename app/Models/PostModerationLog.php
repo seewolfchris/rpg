@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PostModerationLog extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     public $timestamps = false;
@@ -34,11 +35,17 @@ class PostModerationLog extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Post, $this>
+     */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function moderator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'moderator_id');

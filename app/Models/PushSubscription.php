@@ -56,16 +56,26 @@ class PushSubscription extends BasePushSubscription
         });
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<World, $this>
+     */
     public function world(): BelongsTo
     {
         return $this->belongsTo(World::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeForUser(Builder $query, User|int $user): Builder
     {
         $userId = $user instanceof User ? (int) $user->id : (int) $user;
@@ -73,6 +83,10 @@ class PushSubscription extends BasePushSubscription
         return $query->where('user_id', $userId);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeForWorld(Builder $query, World|int $world): Builder
     {
         $worldId = $world instanceof World ? (int) $world->id : (int) $world;

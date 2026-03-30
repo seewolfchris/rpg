@@ -10,6 +10,7 @@ use Illuminate\Support\HtmlString;
 
 class PostRevision extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     public $timestamps = false;
@@ -41,16 +42,25 @@ class PostRevision extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Post, $this>
+     */
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function editor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'editor_id');
     }
 
+    /**
+     * @return BelongsTo<Character, $this>
+     */
     public function character(): BelongsTo
     {
         return $this->belongsTo(Character::class);

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Scene extends Model
 {
+    /** @use HasFactory<\Database\Factories\SceneFactory> */
     use HasFactory;
 
     /**
@@ -46,41 +47,65 @@ class Scene extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Campaign, $this>
+     */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * @return HasMany<Post, $this>
+     */
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
+    /**
+     * @return BelongsTo<Scene, $this>
+     */
     public function previousScene(): BelongsTo
     {
         return $this->belongsTo(Scene::class, 'previous_scene_id');
     }
 
+    /**
+     * @return HasMany<DiceRoll, $this>
+     */
     public function diceRolls(): HasMany
     {
         return $this->hasMany(DiceRoll::class);
     }
 
+    /**
+     * @return HasMany<SceneSubscription, $this>
+     */
     public function subscriptions(): HasMany
     {
         return $this->hasMany(SceneSubscription::class);
     }
 
+    /**
+     * @return HasMany<SceneBookmark, $this>
+     */
     public function bookmarks(): HasMany
     {
         return $this->hasMany(SceneBookmark::class);
     }
 
+    /**
+     * @return BelongsToMany<User, $this>
+     */
     public function subscribers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'scene_subscriptions')

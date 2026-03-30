@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 
 class SceneSubscription extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     /**
@@ -34,16 +35,25 @@ class SceneSubscription extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Scene, $this>
+     */
     public function scene(): BelongsTo
     {
         return $this->belongsTo(Scene::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Post, $this>
+     */
     public function lastReadPost(): BelongsTo
     {
         return $this->belongsTo(Post::class, 'last_read_post_id');

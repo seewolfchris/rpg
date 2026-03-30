@@ -14,6 +14,7 @@ use Illuminate\Support\HtmlString;
 
 class Post extends Model
 {
+    /** @use HasFactory<\Database\Factories\PostFactory> */
     use HasFactory;
 
     public const THREAD_POSTS_PER_PAGE = 20;
@@ -92,61 +93,98 @@ class Post extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Scene, $this>
+     */
     public function scene(): BelongsTo
     {
         return $this->belongsTo(Scene::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Character, $this>
+     */
     public function character(): BelongsTo
     {
         return $this->belongsTo(Character::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function pinnedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pinned_by');
     }
 
+    /**
+     * @return HasMany<PostRevision, $this>
+     */
     public function revisions(): HasMany
     {
         return $this->hasMany(PostRevision::class)->orderByDesc('version');
     }
 
+    /**
+     * @return HasMany<PostModerationLog, $this>
+     */
     public function moderationLogs(): HasMany
     {
         return $this->hasMany(PostModerationLog::class)->orderByDesc('created_at');
     }
 
+    /**
+     * @return HasMany<PostReaction, $this>
+     */
     public function reactions(): HasMany
     {
         return $this->hasMany(PostReaction::class);
     }
 
+    /**
+     * @return HasMany<PostMention, $this>
+     */
     public function mentionRecords(): HasMany
     {
         return $this->hasMany(PostMention::class);
     }
 
+    /**
+     * @return HasOne<DiceRoll, $this>
+     */
     public function diceRoll(): HasOne
     {
         return $this->hasOne(DiceRoll::class);
     }
 
+    /**
+     * @return HasOne<PostModerationLog, $this>
+     */
     public function latestModerationLog(): HasOne
     {
         return $this->hasOne(PostModerationLog::class)->latestOfMany('created_at');
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeLatestByIdHotpath(Builder $query): Builder
     {
         $driver = DB::connection($query->getModel()->getConnectionName())->getDriverName();
