@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Character\BuildCharacterIndexDataAction;
 use App\Actions\Character\BuildCharacterShowDataAction;
 use App\Actions\Character\CreateCharacterAction;
 use App\Actions\Character\DeleteCharacterAction;
@@ -21,6 +22,7 @@ use Throwable;
 class CharacterController extends Controller
 {
     public function __construct(
+        private readonly BuildCharacterIndexDataAction $buildCharacterIndexDataAction,
         private readonly BuildCharacterShowDataAction $buildCharacterShowDataAction,
         private readonly CreateCharacterAction $createCharacterAction,
         private readonly DeleteCharacterAction $deleteCharacterAction,
@@ -32,38 +34,23 @@ class CharacterController extends Controller
     {
         $user = $this->authenticatedUser($request);
         $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
-        $characterStatusOptions = array_keys((array) config('characters.statuses', []));
         $selectedStatus = (string) $request->query('status', 'all');
+        $indexData = $this->buildCharacterIndexDataAction->execute(
+            user: $user,
+            selectedWorldSlug: $selectedWorldSlug,
+            selectedStatus: $selectedStatus,
+        );
 
-        if (! in_array($selectedStatus, array_merge(['all'], $characterStatusOptions), true)) {
-            $selectedStatus = 'all';
+        if ($indexData->selectedWorld instanceof World) {
+            $request->session()->put('world_slug', $indexData->selectedWorld->slug);
         }
-
-        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
-        $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
-        $selectedWorldId = $selectedWorld instanceof World ? (int) $selectedWorld->id : null;
-
-        if ($selectedWorld) {
-            $request->session()->put('world_slug', $selectedWorld->slug);
-        }
-
-        $characters = Character::query()
-            ->when($selectedWorldId !== null, fn ($query) => $query->where('world_id', $selectedWorldId))
-            ->when($selectedStatus !== 'all', fn ($query) => $query->where('status', $selectedStatus))
-            ->when(
-                ! $user->isGmOrAdmin(),
-                fn ($query) => $query->where('user_id', $user->id)
-            )
-            ->with(['user', 'world'])
-            ->latest()
-            ->paginate(12);
 
         return view('characters.index', [
-            'characters' => $characters,
-            'worlds' => $worlds,
-            'selectedWorld' => $selectedWorld,
-            'selectedStatus' => $selectedStatus,
-            'characterStatuses' => (array) config('characters.statuses', []),
+            'characters' => $indexData->characters,
+            'worlds' => $indexData->worlds,
+            'selectedWorld' => $indexData->selectedWorld,
+            'selectedStatus' => $indexData->selectedStatus,
+            'characterStatuses' => $indexData->characterStatuses,
         ]);
     }
 

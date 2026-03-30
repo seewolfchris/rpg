@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-30  
+Stand: 2026-03-31  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -26,7 +26,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **247 passed, 1249 assertions** (2026-03-30)
+  - `php artisan test --without-tty --do-not-cache-result` -> **249 passed, 1268 assertions** (2026-03-31)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
   - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-30)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-30)
@@ -114,6 +114,11 @@ Repository-Branch: `main`
   - `app/Actions/Character/CharacterShowData.php` (typsicheres Ergebnisobjekt fuer Character-Detailansicht)
   - `CharacterController::show()` delegiert auf die Action und behält Fehler-Mapping bei
   - Unit-Absicherung: `tests/Unit/Actions/Character/BuildCharacterShowDataActionTest.php`
+- Character-Index-Flow ist teilweise entkoppelt:
+  - `app/Actions/Character/BuildCharacterIndexDataAction.php` (World-/Status-Filter, Sichtbarkeits-Scope, Paginator-Aufbau)
+  - `app/Actions/Character/CharacterIndexData.php` (typsicheres Ergebnisobjekt fuer Character-Listenansicht)
+  - `CharacterController::index()` delegiert auf die Action und behält Session-World-Mapping bei
+  - Unit-Absicherung: `tests/Unit/Actions/Character/BuildCharacterIndexDataActionTest.php`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 
