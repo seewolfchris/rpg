@@ -45,7 +45,7 @@ Stand: 2026-03-30
 | A1 | Analyse-Haertung (PHPStan Level 5 -> 8) | Erledigt |
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
 | A2.2 | `SceneController` entkoppeln | In Arbeit (threadPage delegiert auf Action) |
-| A2.3 | `CharacterController` entkoppeln | In Arbeit (update delegiert auf Action) |
+| A2.3 | `CharacterController` entkoppeln | In Arbeit (update + inlineUpdate delegieren auf Actions) |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -60,6 +60,10 @@ Stand: 2026-03-30
 - Character-Update-Action:
   - `app/Actions/Character/UpdateCharacterAction.php`
   - `tests/Unit/Actions/Character/UpdateCharacterActionTest.php`
+- Character-Inline-Update-Action:
+  - `app/Actions/Character/UpdateCharacterInlineAction.php`
+  - `app/Actions/Character/UpdateCharacterInlineResult.php`
+  - `tests/Unit/Actions/Character/UpdateCharacterInlineActionTest.php`
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -93,7 +97,7 @@ Stand: 2026-03-30
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-30)
-- `php artisan test --without-tty --do-not-cache-result` -> **243 passed, 1227 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **246 passed, 1237 assertions**
 - `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Character\CreateCharacterAction;
 use App\Actions\Character\DeleteCharacterAction;
 use App\Actions\Character\UpdateCharacterAction;
+use App\Actions\Character\UpdateCharacterInlineAction;
 use App\Domain\Character\CharacterProgressionService;
 use App\Exceptions\CharacterDeletionFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
@@ -14,7 +15,6 @@ use App\Models\World;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -25,6 +25,7 @@ class CharacterController extends Controller
         private readonly CreateCharacterAction $createCharacterAction,
         private readonly DeleteCharacterAction $deleteCharacterAction,
         private readonly UpdateCharacterAction $updateCharacterAction,
+        private readonly UpdateCharacterInlineAction $updateCharacterInlineAction,
     ) {}
 
     public function index(Request $request): View
@@ -132,28 +133,14 @@ class CharacterController extends Controller
     public function inlineUpdate(Request $request, Character $character): View|RedirectResponse
     {
         $this->ensureCanManageCharacter($character);
+        $result = $this->updateCharacterInlineAction->execute($request, $character);
 
-        $statusOptions = array_keys((array) config('characters.statuses', []));
-
-        $validated = $request->validate([
-            'epithet' => ['nullable', 'string', 'max:120'],
-            'status' => ['required', Rule::in($statusOptions)],
-            'bio' => ['required', 'string', 'max:12000'],
-            'concept' => ['nullable', 'string', 'max:180'],
-            'world_connection' => ['nullable', 'string', 'max:2000'],
-            'gm_secret' => ['nullable', 'string', 'max:3000'],
-            'gm_note' => ['nullable', 'string', 'max:2000'],
-        ]);
-
-        $character->fill($validated);
-        $character->save();
-
-        if ($request->header('HX-Request') === 'true') {
-            return view('characters.partials.inline-editor', compact('character'));
+        if ($result->shouldRenderFragment) {
+            return view('characters.partials.inline-editor', ['character' => $result->character]);
         }
 
         return redirect()
-            ->route('characters.show', $character)
+            ->route('characters.show', $result->character)
             ->with('status', 'Charakter-Schnellbearbeitung gespeichert.');
     }
 
