@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EncyclopediaCategory extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     /**
@@ -45,11 +46,17 @@ class EncyclopediaCategory extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<World, $this>
+     */
     public function world(): BelongsTo
     {
         return $this->belongsTo(World::class);
     }
 
+    /**
+     * @return HasMany<EncyclopediaEntry, $this>
+     */
     public function entries(): HasMany
     {
         return $this->hasMany(EncyclopediaEntry::class)
@@ -57,16 +64,27 @@ class EncyclopediaCategory extends Model
             ->orderBy('title');
     }
 
+    /**
+     * @return HasMany<EncyclopediaEntry, $this>
+     */
     public function encyclopediaEntries(): HasMany
     {
         return $this->hasMany(EncyclopediaEntry::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeVisible(Builder $query): Builder
     {
         return $query->where('is_public', true);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeForWorld(Builder $query, World|int $world): Builder
     {
         $worldId = $world instanceof World ? (int) $world->id : (int) $world;

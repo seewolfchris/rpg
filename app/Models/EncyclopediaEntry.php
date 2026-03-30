@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EncyclopediaEntry extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     public const STATUS_DRAFT = 'draft';
@@ -46,21 +47,34 @@ class EncyclopediaEntry extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<EncyclopediaCategory, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(EncyclopediaCategory::class, 'encyclopedia_category_id');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function editor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopePublished(Builder $query): Builder
     {
         return $query
