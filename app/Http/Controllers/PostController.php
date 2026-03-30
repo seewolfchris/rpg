@@ -45,7 +45,7 @@ class PostController extends Controller
         $this->authorize('create', [Post::class, $scene]);
 
         $data = $request->validated();
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $isModerator = $this->canModerateScene($user, $scene);
         $requiresApproval = $campaign->requiresPostModeration()
             && ! $campaign->userCanPostWithoutModeration($user)
@@ -130,7 +130,7 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $data = $request->validated();
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         /** @var Scene $scene */
         $scene = $post->scene;
         /** @var Campaign $campaign */
@@ -249,7 +249,7 @@ class PostController extends Controller
 
         $status = $request->validated('moderation_status');
         $moderationNote = $this->normalizeModerationNote((string) $request->validated('moderation_note', ''));
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         /** @var int<0, max> $moderatorId */
         $moderatorId = max(0, (int) $user->id);
         $previousModerationStatus = (string) $post->moderation_status;

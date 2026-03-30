@@ -34,7 +34,7 @@ class CharacterController extends Controller
 
     public function index(Request $request): View
     {
-        $user = auth()->user();
+        $user = $this->authenticatedUser($request);
         $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
         $characterStatusOptions = array_keys((array) config('characters.statuses', []));
         $selectedStatus = (string) $request->query('status', 'all');
@@ -45,13 +45,14 @@ class CharacterController extends Controller
 
         $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
         $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
+        $selectedWorldId = $selectedWorld instanceof World ? (int) $selectedWorld->id : null;
 
         if ($selectedWorld) {
             $request->session()->put('world_slug', $selectedWorld->slug);
         }
 
         $characters = Character::query()
-            ->when($selectedWorld, fn ($query) => $query->where('world_id', $selectedWorld->id))
+            ->when($selectedWorldId !== null, fn ($query) => $query->where('world_id', $selectedWorldId))
             ->when($selectedStatus !== 'all', fn ($query) => $query->where('status', $selectedStatus))
             ->when(
                 ! $user->isGmOrAdmin(),
@@ -246,7 +247,8 @@ class CharacterController extends Controller
         $user = auth()->user();
 
         abort_unless(
-            (int) $character->user_id === (int) $user->id || $user->isGmOrAdmin(),
+            $user instanceof \App\Models\User
+                && ((int) $character->user_id === (int) $user->id || $user->isGmOrAdmin()),
             403
         );
     }
@@ -256,7 +258,8 @@ class CharacterController extends Controller
         $user = auth()->user();
 
         abort_unless(
-            (int) $character->user_id === (int) $user->id || $user->isGmOrAdmin(),
+            $user instanceof \App\Models\User
+                && ((int) $character->user_id === (int) $user->id || $user->isGmOrAdmin()),
             403
         );
     }

@@ -35,6 +35,7 @@ class PostsLatestByIdBenchmarker
     {
         $safeIterations = max(20, min(2000, $iterations));
         $connection = DB::connection();
+        $connectionName = (string) ($connection->getName() ?? config('database.default', 'default'));
         $driver = $connection->getDriverName();
 
         $normalizedWorldSlug = $this->resolveWorldSlug($worldSlug);
@@ -78,7 +79,7 @@ class PostsLatestByIdBenchmarker
 
         return [
             'generated_at' => Carbon::now()->toIso8601String(),
-            'connection' => $connection->getName(),
+            'connection' => $connectionName !== '' ? $connectionName : 'default',
             'driver' => $driver,
             'world' => [
                 'slug' => $normalizedWorldSlug,

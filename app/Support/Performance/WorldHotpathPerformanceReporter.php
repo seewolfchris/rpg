@@ -22,6 +22,7 @@ class WorldHotpathPerformanceReporter
     public function generate(?string $worldSlug = null): array
     {
         $connection = DB::connection();
+        $connectionName = (string) ($connection->getName() ?? config('database.default', 'default'));
         $driver = $connection->getDriverName();
         $normalizedWorldSlug = $this->resolveWorldSlug($worldSlug);
         $worldId = $this->resolveWorldId($normalizedWorldSlug);
@@ -41,7 +42,7 @@ class WorldHotpathPerformanceReporter
 
         return [
             'generated_at' => Carbon::now()->toIso8601String(),
-            'connection' => $connection->getName(),
+            'connection' => $connectionName !== '' ? $connectionName : 'default',
             'driver' => $driver,
             'world' => [
                 'slug' => $normalizedWorldSlug,

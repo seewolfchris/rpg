@@ -230,10 +230,10 @@ class SceneController extends Controller
         $this->authorize('view', $scene);
 
         $posts = $this->threadPostsPaginator($scene);
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $subscription = SceneSubscription::query()
             ->where('scene_id', $scene->id)
-            ->where('user_id', (int) $user->id)
+            ->where('user_id', $user->id)
             ->first();
         $latestPostId = $this->latestScenePostId($scene);
         $unreadPostsCount = $this->sceneUnreadPostsCount($scene, $subscription, $latestPostId);
@@ -460,9 +460,11 @@ class SceneController extends Controller
      */
     private function previousSceneOptions(Campaign $campaign, ?Scene $excludeScene = null): \Illuminate\Database\Eloquent\Collection
     {
+        $excludeSceneId = $excludeScene instanceof Scene ? $excludeScene->id : null;
+
         /** @var \Illuminate\Database\Eloquent\Collection<int, Scene> $scenes */
         $scenes = $campaign->scenes()
-            ->when($excludeScene instanceof Scene, fn ($query) => $query->whereKeyNot($excludeScene->id))
+            ->when($excludeSceneId !== null, fn ($query) => $query->whereKeyNot($excludeSceneId))
             ->orderBy('position')
             ->orderBy('created_at')
             ->get(['id', 'title', 'position']);

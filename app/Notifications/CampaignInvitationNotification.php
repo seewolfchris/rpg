@@ -165,6 +165,12 @@ class CampaignInvitationNotification extends Notification
             return 'Ein Spielleiter';
         }
 
-        return $this->invitation->inviter->name;
+        $inviter = $this->invitation->inviter;
+
+        if ($inviter instanceof User && $inviter->name !== '') {
+            return $inviter->name;
+        }
+
+        return 'Ein Spielleiter';
     }
 }
