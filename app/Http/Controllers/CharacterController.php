@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Character\BuildCharacterCreateDataAction;
 use App\Actions\Character\BuildCharacterIndexDataAction;
 use App\Actions\Character\BuildCharacterShowDataAction;
 use App\Actions\Character\CreateCharacterAction;
@@ -22,6 +23,7 @@ use Throwable;
 class CharacterController extends Controller
 {
     public function __construct(
+        private readonly BuildCharacterCreateDataAction $buildCharacterCreateDataAction,
         private readonly BuildCharacterIndexDataAction $buildCharacterIndexDataAction,
         private readonly BuildCharacterShowDataAction $buildCharacterShowDataAction,
         private readonly CreateCharacterAction $createCharacterAction,
@@ -56,11 +58,13 @@ class CharacterController extends Controller
 
     public function create(Request $request): View
     {
-        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
         $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
-        $selectedWorld = $worlds->firstWhere('slug', $selectedWorldSlug) ?? $worlds->first();
+        $createData = $this->buildCharacterCreateDataAction->execute($selectedWorldSlug);
 
-        return view('characters.create', compact('worlds', 'selectedWorld'));
+        return view('characters.create', [
+            'worlds' => $createData->worlds,
+            'selectedWorld' => $createData->selectedWorld,
+        ]);
     }
 
     public function store(StoreCharacterRequest $request): RedirectResponse
