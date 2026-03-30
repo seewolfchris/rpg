@@ -26,9 +26,9 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **236 passed, 1159 assertions** (2026-03-30)
+  - `php artisan test --without-tty --do-not-cache-result` -> **238 passed, 1184 assertions** (2026-03-30)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
-  - `node --test tests/js/*.mjs` -> **8 passed** (2026-03-19)
+  - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-30)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-30)
   - `npm run build` -> **gruen** (2026-03-19)
 - Delivery-Basis steht:

@@ -86,8 +86,8 @@ Stand: 2026-03-30
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-30)
-- `php artisan test --without-tty --do-not-cache-result` -> **236 passed, 1159 assertions**
-- `node --test tests/js/*.mjs` -> **8 passed**
+- `php artisan test --without-tty --do-not-cache-result` -> **238 passed, 1184 assertions**
+- `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
 - GitHub Actions (`main`) -> **gruen**
