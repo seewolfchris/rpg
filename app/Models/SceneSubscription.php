@@ -70,11 +70,11 @@ class SceneSubscription extends Model
 
     public function markRead(?int $latestPostId = null): void
     {
-        if (! $latestPostId) {
+        if ($latestPostId === null || $latestPostId <= 0) {
             return;
         }
 
-        $this->last_read_post_id = $latestPostId;
+        $this->last_read_post_id = max(0, $latestPostId);
         $this->last_read_at = Carbon::now();
         $this->save();
     }

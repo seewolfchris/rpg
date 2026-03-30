@@ -41,7 +41,7 @@ class EncyclopediaCategory extends Model
     {
         static::creating(function (EncyclopediaCategory $category): void {
             if (! $category->world_id) {
-                $category->world_id = World::resolveDefaultId();
+                $category->world_id = max(0, World::resolveDefaultId());
             }
         });
     }
