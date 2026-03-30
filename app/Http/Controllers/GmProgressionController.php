@@ -24,7 +24,7 @@ class GmProgressionController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $campaigns = $this->campaignsForUserAndWorld($user, $world);
 
         if (! $user->isGmOrAdmin() && $campaigns->isEmpty()) {
@@ -58,6 +58,7 @@ class GmProgressionController extends Controller
 
     public function awardXp(StoreCharacterProgressionAwardRequest $request, World $world): RedirectResponse
     {
+        $user = $this->authenticatedUser($request);
         $campaignId = (int) $request->validated('campaign_id');
         /** @var Campaign $campaign */
         $campaign = Campaign::query()
@@ -74,7 +75,7 @@ class GmProgressionController extends Controller
             : null;
 
         $result = $this->progressionService->awardXpBatch(
-            actor: $request->user(),
+            actor: $user,
             campaign: $campaign,
             scene: $scene,
             eventMode: (string) $request->validated('event_mode'),

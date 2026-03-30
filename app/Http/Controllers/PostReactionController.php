@@ -16,6 +16,7 @@ class PostReactionController extends Controller
 
     public function store(Request $request, World $world, Post $post): RedirectResponse
     {
+        $user = $this->authenticatedUser($request);
         abort_unless((bool) config('features.wave4.reactions', false), 404);
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
@@ -28,7 +29,7 @@ class PostReactionController extends Controller
 
         PostReaction::query()->firstOrCreate([
             'post_id' => $post->id,
-            'user_id' => (int) $request->user()->id,
+            'user_id' => $user->id,
             'emoji' => (string) $data['emoji'],
         ]);
 
@@ -37,6 +38,7 @@ class PostReactionController extends Controller
 
     public function destroy(Request $request, World $world, Post $post): RedirectResponse
     {
+        $user = $this->authenticatedUser($request);
         abort_unless((bool) config('features.wave4.reactions', false), 404);
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
@@ -49,7 +51,7 @@ class PostReactionController extends Controller
 
         PostReaction::query()
             ->where('post_id', $post->id)
-            ->where('user_id', (int) $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('emoji', (string) $data['emoji'])
             ->delete();
 

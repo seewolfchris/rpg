@@ -11,7 +11,6 @@ use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\User;
 use App\Models\World;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +24,7 @@ class SceneBookmarkController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $this->requireAuthenticatedUser($request);
+        $user = $this->authenticatedUser($request);
         $search = trim((string) $request->query('q', ''));
 
         $bookmarksQuery = SceneBookmark::query()
@@ -83,6 +82,7 @@ class SceneBookmarkController extends Controller
     ): View|RedirectResponse {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         $data = $request->validated();
 
@@ -107,7 +107,7 @@ class SceneBookmarkController extends Controller
         }
 
         SceneBookmark::query()->updateOrCreate([
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'scene_id' => $scene->id,
         ], [
             'post_id' => $postId > 0 ? $postId : null,
@@ -122,7 +122,7 @@ class SceneBookmarkController extends Controller
                 ->first();
 
             if ($post instanceof Post) {
-                $bookmarkCountForNav = $this->visibleBookmarkCountForUser($request->user());
+                $bookmarkCountForNav = $this->visibleBookmarkCountForUser($user);
 
                 return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
             }
@@ -135,9 +135,10 @@ class SceneBookmarkController extends Controller
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         SceneBookmark::query()
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->where('scene_id', $scene->id)
             ->delete();
 
@@ -203,17 +204,6 @@ class SceneBookmarkController extends Controller
             'scene' => $scene,
             'page' => $page,
         ]).'#post-'.$postId;
-    }
-
-    private function requireAuthenticatedUser(Request $request): User
-    {
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            throw new AuthenticationException();
-        }
-
-        return $user;
     }
 
     private function visibleBookmarkCountForUser(?\App\Models\User $user): int

@@ -21,7 +21,7 @@ class SceneSubscriptionController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $status = in_array((string) $request->query('status', 'all'), ['all', 'active', 'muted'], true)
             ? (string) $request->query('status', 'all')
             : 'all';
@@ -63,7 +63,7 @@ class SceneSubscriptionController extends Controller
 
     public function bulkUpdate(BulkUpdateSceneSubscriptionRequest $request, World $world): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $action = (string) $request->validated('bulk_action');
         $status = (string) $request->validated('status', 'all');
         $search = trim((string) $request->validated('q', ''));
@@ -112,16 +112,17 @@ class SceneSubscriptionController extends Controller
             ->with('status', $message.' Betroffene Abos: '.$affected.'.');
     }
 
-    public function subscribe(World $world, Campaign $campaign, Scene $scene): RedirectResponse
+    public function subscribe(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         $latestPostId = $this->latestScenePostId($scene);
 
         SceneSubscription::query()->updateOrCreate([
             'scene_id' => $scene->id,
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
         ], [
             'is_muted' => false,
             'last_read_post_id' => $latestPostId > 0 ? $latestPostId : null,
@@ -131,29 +132,31 @@ class SceneSubscriptionController extends Controller
         return back()->with('status', 'Szene abonniert.');
     }
 
-    public function unsubscribe(World $world, Campaign $campaign, Scene $scene): RedirectResponse
+    public function unsubscribe(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         SceneSubscription::query()
             ->where('scene_id', $scene->id)
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->delete();
 
         return back()->with('status', 'Szenen-Abo entfernt.');
     }
 
-    public function toggleMute(World $world, Campaign $campaign, Scene $scene): RedirectResponse
+    public function toggleMute(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         $latestPostId = $this->latestScenePostId($scene);
 
         $subscription = SceneSubscription::query()->firstOrCreate([
             'scene_id' => $scene->id,
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
         ], [
             'is_muted' => false,
             'last_read_post_id' => $latestPostId > 0 ? $latestPostId : null,
@@ -175,12 +178,13 @@ class SceneSubscriptionController extends Controller
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         $latestPostId = $this->latestScenePostId($scene);
 
         $subscription = SceneSubscription::query()->firstOrCreate([
             'scene_id' => $scene->id,
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
         ], [
             'is_muted' => false,
             'last_read_post_id' => null,
@@ -211,10 +215,11 @@ class SceneSubscriptionController extends Controller
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
+        $user = $this->authenticatedUser($request);
 
         $subscription = SceneSubscription::query()
             ->where('scene_id', $scene->id)
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->first();
 
         if (! $subscription) {
@@ -301,7 +306,7 @@ class SceneSubscriptionController extends Controller
         Campaign $campaign,
         ?SceneSubscription $subscription,
     ): View {
-        $user = $request->user();
+        $user = $this->authenticatedUser($request);
         $posts = Post::query()
             ->where('scene_id', $scene->id)
             ->with(Post::THREAD_PAGE_RELATIONS)

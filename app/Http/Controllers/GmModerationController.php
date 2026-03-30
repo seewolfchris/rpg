@@ -28,8 +28,8 @@ class GmModerationController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $request->user();
-        abort_unless($user && $this->postModerationScope->canAccessWorldQueue($user, $world), 403);
+        $user = $this->authenticatedUser($request);
+        abort_unless($this->postModerationScope->canAccessWorldQueue($user, $world), 403);
 
         $status = in_array((string) $request->query('status', 'pending'), ['all', 'pending', 'approved', 'rejected'], true)
             ? (string) $request->query('status', 'pending')
@@ -72,8 +72,7 @@ class GmModerationController extends Controller
 
     public function bulkUpdate(BulkModerationRequest $request, World $world): View|RedirectResponse
     {
-        $moderator = $request->user();
-        abort_unless($moderator !== null, 403);
+        $moderator = $this->authenticatedUser($request);
 
         $statusFilter = (string) $request->validated('status', 'pending');
         $search = trim((string) $request->validated('q', ''));
@@ -177,6 +176,7 @@ class GmModerationController extends Controller
 
     private function threadFeedFragment(Request $request, World $world, int $sceneId): View
     {
+        $user = $this->authenticatedUser($request);
         $scene = Scene::query()
             ->with('campaign')
             ->findOrFail($sceneId);
@@ -194,11 +194,11 @@ class GmModerationController extends Controller
             ->withQueryString();
         $subscription = SceneSubscription::query()
             ->where('scene_id', $scene->id)
-            ->where('user_id', (int) $request->user()->id)
+            ->where('user_id', $user->id)
             ->first();
         $latestPostId = $this->latestScenePostId($scene);
         $unreadPostsCount = $this->unreadCountForScene($scene, $subscription, $latestPostId);
-        $canModerateScene = $request->user()->isGmOrAdmin() || $campaign->isCoGm($request->user());
+        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
 
         return view('scenes.partials.thread-page', compact(
             'posts',
