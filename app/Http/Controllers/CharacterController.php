@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Character\BuildCharacterCreateDataAction;
+use App\Actions\Character\BuildCharacterEditDataAction;
 use App\Actions\Character\BuildCharacterIndexDataAction;
 use App\Actions\Character\BuildCharacterShowDataAction;
 use App\Actions\Character\CreateCharacterAction;
@@ -24,6 +25,7 @@ class CharacterController extends Controller
 {
     public function __construct(
         private readonly BuildCharacterCreateDataAction $buildCharacterCreateDataAction,
+        private readonly BuildCharacterEditDataAction $buildCharacterEditDataAction,
         private readonly BuildCharacterIndexDataAction $buildCharacterIndexDataAction,
         private readonly BuildCharacterShowDataAction $buildCharacterShowDataAction,
         private readonly CreateCharacterAction $createCharacterAction,
@@ -101,10 +103,12 @@ class CharacterController extends Controller
     public function edit(Character $character): View
     {
         $this->ensureCanManageCharacter($character);
+        $editData = $this->buildCharacterEditDataAction->execute();
 
-        $worlds = World::query()->active()->ordered()->get(['id', 'name', 'slug']);
-
-        return view('characters.edit', compact('character', 'worlds'));
+        return view('characters.edit', [
+            'character' => $character,
+            'worlds' => $editData->worlds,
+        ]);
     }
 
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse

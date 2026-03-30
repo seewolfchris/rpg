@@ -26,11 +26,11 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **249 passed, 1268 assertions** (2026-03-31)
+  - `php artisan test --without-tty --do-not-cache-result` -> **260 passed, 1320 assertions** (2026-03-31)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
-  - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-30)
-  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-30)
-  - `npm run build` -> **gruen** (2026-03-19)
+  - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-31)
+  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-31)
+  - `npm run build` -> **gruen** (2026-03-31)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -91,34 +91,55 @@ Repository-Branch: `main`
   - `app/Services/Character/AvatarService.php` (Stage/Finalize/Cleanup)
   - `app/Exceptions/CharacterCreationFailedException.php` (expliziter Fehlerpfad)
   - `CharacterController::store()` delegiert nur noch an die Action
-- Post-Update-Flow ist in Action ausgelagert:
+- Post-Write-/Moderations-Flow ist in Actions ausgelagert:
   - `app/Actions/Post/UpdatePostAction.php` (Moderationsentscheidung, Revisionssnapshot, Mention-Dispatch)
+  - `app/Actions/Post/ModeratePostAction.php` (Moderationsstatus inkl. Audit-Synchronisierung)
+  - `app/Actions/Post/SetPostPinStateAction.php` (Pin/Unpin-Write-Pfad)
   - `PostController::update()` delegiert auf die Action
-  - Unit-Absicherung: `tests/Unit/Actions/Post/UpdatePostActionTest.php`
-- Scene-ThreadPage-Flow ist teilweise entkoppelt:
+  - `PostController::moderate()`, `PostController::pin()` und `PostController::unpin()` delegieren auf Actions
+  - Unit-Absicherung:
+    - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
+    - `tests/Unit/Actions/Post/ModeratePostActionTest.php`
+    - `tests/Unit/Actions/Post/SetPostPinStateActionTest.php`
+- Scene-Read-Flow ist entkoppelt:
   - `app/Actions/Scene/BuildSceneThreadPageDataAction.php` (Paginator, Subscription-Lookup, Unread-Berechnung, Moderationsflag)
   - `app/Actions/Scene/SceneThreadPageData.php` (typsicheres Ergebnisobjekt fuer das Thread-Fragment)
-  - `SceneController::threadPage()` delegiert auf die Action
-  - Unit-Absicherung: `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
-- Character-Update-Flow ist teilweise entkoppelt:
+  - `app/Actions/Scene/ResolveSceneJumpRedirectAction.php` (Jump-Resolver für `last_read`/`latest`/`first_unread`)
+  - `app/Actions/Scene/BuildSceneShowDataAction.php` (Szenenansicht-Datenaufbereitung inkl. Read-Tracking/Anchor-URLs)
+  - `app/Actions/Scene/SceneShowData.php` (typsicheres Ergebnisobjekt fuer die Szenenansicht)
+  - `SceneController::show()` und `SceneController::threadPage()` delegieren auf Actions
+  - Unit-Absicherung:
+    - `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
+    - `tests/Unit/Actions/Scene/ResolveSceneJumpRedirectActionTest.php`
+    - `tests/Unit/Actions/Scene/BuildSceneShowDataActionTest.php`
+- Character-Update-Flow ist entkoppelt:
   - `app/Actions/Character/UpdateCharacterAction.php` (Transaktion, Inventory-Diff-Logging, Avatar-Stage/Finalize/Cleanup)
   - `CharacterController::update()` delegiert auf die Action
   - Unit-Absicherung: `tests/Unit/Actions/Character/UpdateCharacterActionTest.php`
-- Character-Inline-Update-Flow ist teilweise entkoppelt:
+- Character-Inline-Update-Flow ist entkoppelt:
   - `app/Actions/Character/UpdateCharacterInlineAction.php` (Inline-Validation + Persistenz fuer Schnellbearbeitung)
   - `app/Actions/Character/UpdateCharacterInlineResult.php` (Response-Grenze HTMX-Fragment vs. Redirect)
   - `CharacterController::inlineUpdate()` delegiert auf die Action
   - Unit-Absicherung: `tests/Unit/Actions/Character/UpdateCharacterInlineActionTest.php`
-- Character-Show-Flow ist teilweise entkoppelt:
+- Character-Show-Flow ist entkoppelt:
   - `app/Actions/Character/BuildCharacterShowDataAction.php` (Inventory-Logs, Progression-Events, Progression-State fuer Detailseite)
   - `app/Actions/Character/CharacterShowData.php` (typsicheres Ergebnisobjekt fuer Character-Detailansicht)
   - `CharacterController::show()` delegiert auf die Action und behält Fehler-Mapping bei
   - Unit-Absicherung: `tests/Unit/Actions/Character/BuildCharacterShowDataActionTest.php`
-- Character-Index-Flow ist teilweise entkoppelt:
+- Character-Index-Flow ist entkoppelt:
   - `app/Actions/Character/BuildCharacterIndexDataAction.php` (World-/Status-Filter, Sichtbarkeits-Scope, Paginator-Aufbau)
   - `app/Actions/Character/CharacterIndexData.php` (typsicheres Ergebnisobjekt fuer Character-Listenansicht)
   - `CharacterController::index()` delegiert auf die Action und behält Session-World-Mapping bei
   - Unit-Absicherung: `tests/Unit/Actions/Character/BuildCharacterIndexDataActionTest.php`
+- Character-Create/Edit-Read-Flow ist entkoppelt:
+  - `app/Actions/Character/BuildCharacterCreateDataAction.php`
+  - `app/Actions/Character/CharacterCreateData.php`
+  - `app/Actions/Character/BuildCharacterEditDataAction.php`
+  - `app/Actions/Character/CharacterEditData.php`
+  - `CharacterController::create()` und `CharacterController::edit()` delegieren auf Actions
+  - Unit-Absicherung:
+    - `tests/Unit/Actions/Character/BuildCharacterCreateDataActionTest.php`
+    - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 

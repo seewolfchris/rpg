@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-30
+Stand: 2026-03-31
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -44,8 +44,8 @@ Stand: 2026-03-30
 |---|---|---|
 | A1 | Analyse-Haertung (PHPStan Level 5 -> 8) | Erledigt |
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
-| A2.2 | `SceneController` entkoppeln | In Arbeit (threadPage delegiert auf Action) |
-| A2.3 | `CharacterController` entkoppeln | In Arbeit (index + show + update + inlineUpdate delegieren auf Actions) |
+| A2.2 | `SceneController` entkoppeln | Erledigt |
+| A2.3 | `CharacterController` entkoppeln | Erledigt |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -53,10 +53,21 @@ Stand: 2026-03-30
 - Post-Update-Action:
   - `app/Actions/Post/UpdatePostAction.php`
   - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
+- Post-Moderations-/Pin-Actions:
+  - `app/Actions/Post/ModeratePostAction.php`
+  - `app/Actions/Post/SetPostPinStateAction.php`
+  - `tests/Unit/Actions/Post/ModeratePostActionTest.php`
+  - `tests/Unit/Actions/Post/SetPostPinStateActionTest.php`
 - Scene-ThreadPage-Action:
   - `app/Actions/Scene/BuildSceneThreadPageDataAction.php`
   - `app/Actions/Scene/SceneThreadPageData.php`
   - `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
+- Scene-Show-Actions:
+  - `app/Actions/Scene/BuildSceneShowDataAction.php`
+  - `app/Actions/Scene/ResolveSceneJumpRedirectAction.php`
+  - `app/Actions/Scene/SceneShowData.php`
+  - `tests/Unit/Actions/Scene/BuildSceneShowDataActionTest.php`
+  - `tests/Unit/Actions/Scene/ResolveSceneJumpRedirectActionTest.php`
 - Character-Update-Action:
   - `app/Actions/Character/UpdateCharacterAction.php`
   - `tests/Unit/Actions/Character/UpdateCharacterActionTest.php`
@@ -72,6 +83,10 @@ Stand: 2026-03-30
   - `app/Actions/Character/BuildCharacterIndexDataAction.php`
   - `app/Actions/Character/CharacterIndexData.php`
   - `tests/Unit/Actions/Character/BuildCharacterIndexDataActionTest.php`
+- Character-Edit-Action:
+  - `app/Actions/Character/BuildCharacterEditDataAction.php`
+  - `app/Actions/Character/CharacterEditData.php`
+  - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -105,7 +120,7 @@ Stand: 2026-03-30
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-31)
-- `php artisan test --without-tty --do-not-cache-result` -> **249 passed, 1268 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **260 passed, 1320 assertions**
 - `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**

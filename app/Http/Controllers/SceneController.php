@@ -3,21 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Scene\BuildSceneThreadPageDataAction;
-use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Actions\Scene\BuildSceneShowDataAction;
+use App\Actions\Scene\ResolveSceneJumpRedirectAction;
 use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Domain\Scene\SceneInventoryQuickActionService;
-use App\Domain\Scene\ScenePostAnchorUrlService;
-use App\Domain\Scene\SceneReadTrackingService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Scene\StoreSceneInventoryActionRequest;
 use App\Http\Requests\Scene\StoreSceneRequest;
 use App\Http\Requests\Scene\UpdateSceneRequest;
 use App\Models\Campaign;
-use App\Models\Post;
 use App\Models\Scene;
-use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
-use App\Models\User;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,11 +28,10 @@ class SceneController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
-        private readonly SceneReadTrackingService $sceneReadTrackingService,
-        private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
         private readonly SceneInventoryQuickActionService $sceneInventoryQuickActionService,
-        private readonly CampaignParticipantResolver $campaignParticipantResolver,
+        private readonly BuildSceneShowDataAction $buildSceneShowDataAction,
         private readonly BuildSceneThreadPageDataAction $buildSceneThreadPageDataAction,
+        private readonly ResolveSceneJumpRedirectAction $resolveSceneJumpRedirectAction,
     ) {}
 
     public function create(World $world, Campaign $campaign): View
@@ -92,138 +87,40 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
 
-        $scene->load(['campaign.owner', 'creator', 'previousScene']);
-        $scene->loadCount('subscriptions');
+        $user = $this->authenticatedUser($request);
+        $jump = trim((string) $request->query('jump', ''));
 
-        $userId = (int) auth()->id();
-
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $userId)
-            ->first();
-
-        $lastReadPostIdBeforeOpen = $subscription instanceof SceneSubscription
-            ? (int) $subscription->last_read_post_id
-            : 0;
-        $authenticatedUser = auth()->user();
-
-        if (! $authenticatedUser instanceof User) {
-            abort(403);
-        }
-
-        $jump = (string) $request->query('jump', '');
-        $jumpPostId = match ($jump) {
-            'last_read' => $lastReadPostIdBeforeOpen,
-            'latest' => $this->latestScenePostId($scene),
-            'first_unread' => $subscription ? $this->firstUnreadPostId($scene, $lastReadPostIdBeforeOpen) : 0,
-            default => 0,
-        };
-
-        if ($jumpPostId > 0) {
-            $jumpUrl = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, [$jumpPostId])[$jumpPostId] ?? null;
+        if ($jump !== '') {
+            $jumpUrl = $this->resolveSceneJumpRedirectAction->execute($world, $campaign, $scene, $user, $jump);
 
             if ($jumpUrl !== null) {
                 return redirect()->to($jumpUrl);
             }
         }
 
-        $readTracking = $this->sceneReadTrackingService->synchronize(
-            scene: $scene,
-            subscription: $subscription,
-            lastReadPostIdBeforeOpen: $lastReadPostIdBeforeOpen,
-        );
+        $showData = $this->buildSceneShowDataAction->execute($world, $campaign, $scene, $user);
 
-        $latestPostId = $readTracking->latestPostId;
-        $newPostsSinceLastRead = $readTracking->newPostsSinceLastRead;
-        $hasUnreadPosts = $readTracking->hasUnreadPosts;
-        $firstUnreadPostId = $readTracking->firstUnreadPostId;
-        $unreadPostsCount = 0;
-
-        $posts = $this->threadPostsPaginator($scene);
-
-        $pinnedPosts = Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('is_pinned', true)
-            ->with(['user', 'character', 'pinnedBy'])
-            ->orderByDesc('pinned_at')
-            ->limit(12)
-            ->get();
-        $pinnedPostIds = $pinnedPosts
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-
-        $characters = $authenticatedUser
-            ->characters()
-            ->where('world_id', $campaign->world_id)
-            ->orderBy('name')
-            ->get();
-
-        $canModerateScene = $this->canModerateScene($authenticatedUser, $campaign);
-        $probeCharacters = $canModerateScene
-            ? $this->campaignParticipantResolver->probeCharacters($campaign)
-            : collect();
-
-        $userBookmark = SceneBookmark::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $userId)
-            ->with('post')
-            ->first();
-        $bookmarkPostId = $userBookmark instanceof SceneBookmark
-            ? (int) $userBookmark->post_id
-            : 0;
-
-        $anchorTargetIds = array_values(array_filter(
-            array_merge(
-                $pinnedPostIds,
-                [$lastReadPostIdBeforeOpen, $firstUnreadPostId, $latestPostId, $bookmarkPostId]
-            ),
-            static fn (int $postId): bool => $postId > 0
-        ));
-        $postAnchorUrls = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, $anchorTargetIds);
-
-        $pinnedPostJumpUrls = [];
-        foreach ($pinnedPosts as $pinnedPost) {
-            $pinnedPostJumpUrls[$pinnedPost->id] = $postAnchorUrls[(int) $pinnedPost->id] ?? null;
-        }
-
-        $jumpToLastReadUrl = $lastReadPostIdBeforeOpen > 0
-            ? ($postAnchorUrls[$lastReadPostIdBeforeOpen] ?? null)
-            : null;
-
-        $jumpToFirstUnreadUrl = $firstUnreadPostId > 0
-            ? ($postAnchorUrls[$firstUnreadPostId] ?? null)
-            : null;
-
-        $jumpToLatestPostUrl = $latestPostId > 0
-            ? ($postAnchorUrls[$latestPostId] ?? null)
-            : null;
-
-        $bookmarkJumpUrl = $bookmarkPostId > 0
-            ? ($postAnchorUrls[$bookmarkPostId] ?? null)
-            : null;
-
-        return view('scenes.show', compact(
-            'world',
-            'campaign',
-            'scene',
-            'posts',
-            'pinnedPosts',
-            'pinnedPostJumpUrls',
-            'characters',
-            'probeCharacters',
-            'canModerateScene',
-            'subscription',
-            'latestPostId',
-            'unreadPostsCount',
-            'newPostsSinceLastRead',
-            'hasUnreadPosts',
-            'jumpToLastReadUrl',
-            'jumpToFirstUnreadUrl',
-            'jumpToLatestPostUrl',
-            'userBookmark',
-            'bookmarkJumpUrl',
-        ));
+        return view('scenes.show', [
+            'world' => $world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+            'posts' => $showData->posts,
+            'pinnedPosts' => $showData->pinnedPosts,
+            'pinnedPostJumpUrls' => $showData->pinnedPostJumpUrls,
+            'characters' => $showData->characters,
+            'probeCharacters' => $showData->probeCharacters,
+            'canModerateScene' => $showData->canModerateScene,
+            'subscription' => $showData->subscription,
+            'latestPostId' => $showData->latestPostId,
+            'unreadPostsCount' => $showData->unreadPostsCount,
+            'newPostsSinceLastRead' => $showData->newPostsSinceLastRead,
+            'hasUnreadPosts' => $showData->hasUnreadPosts,
+            'jumpToLastReadUrl' => $showData->jumpToLastReadUrl,
+            'jumpToFirstUnreadUrl' => $showData->jumpToFirstUnreadUrl,
+            'jumpToLatestPostUrl' => $showData->jumpToLatestPostUrl,
+            'userBookmark' => $showData->userBookmark,
+            'bookmarkJumpUrl' => $showData->bookmarkJumpUrl,
+        ]);
     }
 
     public function threadPage(Request $request, World $world, Campaign $campaign, Scene $scene): View
@@ -403,43 +300,6 @@ class SceneController extends Controller
                 'last_read_at' => now(),
             ]);
         }
-    }
-
-    /**
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, Post>
-     */
-    private function threadPostsPaginator(Scene $scene): \Illuminate\Contracts\Pagination\LengthAwarePaginator
-    {
-        return Post::query()
-            ->where('scene_id', $scene->id)
-            ->with(Post::THREAD_PAGE_RELATIONS)
-            ->latestByIdHotpath()
-            ->paginate(Post::THREAD_POSTS_PER_PAGE)
-            ->withQueryString();
-    }
-
-    private function latestScenePostId(Scene $scene): int
-    {
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->max('id');
-    }
-
-    private function firstUnreadPostId(Scene $scene, int $lastReadPostId): int
-    {
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->when(
-                $lastReadPostId > 0,
-                fn ($query) => $query->where('id', '>', $lastReadPostId),
-            )
-            ->orderBy('id')
-            ->value('id');
-    }
-
-    private function canModerateScene(User $user, Campaign $campaign): bool
-    {
-        return $user->isGmOrAdmin() || $campaign->isCoGm($user);
     }
 
     /**

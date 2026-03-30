@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Post\UpdatePostAction;
-use App\Domain\Post\PostModerationService;
+use App\Actions\Post\ModeratePostAction;
+use App\Actions\Post\SetPostPinStateAction;
 use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
 use App\Domain\Post\StorePostService;
@@ -33,8 +34,9 @@ class PostController extends Controller
     public function __construct(
         private readonly PointService $pointService,
         private readonly StorePostService $storePostService,
-        private readonly PostModerationService $postModerationService,
         private readonly UpdatePostAction $updatePostAction,
+        private readonly ModeratePostAction $moderatePostAction,
+        private readonly SetPostPinStateAction $setPostPinStateAction,
     ) {}
 
     public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -182,29 +184,11 @@ class PostController extends Controller
         $this->authorize('moderate', $post);
 
         $status = $request->validated('moderation_status');
-        $moderationNote = $this->normalizeModerationNote((string) $request->validated('moderation_note', ''));
-        $user = $this->authenticatedUser($request);
-        /** @var int<0, max> $moderatorId */
-        $moderatorId = max(0, (int) $user->id);
-        $previousModerationStatus = (string) $post->moderation_status;
-
-        $post->moderation_status = $status;
-
-        if ($status === 'approved') {
-            $post->approved_at = now();
-            $post->approved_by = $moderatorId;
-        } else {
-            $post->approved_at = null;
-            $post->approved_by = null;
-        }
-
-        $post->save();
-
-        $this->postModerationService->synchronize(
+        $this->moderatePostAction->execute(
             post: $post,
-            moderator: $user,
-            previousStatus: $previousModerationStatus,
-            moderationNote: $moderationNote,
+            moderator: $this->authenticatedUser($request),
+            status: $status,
+            moderationNote: (string) $request->validated('moderation_note', ''),
         );
 
         if ($this->expectsThreadItemFragment($request)) {
@@ -219,12 +203,13 @@ class PostController extends Controller
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
-
-        $post->is_pinned = true;
-        $post->pinned_at = now();
         $pinnedById = auth()->id();
-        $post->pinned_by = $pinnedById === null ? null : max(0, (int) $pinnedById);
-        $post->save();
+
+        $this->setPostPinStateAction->execute(
+            post: $post,
+            isPinned: true,
+            pinnedByUserId: $pinnedById === null ? null : (int) $pinnedById,
+        );
 
         if ($request->header('HX-Request') === 'true') {
             return $this->threadItemFragment($post);
@@ -239,10 +224,10 @@ class PostController extends Controller
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
-        $post->is_pinned = false;
-        $post->pinned_at = null;
-        $post->pinned_by = null;
-        $post->save();
+        $this->setPostPinStateAction->execute(
+            post: $post,
+            isPinned: false,
+        );
 
         if ($request->header('HX-Request') === 'true') {
             return $this->threadItemFragment($post);
@@ -299,13 +284,6 @@ class PostController extends Controller
         $campaign = $scene->campaign;
 
         return [$scene, $campaign];
-    }
-
-    private function normalizeModerationNote(string $note): ?string
-    {
-        $normalized = trim($note);
-
-        return $normalized !== '' ? $normalized : null;
     }
 
     private function expectsThreadItemFragment(Request $request): bool

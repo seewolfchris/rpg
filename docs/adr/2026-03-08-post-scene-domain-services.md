@@ -17,11 +17,17 @@ Wir verschieben Domänenlogik in klar getrennte Services und lassen Controller n
 - `App\Domain\Post\PostModerationService`
 - `App\Domain\Post\ScenePostNotificationService`
 - `App\Actions\Post\UpdatePostAction` (Follow-up 2026-03-30, entkoppelt Post-Update-Write-Flow aus dem Controller)
+- `App\Actions\Post\ModeratePostAction` (Follow-up 2026-03-31, entkoppelt Post-Moderations-Write-Flow aus dem Controller)
+- `App\Actions\Post\SetPostPinStateAction` (Follow-up 2026-03-31, entkoppelt Post-Pin/Unpin-Write-Flow aus dem Controller)
 - `App\Actions\Scene\BuildSceneThreadPageDataAction` (Follow-up 2026-03-30, entkoppelt Scene threadPage-Fragmentlogik)
+- `App\Actions\Scene\ResolveSceneJumpRedirectAction` (Follow-up 2026-03-31, entkoppelt Scene Jump-Resolver aus dem Controller)
+- `App\Actions\Scene\BuildSceneShowDataAction` (Follow-up 2026-03-31, entkoppelt Scene-Show-Datenaufbereitung inkl. Read-Tracking/Anchor-URLs)
 - `App\Actions\Character\UpdateCharacterAction` (Follow-up 2026-03-30, entkoppelt Character-Update-Write-Flow aus dem Controller)
 - `App\Actions\Character\UpdateCharacterInlineAction` (Follow-up 2026-03-30, entkoppelt Character-inlineUpdate-Flow inkl. HTMX-Response-Grenze)
 - `App\Actions\Character\BuildCharacterShowDataAction` (Follow-up 2026-03-31, entkoppelt Character-Detaildaten-Aufbereitung aus dem Controller)
 - `App\Actions\Character\BuildCharacterIndexDataAction` (Follow-up 2026-03-31, entkoppelt Character-Listenaufbereitung aus dem Controller)
+- `App\Actions\Character\BuildCharacterCreateDataAction` (Follow-up 2026-03-31, entkoppelt Character-Create-Weltauswahl aus dem Controller)
+- `App\Actions\Character\BuildCharacterEditDataAction` (Follow-up 2026-03-31, entkoppelt Character-Edit-Weltliste aus dem Controller)
 - `App\Domain\Scene\SceneReadTrackingService`
 - `App\Domain\Scene\ScenePostAnchorUrlService`
 - `App\Domain\Scene\SceneInventoryQuickActionService`
