@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\World;
 
+use App\Models\World;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,8 @@ class UpdateWorldRequest extends FormRequest
      */
     public function rules(): array
     {
-        $worldId = $this->route('world')?->getKey();
+        $world = $this->route('world');
+        $worldId = $world instanceof World ? $world->getKey() : null;
 
         return [
             'name' => ['required', 'string', 'max:120'],

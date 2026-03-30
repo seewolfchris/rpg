@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Encyclopedia;
 
+use App\Models\EncyclopediaCategory;
+use App\Models\World;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -23,8 +25,11 @@ class UpdateEncyclopediaCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $categoryId = $this->route('encyclopediaCategory')?->getKey();
-        $worldId = $this->route('world')?->id;
+        $category = $this->route('encyclopediaCategory');
+        $categoryId = $category instanceof EncyclopediaCategory ? $category->getKey() : null;
+
+        $world = $this->route('world');
+        $worldId = $world instanceof World ? $world->id : null;
 
         return [
             'name' => ['required', 'string', 'max:120'],

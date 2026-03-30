@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Encyclopedia;
 
+use App\Models\World;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -23,7 +24,8 @@ class StoreEncyclopediaCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $worldId = $this->route('world')?->id;
+        $world = $this->route('world');
+        $worldId = $world instanceof World ? $world->id : null;
 
         return [
             'name' => ['required', 'string', 'max:120'],

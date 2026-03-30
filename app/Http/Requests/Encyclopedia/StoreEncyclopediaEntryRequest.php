@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Encyclopedia;
 
+use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -32,7 +33,8 @@ class StoreEncyclopediaEntryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $categoryId = $this->route('encyclopediaCategory')?->getKey();
+        $category = $this->route('encyclopediaCategory');
+        $categoryId = $category instanceof EncyclopediaCategory ? $category->getKey() : null;
 
         return [
             'title' => ['required', 'string', 'max:150'],
