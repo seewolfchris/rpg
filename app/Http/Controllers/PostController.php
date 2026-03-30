@@ -373,7 +373,20 @@ class PostController extends Controller
 
     private function canModerateScene(User $user, Scene $scene): bool
     {
-        return $user->isGmOrAdmin() || $scene->campaign->isCoGm($user);
+        if ($user->isGmOrAdmin()) {
+            return true;
+        }
+
+        $campaign = $this->resolveCampaignFromScene($scene);
+
+        return $campaign?->isCoGm($user) ?? false;
+    }
+
+    private function resolveCampaignFromScene(Scene $scene): ?Campaign
+    {
+        $campaign = $scene->campaign;
+
+        return $campaign instanceof Campaign ? $campaign : null;
     }
 
     /**

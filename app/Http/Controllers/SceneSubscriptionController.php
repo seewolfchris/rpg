@@ -281,9 +281,12 @@ class SceneSubscriptionController extends Controller
     {
         return SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
-                ->visibleTo($user)
-                ->where('world_id', (int) $world->id));
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
+                $campaignQuery->whereIn('id', Campaign::query()
+                    ->visibleTo($user)
+                    ->where('world_id', (int) $world->id)
+                    ->select('id'));
+            });
     }
 
     private function threadFeedFragment(

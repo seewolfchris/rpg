@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Character;
+use App\Models\Campaign;
 use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\SceneSubscription;
@@ -51,7 +52,9 @@ class DashboardController extends Controller
             ->groupBy('scene_id');
 
         $unreadSceneCount = (int) SceneSubscription::query()
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo(auth()->user()))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
+                $campaignQuery->whereIn('id', Campaign::query()->visibleTo($user)->select('id'));
+            })
             ->leftJoinSub($latestPostsPerScene, 'latest_posts', function ($join): void {
                 $join->on('scene_subscriptions.scene_id', '=', 'latest_posts.scene_id');
             })
@@ -71,7 +74,9 @@ class DashboardController extends Controller
 
         $hasSceneSubscription = SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
+                $campaignQuery->whereIn('id', Campaign::query()->visibleTo($user)->select('id'));
+            })
             ->exists();
 
         $hasPost = Post::query()

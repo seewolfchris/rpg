@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class World extends Model
 {
+    /** @use HasFactory<\Database\Factories\WorldFactory> */
     use HasFactory;
 
     /**
@@ -39,36 +40,59 @@ class World extends Model
         return 'slug';
     }
 
+    /**
+     * @return HasMany<Campaign, $this>
+     */
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
     }
 
+    /**
+     * @return HasMany<Character, $this>
+     */
     public function characters(): HasMany
     {
         return $this->hasMany(Character::class);
     }
 
+    /**
+     * @return HasMany<EncyclopediaCategory, $this>
+     */
     public function encyclopediaCategories(): HasMany
     {
         return $this->hasMany(EncyclopediaCategory::class);
     }
 
+    /**
+     * @return HasMany<WorldSpecies, $this>
+     */
     public function speciesOptions(): HasMany
     {
         return $this->hasMany(WorldSpecies::class);
     }
 
+    /**
+     * @return HasMany<WorldCalling, $this>
+     */
     public function callingOptions(): HasMany
     {
         return $this->hasMany(WorldCalling::class);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeOrdered(Builder $query): Builder
     {
         return $query

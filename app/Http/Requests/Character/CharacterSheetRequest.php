@@ -335,7 +335,7 @@ abstract class CharacterSheetRequest extends FormRequest
             ];
         }
 
-        return array_values($normalized);
+        return $normalized;
     }
 
     /**
@@ -373,7 +373,7 @@ abstract class CharacterSheetRequest extends FormRequest
             ];
         }
 
-        return array_values($normalized);
+        return $normalized;
     }
 
     protected function normalizeWeaponDamageValue(mixed $value): int|string
@@ -392,8 +392,8 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         if (preg_match('/^(\d+)\s*[wWdD]\s*(\d+)\s*([+-]\s*\d+)?$/', $raw, $matches) === 1) {
-            $count = (int) ($matches[1] ?? 0);
-            $faces = (int) ($matches[2] ?? 0);
+            $count = (int) $matches[1];
+            $faces = (int) $matches[2];
             $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
             $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
 

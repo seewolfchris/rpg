@@ -16,6 +16,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
+use App\Models\User;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,7 +100,15 @@ class SceneController extends Controller
             ->where('user_id', $userId)
             ->first();
 
-        $lastReadPostIdBeforeOpen = (int) ($subscription?->last_read_post_id ?? 0);
+        $lastReadPostIdBeforeOpen = $subscription instanceof SceneSubscription
+            ? (int) $subscription->last_read_post_id
+            : 0;
+        $authenticatedUser = auth()->user();
+
+        if (! $authenticatedUser instanceof User) {
+            abort(403);
+        }
+
         $jump = (string) $request->query('jump', '');
         $jumpPostId = match ($jump) {
             'last_read' => $lastReadPostIdBeforeOpen,
@@ -142,13 +151,13 @@ class SceneController extends Controller
             ->map(static fn ($id): int => (int) $id)
             ->all();
 
-        $characters = auth()->user()
+        $characters = $authenticatedUser
             ->characters()
             ->where('world_id', $campaign->world_id)
             ->orderBy('name')
             ->get();
 
-        $canModerateScene = auth()->user()->isGmOrAdmin() || $scene->campaign->isCoGm(auth()->user());
+        $canModerateScene = $this->canModerateScene($authenticatedUser, $campaign);
         $probeCharacters = $canModerateScene
             ? $this->campaignParticipantResolver->probeCharacters($campaign)
             : collect();
@@ -158,7 +167,9 @@ class SceneController extends Controller
             ->where('user_id', $userId)
             ->with('post')
             ->first();
-        $bookmarkPostId = (int) ($userBookmark?->post_id ?? 0);
+        $bookmarkPostId = $userBookmark instanceof SceneBookmark
+            ? (int) $userBookmark->post_id
+            : 0;
 
         $anchorTargetIds = array_values(array_filter(
             array_merge(
@@ -434,6 +445,11 @@ class SceneController extends Controller
             ->where('scene_id', $scene->id)
             ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
             ->count();
+    }
+
+    private function canModerateScene(User $user, Campaign $campaign): bool
+    {
+        return $user->isGmOrAdmin() || $campaign->isCoGm($user);
     }
 
     /**

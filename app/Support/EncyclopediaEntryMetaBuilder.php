@@ -28,7 +28,7 @@ class EncyclopediaEntryMetaBuilder
         $seenUrls = [];
 
         foreach ($matches as $match) {
-            $url = trim((string) ($match['url'] ?? ''));
+            $url = trim((string) $match['url']);
 
             if ($url === '' || isset($seenUrls[$url])) {
                 continue;
@@ -59,10 +59,14 @@ class EncyclopediaEntryMetaBuilder
         $excerpt = trim((string) ($entry->excerpt ?? ''));
         /** @var EncyclopediaCategory|null $categoryModel */
         $categoryModel = $entry->category;
-        $category = trim((string) ($categoryModel?->name ?? 'Enzyklopädie'));
+        $category = 'Enzyklopädie';
         $worldName = 'C76-RPG';
 
         if ($categoryModel instanceof EncyclopediaCategory) {
+            if (trim($categoryModel->name) !== '') {
+                $category = trim($categoryModel->name);
+            }
+
             /** @var World|null $world */
             $world = $categoryModel->world;
             if ($world instanceof World && trim($world->name) !== '') {
@@ -70,7 +74,11 @@ class EncyclopediaEntryMetaBuilder
             }
         }
 
-        $categoryDirective = match ((string) ($categoryModel->slug ?? '')) {
+        $categorySlug = $categoryModel instanceof EncyclopediaCategory
+            ? (string) $categoryModel->slug
+            : '';
+
+        $categoryDirective = match ($categorySlug) {
             'monster-bestiarium' => 'focus on creature anatomy, scarred hide, predatory stance, field-guide realism',
             'waffen-ruestungen-relikte' => 'focus on material detail, wear marks, smithing history, practical combat look',
             'heldenarchetypen-berufungen' => 'focus on character silhouette, role identity, emotional tension',

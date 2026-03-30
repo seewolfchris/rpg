@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
+use App\Models\Campaign;
 use App\Models\SceneSubscription;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,9 @@ class NotificationController extends Controller
         $unreadCount = $user->unreadNotifications()->count();
         $subscriptions = SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery->visibleTo($user))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
+                $campaignQuery->whereIn('id', Campaign::query()->visibleTo($user)->select('id'));
+            })
             ->with(['scene.campaign.world'])
             ->latest('updated_at')
             ->get();

@@ -21,7 +21,11 @@ class ScenePolicy
      */
     public function view(User $user, Scene $scene): bool
     {
-        $campaign = $scene->campaign;
+        $campaign = $this->resolveCampaign($scene);
+        if (! $campaign instanceof Campaign) {
+            return false;
+        }
+
         $canViewCampaign = $campaign->isVisibleTo($user);
 
         if (! $canViewCampaign) {
@@ -52,9 +56,14 @@ class ScenePolicy
      */
     public function update(User $user, Scene $scene): bool
     {
-        return $scene->campaign->owner_id === $user->id
+        $campaign = $this->resolveCampaign($scene);
+        if (! $campaign instanceof Campaign) {
+            return false;
+        }
+
+        return $campaign->owner_id === $user->id
             || $user->isGmOrAdmin()
-            || $scene->campaign->isCoGm($user);
+            || $campaign->isCoGm($user);
     }
 
     /**
@@ -62,8 +71,20 @@ class ScenePolicy
      */
     public function delete(User $user, Scene $scene): bool
     {
-        return $scene->campaign->owner_id === $user->id
+        $campaign = $this->resolveCampaign($scene);
+        if (! $campaign instanceof Campaign) {
+            return false;
+        }
+
+        return $campaign->owner_id === $user->id
             || $user->isGmOrAdmin()
-            || $scene->campaign->isCoGm($user);
+            || $campaign->isCoGm($user);
+    }
+
+    private function resolveCampaign(Scene $scene): ?Campaign
+    {
+        $campaign = $scene->campaign;
+
+        return $campaign instanceof Campaign ? $campaign : null;
     }
 }

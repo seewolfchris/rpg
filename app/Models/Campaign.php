@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Campaign extends Model
 {
+    /** @use HasFactory<\Database\Factories\CampaignFactory> */
     use HasFactory;
 
     /**
@@ -52,32 +53,51 @@ class Campaign extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<World, $this>
+     */
     public function world(): BelongsTo
     {
         return $this->belongsTo(World::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany<Scene, $this>
+     */
     public function scenes(): HasMany
     {
         return $this->hasMany(Scene::class);
     }
 
+    /**
+     * @return HasMany<CampaignInvitation, $this>
+     */
     public function invitations(): HasMany
     {
         return $this->hasMany(CampaignInvitation::class);
     }
 
+    /**
+     * @return BelongsToMany<User, $this>
+     */
     public function invitedUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'campaign_invitations')
             ->withPivot(['invited_by', 'status', 'role', 'accepted_at', 'responded_at', 'created_at']);
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isGmOrAdmin()) {
@@ -96,6 +116,10 @@ class Campaign extends Model
         });
     }
 
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
     public function scopeForWorld(Builder $query, World|int $world): Builder
     {
         $worldId = $world instanceof World ? (int) $world->id : (int) $world;
@@ -115,11 +139,20 @@ class Campaign extends Model
     public function hasAcceptedInvitation(User $user): bool
     {
         if ($this->relationLoaded('invitations')) {
-            return $this->invitations
-                ->contains(
-                    fn (CampaignInvitation $invitation): bool => $invitation->user_id === $user->id
-                        && $invitation->status === CampaignInvitation::STATUS_ACCEPTED,
-                );
+            foreach ($this->invitations as $invitation) {
+                if (! $invitation instanceof CampaignInvitation) {
+                    continue;
+                }
+
+                if (
+                    $invitation->user_id === $user->id
+                    && $invitation->status === CampaignInvitation::STATUS_ACCEPTED
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         return $this->invitations()
@@ -131,12 +164,21 @@ class Campaign extends Model
     public function hasParticipantRole(User $user, string $role): bool
     {
         if ($this->relationLoaded('invitations')) {
-            return $this->invitations
-                ->contains(
-                    fn (CampaignInvitation $invitation): bool => $invitation->user_id === $user->id
-                        && $invitation->status === CampaignInvitation::STATUS_ACCEPTED
-                        && $invitation->role === $role,
-                );
+            foreach ($this->invitations as $invitation) {
+                if (! $invitation instanceof CampaignInvitation) {
+                    continue;
+                }
+
+                if (
+                    $invitation->user_id === $user->id
+                    && $invitation->status === CampaignInvitation::STATUS_ACCEPTED
+                    && $invitation->role === $role
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         return $this->invitations()

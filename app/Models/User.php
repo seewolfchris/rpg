@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -83,77 +84,122 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * @return HasMany<Character, $this>
+     */
     public function characters(): HasMany
     {
         return $this->hasMany(Character::class);
     }
 
+    /**
+     * @return HasMany<Campaign, $this>
+     */
     public function ownedCampaigns(): HasMany
     {
         return $this->hasMany(Campaign::class, 'owner_id');
     }
 
+    /**
+     * @return HasMany<CampaignInvitation, $this>
+     */
     public function campaignInvitations(): HasMany
     {
         return $this->hasMany(CampaignInvitation::class);
     }
 
+    /**
+     * @return BelongsToMany<Campaign, $this>
+     */
     public function invitedCampaigns(): BelongsToMany
     {
         return $this->belongsToMany(Campaign::class, 'campaign_invitations')
             ->withPivot(['invited_by', 'status', 'role', 'accepted_at', 'responded_at', 'created_at']);
     }
 
+    /**
+     * @return HasMany<Scene, $this>
+     */
     public function createdScenes(): HasMany
     {
         return $this->hasMany(Scene::class, 'created_by');
     }
 
+    /**
+     * @return HasMany<Post, $this>
+     */
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
+    /**
+     * @return HasMany<PostReaction, $this>
+     */
     public function postReactions(): HasMany
     {
         return $this->hasMany(PostReaction::class);
     }
 
+    /**
+     * @return HasMany<PostMention, $this>
+     */
     public function receivedPostMentions(): HasMany
     {
         return $this->hasMany(PostMention::class, 'mentioned_user_id');
     }
 
+    /**
+     * @return HasMany<Post, $this>
+     */
     public function approvedPosts(): HasMany
     {
         return $this->hasMany(Post::class, 'approved_by');
     }
 
+    /**
+     * @return HasMany<PostRevision, $this>
+     */
     public function postRevisions(): HasMany
     {
         return $this->hasMany(PostRevision::class, 'editor_id');
     }
 
+    /**
+     * @return HasMany<PointEvent, $this>
+     */
     public function pointEvents(): HasMany
     {
         return $this->hasMany(PointEvent::class);
     }
 
+    /**
+     * @return HasMany<DiceRoll, $this>
+     */
     public function diceRolls(): HasMany
     {
         return $this->hasMany(DiceRoll::class);
     }
 
+    /**
+     * @return HasMany<SceneSubscription, $this>
+     */
     public function sceneSubscriptions(): HasMany
     {
         return $this->hasMany(SceneSubscription::class);
     }
 
+    /**
+     * @return HasMany<SceneBookmark, $this>
+     */
     public function sceneBookmarks(): HasMany
     {
         return $this->hasMany(SceneBookmark::class);
     }
 
+    /**
+     * @return BelongsToMany<Scene, $this>
+     */
     public function subscribedScenes(): BelongsToMany
     {
         return $this->belongsToMany(Scene::class, 'scene_subscriptions')
@@ -161,7 +207,10 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    public function pushSubscriptionsForWorld(World|int $world): \Illuminate\Database\Eloquent\Relations\MorphMany
+    /**
+     * @return MorphMany<\NotificationChannels\WebPush\PushSubscription, $this>
+     */
+    public function pushSubscriptionsForWorld(World|int $world): MorphMany
     {
         $worldId = $world instanceof World ? (int) $world->id : (int) $world;
 
@@ -194,8 +243,12 @@ class User extends Authenticatable
     public function hasRole(UserRole|string $role): bool
     {
         $roleValue = $role instanceof UserRole ? $role->value : $role;
+        $currentRole = $this->role;
+        $currentRoleValue = $currentRole instanceof UserRole
+            ? $currentRole->value
+            : (is_string($currentRole) ? $currentRole : null);
 
-        return $this->role?->value === $roleValue;
+        return $currentRoleValue === $roleValue;
     }
 
     public function hasAnyRole(UserRole|string ...$roles): bool

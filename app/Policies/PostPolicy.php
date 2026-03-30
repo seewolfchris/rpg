@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -21,8 +22,11 @@ class PostPolicy
      */
     public function view(User $user, Post $post): bool
     {
-        $scene = $post->scene;
-        $campaign = $scene->campaign;
+        $campaign = $this->resolveCampaignFromPost($post);
+        if (! $campaign instanceof Campaign) {
+            return $post->user_id === $user->id
+                || $user->isGmOrAdmin();
+        }
 
         return $campaign->isVisibleTo($user)
             || $post->user_id === $user->id
@@ -34,11 +38,16 @@ class PostPolicy
      */
     public function create(User $user, Scene $scene): bool
     {
-        if ($scene->status !== 'open' && ! $user->isGmOrAdmin() && ! $scene->campaign->isCoGm($user)) {
+        $campaign = $this->resolveCampaignFromScene($scene);
+        if (! $campaign instanceof Campaign) {
             return false;
         }
 
-        return $scene->campaign->isVisibleTo($user);
+        if ($scene->status !== 'open' && ! $user->isGmOrAdmin() && ! $campaign->isCoGm($user)) {
+            return false;
+        }
+
+        return $campaign->isVisibleTo($user);
     }
 
     /**
@@ -46,9 +55,11 @@ class PostPolicy
      */
     public function update(User $user, Post $post): bool
     {
+        $campaign = $this->resolveCampaignFromPost($post);
+
         return $post->user_id === $user->id
             || $user->isGmOrAdmin()
-            || $post->scene->campaign->isCoGm($user);
+            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
     }
 
     /**
@@ -56,13 +67,35 @@ class PostPolicy
      */
     public function delete(User $user, Post $post): bool
     {
+        $campaign = $this->resolveCampaignFromPost($post);
+
         return $post->user_id === $user->id
             || $user->isGmOrAdmin()
-            || $post->scene->campaign->isCoGm($user);
+            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
     }
 
     public function moderate(User $user, Post $post): bool
     {
-        return $user->isGmOrAdmin() || $post->scene->campaign->isCoGm($user);
+        $campaign = $this->resolveCampaignFromPost($post);
+
+        return $user->isGmOrAdmin()
+            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
+    }
+
+    private function resolveCampaignFromPost(Post $post): ?Campaign
+    {
+        $scene = $post->scene;
+        if (! $scene instanceof Scene) {
+            return null;
+        }
+
+        return $this->resolveCampaignFromScene($scene);
+    }
+
+    private function resolveCampaignFromScene(Scene $scene): ?Campaign
+    {
+        $campaign = $scene->campaign;
+
+        return $campaign instanceof Campaign ? $campaign : null;
     }
 }

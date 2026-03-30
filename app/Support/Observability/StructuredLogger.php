@@ -2,6 +2,7 @@
 
 namespace App\Support\Observability;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class StructuredLogger
@@ -24,13 +25,16 @@ class StructuredLogger
 
         if (app()->bound('request')) {
             $request = app('request');
-            $fromAttributes = $request?->attributes?->get('request_id');
-            $fromHeader = $request?->headers?->get('X-Request-Id');
-            $candidate = is_string($fromAttributes) && trim($fromAttributes) !== ''
-                ? trim($fromAttributes)
-                : (is_string($fromHeader) && trim($fromHeader) !== '' ? trim($fromHeader) : null);
 
-            $requestId = $candidate;
+            if ($request instanceof Request) {
+                $fromAttributes = $request->attributes->get('request_id');
+                $fromHeader = $request->headers->get('X-Request-Id');
+                $candidate = is_string($fromAttributes) && trim($fromAttributes) !== ''
+                    ? trim($fromAttributes)
+                    : (is_string($fromHeader) && trim($fromHeader) !== '' ? trim($fromHeader) : null);
+
+                $requestId = $candidate;
+            }
         }
 
         $merged = array_merge([

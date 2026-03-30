@@ -294,14 +294,11 @@ class KnowledgeController extends Controller
         $entry = EncyclopediaEntry::query()
             ->published()
             ->where('slug', $entrySlug)
-            ->whereHas('category', function ($query) use ($categorySlug): void {
-                $query
-                    ->visible()
-                    ->where('slug', $categorySlug);
-            })
-            ->whereHas('category', function ($query) use ($world): void {
-                $query->where('world_id', $world->id);
-            })
+            ->whereIn('encyclopedia_category_id', EncyclopediaCategory::query()
+                ->forWorld($world)
+                ->visible()
+                ->where('slug', $categorySlug)
+                ->select('id'))
             ->with([
                 'category:id,world_id,name,slug,summary',
             ])

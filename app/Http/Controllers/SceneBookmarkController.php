@@ -9,8 +9,11 @@ use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
+use App\Models\User;
 use App\Models\World;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -22,14 +25,17 @@ class SceneBookmarkController extends Controller
 
     public function index(Request $request, World $world): View
     {
-        $user = $request->user();
+        $user = $this->requireAuthenticatedUser($request);
         $search = trim((string) $request->query('q', ''));
 
         $bookmarksQuery = SceneBookmark::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
-                ->visibleTo($user)
-                ->forWorld($world))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
+                $campaignQuery->whereIn('id', Campaign::query()
+                    ->visibleTo($user)
+                    ->forWorld($world)
+                    ->select('id'));
+            })
             ->with(['scene.campaign', 'post'])
             ->latest('updated_at');
 
@@ -46,6 +52,7 @@ class SceneBookmarkController extends Controller
             });
         }
 
+        /** @var LengthAwarePaginator<SceneBookmark> $bookmarks */
         $bookmarks = $bookmarksQuery
             ->paginate(20)
             ->withQueryString();
@@ -57,9 +64,12 @@ class SceneBookmarkController extends Controller
 
         $totalCount = SceneBookmark::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', fn (Builder $campaignQuery) => $campaignQuery
-                ->visibleTo($user)
-                ->forWorld($world))
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
+                $campaignQuery->whereIn('id', Campaign::query()
+                    ->visibleTo($user)
+                    ->forWorld($world)
+                    ->select('id'));
+            })
             ->count();
 
         return view('bookmarks.index', compact('world', 'bookmarks', 'bookmarkJumpUrls', 'search', 'totalCount'));
@@ -145,18 +155,24 @@ class SceneBookmarkController extends Controller
     {
         $scene = $bookmark->scene;
 
-        if (! $scene || ! $scene->campaign) {
+        if (! $scene instanceof Scene) {
             return route('bookmarks.index');
         }
 
-        $world = $scene->campaign->world;
+        $campaign = $scene->campaign;
+
+        if (! $campaign instanceof Campaign) {
+            return route('bookmarks.index');
+        }
+
+        $world = $campaign->world;
 
         $postId = (int) ($bookmark->post_id ?? 0);
 
         if ($postId <= 0) {
             return route('campaigns.scenes.show', [
                 'world' => $world,
-                'campaign' => $scene->campaign,
+                'campaign' => $campaign,
                 'scene' => $scene,
             ]);
         }
@@ -169,7 +185,7 @@ class SceneBookmarkController extends Controller
         if (! $postExistsInScene) {
             return route('campaigns.scenes.show', [
                 'world' => $world,
-                'campaign' => $scene->campaign,
+                'campaign' => $campaign,
                 'scene' => $scene,
             ]);
         }
@@ -183,10 +199,21 @@ class SceneBookmarkController extends Controller
 
         return route('campaigns.scenes.show', [
             'world' => $world,
-            'campaign' => $scene->campaign,
+            'campaign' => $campaign,
             'scene' => $scene,
             'page' => $page,
         ]).'#post-'.$postId;
+    }
+
+    private function requireAuthenticatedUser(Request $request): User
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            throw new AuthenticationException();
+        }
+
+        return $user;
     }
 
     private function visibleBookmarkCountForUser(?\App\Models\User $user): int
