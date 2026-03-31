@@ -22,6 +22,7 @@ const BROWSER_NOTIFICATION_ROOT_SELECTOR = '[data-browser-notifications]';
 const BROWSER_NOTIFICATION_STATUS_SELECTOR = '[data-browser-notifications-status]';
 const BROWSER_NOTIFICATION_ENABLE_SELECTOR = '[data-browser-notifications-enable]';
 const PARALLAX_SCENE_SELECTOR = '[data-parallax-scene]';
+const LOGOUT_FORM_SELECTOR = 'form[data-logout-form]';
 const POST_EDITOR_SELECTOR = 'form[data-post-editor]';
 const POST_PREVIEW_DEBOUNCE_MS = 450;
 const POST_DRAFT_DEBOUNCE_MS = 350;
@@ -72,6 +73,7 @@ const bootApplication = async () => {
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();
     setupServiceWorkerMessageHandling();
+    setupServiceWorkerLogoutCleanup();
     await renderDeadLetterPanel();
     await renderOfflineQueueStatusPanel();
 
@@ -850,16 +852,7 @@ async function warmOfflineReadingCache() {
         return;
     }
 
-    const activeWorker =
-        navigator.serviceWorker.controller ||
-        (await getActiveServiceWorkerRegistration())?.active ||
-        null;
-
-    if (!activeWorker) {
-        return;
-    }
-
-    activeWorker.postMessage({
+    await postMessageToActiveServiceWorker({
         type: 'CACHE_URLS',
         urls: filteredUrls,
     });
@@ -900,4 +893,37 @@ async function getActiveServiceWorkerRegistration() {
     }
 
     return null;
+}
+
+function setupServiceWorkerLogoutCleanup() {
+    document.querySelectorAll(LOGOUT_FORM_SELECTOR).forEach((form) => {
+        if (!(form instanceof HTMLFormElement) || form.dataset.swLogoutCleanupBound === '1') {
+            return;
+        }
+
+        form.dataset.swLogoutCleanupBound = '1';
+
+        form.addEventListener('submit', () => {
+            void postMessageToActiveServiceWorker({
+                type: 'CLEAR_PRIVATE_DATA',
+            });
+        }, { once: true });
+    });
+}
+
+async function postMessageToActiveServiceWorker(message) {
+    if (!('serviceWorker' in navigator)) {
+        return;
+    }
+
+    const activeWorker =
+        navigator.serviceWorker.controller ||
+        (await getActiveServiceWorkerRegistration())?.active ||
+        null;
+
+    if (!activeWorker) {
+        return;
+    }
+
+    activeWorker.postMessage(message);
 }

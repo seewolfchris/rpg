@@ -3,6 +3,7 @@
 namespace App\Http\Requests\WebPush;
 
 use App\Models\World;
+use App\Rules\WebPushEndpointAllowed;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,7 @@ class StoreWebPushSubscriptionRequest extends FormRequest
                 'string',
                 Rule::exists('worlds', 'slug')->where(fn ($query) => $query->where('is_active', true)),
             ],
-            'endpoint' => ['required', 'string', 'url', 'max:500'],
+            'endpoint' => ['required', 'string', 'url:https', 'max:500', new WebPushEndpointAllowed()],
             'public_key' => ['required', 'string', 'max:500'],
             'auth_token' => ['required', 'string', 'max:500'],
             'content_encoding' => ['nullable', 'string', Rule::in(['aesgcm', 'aes128gcm'])],

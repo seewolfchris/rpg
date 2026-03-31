@@ -50,4 +50,21 @@ return [
         'badge' => env('WEBPUSH_BADGE', '/images/icons/icon-96.png'),
     ],
 
+    /**
+     * Allowed push service hosts for subscription endpoints.
+     */
+    'endpoint_allowed_hosts' => array_values(array_filter(
+        array_map(
+            static fn (string $host): string => strtolower(trim($host)),
+            explode(
+                ',',
+                (string) env(
+                    'WEBPUSH_ENDPOINT_ALLOWED_HOSTS',
+                    'fcm.googleapis.com,fcmregistrations.googleapis.com,*.push.services.mozilla.com,web.push.apple.com,*.web.push.apple.com'
+                )
+            )
+        ),
+        static fn (string $host): bool => $host !== ''
+    )),
+
 ];

@@ -31,7 +31,6 @@
         @php($unreadNotificationsCount = (int) ($unreadNotificationsCount ?? 0))
         @php($bookmarkCount = (int) ($bookmarkCount ?? 0))
         @php($pendingCampaignInvitationsCount = (int) ($pendingCampaignInvitationsCount ?? 0))
-        @php($csp = "default-src 'self'; base-uri 'self'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self' blob:")
         @php(
             $htmxConfig = json_encode([
                 'selfRequestsOnly' => true,
@@ -45,7 +44,6 @@
 
         <title>@yield('title', config('app.name', 'C76-RPG'))</title>
         <meta name="description" content="{{ $metaDescription }}">
-        <meta http-equiv="Content-Security-Policy" content="{{ $csp }}">
         <meta name="htmx-config" content='{{ $htmxConfig }}'>
         <meta property="og:site_name" content="{{ $appName }}">
         <meta property="og:title" content="@yield('title', $appName)">
@@ -194,7 +192,7 @@
                                 Admin-Nutzer
                             </a>
                         @endif
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" data-logout-form>
                             @csrf
                             <button
                                 type="submit"

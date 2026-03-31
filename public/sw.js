@@ -95,6 +95,60 @@ function isManagedCacheKey(key) {
     );
 }
 
+function isPrivateManagedCacheKey(key) {
+    return (
+        typeof key === 'string'
+        && (
+            key.startsWith('chroniken-pages-')
+            || key.startsWith('chroniken-content-')
+        )
+    );
+}
+
+async function clearPrivateSessionData() {
+    await Promise.all([
+        clearPrivateCaches(),
+        clearQueueDatabase(),
+    ]);
+
+    activePostSyncPromise = null;
+
+    await notifyClients('PRIVATE_DATA_CLEARED');
+}
+
+async function clearPrivateCaches() {
+    const cacheKeys = await caches.keys();
+    const privateCacheKeys = cacheKeys.filter((cacheKey) => isPrivateManagedCacheKey(cacheKey));
+
+    if (privateCacheKeys.length === 0) {
+        return;
+    }
+
+    await Promise.all(privateCacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+}
+
+async function clearQueueDatabase() {
+    if (typeof indexedDB === 'undefined' || typeof indexedDB.deleteDatabase !== 'function') {
+        return;
+    }
+
+    await new Promise((resolve) => {
+        let request;
+
+        try {
+            request = indexedDB.deleteDatabase(QUEUE_DB_NAME);
+        } catch {
+            resolve(undefined);
+
+            return;
+        }
+
+        request.onsuccess = () => resolve(undefined);
+        request.onerror = () => resolve(undefined);
+        request.onblocked = () => resolve(undefined);
+    });
+}
+
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') {
         return;
@@ -145,6 +199,11 @@ self.addEventListener('message', (event) => {
 
     if (data.type === 'SYNC_POSTS_NOW') {
         event.waitUntil(runQueuedPostsSync());
+        return;
+    }
+
+    if (data.type === 'CLEAR_PRIVATE_DATA') {
+        event.waitUntil(clearPrivateSessionData());
     }
 });
 

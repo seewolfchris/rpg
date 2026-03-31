@@ -72,7 +72,7 @@ class MutatingRoutesRateLimitTest extends TestCase
         for ($attempt = 0; $attempt < 20; $attempt++) {
             $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
                 'world_slug' => $world->slug,
-                'endpoint' => 'https://example.push.local/subscription/rate-limit-'.$attempt,
+                'endpoint' => 'https://fcm.googleapis.com/fcm/send/rate-limit-'.$attempt,
                 'public_key' => 'public-key-'.$attempt,
                 'auth_token' => 'auth-token-'.$attempt,
                 'content_encoding' => 'aes128gcm',
@@ -81,7 +81,7 @@ class MutatingRoutesRateLimitTest extends TestCase
 
         $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
             'world_slug' => $world->slug,
-            'endpoint' => 'https://example.push.local/subscription/rate-limit-blocked',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/rate-limit-blocked',
             'public_key' => 'public-key-blocked',
             'auth_token' => 'auth-token-blocked',
             'content_encoding' => 'aes128gcm',

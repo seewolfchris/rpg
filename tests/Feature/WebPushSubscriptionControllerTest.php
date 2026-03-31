@@ -17,7 +17,7 @@ class WebPushSubscriptionControllerTest extends TestCase
 
         $this->post(route('api.webpush.subscribe'), [
             'world_slug' => $world->slug,
-            'endpoint' => 'https://example.push.local/subscription/abc',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/subscription-abc',
             'public_key' => 'public-key-1',
             'auth_token' => 'auth-token-1',
             'content_encoding' => 'aes128gcm',
@@ -34,7 +34,7 @@ class WebPushSubscriptionControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        $endpoint = 'https://example.push.local/subscription/shared-endpoint';
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/shared-endpoint';
 
         $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
             'world_slug' => $defaultWorld->slug,
@@ -74,7 +74,7 @@ class WebPushSubscriptionControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
-        $endpoint = 'https://example.push.local/subscription/remove-me';
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/remove-me';
 
         $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
             'world_slug' => $world->slug,
@@ -107,10 +107,38 @@ class WebPushSubscriptionControllerTest extends TestCase
 
         $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
             'world_slug' => $inactiveWorld->slug,
-            'endpoint' => 'https://example.push.local/subscription/inactive-world',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/inactive-world',
             'public_key' => 'public-key-1',
             'auth_token' => 'auth-token-1',
             'content_encoding' => 'aes128gcm',
         ])->assertUnprocessable();
+    }
+
+    public function test_non_https_endpoint_is_rejected_for_subscription_updates(): void
+    {
+        $user = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => 'http://fcm.googleapis.com/fcm/send/insecure-endpoint',
+            'public_key' => 'public-key-1',
+            'auth_token' => 'auth-token-1',
+            'content_encoding' => 'aes128gcm',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['endpoint']);
+    }
+
+    public function test_unknown_push_endpoint_host_is_rejected_for_subscription_updates(): void
+    {
+        $user = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => 'https://example.push.local/subscription/blocked-endpoint',
+            'public_key' => 'public-key-1',
+            'auth_token' => 'auth-token-1',
+            'content_encoding' => 'aes128gcm',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['endpoint']);
     }
 }

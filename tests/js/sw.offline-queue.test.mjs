@@ -39,6 +39,45 @@ test('resolveOfflineFallbackUrl keeps default world context for non-world routes
     );
 });
 
+test('clearPrivateSessionData removes private caches and queue database state', async () => {
+    const deletedCacheKeys = [];
+    let deletedDatabaseName = null;
+
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+
+    harness.context.caches.keys = async () => [
+        'chroniken-static-v1',
+        'chroniken-pages-v2',
+        'chroniken-content-v2',
+        'chroniken-pages-v1',
+    ];
+    harness.context.caches.delete = async (cacheKey) => {
+        deletedCacheKeys.push(cacheKey);
+        return true;
+    };
+    harness.context.indexedDB.deleteDatabase = (dbName) => {
+        deletedDatabaseName = dbName;
+        const request = {};
+        queueMicrotask(() => {
+            request.onsuccess?.();
+        });
+
+        return request;
+    };
+
+    await harness.context.clearPrivateSessionData();
+
+    assert.deepEqual(
+        deletedCacheKeys.sort(),
+        ['chroniken-content-v2', 'chroniken-pages-v1', 'chroniken-pages-v2'],
+    );
+    assert.equal(deletedDatabaseName, 'chroniken-pbp');
+    assert.ok(harness.eventTypes().includes('PRIVATE_DATA_CLEARED'));
+});
+
 test('syncQueuedPosts retries a 419 post after re-signing and clears queue', async () => {
     let submitAttempt = 0;
     const submitRequests = [];
