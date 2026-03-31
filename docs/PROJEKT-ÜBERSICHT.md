@@ -143,6 +143,7 @@ Repository-Branch: `main`
 - A3 Invarianten-Matrix fuer Mutationsrouten ist eingeführt:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
   - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) fuer zentrale Write-Routen ab
+  - Konkrete Schreibpfade: Szenen-Create, Post-Moderation, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 

@@ -230,6 +230,354 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
         }
     }
 
+    public function test_gm_progression_award_xp_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $cases = [
+            'owner' => [$owner, 302],
+            'co-gm' => [$coGm, 302],
+            'admin' => [$admin, 302],
+            'player' => [$player, 403],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $character = Character::factory()->create([
+                'user_id' => $player->id,
+                'world_id' => $campaign->world_id,
+                'xp_total' => 0,
+                'level' => 1,
+            ]);
+
+            $response = $this->actingAs($actor)->post(route('gm.progression.award-xp', [
+                'world' => $campaign->world,
+            ]), $this->gmProgressionPayload(
+                campaignId: (int) $campaign->id,
+                sceneId: (int) $scene->id,
+                characterId: (int) $character->id,
+                reason: 'A3 progression role '.$suffix,
+            ));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirect(route('gm.progression.index', [
+                    'world' => $campaign->world,
+                    'campaign_id' => $campaign->id,
+                ]));
+
+                $this->assertDatabaseHas('characters', [
+                    'id' => $character->id,
+                    'xp_total' => 30,
+                ]);
+                $this->assertDatabaseHas('character_progression_events', [
+                    'character_id' => $character->id,
+                    'actor_user_id' => $actor->id,
+                    'campaign_id' => $campaign->id,
+                    'scene_id' => $scene->id,
+                    'xp_delta' => 30,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('characters', [
+                'id' => $character->id,
+                'xp_total' => 0,
+            ]);
+            $this->assertDatabaseMissing('character_progression_events', [
+                'character_id' => $character->id,
+                'actor_user_id' => $actor->id,
+                'campaign_id' => $campaign->id,
+            ]);
+        }
+    }
+
+    public function test_gm_progression_award_xp_ownership_and_world_context_guards(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+        unset($coGm, $admin);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $participantCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+            'xp_total' => 0,
+            'level' => 1,
+        ]);
+        $foreignCharacter = Character::factory()->create([
+            'user_id' => $outsider->id,
+            'world_id' => $campaign->world_id,
+            'xp_total' => 0,
+            'level' => 1,
+        ]);
+
+        $this->actingAs($owner)->post(route('gm.progression.award-xp', [
+            'world' => $campaign->world,
+        ]), $this->gmProgressionPayload(
+            campaignId: (int) $campaign->id,
+            sceneId: (int) $scene->id,
+            characterId: (int) $participantCharacter->id,
+            reason: 'A3 progression ownership ok',
+        ))->assertRedirect(route('gm.progression.index', [
+            'world' => $campaign->world,
+            'campaign_id' => $campaign->id,
+        ]));
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $participantCharacter->id,
+            'xp_total' => 30,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]))
+            ->post(route('gm.progression.award-xp', [
+                'world' => $campaign->world,
+            ]), $this->gmProgressionPayload(
+                campaignId: (int) $campaign->id,
+                sceneId: (int) $scene->id,
+                characterId: (int) $foreignCharacter->id,
+                reason: 'A3 progression ownership reject',
+            ))
+            ->assertRedirect(route('gm.progression.index', ['world' => $campaign->world, 'campaign_id' => $campaign->id]))
+            ->assertSessionHasErrors('awards.0.character_id');
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $foreignCharacter->id,
+            'xp_total' => 0,
+        ]);
+        $this->assertDatabaseHas('characters', [
+            'id' => $participantCharacter->id,
+            'xp_total' => 30,
+        ]);
+
+        $foreignActiveWorld = World::factory()->create([
+            'slug' => 'a3-progression-fremd-aktiv',
+            'is_active' => true,
+            'position' => -330,
+        ]);
+        $inactiveWorld = World::factory()->create([
+            'slug' => 'a3-progression-inaktiv',
+            'is_active' => false,
+            'position' => -340,
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('gm.progression.index', ['world' => $foreignActiveWorld]))
+            ->post(route('gm.progression.award-xp', [
+                'world' => $foreignActiveWorld,
+            ]), $this->gmProgressionPayload(
+                campaignId: (int) $campaign->id,
+                sceneId: (int) $scene->id,
+                characterId: (int) $participantCharacter->id,
+                reason: 'A3 progression wrong world',
+            ))
+            ->assertRedirect(route('gm.progression.index', ['world' => $foreignActiveWorld]))
+            ->assertSessionHasErrors('campaign_id');
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $participantCharacter->id,
+            'xp_total' => 30,
+        ]);
+
+        $this->actingAs($owner)->post(route('gm.progression.award-xp', [
+            'world' => $inactiveWorld,
+        ]), $this->gmProgressionPayload(
+            campaignId: (int) $campaign->id,
+            sceneId: (int) $scene->id,
+            characterId: (int) $participantCharacter->id,
+            reason: 'A3 progression inactive world',
+        ))->assertNotFound();
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $participantCharacter->id,
+            'xp_total' => 30,
+        ]);
+    }
+
+    public function test_scene_inventory_quick_action_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $cases = [
+            'owner' => [$owner, true],
+            'co-gm' => [$coGm, true],
+            'admin' => [$admin, true],
+            'player' => [$player, false],
+            'outsider' => [$outsider, false],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $shouldMutate]) {
+            $character = Character::factory()->create([
+                'user_id' => $player->id,
+                'world_id' => $campaign->world_id,
+                'inventory' => ['Fackel'],
+            ]);
+
+            $response = $this->actingAs($actor)
+                ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+                ->post(route('campaigns.scenes.inventory-quick-action', [
+                    'world' => $campaign->world,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                ]), $this->inventoryQuickActionPayload((int) $character->id, [
+                    'inventory_action_item' => 'Heiltrank '.$suffix,
+                ]));
+
+            $expectedRedirect = route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]);
+
+            $response->assertRedirect(
+                $shouldMutate ? $expectedRedirect.'#inventory-quick-action' : $expectedRedirect
+            );
+
+            $character->refresh();
+            $inventory = is_array($character->inventory) ? $character->inventory : [];
+
+            if ($shouldMutate) {
+                $this->assertCount(2, $inventory);
+                $this->assertSame('Heiltrank '.$suffix, (string) ($inventory[1]['name'] ?? ''));
+                $this->assertSame(2, (int) ($inventory[1]['quantity'] ?? 0));
+                $this->assertDatabaseHas('character_inventory_logs', [
+                    'character_id' => $character->id,
+                    'actor_user_id' => $actor->id,
+                    'source' => 'scene_inventory_quick_action',
+                    'action' => 'add',
+                    'item_name' => 'Heiltrank '.$suffix,
+                    'quantity' => 2,
+                ]);
+
+                continue;
+            }
+
+            $response->assertSessionHasErrors('inventory_action_character_id');
+            $this->assertSame(['Fackel'], $inventory);
+            $this->assertDatabaseMissing('character_inventory_logs', [
+                'character_id' => $character->id,
+                'actor_user_id' => $actor->id,
+                'source' => 'scene_inventory_quick_action',
+                'action' => 'add',
+                'item_name' => 'Heiltrank '.$suffix,
+            ]);
+        }
+    }
+
+    public function test_scene_inventory_quick_action_ownership_and_world_context_guards(): void
+    {
+        [$campaign, $owner, , $player, $outsider] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $participantCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+            'inventory' => ['Fackel'],
+        ]);
+        $nonParticipantCharacter = Character::factory()->create([
+            'user_id' => $outsider->id,
+            'world_id' => $campaign->world_id,
+            'inventory' => ['Dolch'],
+        ]);
+
+        $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), $this->inventoryQuickActionPayload((int) $participantCharacter->id, [
+                'inventory_action_item' => 'Seil',
+            ]))
+            ->assertRedirect(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]).'#inventory-quick-action');
+
+        $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.inventory-quick-action', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), $this->inventoryQuickActionPayload((int) $nonParticipantCharacter->id, [
+                'inventory_action_item' => 'Heiltrank',
+            ]))
+            ->assertRedirect(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertSessionHasErrors('inventory_action_character_id');
+
+        $this->assertSame(['Dolch'], $nonParticipantCharacter->fresh()->inventory);
+
+        $foreignActiveWorld = World::factory()->create([
+            'slug' => 'a3-inventory-fremd-aktiv',
+            'is_active' => true,
+            'position' => -350,
+        ]);
+
+        $this->actingAs($owner)->post(route('campaigns.scenes.inventory-quick-action', [
+            'world' => $foreignActiveWorld,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), $this->inventoryQuickActionPayload((int) $participantCharacter->id, [
+            'inventory_action_item' => 'Fremdwelt',
+        ]))->assertNotFound();
+
+        [$inactiveCampaign, $inactiveOwner, , $inactivePlayer] = $this->seedCampaignRoleMatrix(worldActive: false);
+        $inactiveScene = Scene::factory()->create([
+            'campaign_id' => $inactiveCampaign->id,
+            'created_by' => $inactiveOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $inactiveParticipantCharacter = Character::factory()->create([
+            'user_id' => $inactivePlayer->id,
+            'world_id' => $inactiveCampaign->world_id,
+            'inventory' => ['Fackel'],
+        ]);
+
+        $this->actingAs($inactiveOwner)->post(route('campaigns.scenes.inventory-quick-action', [
+            'world' => $inactiveCampaign->world,
+            'campaign' => $inactiveCampaign,
+            'scene' => $inactiveScene,
+        ]), $this->inventoryQuickActionPayload((int) $inactiveParticipantCharacter->id, [
+            'inventory_action_item' => 'Inaktive Welt',
+        ]))->assertNotFound();
+
+        $this->assertSame(['Fackel'], $inactiveParticipantCharacter->fresh()->inventory);
+    }
+
     /**
      * @return array{Campaign, User, User, User, User, User}
      */
@@ -287,5 +635,42 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
             'position' => 1,
             'allow_ooc' => true,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function gmProgressionPayload(
+        int $campaignId,
+        int $sceneId,
+        int $characterId,
+        string $reason
+    ): array {
+        return [
+            'campaign_id' => $campaignId,
+            'scene_id' => $sceneId,
+            'event_mode' => 'milestone',
+            'reason' => $reason,
+            'awards' => [[
+                'character_id' => $characterId,
+                'xp_delta' => 30,
+            ]],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function inventoryQuickActionPayload(int $characterId, array $overrides = []): array
+    {
+        return array_merge([
+            'inventory_action_character_id' => $characterId,
+            'inventory_action_type' => 'add',
+            'inventory_action_item' => 'Heiltrank',
+            'inventory_action_quantity' => 2,
+            'inventory_action_equipped' => '0',
+            'inventory_action_note' => 'A3 Matrix',
+        ], $overrides);
     }
 }

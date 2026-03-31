@@ -46,7 +46,7 @@ Stand: 2026-03-31
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
 | A2.2 | `SceneController` entkoppeln | Erledigt |
 | A2.3 | `CharacterController` entkoppeln | Erledigt |
-| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | In Arbeit (Mutations-Matrix als Feature-Test eingeführt) |
+| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | In Arbeit (Mutations-Matrix inkl. GM-Progression und Scene-Inventory-Quick-Action erweitert) |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -90,6 +90,7 @@ Stand: 2026-03-31
   - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - A3 Invarianten-Matrix:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
+  - Abdeckung: Szenen-Create, Post-Moderation, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -123,7 +124,7 @@ Stand: 2026-03-31
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-31)
-- `php artisan test --without-tty --do-not-cache-result` -> **264 passed, 1361 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **268 passed, 1435 assertions**
 - `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
