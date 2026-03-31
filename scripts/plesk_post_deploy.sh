@@ -3,6 +3,8 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
+echo "=== PLESK POST-DEPLOY START $(date '+%Y-%m-%d %H:%M:%S') ==="
+trap 'echo "=== PLESK POST-DEPLOY FAILED WITH CODE $? ==="' ERR
 
 if [[ ! -f .env ]]; then
   echo "ERROR: .env fehlt im Projektordner ($PROJECT_ROOT)."
@@ -23,7 +25,7 @@ fi
 PHP_BIN="${PHP_BIN:-php}"
 
 if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'; then
-  echo "ERROR: Falsche PHP-CLI Version ($("$PHP_BIN" -r 'echo PHP_VERSION;')). Benoetigt >= 8.5."
+  echo "ERROR: Falsche PHP-CLI Version ($("$PHP_BIN" -r 'echo PHP_VERSION;')). Benötigt >= 8.5."
   echo "Setze in Plesk/CLI PHP 8.5+ oder exportiere PHP_BIN=/opt/plesk/php/8.5/bin/php."
   exit 1
 fi
@@ -55,22 +57,22 @@ fi
 
 echo "[2/9] Smoke-Test: perf:posts-latest-by-id-benchmark Command..."
 if "$PHP_BIN" artisan list --no-ansi | grep -q "perf:posts-latest-by-id-benchmark"; then
-    if "$PHP_BIN" artisan perf:posts-latest-by-id-benchmark --help > /dev/null 2>&1; then
-        echo "[deploy] ✅ perf:posts-latest-by-id-benchmark Command ist registriert und ausführbar"
-    else
-        echo "[deploy] ❌ CRITICAL: Command existiert in 'list', kann aber --help nicht ausführen!"
-        exit 1
-    fi
-else
-    echo "[deploy] ❌ CRITICAL: perf:posts-latest-by-id-benchmark Command fehlt komplett nach Deploy!"
-    echo "[deploy]     → Command-Klasse / Autoloader / ServiceProvider nicht geladen?"
+  if "$PHP_BIN" artisan perf:posts-latest-by-id-benchmark --help > /dev/null 2>&1; then
+    echo "[deploy] ✅ perf:posts-latest-by-id-benchmark Command ist registriert und ausführbar"
+  else
+    echo "[deploy] ❌ CRITICAL: Command existiert in 'list', kann aber --help nicht ausführen!"
     exit 1
+  fi
+else
+  echo "[deploy] ❌ CRITICAL: perf:posts-latest-by-id-benchmark Command fehlt komplett nach Deploy!"
+  echo "[deploy]     → Command-Klasse / Autoloader / ServiceProvider nicht geladen?"
+  exit 1
 fi
 
 echo "[3/9] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
 
-echo "[4/9] Frontend-Build pruefen..."
+echo "[4/9] Frontend-Build prüfen..."
 if [[ ! -f public/build/manifest.json ]]; then
   echo "ERROR: Frontend-Build fehlt (public/build/manifest.json)."
   echo "Bitte vor dem Deploy lokal 'npm run build' ausfuehren und Build-Dateien committen."
