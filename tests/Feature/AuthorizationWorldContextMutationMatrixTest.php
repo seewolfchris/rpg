@@ -1085,6 +1085,524 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
         ]);
     }
 
+    public function test_posts_update_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $cases = [
+            'owner' => [$owner, 302],
+            'co-gm' => [$coGm, 302],
+            'admin' => [$admin, 302],
+            'author-player' => [$player, 302],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $post = Post::factory()->create([
+                'scene_id' => $scene->id,
+                'user_id' => $player->id,
+                'post_type' => 'ooc',
+                'content_format' => 'plain',
+                'content' => 'A3 Post update baseline '.$suffix,
+                'moderation_status' => 'pending',
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+
+            $updatedContent = 'A3 Post update changed '.$suffix;
+
+            $response = $this->actingAs($actor)->patch(route('posts.update', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]), $this->postUpdatePayload($updatedContent));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirect(route('campaigns.scenes.show', [
+                    'world' => $campaign->world,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                ]).'#post-'.$post->id);
+                $this->assertDatabaseHas('posts', [
+                    'id' => $post->id,
+                    'content' => $updatedContent,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('posts', [
+                'id' => $post->id,
+                'content' => 'A3 Post update baseline '.$suffix,
+            ]);
+        }
+    }
+
+    public function test_posts_update_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
+    {
+        [$campaign, $owner, $coGm, $player] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $foreignOwner = User::factory()->gm()->create();
+
+        $sameWorldForeignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $campaign->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $sameWorldForeignScene = Scene::factory()->create([
+            'campaign_id' => $sameWorldForeignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $sameWorldForeignPost = Post::factory()->create([
+            'scene_id' => $sameWorldForeignScene->id,
+            'user_id' => $player->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'A3 CoGM same world baseline',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $sameWorldForeignPost,
+        ]), $this->postUpdatePayload('A3 blocked same world'))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $sameWorldForeignPost->id,
+            'content' => 'A3 CoGM same world baseline',
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-post-update-foreign-world',
+            'is_active' => true,
+            'position' => -390,
+        ]);
+        $foreignWorldCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $foreignWorld->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignWorldScene = Scene::factory()->create([
+            'campaign_id' => $foreignWorldCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $foreignWorldPost = Post::factory()->create([
+            'scene_id' => $foreignWorldScene->id,
+            'user_id' => $player->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'A3 CoGM foreign world baseline',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)->patch(route('posts.update', [
+            'world' => $foreignWorld,
+            'post' => $foreignWorldPost,
+        ]), $this->postUpdatePayload('A3 blocked foreign world'))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $foreignWorldPost->id,
+            'content' => 'A3 CoGM foreign world baseline',
+        ]);
+
+        unset($owner);
+    }
+
+    public function test_posts_destroy_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $cases = [
+            'owner' => [$owner, 302],
+            'co-gm' => [$coGm, 302],
+            'admin' => [$admin, 302],
+            'author-player' => [$player, 302],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $post = Post::factory()->create([
+                'scene_id' => $scene->id,
+                'user_id' => $player->id,
+                'post_type' => 'ooc',
+                'content_format' => 'plain',
+                'content' => 'A3 Post destroy baseline '.$suffix,
+                'moderation_status' => 'pending',
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+
+            $response = $this->actingAs($actor)->delete(route('posts.destroy', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirect(route('campaigns.scenes.show', [
+                    'world' => $campaign->world,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                ]));
+                $this->assertDatabaseMissing('posts', [
+                    'id' => $post->id,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('posts', [
+                'id' => $post->id,
+                'content' => 'A3 Post destroy baseline '.$suffix,
+            ]);
+        }
+    }
+
+    public function test_posts_destroy_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
+    {
+        [$campaign, , $coGm, $player] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $foreignOwner = User::factory()->gm()->create();
+
+        $sameWorldForeignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $campaign->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $sameWorldForeignScene = Scene::factory()->create([
+            'campaign_id' => $sameWorldForeignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $sameWorldForeignPost = Post::factory()->create([
+            'scene_id' => $sameWorldForeignScene->id,
+            'user_id' => $player->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'A3 CoGM destroy same world',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)->delete(route('posts.destroy', [
+            'world' => $campaign->world,
+            'post' => $sameWorldForeignPost,
+        ]))->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $sameWorldForeignPost->id,
+            'content' => 'A3 CoGM destroy same world',
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-post-destroy-foreign-world',
+            'is_active' => true,
+            'position' => -391,
+        ]);
+        $foreignWorldCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $foreignWorld->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignWorldScene = Scene::factory()->create([
+            'campaign_id' => $foreignWorldCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $foreignWorldPost = Post::factory()->create([
+            'scene_id' => $foreignWorldScene->id,
+            'user_id' => $player->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'A3 CoGM destroy foreign world',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)->delete(route('posts.destroy', [
+            'world' => $foreignWorld,
+            'post' => $foreignWorldPost,
+        ]))->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $foreignWorldPost->id,
+            'content' => 'A3 CoGM destroy foreign world',
+        ]);
+    }
+
+    public function test_scenes_update_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $cases = [
+            'owner' => [$owner, 302],
+            'co-gm' => [$coGm, 302],
+            'admin' => [$admin, 302],
+            'player' => [$player, 403],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $scene = Scene::factory()->create([
+                'campaign_id' => $campaign->id,
+                'created_by' => $owner->id,
+                'title' => 'A3 Scene Update Baseline '.$suffix,
+                'slug' => 'a3-scene-update-base-'.$suffix,
+                'status' => 'open',
+                'allow_ooc' => true,
+                'mood' => 'neutral',
+            ]);
+
+            $updatedSlug = 'a3-scene-update-'.$suffix;
+            $updatedTitle = 'A3 Szene Update '.$suffix;
+
+            $response = $this->actingAs($actor)->patch(route('campaigns.scenes.update', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), $this->sceneUpdatePayload($updatedSlug, $updatedTitle));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirect(route('campaigns.scenes.show', [
+                    'world' => $campaign->world,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                ]));
+                $this->assertDatabaseHas('scenes', [
+                    'id' => $scene->id,
+                    'slug' => $updatedSlug,
+                    'title' => $updatedTitle,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('scenes', [
+                'id' => $scene->id,
+                'slug' => 'a3-scene-update-base-'.$suffix,
+                'title' => 'A3 Scene Update Baseline '.$suffix,
+            ]);
+        }
+    }
+
+    public function test_scenes_update_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
+    {
+        [$campaign, , $coGm] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $foreignOwner = User::factory()->gm()->create();
+
+        $sameWorldForeignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $campaign->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $sameWorldForeignScene = Scene::factory()->create([
+            'campaign_id' => $sameWorldForeignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'title' => 'A3 CoGM Same World Scene',
+            'slug' => 'a3-cogm-same-world-scene',
+            'status' => 'open',
+            'allow_ooc' => true,
+            'mood' => 'neutral',
+        ]);
+
+        $this->actingAs($coGm)->patch(route('campaigns.scenes.update', [
+            'world' => $campaign->world,
+            'campaign' => $sameWorldForeignCampaign,
+            'scene' => $sameWorldForeignScene,
+        ]), $this->sceneUpdatePayload(
+            slug: 'a3-cogm-same-world-scene-blocked',
+            title: 'A3 CoGM same world blocked',
+        ))->assertForbidden();
+
+        $this->assertDatabaseHas('scenes', [
+            'id' => $sameWorldForeignScene->id,
+            'slug' => 'a3-cogm-same-world-scene',
+            'title' => 'A3 CoGM Same World Scene',
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-scene-update-foreign-world',
+            'is_active' => true,
+            'position' => -392,
+        ]);
+        $foreignWorldCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $foreignWorld->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignWorldScene = Scene::factory()->create([
+            'campaign_id' => $foreignWorldCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'title' => 'A3 CoGM Foreign World Scene',
+            'slug' => 'a3-cogm-foreign-world-scene',
+            'status' => 'open',
+            'allow_ooc' => true,
+            'mood' => 'neutral',
+        ]);
+
+        $this->actingAs($coGm)->patch(route('campaigns.scenes.update', [
+            'world' => $foreignWorld,
+            'campaign' => $foreignWorldCampaign,
+            'scene' => $foreignWorldScene,
+        ]), $this->sceneUpdatePayload(
+            slug: 'a3-cogm-foreign-world-scene-blocked',
+            title: 'A3 CoGM foreign world blocked',
+        ))->assertForbidden();
+
+        $this->assertDatabaseHas('scenes', [
+            'id' => $foreignWorldScene->id,
+            'slug' => 'a3-cogm-foreign-world-scene',
+            'title' => 'A3 CoGM Foreign World Scene',
+        ]);
+    }
+
+    public function test_scenes_destroy_role_matrix_for_active_world(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $cases = [
+            'owner' => [$owner, 302],
+            'co-gm' => [$coGm, 302],
+            'admin' => [$admin, 302],
+            'player' => [$player, 403],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $scene = Scene::factory()->create([
+                'campaign_id' => $campaign->id,
+                'created_by' => $owner->id,
+                'title' => 'A3 Scene Destroy '.$suffix,
+                'slug' => 'a3-scene-destroy-'.$suffix,
+                'status' => 'open',
+                'allow_ooc' => true,
+                'mood' => 'neutral',
+            ]);
+
+            $response = $this->actingAs($actor)->delete(route('campaigns.scenes.destroy', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirect(route('campaigns.show', [
+                    'world' => $campaign->world,
+                    'campaign' => $campaign,
+                ]));
+                $this->assertDatabaseMissing('scenes', [
+                    'id' => $scene->id,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('scenes', [
+                'id' => $scene->id,
+                'slug' => 'a3-scene-destroy-'.$suffix,
+            ]);
+        }
+    }
+
+    public function test_scenes_destroy_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
+    {
+        [$campaign, , $coGm] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $foreignOwner = User::factory()->gm()->create();
+
+        $sameWorldForeignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $campaign->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $sameWorldForeignScene = Scene::factory()->create([
+            'campaign_id' => $sameWorldForeignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'title' => 'A3 CoGM Destroy Same World',
+            'slug' => 'a3-cogm-destroy-same-world',
+            'status' => 'open',
+            'allow_ooc' => true,
+            'mood' => 'neutral',
+        ]);
+
+        $this->actingAs($coGm)->delete(route('campaigns.scenes.destroy', [
+            'world' => $campaign->world,
+            'campaign' => $sameWorldForeignCampaign,
+            'scene' => $sameWorldForeignScene,
+        ]))->assertForbidden();
+
+        $this->assertDatabaseHas('scenes', [
+            'id' => $sameWorldForeignScene->id,
+            'slug' => 'a3-cogm-destroy-same-world',
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-scene-destroy-foreign-world',
+            'is_active' => true,
+            'position' => -393,
+        ]);
+        $foreignWorldCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $foreignWorld->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignWorldScene = Scene::factory()->create([
+            'campaign_id' => $foreignWorldCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'title' => 'A3 CoGM Destroy Foreign World',
+            'slug' => 'a3-cogm-destroy-foreign-world',
+            'status' => 'open',
+            'allow_ooc' => true,
+            'mood' => 'neutral',
+        ]);
+
+        $this->actingAs($coGm)->delete(route('campaigns.scenes.destroy', [
+            'world' => $foreignWorld,
+            'campaign' => $foreignWorldCampaign,
+            'scene' => $foreignWorldScene,
+        ]))->assertForbidden();
+
+        $this->assertDatabaseHas('scenes', [
+            'id' => $foreignWorldScene->id,
+            'slug' => 'a3-cogm-destroy-foreign-world',
+        ]);
+    }
+
     /**
      * @return array{Campaign, User, User, User, User, User}
      */
@@ -1216,6 +1734,35 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
         return [
             'email' => $email,
             'role' => $role,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function postUpdatePayload(string $content): array
+    {
+        return [
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => $content,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sceneUpdatePayload(string $slug, string $title): array
+    {
+        return [
+            'title' => $title,
+            'slug' => $slug,
+            'summary' => 'A3 Matrix Scene Update',
+            'description' => 'A3 Matrix Scene Update Description',
+            'status' => 'open',
+            'mood' => 'neutral',
+            'position' => 2,
+            'allow_ooc' => true,
         ];
     }
 }
