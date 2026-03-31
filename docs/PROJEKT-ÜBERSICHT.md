@@ -26,7 +26,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.25-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **260 passed, 1320 assertions** (2026-03-31)
+  - `php artisan test --without-tty --do-not-cache-result` -> **264 passed, 1361 assertions** (2026-03-31)
   - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
   - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-31)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-31)
@@ -140,6 +140,9 @@ Repository-Branch: `main`
   - Unit-Absicherung:
     - `tests/Unit/Actions/Character/BuildCharacterCreateDataActionTest.php`
     - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
+- A3 Invarianten-Matrix fuer Mutationsrouten ist eingeführt:
+  - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
+  - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) fuer zentrale Write-Routen ab
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 
