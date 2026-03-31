@@ -46,24 +46,38 @@ fi
 echo "Using PHP binary: $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 echo "Using Composer: $COMPOSER_PATH"
 
-echo "[1/7] Composer dependencies installieren (production)..."
+echo "[1/9] Composer dependencies installieren (production)..."
 if [[ "$COMPOSER_PATH" == *.phar ]] || [[ "$COMPOSER_PATH" == "$COMPOSER_PHAR_DEFAULT" ]]; then
   "$PHP_BIN" "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 else
   "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 fi
 
-echo "[2/8] Dev-Hotfile entfernen (falls vorhanden)..."
+echo "[2/9] Smoke-Test: perf:posts-latest-by-id-benchmark Command..."
+if "$PHP_BIN" artisan list --no-ansi | grep -q "perf:posts-latest-by-id-benchmark"; then
+    if "$PHP_BIN" artisan perf:posts-latest-by-id-benchmark --help > /dev/null 2>&1; then
+        echo "[deploy] ✅ perf:posts-latest-by-id-benchmark Command ist registriert und ausführbar"
+    else
+        echo "[deploy] ❌ CRITICAL: Command existiert in 'list', kann aber --help nicht ausführen!"
+        exit 1
+    fi
+else
+    echo "[deploy] ❌ CRITICAL: perf:posts-latest-by-id-benchmark Command fehlt komplett nach Deploy!"
+    echo "[deploy]     → Command-Klasse / Autoloader / ServiceProvider nicht geladen?"
+    exit 1
+fi
+
+echo "[3/9] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
 
-echo "[3/8] Frontend-Build pruefen..."
+echo "[4/9] Frontend-Build pruefen..."
 if [[ ! -f public/build/manifest.json ]]; then
   echo "ERROR: Frontend-Build fehlt (public/build/manifest.json)."
   echo "Bitte vor dem Deploy lokal 'npm run build' ausfuehren und Build-Dateien committen."
   exit 1
 fi
 
-echo "[4/8] APP_KEY prüfen..."
+echo "[5/9] APP_KEY prüfen..."
 if ! grep -Eq '^APP_KEY=' .env; then
   echo "APP_KEY=" >> .env
 fi
@@ -71,16 +85,16 @@ if ! grep -Eq '^APP_KEY=base64:' .env; then
   "$PHP_BIN" artisan key:generate --force --no-interaction
 fi
 
-echo "[5/8] Datenbank migrieren..."
+echo "[6/9] Datenbank migrieren..."
 "$PHP_BIN" artisan migrate --force --no-interaction
 
-echo "[6/8] Storage-Link sicherstellen..."
+echo "[7/9] Storage-Link sicherstellen..."
 "$PHP_BIN" artisan storage:link --no-interaction || true
 
-echo "[7/8] Caches bereinigen..."
+echo "[8/9] Caches bereinigen..."
 "$PHP_BIN" artisan optimize:clear --no-interaction
 
-echo "[8/8] Performance-Caches aufbauen..."
+echo "[9/9] Performance-Caches aufbauen..."
 "$PHP_BIN" artisan config:cache --no-interaction
 "$PHP_BIN" artisan route:cache --no-interaction
 "$PHP_BIN" artisan view:cache --no-interaction
