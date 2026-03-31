@@ -46,7 +46,7 @@ Stand: 2026-03-31
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
 | A2.2 | `SceneController` entkoppeln | Erledigt |
 | A2.3 | `CharacterController` entkoppeln | Erledigt |
-| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | In Arbeit (Mutations-Matrix um Campaign-Write-Pfade, Post-Store und HTMX-Moderation/Pin erweitert) |
+| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | Erledigt (inkl. HTMX-Pfade + dediziertem Invarianten-Report) |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -90,8 +90,10 @@ Stand: 2026-03-31
   - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - A3 Invarianten-Matrix:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
-  - Abdeckung: Campaign-Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
+  - Abdeckung: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
   - HTMX-Response-Grenzen explizit abgesichert fuer `posts.moderate` sowie `posts.pin/unpin` (Fragment vs. Redirect)
+  - HTMX-Response-Grenzen explizit abgesichert fuer `gm.moderation.bulk-update` (Fragment vs. Redirect)
+  - Route-basierter Abschlussreport: `docs/A3-INVARIANTEN-REPORT.md`
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`

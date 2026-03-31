@@ -1897,6 +1897,108 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
         ]);
     }
 
+    public function test_campaigns_store_role_matrix_and_world_guards(): void
+    {
+        [, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $foreignGm = User::factory()->gm()->create();
+        $world = World::factory()->create([
+            'slug' => 'a3-campaign-store-aktiv',
+            'is_active' => true,
+            'position' => -405,
+        ]);
+
+        $cases = [
+            'owner-gm' => [$owner, 302],
+            'foreign-gm' => [$foreignGm, 302],
+            'admin' => [$admin, 302],
+            'co-gm' => [$coGm, 403],
+            'player' => [$player, 403],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $slug = 'a3-campaign-store-'.$suffix;
+            $title = 'A3 Campaign Store '.$suffix;
+
+            $response = $this->actingAs($actor)->post(route('campaigns.store', [
+                'world' => $world,
+            ]), $this->campaignStorePayload($slug, $title));
+
+            if ($expectedStatus === 302) {
+                $response->assertRedirectContains('/campaigns/');
+                $this->assertDatabaseHas('campaigns', [
+                    'slug' => $slug,
+                    'title' => $title,
+                    'owner_id' => $actor->id,
+                    'world_id' => $world->id,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseMissing('campaigns', [
+                'slug' => $slug,
+                'world_id' => $world->id,
+            ]);
+        }
+
+        $inactiveWorld = World::factory()->create([
+            'slug' => 'a3-campaign-store-inaktiv',
+            'is_active' => false,
+            'position' => -406,
+        ]);
+
+        $this->actingAs($owner)->post(route('campaigns.store', [
+            'world' => $inactiveWorld,
+        ]), $this->campaignStorePayload(
+            slug: 'a3-campaign-store-inaktiv-blocked',
+            title: 'A3 Campaign Store Inactive Blocked',
+        ))->assertNotFound();
+
+        $this->assertDatabaseMissing('campaigns', [
+            'slug' => 'a3-campaign-store-inaktiv-blocked',
+            'world_id' => $inactiveWorld->id,
+        ]);
+    }
+
+    public function test_campaigns_store_co_gm_negative_cases_same_world_and_foreign_world(): void
+    {
+        [$campaign, , $coGm] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $sameWorldSlug = 'a3-cogm-campaign-store-same-world';
+        $this->actingAs($coGm)->post(route('campaigns.store', [
+            'world' => $campaign->world,
+        ]), $this->campaignStorePayload(
+            slug: $sameWorldSlug,
+            title: 'A3 CoGM Campaign Store Same World',
+        ))->assertForbidden();
+
+        $this->assertDatabaseMissing('campaigns', [
+            'slug' => $sameWorldSlug,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-campaign-store-foreign-world',
+            'is_active' => true,
+            'position' => -407,
+        ]);
+        $foreignWorldSlug = 'a3-cogm-campaign-store-foreign-world';
+
+        $this->actingAs($coGm)->post(route('campaigns.store', [
+            'world' => $foreignWorld,
+        ]), $this->campaignStorePayload(
+            slug: $foreignWorldSlug,
+            title: 'A3 CoGM Campaign Store Foreign World',
+        ))->assertForbidden();
+
+        $this->assertDatabaseMissing('campaigns', [
+            'slug' => $foreignWorldSlug,
+            'world_id' => $foreignWorld->id,
+        ]);
+    }
+
     public function test_posts_store_role_matrix_and_world_guards(): void
     {
         [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
@@ -2043,6 +2145,234 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
             'scene_id' => $foreignWorldScene->id,
             'content' => $foreignWorldContent,
         ]);
+    }
+
+    public function test_gm_moderation_bulk_update_hx_role_matrix_and_response_boundaries(): void
+    {
+        [$campaign, $owner, $coGm, $player, $outsider, $admin] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $cases = [
+            'owner' => [$owner, 200],
+            'co-gm' => [$coGm, 200],
+            'admin' => [$admin, 200],
+            'player' => [$player, 403],
+            'outsider' => [$outsider, 403],
+        ];
+
+        foreach ($cases as $suffix => [$actor, $expectedStatus]) {
+            $post = Post::factory()->create([
+                'scene_id' => $scene->id,
+                'user_id' => $player->id,
+                'content' => 'A3 HX Bulk Moderation '.$suffix,
+                'moderation_status' => 'pending',
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+
+            $response = $this->actingAs($actor)
+                ->withHeaders([
+                    'HX-Request' => 'true',
+                    'HX-Target' => 'thread-page',
+                ])
+                ->patch(route('gm.moderation.bulk-update', [
+                    'world' => $campaign->world,
+                ]), $this->gmBulkModerationPayload(
+                    moderationStatus: 'approved',
+                    postIds: [(int) $post->id],
+                    sceneId: (int) $scene->id,
+                ));
+
+            if ($expectedStatus === 200) {
+                $response->assertOk();
+                $response->assertSeeText('A3 HX Bulk Moderation '.$suffix);
+                $this->assertDatabaseHas('posts', [
+                    'id' => $post->id,
+                    'moderation_status' => 'approved',
+                    'approved_by' => $actor->id,
+                ]);
+
+                continue;
+            }
+
+            $response->assertStatus($expectedStatus);
+            $this->assertDatabaseHas('posts', [
+                'id' => $post->id,
+                'moderation_status' => 'pending',
+                'approved_by' => null,
+            ]);
+        }
+
+        $boundaryPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'content' => 'A3 HX Bulk Redirect Boundary',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'thread-page',
+            ])
+            ->from(route('gm.moderation.index', ['world' => $campaign->world, 'status' => 'all']))
+            ->patch(route('gm.moderation.bulk-update', [
+                'world' => $campaign->world,
+            ]), $this->gmBulkModerationPayload(
+                moderationStatus: 'approved',
+                postIds: [(int) $boundaryPost->id],
+                sceneId: null,
+            ))
+            ->assertRedirect(route('gm.moderation.index', [
+                'world' => $campaign->world,
+                'status' => 'all',
+            ]));
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $boundaryPost->id,
+            'moderation_status' => 'approved',
+            'approved_by' => $owner->id,
+        ]);
+    }
+
+    public function test_gm_moderation_bulk_update_hx_world_guards_and_co_gm_negative_scope(): void
+    {
+        [$campaign, $owner, $coGm, $player] = $this->seedCampaignRoleMatrix(worldActive: true);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $foreignOwner = User::factory()->gm()->create();
+
+        $sameWorldForeignCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $campaign->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $sameWorldForeignScene = Scene::factory()->create([
+            'campaign_id' => $sameWorldForeignCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $sameWorldForeignPost = Post::factory()->create([
+            'scene_id' => $sameWorldForeignScene->id,
+            'user_id' => $player->id,
+            'content' => 'A3 HX Bulk CoGM Same World',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'thread-page',
+            ])
+            ->patch(route('gm.moderation.bulk-update', [
+                'world' => $campaign->world,
+            ]), $this->gmBulkModerationPayload(
+                moderationStatus: 'approved',
+                postIds: [(int) $sameWorldForeignPost->id],
+                sceneId: (int) $sameWorldForeignScene->id,
+            ))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $sameWorldForeignPost->id,
+            'moderation_status' => 'pending',
+            'approved_by' => null,
+        ]);
+
+        $foreignWorld = World::factory()->create([
+            'slug' => 'a3-hx-bulk-moderation-foreign-world',
+            'is_active' => true,
+            'position' => -408,
+        ]);
+        $foreignWorldCampaign = Campaign::factory()->create([
+            'owner_id' => $foreignOwner->id,
+            'world_id' => $foreignWorld->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $foreignWorldScene = Scene::factory()->create([
+            'campaign_id' => $foreignWorldCampaign->id,
+            'created_by' => $foreignOwner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+        $foreignWorldPost = Post::factory()->create([
+            'scene_id' => $foreignWorldScene->id,
+            'user_id' => $player->id,
+            'content' => 'A3 HX Bulk CoGM Foreign World',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($coGm)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'thread-page',
+            ])
+            ->patch(route('gm.moderation.bulk-update', [
+                'world' => $foreignWorld,
+            ]), $this->gmBulkModerationPayload(
+                moderationStatus: 'approved',
+                postIds: [(int) $foreignWorldPost->id],
+                sceneId: (int) $foreignWorldScene->id,
+            ))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $foreignWorldPost->id,
+            'moderation_status' => 'pending',
+            'approved_by' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'thread-page',
+            ])
+            ->patch(route('gm.moderation.bulk-update', [
+                'world' => $foreignWorld,
+            ]), $this->gmBulkModerationPayload(
+                moderationStatus: 'approved',
+                postIds: [],
+                sceneId: (int) $scene->id,
+            ))
+            ->assertNotFound();
+
+        $inactiveWorld = World::factory()->create([
+            'slug' => 'a3-hx-bulk-moderation-inaktiv',
+            'is_active' => false,
+            'position' => -409,
+        ]);
+
+        $this->actingAs($owner)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'thread-page',
+            ])
+            ->patch(route('gm.moderation.bulk-update', [
+                'world' => $inactiveWorld,
+            ]), $this->gmBulkModerationPayload(
+                moderationStatus: 'approved',
+                postIds: [],
+                sceneId: (int) $scene->id,
+            ))
+            ->assertNotFound();
     }
 
     public function test_posts_moderate_hx_request_response_boundaries_and_guards(): void
@@ -2532,15 +2862,24 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
      * @param  list<int>  $postIds
      * @return array<string, mixed>
      */
-    private function gmBulkModerationPayload(string $moderationStatus, array $postIds): array
+    private function gmBulkModerationPayload(string $moderationStatus, array $postIds, ?int $sceneId = null): array
     {
-        return [
+        $payload = [
             'status' => 'all',
             'q' => '',
             'moderation_status' => $moderationStatus,
             'moderation_note' => 'A3 Matrix Bulk',
-            'post_ids' => $postIds,
         ];
+
+        if ($postIds !== []) {
+            $payload['post_ids'] = $postIds;
+        }
+
+        if ($sceneId !== null && $sceneId > 0) {
+            $payload['scene_id'] = $sceneId;
+        }
+
+        return $payload;
     }
 
     /**
@@ -2619,6 +2958,22 @@ class AuthorizationWorldContextMutationMatrixTest extends TestCase
         return [
             'moderation_status' => $status,
             'moderation_note' => $note,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function campaignStorePayload(string $slug, string $title): array
+    {
+        return [
+            'title' => $title,
+            'slug' => $slug,
+            'summary' => 'A3 Matrix Campaign Store',
+            'lore' => 'A3 Matrix Campaign Store Lore',
+            'status' => 'active',
+            'is_public' => false,
+            'requires_post_moderation' => false,
         ];
     }
 }

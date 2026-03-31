@@ -143,9 +143,10 @@ Repository-Branch: `main`
 - A3 Invarianten-Matrix fuer Mutationsrouten ist eingeführt:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
   - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) fuer zentrale Write-Routen ab
-  - Konkrete Schreibpfade: Campaign-Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
+  - Konkrete Schreibpfade: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
   - Co-GM-Scope-Negativfaelle sind explizit abgedeckt (fremde Kampagne in gleicher Welt + Fremdwelt) fuer die High-Risk-Write-Pfade
-  - HTMX-Mutationspfade sind explizit abgesichert (`HX-Request=true`) inklusive Response-Grenzen (Fragment vs. Redirect), Rechte und Weltkontext
+  - HTMX-Mutationspfade sind explizit abgesichert (`HX-Request=true`) inklusive Response-Grenzen (Fragment vs. Redirect), Rechte und Weltkontext fuer `posts.moderate`, `posts.pin/unpin` und `gm.moderation.bulk-update`
+  - Abnahme-/Referenzdoku liegt als Route-Report vor: `docs/A3-INVARIANTEN-REPORT.md`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 
