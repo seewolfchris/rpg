@@ -46,7 +46,7 @@ Stand: 2026-03-31
 | A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
 | A2.2 | `SceneController` entkoppeln | Erledigt |
 | A2.3 | `CharacterController` entkoppeln | Erledigt |
-| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | In Arbeit (Mutations-Matrix um Post-/Scene-Update+Delete inkl. Co-GM-Scope-Negativfaelle erweitert) |
+| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | In Arbeit (Mutations-Matrix um Campaign-Write-Pfade, Post-Store und HTMX-Moderation/Pin erweitert) |
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
@@ -90,7 +90,8 @@ Stand: 2026-03-31
   - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - A3 Invarianten-Matrix:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
-  - Abdeckung: Szenen-Create, Scene-Update/Delete, Post-Moderation, Post-Update/Delete, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation, Campaign-Invitations Store/Destroy
+  - Abdeckung: Campaign-Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
+  - HTMX-Response-Grenzen explizit abgesichert fuer `posts.moderate` sowie `posts.pin/unpin` (Fragment vs. Redirect)
 - Multi-Welt:
   - `app/Models/World.php`
   - `database/migrations/2026_03_09_120000_create_worlds_table.php`
@@ -124,7 +125,7 @@ Stand: 2026-03-31
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-03-31)
-- `php artisan test --without-tty --do-not-cache-result` -> **280 passed, 1588 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **289 passed, 1709 assertions**
 - `node --test tests/js/*.mjs` -> **18 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
