@@ -11,6 +11,21 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * @phpstan-type NormalizedInventoryItem array{name: string, quantity: int, equipped: bool}
+ * @phpstan-type NormalizedWeaponItem array{name: string, attack: int|string, parry: int|string, damage: int|string}
+ * @phpstan-type NormalizedArmorItem array{name: string, protection: int, equipped: bool}
+ * @phpstan-type DerivedPools array{le_max: int, le_current: int, ae_max: int, ae_current: int}
+ * @phpstan-type CharacterValidatedPayload array<string, mixed>&array{
+ *     inventory?: array<int, NormalizedInventoryItem>,
+ *     weapons?: list<NormalizedWeaponItem>,
+ *     armors?: list<NormalizedArmorItem>,
+ *     le_max?: int,
+ *     le_current?: int,
+ *     ae_max?: int,
+ *     ae_current?: int
+ * }
+ */
 abstract class CharacterSheetRequest extends FormRequest
 {
     /**
@@ -109,6 +124,7 @@ abstract class CharacterSheetRequest extends FormRequest
     {
         /** @var array<string, mixed> $validated */
         $validated = parent::validated();
+        /** @var CharacterValidatedPayload $withDerived */
         $withDerived = array_merge($validated, $this->derivedPools());
 
         if ($key === null) {
@@ -277,7 +293,7 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @return array<int, array{name: string, quantity: int, equipped: bool}>
+     * @return array<int, NormalizedInventoryItem>
      */
     protected function normalizeInventoryInput(mixed $input): array
     {
@@ -293,7 +309,7 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @return array<int, array{name: string, attack: int|string, parry: int|string, damage: int|string}>
+     * @return list<NormalizedWeaponItem>
      */
     protected function normalizeWeaponInput(mixed $input): array
     {
@@ -339,7 +355,7 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @return array<int, array{name: string, protection: int, equipped: bool}>
+     * @return list<NormalizedArmorItem>
      */
     protected function normalizeArmorInput(mixed $input): array
     {
@@ -461,7 +477,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
     /**
      * @param  array<string, mixed>  $source
-     * @return array<string, int>
+     * @return array{le_max: int, ae_max: int}
      */
     protected function calculateDerivedPools(array $source): array
     {
@@ -526,7 +542,7 @@ abstract class CharacterSheetRequest extends FormRequest
     }
 
     /**
-     * @return array{le_max: int, le_current: int, ae_max: int, ae_current: int}
+     * @return DerivedPools
      */
     public function derivedPools(): array
     {
@@ -535,7 +551,7 @@ abstract class CharacterSheetRequest extends FormRequest
 
     /**
      * @param  array<string, mixed>  $source
-     * @return array{le_max: int, le_current: int, ae_max: int, ae_current: int}
+     * @return DerivedPools
      */
     protected function resolveDerivedPools(array $source): array
     {
