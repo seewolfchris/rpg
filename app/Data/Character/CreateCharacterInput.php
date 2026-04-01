@@ -13,6 +13,11 @@ final readonly class CreateCharacterInput
         public User $actor,
         /**
          * @var array<string, mixed>&array{
+         *     world_id?: int,
+         *     name?: string,
+         *     epithet?: string|null,
+         *     bio?: string,
+         *     status?: string,
          *     advantages?: list<string>,
          *     disadvantages?: list<string>,
          *     origin?: string,
