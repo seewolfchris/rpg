@@ -9,11 +9,11 @@ use App\Domain\Post\PostModerationService;
 use App\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
-use Illuminate\Database\Eloquent\Builder;
 
 class BulkModeratePostsAction
 {
     public function __construct(
+        private readonly ApplyPostModerationFiltersAction $applyPostModerationFiltersAction,
         private readonly PostModerationService $postModerationService,
         private readonly PostModerationScope $postModerationScope,
         private readonly DatabaseManager $db,
@@ -40,7 +40,7 @@ class BulkModeratePostsAction
         } elseif ($input->isHtmxRequest && $input->sceneId > 0) {
             $postsQuery->whereRaw('1 = 0');
         } else {
-            $this->applyFilters($postsQuery, $input->statusFilter, $input->search);
+            $this->applyPostModerationFiltersAction->execute($postsQuery, $input->statusFilter, $input->search);
         }
 
         if ($input->sceneId > 0) {
@@ -103,38 +103,5 @@ class BulkModeratePostsAction
         });
 
         return new BulkModeratePostsResult(affected: $affected);
-    }
-
-    /**
-     * @param  Builder<Post>  $query
-     */
-    private function applyFilters(Builder $query, string $status, string $search): void
-    {
-        if ($status !== 'all') {
-            $query->where('moderation_status', $status);
-        }
-
-        if ($search !== '') {
-            $searchTerm = '%'.$search.'%';
-            $query->where(function (Builder $innerQuery) use ($searchTerm, $search): void {
-                $innerQuery->where('content', 'like', $searchTerm)
-                    ->orWhereHas('user', function (Builder $userQuery) use ($searchTerm): void {
-                        $userQuery->where('name', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('scene', function (Builder $sceneQuery) use ($searchTerm): void {
-                        $sceneQuery->where('title', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('scene.campaign', function (Builder $campaignQuery) use ($searchTerm): void {
-                        $campaignQuery->where('title', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('latestModerationLog', function (Builder $logQuery) use ($searchTerm): void {
-                        $logQuery->where('reason', 'like', $searchTerm);
-                    });
-
-                if (is_numeric($search)) {
-                    $innerQuery->orWhere('id', (int) $search);
-                }
-            });
-        }
     }
 }

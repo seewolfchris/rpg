@@ -267,6 +267,72 @@ class CharacterProgressionTest extends TestCase
         $this->assertSame(['mu' => 2, 'ko' => 3, 'kk' => 1], $event->attribute_deltas);
     }
 
+    public function test_gm_can_spend_attribute_points_for_foreign_character(): void
+    {
+        $owner = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+            'species' => 'mensch',
+            'calling' => 'heiler',
+            'mu' => 40,
+            'level' => 2,
+            'xp_total' => 120,
+            'attribute_points_unspent' => 4,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('characters.progression.spend', $character), [
+            'attribute_allocations' => [
+                'mu' => 1,
+            ],
+            'note' => 'GM spend test',
+        ]);
+
+        $response->assertRedirect(route('characters.show', $character));
+
+        $character->refresh();
+        $this->assertSame(41, (int) $character->mu);
+        $this->assertSame(3, (int) $character->attribute_points_unspent);
+
+        $this->assertDatabaseHas('character_progression_events', [
+            'character_id' => $character->id,
+            'actor_user_id' => $gm->id,
+            'event_type' => CharacterProgressionEvent::EVENT_AP_SPEND,
+            'ap_delta' => -1,
+        ]);
+    }
+
+    public function test_user_cannot_spend_attribute_points_for_foreign_character(): void
+    {
+        $owner = User::factory()->create();
+        $outsider = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+            'species' => 'mensch',
+            'calling' => 'heiler',
+            'mu' => 40,
+            'level' => 2,
+            'xp_total' => 120,
+            'attribute_points_unspent' => 4,
+        ]);
+
+        $this->actingAs($outsider)
+            ->post(route('characters.progression.spend', $character), [
+                'attribute_allocations' => [
+                    'mu' => 1,
+                ],
+                'note' => 'Unauthorized spend attempt',
+            ])
+            ->assertForbidden();
+
+        $character->refresh();
+        $this->assertSame(40, (int) $character->mu);
+        $this->assertSame(4, (int) $character->attribute_points_unspent);
+        $this->assertDatabaseCount('character_progression_events', 0);
+    }
+
     public function test_spending_attribute_points_enforces_limits(): void
     {
         $owner = User::factory()->create();

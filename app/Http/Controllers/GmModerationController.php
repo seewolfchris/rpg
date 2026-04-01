@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Post\ApplyPostModerationFiltersAction;
 use App\Actions\Post\BulkModeratePostsAction;
 use App\Actions\Post\BulkModeratePostsInput;
+use App\Actions\Scene\BuildSceneThreadPageDataAction;
 use App\Domain\Post\PostModerationScope;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\BulkModerationRequest;
 use App\Models\Campaign;
+use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\Scene;
-use App\Models\SceneSubscription;
 use App\Models\World;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\ProbeRoller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,8 +24,11 @@ class GmModerationController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
+        private readonly ApplyPostModerationFiltersAction $applyPostModerationFiltersAction,
         private readonly BulkModeratePostsAction $bulkModeratePostsAction,
+        private readonly BuildSceneThreadPageDataAction $buildSceneThreadPageDataAction,
         private readonly PostModerationScope $postModerationScope,
+        private readonly ProbeRoller $probeRoller,
     ) {}
 
     public function index(Request $request, World $world): View
@@ -42,7 +47,7 @@ class GmModerationController extends Controller
             ->with(['scene.campaign', 'scene', 'user', 'character', 'approvedBy', 'latestModerationLog.moderator'])
             ->withCount('moderationLogs');
 
-        $this->applyFilters($postsQuery, $status, $search);
+        $this->applyPostModerationFiltersAction->execute($postsQuery, $status, $search);
 
         if ($status === 'all') {
             $postsQuery->orderByRaw("CASE moderation_status WHEN 'pending' THEN 0 WHEN 'rejected' THEN 1 ELSE 2 END");
@@ -118,53 +123,25 @@ class GmModerationController extends Controller
         $this->authorize('moderate', $post);
 
         $data = $request->validate([
-            'modifier' => ['nullable', 'integer', 'between:-20,20'],
+            'modifier' => ['nullable', 'integer', 'between:-40,40'],
+            'target' => ['required', 'integer', 'between:0,100'],
         ]);
 
         $modifier = (int) ($data['modifier'] ?? 0);
-        $roll = random_int(1, 20);
-        $total = $roll + $modifier;
+        $target = (int) $data['target'];
+        $rolled = $this->probeRoller->roll(DiceRoll::MODE_NORMAL, $modifier);
+        $roll = (int) $rolled['kept_roll'];
+        $total = (int) $rolled['total'];
+        $isSuccess = $total <= $target;
+
         $outcome = match (true) {
-            $roll === 20 => 'Kritischer Erfolg',
-            $roll === 1 => 'Kritischer Patzer',
-            $total >= 15 => 'Erfolg',
+            (bool) $rolled['critical_success'] => 'Kritischer Erfolg',
+            (bool) $rolled['critical_failure'] => 'Kritischer Patzer',
+            $isSuccess => 'Erfolg',
             default => 'Fehlschlag',
         };
 
-        return view('gm.partials.probe-result', compact('post', 'roll', 'modifier', 'total', 'outcome'));
-    }
-
-    /**
-     * @param  Builder<Post>  $query
-     */
-    private function applyFilters(Builder $query, string $status, string $search): void
-    {
-        if ($status !== 'all') {
-            $query->where('moderation_status', $status);
-        }
-
-        if ($search !== '') {
-            $searchTerm = '%'.$search.'%';
-            $query->where(function (Builder $innerQuery) use ($searchTerm, $search): void {
-                $innerQuery->where('content', 'like', $searchTerm)
-                    ->orWhereHas('user', function (Builder $userQuery) use ($searchTerm): void {
-                        $userQuery->where('name', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('scene', function (Builder $sceneQuery) use ($searchTerm): void {
-                        $sceneQuery->where('title', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('scene.campaign', function (Builder $campaignQuery) use ($searchTerm): void {
-                        $campaignQuery->where('title', 'like', $searchTerm);
-                    })
-                    ->orWhereHas('latestModerationLog', function (Builder $logQuery) use ($searchTerm): void {
-                        $logQuery->where('reason', 'like', $searchTerm);
-                    });
-
-                if (is_numeric($search)) {
-                    $innerQuery->orWhere('id', (int) $search);
-                }
-            });
-        }
+        return view('gm.partials.probe-result', compact('post', 'roll', 'modifier', 'total', 'target', 'outcome'));
     }
 
     private function normalizeModerationNote(string $note): ?string
@@ -185,48 +162,16 @@ class GmModerationController extends Controller
         $campaign = $scene->campaign;
         abort_unless((int) $campaign->world_id === (int) $world->id, 404);
         $this->authorize('view', $scene);
+        $threadData = $this->buildSceneThreadPageDataAction->execute($scene, $campaign, $user);
 
-        $posts = Post::query()
-            ->where('scene_id', $scene->id)
-            ->with(Post::THREAD_PAGE_RELATIONS)
-            ->latestByIdHotpath()
-            ->paginate(Post::THREAD_POSTS_PER_PAGE)
-            ->withQueryString();
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
-        $latestPostId = $this->latestScenePostId($scene);
-        $unreadPostsCount = $this->unreadCountForScene($scene, $subscription, $latestPostId);
-        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
-
-        return view('scenes.partials.thread-page', compact(
-            'posts',
-            'campaign',
-            'scene',
-            'subscription',
-            'latestPostId',
-            'unreadPostsCount',
-            'canModerateScene',
-        ));
-    }
-
-    private function latestScenePostId(Scene $scene): int
-    {
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->max('id');
-    }
-
-    private function unreadCountForScene(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
-    {
-        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
-            return 0;
-        }
-
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
-            ->count();
+        return view('scenes.partials.thread-page', [
+            'posts' => $threadData->posts,
+            'campaign' => $campaign,
+            'scene' => $scene,
+            'subscription' => $threadData->subscription,
+            'latestPostId' => $threadData->latestPostId,
+            'unreadPostsCount' => $threadData->unreadPostsCount,
+            'canModerateScene' => $threadData->canModerateScene,
+        ]);
     }
 }

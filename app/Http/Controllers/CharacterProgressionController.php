@@ -16,11 +16,7 @@ class CharacterProgressionController extends Controller
     public function spend(SpendCharacterAttributePointsRequest $request, Character $character): RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-
-        abort_unless(
-            $character->user_id === $user->id || $user->isGmOrAdmin(),
-            403
-        );
+        $this->authorize('spendAttributePoints', $character);
 
         $result = $this->progressionService->spendAttributePoints(
             character: $character,

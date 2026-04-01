@@ -57,8 +57,8 @@ class ProbeRoller
     private function resolveKeptRoll(string $mode, array $rolls): int
     {
         return match ($mode) {
-            DiceRoll::MODE_ADVANTAGE => max($rolls),
-            DiceRoll::MODE_DISADVANTAGE => min($rolls),
+            DiceRoll::MODE_ADVANTAGE => min($rolls),
+            DiceRoll::MODE_DISADVANTAGE => max($rolls),
             default => $rolls[0],
         };
     }

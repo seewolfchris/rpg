@@ -29,14 +29,14 @@ class ProbeRollerTest extends TestCase
         $roller = new ProbeRoller($this->sequenceGenerator([1, 100, 100, 1]));
 
         $advantage = $roller->roll(DiceRoll::MODE_ADVANTAGE, 0);
-        $this->assertSame(100, $advantage['kept_roll']);
-        $this->assertFalse($advantage['critical_success']);
-        $this->assertTrue($advantage['critical_failure']);
+        $this->assertSame(1, $advantage['kept_roll']);
+        $this->assertTrue($advantage['critical_success']);
+        $this->assertFalse($advantage['critical_failure']);
 
         $disadvantage = $roller->roll(DiceRoll::MODE_DISADVANTAGE, 0);
-        $this->assertSame(1, $disadvantage['kept_roll']);
-        $this->assertTrue($disadvantage['critical_success']);
-        $this->assertFalse($disadvantage['critical_failure']);
+        $this->assertSame(100, $disadvantage['kept_roll']);
+        $this->assertFalse($disadvantage['critical_success']);
+        $this->assertTrue($disadvantage['critical_failure']);
     }
 
     /**

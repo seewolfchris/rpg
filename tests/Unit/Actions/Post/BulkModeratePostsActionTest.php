@@ -156,6 +156,83 @@ class BulkModeratePostsActionTest extends TestCase
         }
     }
 
+    public function test_it_applies_status_and_search_filters_for_bulk_without_explicit_post_ids(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $author = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $matchingPendingPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $author->id,
+            'content' => 'FILTER-MATCH',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+        $nonMatchingPendingPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $author->id,
+            'content' => 'FILTER-OTHER',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+        $matchingApprovedPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $author->id,
+            'content' => 'FILTER-MATCH',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $result = app(BulkModeratePostsAction::class)->execute(new BulkModeratePostsInput(
+            world: $campaign->world,
+            moderator: $gm,
+            statusFilter: 'pending',
+            search: 'FILTER-MATCH',
+            targetStatus: 'approved',
+            moderationNote: 'Filter-Update',
+            sceneId: 0,
+            postIds: collect(),
+            isHtmxRequest: false,
+        ));
+
+        $this->assertSame(1, $result->affected);
+        $this->assertDatabaseHas('posts', [
+            'id' => $matchingPendingPost->id,
+            'moderation_status' => 'approved',
+            'approved_by' => $gm->id,
+        ]);
+        $this->assertDatabaseHas('posts', [
+            'id' => $nonMatchingPendingPost->id,
+            'moderation_status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('posts', [
+            'id' => $matchingApprovedPost->id,
+            'moderation_status' => 'approved',
+            'approved_by' => $gm->id,
+        ]);
+    }
+
     public function test_it_rolls_back_all_bulk_changes_when_synchronization_fails_mid_batch(): void
     {
         $owner = User::factory()->gm()->create();

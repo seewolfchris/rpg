@@ -35,7 +35,7 @@ class SceneBookmarkController extends Controller
                     ->forWorld($world)
                     ->select('id'));
             })
-            ->with(['scene.campaign', 'post'])
+            ->with('scene.campaign.world')
             ->latest('updated_at');
 
         if ($search !== '') {
@@ -56,10 +56,7 @@ class SceneBookmarkController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $bookmarkJumpUrls = [];
-        foreach ($bookmarks as $bookmark) {
-            $bookmarkJumpUrls[$bookmark->id] = $this->buildBookmarkUrl($bookmark);
-        }
+        $bookmarkJumpUrls = $this->buildBookmarkUrls($bookmarks, $world);
 
         $totalCount = SceneBookmark::query()
             ->where('user_id', $user->id)
@@ -152,58 +149,89 @@ class SceneBookmarkController extends Controller
         return $normalized !== '' ? $normalized : null;
     }
 
-    private function buildBookmarkUrl(SceneBookmark $bookmark): string
+    /**
+     * @param  LengthAwarePaginator<int, SceneBookmark>  $bookmarks
+     * @return array<int, string>
+     */
+    private function buildBookmarkUrls(LengthAwarePaginator $bookmarks, World $world): array
     {
-        $scene = $bookmark->scene;
+        $bookmarkJumpUrls = [];
+        $sceneIdByPostId = [];
 
-        if (! $scene instanceof Scene) {
-            return route('bookmarks.index');
+        foreach ($bookmarks as $bookmark) {
+            $bookmarkId = (int) $bookmark->id;
+            $scene = $bookmark->scene;
+            $campaign = $scene?->campaign;
+
+            if (! $scene instanceof Scene || ! $campaign instanceof Campaign) {
+                $bookmarkJumpUrls[$bookmarkId] = route('bookmarks.index', ['world' => $world]);
+
+                continue;
+            }
+
+            $bookmarkJumpUrls[$bookmarkId] = $this->sceneRouteUrl($world, $campaign, $scene);
+
+            $postId = (int) ($bookmark->post_id ?? 0);
+            if ($postId > 0) {
+                $sceneIdByPostId[$postId] = (int) $scene->id;
+            }
         }
 
-        $campaign = $scene->campaign;
-
-        if (! $campaign instanceof Campaign) {
-            return route('bookmarks.index');
+        if ($sceneIdByPostId === []) {
+            return $bookmarkJumpUrls;
         }
 
-        $world = $campaign->world;
+        $postRows = Post::query()
+            ->from('posts as current_posts')
+            ->selectRaw('current_posts.id as post_id')
+            ->selectRaw('current_posts.scene_id as scene_id')
+            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
+            ->whereIn('current_posts.id', array_keys($sceneIdByPostId))
+            ->get();
 
-        $postId = (int) ($bookmark->post_id ?? 0);
+        $newerPostsCountByPostId = [];
+        foreach ($postRows as $postRow) {
+            $postId = (int) ($postRow->post_id ?? 0);
+            $sceneId = (int) ($postRow->scene_id ?? 0);
+            if ($postId <= 0 || ($sceneIdByPostId[$postId] ?? 0) !== $sceneId) {
+                continue;
+            }
 
-        if ($postId <= 0) {
-            return route('campaigns.scenes.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'scene' => $scene,
-            ]);
+            $newerPostsCountByPostId[$postId] = (int) ($postRow->newer_posts_count ?? 0);
         }
 
-        $postExistsInScene = Post::query()
-            ->where('scene_id', $scene->id)
-            ->whereKey($postId)
-            ->exists();
+        foreach ($bookmarks as $bookmark) {
+            $scene = $bookmark->scene;
+            $campaign = $scene?->campaign;
+            $postId = (int) ($bookmark->post_id ?? 0);
+            if ($postId <= 0 || ! $scene instanceof Scene || ! $campaign instanceof Campaign) {
+                continue;
+            }
 
-        if (! $postExistsInScene) {
-            return route('campaigns.scenes.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'scene' => $scene,
-            ]);
+            if (! array_key_exists($postId, $newerPostsCountByPostId)) {
+                continue;
+            }
+
+            $page = intdiv($newerPostsCountByPostId[$postId], Post::THREAD_POSTS_PER_PAGE) + 1;
+            $bookmarkJumpUrls[(int) $bookmark->id] = $this->sceneRouteUrl($world, $campaign, $scene, $page).'#post-'.$postId;
         }
 
-        $newerPostsCount = (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', $postId)
-            ->count();
+        return $bookmarkJumpUrls;
+    }
 
-        $page = intdiv($newerPostsCount, Post::THREAD_POSTS_PER_PAGE) + 1;
-
-        return route('campaigns.scenes.show', [
+    private function sceneRouteUrl(World $world, Campaign $campaign, Scene $scene, ?int $page = null): string
+    {
+        $parameters = [
             'world' => $world,
             'campaign' => $campaign,
             'scene' => $scene,
-            'page' => $page,
-        ]).'#post-'.$postId;
+        ];
+
+        if ($page !== null) {
+            $parameters['page'] = $page;
+        }
+
+        return route('campaigns.scenes.show', $parameters);
     }
 
     private function visibleBookmarkCountForUser(?\App\Models\User $user): int

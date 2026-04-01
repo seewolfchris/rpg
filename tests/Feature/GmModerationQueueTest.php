@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Support\ProbeRoller;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -380,5 +382,62 @@ class GmModerationQueueTest extends TestCase
             'new_status' => 'approved',
             'reason' => 'Bulk-Freigabe nach Sammelpruefung.',
         ]);
+    }
+
+    public function test_gm_probe_endpoint_uses_d100_probe_roller_formula(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $author = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $author->id,
+            'content' => 'PROBE-ME',
+            'content_format' => 'plain',
+            'post_type' => 'ic',
+            'moderation_status' => 'pending',
+        ]);
+
+        $probeRoller = $this->createMock(ProbeRoller::class);
+        $probeRoller->expects($this->once())
+            ->method('roll')
+            ->with(DiceRoll::MODE_NORMAL, 5)
+            ->willReturn([
+                'mode' => DiceRoll::MODE_NORMAL,
+                'rolls' => [50],
+                'kept_roll' => 50,
+                'modifier' => 5,
+                'total' => 55,
+                'critical_success' => false,
+                'critical_failure' => false,
+            ]);
+        $this->app->instance(ProbeRoller::class, $probeRoller);
+
+        $response = $this->actingAs($gm)->post(route('gm.moderation.probe', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'modifier' => 5,
+            'target' => 60,
+        ]);
+
+        $response->assertOk();
+        $response->assertSeeText('W100 50');
+        $response->assertSeeText('+5');
+        $response->assertSeeText('= 55 gegen 60');
+        $response->assertSeeText('Erfolg');
+        $response->assertDontSeeText('W20');
     }
 }

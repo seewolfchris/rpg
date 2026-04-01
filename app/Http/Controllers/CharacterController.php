@@ -80,7 +80,7 @@ class CharacterController extends Controller
 
     public function show(Character $character): View|RedirectResponse
     {
-        $this->ensureCanManageCharacter($character);
+        $this->authorize('view', $character);
 
         try {
             $showData = $this->buildCharacterShowDataAction->execute($character);
@@ -102,7 +102,7 @@ class CharacterController extends Controller
 
     public function edit(Character $character): View
     {
-        $this->ensureCanManageCharacter($character);
+        $this->authorize('update', $character);
         $editData = $this->buildCharacterEditDataAction->execute();
 
         return view('characters.edit', [
@@ -113,7 +113,7 @@ class CharacterController extends Controller
 
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse
     {
-        $this->ensureCanManageCharacter($character);
+        $this->authorize('update', $character);
 
         $this->updateCharacterAction->execute($request, $character);
 
@@ -124,7 +124,7 @@ class CharacterController extends Controller
 
     public function inlineUpdate(Request $request, Character $character): View|RedirectResponse
     {
-        $this->ensureCanManageCharacter($character);
+        $this->authorize('update', $character);
         $result = $this->updateCharacterInlineAction->execute($request, $character);
 
         if ($result->shouldRenderFragment) {
@@ -138,7 +138,7 @@ class CharacterController extends Controller
 
     public function destroy(Character $character): RedirectResponse
     {
-        $this->ensureCanDeleteCharacter($character);
+        $this->authorize('delete', $character);
 
         try {
             $this->deleteCharacterAction->execute($character);
@@ -157,27 +157,5 @@ class CharacterController extends Controller
         return redirect()
             ->route('characters.index')
             ->with('status', 'Charakter gelöscht.');
-    }
-
-    private function ensureCanDeleteCharacter(Character $character): void
-    {
-        $user = auth()->user();
-
-        abort_unless(
-            $user instanceof \App\Models\User
-                && ((int) $character->user_id === (int) $user->id || $user->isGmOrAdmin()),
-            403
-        );
-    }
-
-    private function ensureCanManageCharacter(Character $character): void
-    {
-        $user = auth()->user();
-
-        abort_unless(
-            $user instanceof \App\Models\User
-                && ((int) $character->user_id === (int) $user->id || $user->isGmOrAdmin()),
-            403
-        );
     }
 }
