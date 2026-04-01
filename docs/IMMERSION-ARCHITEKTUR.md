@@ -1,6 +1,6 @@
-# Immersion-Architektur (v0.25-beta)
+# Immersion-Architektur (v0.26-beta)
 
-Stand: 2026-03-29
+Stand: 2026-04-02
 
 ## Zielbild
 

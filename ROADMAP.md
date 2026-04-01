@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
-Stand: 2026-03-31
+Stand: 2026-04-02
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -126,9 +126,9 @@ Stand: 2026-03-31
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
-## Aktueller Verifikationsstand (2026-03-31)
-- `php artisan test --without-tty --do-not-cache-result` -> **289 passed, 1709 assertions**
-- `node --test tests/js/*.mjs` -> **18 passed**
+## Aktueller Verifikationsstand (2026-04-02)
+- `php artisan test --without-tty --do-not-cache-result` -> **314 passed, 1846 assertions**
+- `node --test tests/js/*.mjs` -> **19 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
 - GitHub Actions (`main`) -> **gruen**

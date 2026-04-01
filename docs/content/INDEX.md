@@ -1,6 +1,6 @@
 # Content-Index
 
-Stand: 2026-03-29
+Stand: 2026-04-02
 
 Dieses Verzeichnis ist die Quelle fuer spielbaren Inhalt.  
 Nicht in Blade-Strings pflegen. Hier pflegen.

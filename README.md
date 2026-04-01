@@ -36,19 +36,19 @@ Wichtige Regeln:
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.25-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.26-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
+- v0.26-beta (2026-04-02): Architektur-Konsolidierung nach Multi-Welt-Rollout: d100-Probenpfad vereinheitlicht, Moderations-Readlogik dedupliziert, Character-/Progression-Autorisierung policy-first konsolidiert, Bookmark-Jump-Querylast reduziert, Character-Actions auf request-freie Inputs umgestellt und Payload-Typisierung bis inkl. Request-Grenze nachgezogen; PHPStan-Baseline auf null reduziert.
 - v0.25-beta (2026-03-29): Immersion-Upgrade Phasen 1-4 abgeschlossen (World-Theme-Resolver + CSS-Variablen am Root, erweiterter Romanmodus inkl. Fullscreen/Progress-Lesezeichen/Shortcut-Navigation, Hero-/Card-Parallax-light mit reduced-motion-Fallback, PWA-Offline-/Queue-Narrativ, DE-first Sprachkonsistenz und Fokus-/Scroll-Polish)
 - v0.24-beta: Finaler Immersion-Polish – Landing-Hero mit Szenen-Teaser, romanhafter Thread-Lesemodus, konsistente World/Character-Cards, globale Typografie-/Spacing-Glättung
 - v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result` -> **179 passed, 883 assertions** (Stand: 2026-03-19)
-- `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (Stand: 2026-03-23)
-- `node --test tests/js/*.mjs` -> **8 passed** (Stand: 2026-03-19)
-- `composer analyse` -> **keine Fehler** (Stand: 2026-03-23)
-- `npm run build` -> **gruen** (Stand: 2026-03-19)
+- `php artisan test --without-tty --do-not-cache-result` -> **314 passed, 1846 assertions** (Stand: 2026-04-02)
+- `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-02)
+- `composer analyse` -> **keine Fehler** (Stand: 2026-04-02)
+- `npm run build` -> **gruen** (Stand: 2026-04-02)
 
 Enthalten:
 - Auth: Registrierung/Login/Logout (Breeze-Style, Blade)
@@ -250,19 +250,19 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 Release-Metadaten (Version/Build/Doku) vorbereiten:
 
 ```bash
-scripts/release_prepare.sh --version v0.25-beta
+scripts/release_prepare.sh --version v0.26-beta
 ```
 
 Optional auch lokale `.env` aktualisieren:
 
 ```bash
-scripts/release_prepare.sh --version v0.25-beta --update-dotenv
+scripts/release_prepare.sh --version v0.26-beta --update-dotenv
 ```
 
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh v0.25-beta --world chroniken-der-asche --archive
+scripts/release_flow.sh v0.26-beta --world chroniken-der-asche --archive
 ```
 
 Release-Smoke automatisiert:

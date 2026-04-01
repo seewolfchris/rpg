@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-03-31  
+Stand: 2026-04-02  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -24,13 +24,12 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.25-beta`**.
+- Laufende Versionslinie: **`v0.26-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **264 passed, 1361 assertions** (2026-03-31)
-  - `php artisan test tests/Unit/Domain/ServiceScopeInvariantTest.php tests/Feature/CampaignScenePostWorkflowTest.php tests/Unit/Actions/Character/CreateCharacterActionTest.php tests/Unit/ProbeRollerTest.php` -> **29 passed, 203 assertions** (2026-03-23)
-  - `node --test tests/js/*.mjs` -> **18 passed** (2026-03-31)
-  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-03-31)
-  - `npm run build` -> **gruen** (2026-03-31)
+  - `php artisan test --without-tty --do-not-cache-result` -> **314 passed, 1846 assertions** (2026-04-02)
+  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-02)
+  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-02)
+  - `npm run build` -> **gruen** (2026-04-02)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -140,6 +139,11 @@ Repository-Branch: `main`
   - Unit-Absicherung:
     - `tests/Unit/Actions/Character/BuildCharacterCreateDataActionTest.php`
     - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
+- Character-Architekturkonsolidierung (nach A3) ist abgeschlossen:
+  - Character-/Progression-Autorisierung policy-first konsolidiert
+  - Character-Actions request-frei via Input-DTOs (`CreateCharacterInput`, `UpdateCharacterInput`, `InlineUpdateCharacterInput`)
+  - Payload-Typisierung entlang DTOs + Request-Grenze (`CharacterSheetRequest`) auf konsistente Shapes erweitert
+  - PHPStan-Baseline auf null reduziert (`phpstan-baseline.neon` ohne verbleibende Ignored Errors)
 - A3 Invarianten-Matrix fuer Mutationsrouten ist eingeführt:
   - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
   - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) fuer zentrale Write-Routen ab
