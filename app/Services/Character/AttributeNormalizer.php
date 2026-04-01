@@ -39,6 +39,22 @@ use Illuminate\Validation\ValidationException;
  *     ko_note?: string|null,
  *     kk_note?: string|null
  * }
+ * @phpstan-type CharacterAttributePayload array{
+ *     mu?: int,
+ *     kl?: int,
+ *     in?: int,
+ *     ch?: int,
+ *     ff?: int,
+ *     ge?: int,
+ *     ko?: int,
+ *     kk?: int
+ * }
+ * @phpstan-type CharacterPoolPayload array{
+ *     le_max?: int,
+ *     le_current?: int,
+ *     ae_max?: int,
+ *     ae_current?: int
+ * }
  * @phpstan-type InventoryItem array{
  *     name: string,
  *     quantity: int,
@@ -170,6 +186,7 @@ class AttributeNormalizer
                 $data[$legacyColumn] = (int) $data[$attributeKey];
             }
         }
+        /** @var array<string, mixed>&CharacterAttributePayload $data */
 
         /** @var TraitList|null $characterAdvantages */
         $characterAdvantages = $character instanceof Character ? $character->advantages : [];
@@ -190,6 +207,7 @@ class AttributeNormalizer
                 $data[$poolKey] = $character->{$poolKey};
             }
         }
+        /** @var array<string, mixed>&CharacterPoolPayload $data */
 
         return $data;
     }
