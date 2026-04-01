@@ -49,8 +49,10 @@ Hinweis:
 ## Notification-Retry-Queue Schnellcheck
 Wenn Szenen-/Mention-Benachrichtigungen ausfallen:
 
+0. `.env` prüfen:
+   - `QUEUE_CONNECTION=database` (nicht `sync`)
 1. Queue-Worker pruefen (database-queue):
-   - `php artisan queue:work --queue=default --tries=4`
+   - `php artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90`
 2. Fehlgeschlagene Jobs pruefen:
    - `php artisan queue:failed`
 3. Falls noetig erneut anstossen:

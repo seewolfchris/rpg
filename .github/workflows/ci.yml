@@ -63,3 +63,9 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
+
+      - name: Smoke checks (artisan mode)
+        run: SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh
+
+      - name: Verify generated frontend artifacts are committed
+        run: git diff --exit-code -- public/build public/js/character-sheet.global.js

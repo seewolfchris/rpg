@@ -146,6 +146,6 @@ Stand: 2026-03-31
 - Externe Media/CDN-Optimierung.
 
 ## Naechste Schritte
-1. `scripts/release_flow.sh --version ...` als Standard-Release-Ablauf etablieren.
+1. `scripts/release_flow.sh vX.Y-beta --world <slug> --archive` als Standard-Release-Ablauf etablieren.
 2. Perf-Gate (`scripts/release_perf_gate.sh`) vor jedem Deploy gegen Zielsystem laufen lassen und Report ablegen.
 3. Runtime-Hint fuer `posts.latest_by_id` anhand der Perf-Gate-Historie aktiv/aus halten.

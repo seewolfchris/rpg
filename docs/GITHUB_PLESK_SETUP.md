@@ -43,7 +43,8 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 
 Dieses Script liegt im Repo und macht:
 - `composer install --no-dev`
-- `php artisan key:generate` (nur wenn APP_KEY fehlt)
+- prüft `APP_KEY` (fail-fast bei fehlendem/ungueltigem Key)
+- prüft `QUEUE_CONNECTION` (fail-fast bei `sync`)
 - `php artisan migrate --force`
 - `php artisan storage:link`
 - Cache clear + cache build
@@ -76,6 +77,12 @@ VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 ```
 
+Wichtig fuer Retry-Jobs in Produktion:
+
+```env
+QUEUE_CONNECTION=database
+```
+
 ## 5) Erster Deploy
 
 1. In Plesk Git auf `Deploy` klicken
@@ -95,6 +102,11 @@ git push
 Server:
 - Entweder Auto-Deploy bei Push
 - Oder in Plesk auf `Pull/Deploy` klicken
+- Queue-Worker muss laufen (Scheduled Task/Prozess):
+
+```bash
+PHP_BIN=/opt/plesk/php/8.5/bin/php artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
+```
 
 ## 7) Troubleshooting (häufig)
 

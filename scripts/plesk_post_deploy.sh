@@ -12,6 +12,20 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+read_env_var_from_dotenv() {
+  local key="$1"
+  local value
+
+  value="$(awk -F '=' -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' .env)"
+  value="${value%$'\r'}"
+  value="${value#\"}"
+  value="${value%\"}"
+  value="${value#\'}"
+  value="${value%\'}"
+
+  printf '%s\n' "$value"
+}
+
 # Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
 PHP_BIN="${PHP_BIN:-}"
 if [[ -z "$PHP_BIN" ]]; then
@@ -48,14 +62,14 @@ fi
 echo "Using PHP binary: $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 echo "Using Composer: $COMPOSER_PATH"
 
-echo "[1/9] Composer dependencies installieren (production)..."
+echo "[1/10] Composer dependencies installieren (production)..."
 if [[ "$COMPOSER_PATH" == *.phar ]] || [[ "$COMPOSER_PATH" == "$COMPOSER_PHAR_DEFAULT" ]]; then
   "$PHP_BIN" "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 else
   "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 fi
 
-echo "[2/9] Smoke-Test: perf:posts-latest-by-id-benchmark Command..."
+echo "[2/10] Smoke-Test: perf:posts-latest-by-id-benchmark Command..."
 if "$PHP_BIN" artisan list --no-ansi | grep -q "perf:posts-latest-by-id-benchmark"; then
   if "$PHP_BIN" artisan perf:posts-latest-by-id-benchmark --help > /dev/null 2>&1; then
     echo "[deploy] ✅ perf:posts-latest-by-id-benchmark Command ist registriert und ausführbar"
@@ -69,34 +83,47 @@ else
   exit 1
 fi
 
-echo "[3/9] Dev-Hotfile entfernen (falls vorhanden)..."
+echo "[3/10] Dev-Hotfile entfernen (falls vorhanden)..."
 rm -f public/hot || true
 
-echo "[4/9] Frontend-Build prüfen..."
+echo "[4/10] Frontend-Build prüfen..."
 if [[ ! -f public/build/manifest.json ]]; then
   echo "ERROR: Frontend-Build fehlt (public/build/manifest.json)."
   echo "Bitte vor dem Deploy lokal 'npm run build' ausfuehren und Build-Dateien committen."
   exit 1
 fi
 
-echo "[5/9] APP_KEY prüfen..."
-if ! grep -Eq '^APP_KEY=' .env; then
-  echo "APP_KEY=" >> .env
-fi
-if ! grep -Eq '^APP_KEY=base64:' .env; then
-  "$PHP_BIN" artisan key:generate --force --no-interaction
+echo "[5/10] APP_KEY prüfen..."
+app_key="$(read_env_var_from_dotenv "APP_KEY")"
+if [[ -z "$app_key" || "$app_key" != base64:* ]]; then
+  echo "ERROR: APP_KEY fehlt oder ist ungueltig."
+  echo "Setze APP_KEY in Plesk (.env), aber rotiere ihn nicht automatisch im Deploy."
+  exit 1
 fi
 
-echo "[6/9] Datenbank migrieren..."
+echo "[6/10] Queue-Preflight prüfen..."
+queue_connection="$(read_env_var_from_dotenv "QUEUE_CONNECTION")"
+if [[ -z "$queue_connection" ]]; then
+  echo "ERROR: QUEUE_CONNECTION fehlt in .env."
+  echo "Setze QUEUE_CONNECTION=database und richte einen Queue-Worker ein."
+  exit 1
+fi
+if [[ "$queue_connection" == "sync" ]]; then
+  echo "ERROR: QUEUE_CONNECTION=sync ist fuer Produktion nicht zulaessig."
+  echo "Setze QUEUE_CONNECTION=database und betreibe queue:work."
+  exit 1
+fi
+
+echo "[7/10] Datenbank migrieren..."
 "$PHP_BIN" artisan migrate --force --no-interaction
 
-echo "[7/9] Storage-Link sicherstellen..."
+echo "[8/10] Storage-Link sicherstellen..."
 "$PHP_BIN" artisan storage:link --no-interaction || true
 
-echo "[8/9] Caches bereinigen..."
+echo "[9/10] Caches bereinigen..."
 "$PHP_BIN" artisan optimize:clear --no-interaction
 
-echo "[9/9] Performance-Caches aufbauen..."
+echo "[10/10] Performance-Caches aufbauen..."
 "$PHP_BIN" artisan config:cache --no-interaction
 "$PHP_BIN" artisan route:cache --no-interaction
 "$PHP_BIN" artisan view:cache --no-interaction

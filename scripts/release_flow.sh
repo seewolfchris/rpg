@@ -18,9 +18,9 @@ Description:
   Standard-Release-Flow (endet vor Deploy):
     1) Clean tree check
     2) release_prepare + lokale Quality Gates
-    3) Commit + push main
-    4) tag + push --tags
-    5) optional Perf-Gate
+    3) Commit release changes
+    4) optional Perf-Gate
+    5) push main + tag + push --tags
 USAGE
 }
 
@@ -148,8 +148,8 @@ composer analyse
 echo "[5/13] Backend tests..."
 php artisan test --without-tty --do-not-cache-result
 
-echo "[6/13] Service Worker tests..."
-npm run test:sw
+echo "[6/13] Frontend JS tests..."
+npm run test:js
 
 echo "[7/13] Frontend build..."
 npm run build
@@ -170,46 +170,49 @@ if git diff --cached --quiet; then
 fi
 git commit -m "chore(release): ${version}"
 
-echo "[10/13] Push main..."
+perf_archive_out=""
+perf_ran="no"
+
+if [[ "$skip_perf" == true ]]; then
+  echo "[10/13] Perf gate skipped (--skip-perf)."
+else
+  echo "[10/13] Clean tree check before Perf-Gate..."
+  require_clean_tree
+
+  if [[ "$archive" == true ]]; then
+    perf_archive_out="docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-$(date -u +%Y%m%dT%H%M%SZ).md"
+  fi
+
+  if [[ -n "$perf_archive_out" ]]; then
+    PERF_WORLD_SLUG="$world" \
+    PERF_ITERATIONS="$iter" \
+    PERF_GATE_ARCHIVE_OUT="$perf_archive_out" \
+    scripts/release_perf_gate.sh
+  else
+    PERF_WORLD_SLUG="$world" \
+    PERF_ITERATIONS="$iter" \
+    scripts/release_perf_gate.sh
+  fi
+
+  perf_ran="yes"
+fi
+
+echo "[11/13] Push main..."
 git push origin main
 
-echo "[11/13] Clean tree check before git tag..."
+echo "[12/13] Clean tree check before git tag..."
 require_clean_tree
 git tag "$version"
 
-echo "[12/13] Clean tree check before git push --tags..."
+echo "[13/13] Clean tree check before git push --tags..."
 require_clean_tree
 git push origin --tags
-
-if [[ "$skip_perf" == true ]]; then
-  echo "[13/13] Perf gate skipped (--skip-perf)."
-  exit 0
-fi
-
-echo "[13/13] Clean tree check before Perf-Gate..."
-require_clean_tree
-
-perf_archive_out=""
-if [[ "$archive" == true ]]; then
-  perf_archive_out="docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-$(date -u +%Y%m%dT%H%M%SZ).md"
-fi
-
-if [[ -n "$perf_archive_out" ]]; then
-  PERF_WORLD_SLUG="$world" \
-  PERF_ITERATIONS="$iter" \
-  PERF_GATE_ARCHIVE_OUT="$perf_archive_out" \
-  scripts/release_perf_gate.sh
-else
-  PERF_WORLD_SLUG="$world" \
-  PERF_ITERATIONS="$iter" \
-  scripts/release_perf_gate.sh
-fi
 
 echo
 echo "Release flow completed successfully."
 echo "- Version: ${version}"
 echo "- Build: ${build}"
-echo "- Perf run: yes"
+echo "- Perf run: ${perf_ran}"
 if [[ -n "$perf_archive_out" ]]; then
   echo "- Perf archive: ${perf_archive_out}"
 fi

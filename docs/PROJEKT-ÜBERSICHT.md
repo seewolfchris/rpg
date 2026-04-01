@@ -157,6 +157,7 @@ Repository-Branch: `main`
   - `composer validate --strict`
   - `composer analyse`
   - `php artisan test --without-tty --do-not-cache-result`
+  - `npm run test:js`
   - `npm run build`
 - Wichtiger Test-Hinweis:
   - vor lokalen Feature-Testlaeufen nach aktivierten Caches immer `php artisan optimize:clear`
@@ -165,7 +166,7 @@ Repository-Branch: `main`
 - Release-Prepare (Version/Build/Doku):
   - `scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short HEAD)"`
 - Release-Flow (fixe Reihenfolge inkl. Prepare):
-  - `scripts/release_flow.sh --version vX.XX-beta`
+  - `scripts/release_flow.sh vX.Y-beta --world <slug> --archive`
 - Smoke-Report-Ausgabe:
   - `SMOKE_REPORT_OUT=docs/SMOKE-PASS-STAGING-PROD.md scripts/release_smoke.sh`
   - `WORLD_DEFAULT_SLUG` wird in den Release-/Smoke-Skripten bei leerem Shell-Env direkt aus `.env` gelesen
@@ -218,7 +219,7 @@ Repository-Branch: `main`
 - Kein externes Media/CDN-Setup.
 
 ## 7) Empfohlene naechste Schritte
-1. `scripts/release_flow.sh --version ...` als Standard vor jedem Release nutzen.
+1. `scripts/release_flow.sh vX.Y-beta --world <slug> --archive` als Standard vor jedem Release nutzen.
 2. Perf-Gate-Statushistorie (`...GATE-LATEST.md`) bei jeder Staging/Prod-Runde fortschreiben.
 3. Runtime-Hint aktiv lassen oder deaktivieren anhand wiederholter Messungen im Zielsystem.
 

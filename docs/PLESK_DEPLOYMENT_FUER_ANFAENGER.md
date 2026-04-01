@@ -83,6 +83,12 @@ DB_PASSWORD=DEIN_DB_PASS
 
 Für Mail später SMTP eintragen. Zum Start kann Mail notfalls auf `log` bleiben.
 
+Wichtig für Retry-/Notification-Stabilität:
+
+```env
+QUEUE_CONNECTION=database
+```
+
 Für Web Push (aktiv seit `v0.20-beta`) ergänzen:
 
 ```env
@@ -98,13 +104,21 @@ Im Laravel Toolkit oder über SSH im Projektordner:
 ```bash
 PHP_BIN=/opt/plesk/php/8.5/bin/php
 composer install --no-dev --optimize-autoloader
-$PHP_BIN artisan key:generate --force
+# APP_KEY muss in .env bereits gesetzt sein (nicht pro Deploy neu generieren):
+grep '^APP_KEY=base64:' .env
 $PHP_BIN artisan migrate --force
 $PHP_BIN artisan storage:link
 $PHP_BIN artisan optimize:clear
 $PHP_BIN artisan config:cache
 $PHP_BIN artisan route:cache
 $PHP_BIN artisan view:cache
+```
+
+Queue-Worker verbindlich starten (Plesk Scheduled Task oder dauerhafter Prozess):
+
+```bash
+PHP_BIN=/opt/plesk/php/8.5/bin/php
+$PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
 ```
 
 ## 7) Dateirechte prüfen
@@ -137,6 +151,7 @@ Typische Ursachen:
 
 - falsche DB-Daten in `.env`
 - `APP_KEY` fehlt
+- `QUEUE_CONNECTION=sync` in Produktion oder kein Queue-Worker aktiv
 - `public` nicht als Document Root
 - fehlende Rechte auf `storage` / `bootstrap/cache`
 - PHP-CLI zu alt (Projekt braucht `>= 8.5`)

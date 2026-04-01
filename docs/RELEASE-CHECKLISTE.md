@@ -24,8 +24,8 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
   - `composer analyse`
 - Tests:
   - `php artisan test --without-tty --do-not-cache-result`
-- Service-Worker Regression:
-  - `npm run test:sw`
+- Frontend-JS Regression:
+  - `npm run test:js`
 - Frontend-Build:
   - `npm run build`
 
@@ -93,6 +93,17 @@ Post-Deploy muss mit PHP 8.5 laufen:
 ```bash
 cd /var/www/vhosts/c76.org/rpg.c76.org
 PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
+```
+
+Queue-Retry in Produktion sicherstellen:
+
+```bash
+# .env
+QUEUE_CONNECTION=database
+
+# Worker (Scheduled Task/Prozess)
+PHP_BIN=/opt/plesk/php/8.5/bin/php
+$PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
 ```
 
 Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:
