@@ -39,6 +39,11 @@ use Illuminate\Validation\ValidationException;
  *     ko_note?: string|null,
  *     kk_note?: string|null
  * }
+ * @phpstan-type InventoryItem array{
+ *     name: string,
+ *     quantity: int,
+ *     equipped: bool
+ * }
  */
 class AttributeNormalizer
 {
@@ -165,11 +170,7 @@ class AttributeNormalizer
 
         $data['advantages'] = $this->resolveTraitList($data['advantages'] ?? null, $characterAdvantages);
         $data['disadvantages'] = $this->resolveTraitList($data['disadvantages'] ?? null, $characterDisadvantages);
-        $data['inventory'] = $this->inventoryService->normalize(
-            is_array($data['inventory'] ?? null)
-                ? $data['inventory']
-                : $characterInventory
-        );
+        $data['inventory'] = $this->resolveInventoryList($data['inventory'] ?? null, $characterInventory);
         $data['weapons'] = is_array($data['weapons'] ?? null)
             ? $this->sanitizeWeapons($data['weapons'])
             : $this->sanitizeWeapons($characterWeapons);
@@ -359,6 +360,20 @@ class AttributeNormalizer
         $normalizedTraits = array_values($incomingTraits);
 
         return $normalizedTraits;
+    }
+
+    /**
+     * @param  mixed  $incomingInventory
+     * @param  mixed  $fallbackInventory
+     * @return array<int, InventoryItem>
+     */
+    private function resolveInventoryList(mixed $incomingInventory, mixed $fallbackInventory): array
+    {
+        $inventorySource = is_array($incomingInventory)
+            ? $incomingInventory
+            : $fallbackInventory;
+
+        return $this->inventoryService->normalize($inventorySource);
     }
 
     /**

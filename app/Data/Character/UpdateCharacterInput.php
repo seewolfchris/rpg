@@ -33,7 +33,12 @@ final readonly class UpdateCharacterInput
          *     ff_note?: string|null,
          *     ge_note?: string|null,
          *     ko_note?: string|null,
-         *     kk_note?: string|null
+         *     kk_note?: string|null,
+         *     inventory?: list<array{
+         *         name: string,
+         *         quantity: int,
+         *         equipped?: bool|null
+         *     }>|null
          * }
          */
         public array $payload,
