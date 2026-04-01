@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Character;
 
+use App\Data\Character\CreateCharacterInput;
 use App\Exceptions\CharacterCreationFailedException;
-use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Models\Character;
 use App\Services\Character\AttributeNormalizer;
 use App\Services\Character\AvatarService;
 use App\Support\CharacterInventoryService;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
@@ -26,27 +25,21 @@ class CreateCharacterAction
     ) {}
 
     /**
-     * @throws AuthorizationException
      * @throws ValidationException
      * @throws ModelNotFoundException
      * @throws CharacterCreationFailedException
      */
-    public function execute(StoreCharacterRequest $request): Character
+    public function execute(CreateCharacterInput $input): Character
     {
-        $user = $request->user();
-        if ($user === null) {
-            throw new AuthorizationException('Missing authenticated user.');
-        }
-
         $stagedAvatar = null;
 
         try {
-            $stagedAvatar = $this->avatarService->stageFromRequest($request);
+            $stagedAvatar = $this->avatarService->stageUploadedAvatar($input->avatar);
             /** @var int<0, max> $authenticatedUserId */
-            $authenticatedUserId = max(0, (int) $user->id);
+            $authenticatedUserId = max(0, (int) $input->actor->id);
 
-            $character = $this->db->transaction(function () use ($request, $stagedAvatar, $authenticatedUserId): Character {
-                $data = $this->attributeNormalizer->normalizeForCreate($request);
+            $character = $this->db->transaction(function () use ($input, $stagedAvatar, $authenticatedUserId): Character {
+                $data = $this->attributeNormalizer->normalizeForCreate($input->payload);
                 $data['avatar_path'] = null;
 
                 $character = new Character($data);
@@ -79,7 +72,7 @@ class CreateCharacterAction
             });
 
             return $character->fresh() ?? $character;
-        } catch (AuthorizationException | ValidationException | ModelNotFoundException $throwable) {
+        } catch (ValidationException | ModelNotFoundException $throwable) {
             $this->avatarService->discardStageIfPresent($stagedAvatar);
 
             throw $throwable;

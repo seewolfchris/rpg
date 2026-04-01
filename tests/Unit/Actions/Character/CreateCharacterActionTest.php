@@ -5,19 +5,16 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Character;
 
 use App\Actions\Character\CreateCharacterAction;
+use App\Data\Character\CreateCharacterInput;
 use App\Exceptions\CharacterCreationFailedException;
-use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Models\Character;
 use App\Models\User;
 use App\Models\World;
 use App\Services\Character\AttributeNormalizer;
 use App\Services\Character\AvatarService;
 use App\Support\CharacterInventoryService;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -28,7 +25,7 @@ class CreateCharacterActionTest extends TestCase
     public function test_it_creates_character_and_logs_inventory_with_mocks(): void
     {
         $user = User::factory()->create();
-        $request = new StoreCharacterRequestFake(fakeUser: $user);
+        $payload = ['name' => 'Unit Hero'];
 
         $normalizedData = $this->normalizedCharacterData();
         $normalizedInventory = [[
@@ -46,14 +43,14 @@ class CreateCharacterActionTest extends TestCase
         $attributeNormalizer = $this->createMock(AttributeNormalizer::class);
         $attributeNormalizer->expects($this->once())
             ->method('normalizeForCreate')
-            ->with($request)
+            ->with($payload)
             ->willReturn($normalizedData);
         app()->instance(AttributeNormalizer::class, $attributeNormalizer);
 
         $avatarService = $this->createMock(AvatarService::class);
         $avatarService->expects($this->once())
-            ->method('stageFromRequest')
-            ->with($request)
+            ->method('stageUploadedAvatar')
+            ->with(null)
             ->willReturn(null);
         $avatarService->expects($this->never())
             ->method('finalizeForCharacter');
@@ -86,7 +83,12 @@ class CreateCharacterActionTest extends TestCase
             );
         app()->instance(CharacterInventoryService::class, $inventoryService);
 
-        $character = app(CreateCharacterAction::class)->execute($request);
+        $character = app(CreateCharacterAction::class)->execute(
+            new CreateCharacterInput(
+                actor: $user,
+                payload: $payload,
+            )
+        );
 
         $this->assertInstanceOf(Character::class, $character);
         $this->assertDatabaseHas('characters', [
@@ -96,53 +98,26 @@ class CreateCharacterActionTest extends TestCase
         ]);
     }
 
-    public function test_it_throws_authorization_exception_when_request_has_no_user(): void
-    {
-        $request = new StoreCharacterRequestFake(fakeUser: null);
-
-        $attributeNormalizer = $this->createMock(AttributeNormalizer::class);
-        $attributeNormalizer->expects($this->never())
-            ->method('normalizeForCreate');
-        app()->instance(AttributeNormalizer::class, $attributeNormalizer);
-
-        $avatarService = $this->createMock(AvatarService::class);
-        $avatarService->expects($this->never())
-            ->method('stageFromRequest');
-        app()->instance(AvatarService::class, $avatarService);
-
-        $inventoryService = $this->createMock(CharacterInventoryService::class);
-        $inventoryService->expects($this->never())
-            ->method('normalize');
-        $inventoryService->expects($this->never())
-            ->method('diff');
-        $inventoryService->expects($this->never())
-            ->method('log');
-        app()->instance(CharacterInventoryService::class, $inventoryService);
-
-        $this->expectException(AuthorizationException::class);
-
-        app(CreateCharacterAction::class)->execute($request);
-    }
-
     public function test_it_persists_character_and_inventory_log_in_short_integration_case(): void
     {
         Storage::fake('public');
 
         $user = User::factory()->create();
         $avatar = UploadedFile::fake()->image('avatar.png', 220, 220);
-        $request = new StoreCharacterRequestFake(
-            fakeUser: $user,
-            validated: $this->validatedPayload(),
-            derivedPools: [
-                'le_max' => 42,
-                'le_current' => 42,
-                'ae_max' => 0,
-                'ae_current' => 0,
-            ],
-            avatar: $avatar,
-        );
+        $payload = array_merge($this->validatedPayload(), [
+            'le_max' => 42,
+            'le_current' => 42,
+            'ae_max' => 0,
+            'ae_current' => 0,
+        ]);
 
-        $character = app(CreateCharacterAction::class)->execute($request);
+        $character = app(CreateCharacterAction::class)->execute(
+            new CreateCharacterInput(
+                actor: $user,
+                payload: $payload,
+                avatar: $avatar,
+            )
+        );
 
         $this->assertDatabaseHas('characters', [
             'id' => $character->id,
@@ -165,7 +140,8 @@ class CreateCharacterActionTest extends TestCase
     public function test_it_keeps_character_when_avatar_finalization_fails_after_commit(): void
     {
         $user = User::factory()->create();
-        $request = new StoreCharacterRequestFake(fakeUser: $user);
+        $payload = ['name' => 'Unit Hero'];
+        $avatar = UploadedFile::fake()->image('avatar.png', 220, 220);
         $normalizedData = $this->normalizedCharacterData();
         $stagedAvatar = [
             'disk' => 'public',
@@ -176,14 +152,14 @@ class CreateCharacterActionTest extends TestCase
         $attributeNormalizer = $this->createMock(AttributeNormalizer::class);
         $attributeNormalizer->expects($this->once())
             ->method('normalizeForCreate')
-            ->with($request)
+            ->with($payload)
             ->willReturn($normalizedData);
         app()->instance(AttributeNormalizer::class, $attributeNormalizer);
 
         $avatarService = $this->createMock(AvatarService::class);
         $avatarService->expects($this->once())
-            ->method('stageFromRequest')
-            ->with($request)
+            ->method('stageUploadedAvatar')
+            ->with($avatar)
             ->willReturn($stagedAvatar);
         $avatarService->expects($this->once())
             ->method('finalizeForCharacter')
@@ -212,7 +188,13 @@ class CreateCharacterActionTest extends TestCase
             );
         app()->instance(CharacterInventoryService::class, $inventoryService);
 
-        $character = app(CreateCharacterAction::class)->execute($request);
+        $character = app(CreateCharacterAction::class)->execute(
+            new CreateCharacterInput(
+                actor: $user,
+                payload: $payload,
+                avatar: $avatar,
+            )
+        );
 
         $this->assertInstanceOf(Character::class, $character);
         $this->assertDatabaseHas('characters', [
@@ -323,60 +305,5 @@ class CreateCharacterActionTest extends TestCase
             'kk_note' => 'Schultert Lasten ohne Klage.',
             'avatar' => 'ignored-in-normalizer',
         ];
-    }
-}
-
-final class StoreCharacterRequestFake extends StoreCharacterRequest
-{
-    /**
-     * @param  array<string, mixed>  $validated
-     * @param  array{le_max: int, le_current: int, ae_max: int, ae_current: int}  $derivedPools
-     */
-    public function __construct(
-        private readonly ?Authenticatable $fakeUser = null,
-        private readonly array $validated = [],
-        private readonly array $derivedPools = [
-            'le_max' => 0,
-            'le_current' => 0,
-            'ae_max' => 0,
-            'ae_current' => 0,
-        ],
-        private readonly ?UploadedFile $avatar = null,
-    ) {}
-
-    public function user($guard = null): ?Authenticatable
-    {
-        return $this->fakeUser;
-    }
-
-    public function validated($key = null, $default = null): mixed
-    {
-        if ($key === null) {
-            return $this->validated;
-        }
-
-        return Arr::get($this->validated, (string) $key, $default);
-    }
-
-    /**
-     * @return array{le_max: int, le_current: int, ae_max: int, ae_current: int}
-     */
-    public function derivedPools(): array
-    {
-        return $this->derivedPools;
-    }
-
-    public function hasFile($key): bool
-    {
-        return (string) $key === 'avatar' && $this->avatar instanceof UploadedFile;
-    }
-
-    public function file($key = null, $default = null): mixed
-    {
-        if ((string) $key === 'avatar' && $this->avatar instanceof UploadedFile) {
-            return $this->avatar;
-        }
-
-        return $default;
     }
 }

@@ -10,6 +10,9 @@ use App\Actions\Character\CreateCharacterAction;
 use App\Actions\Character\DeleteCharacterAction;
 use App\Actions\Character\UpdateCharacterAction;
 use App\Actions\Character\UpdateCharacterInlineAction;
+use App\Data\Character\CreateCharacterInput;
+use App\Data\Character\InlineUpdateCharacterInput;
+use App\Data\Character\UpdateCharacterInput;
 use App\Exceptions\CharacterDeletionFailedException;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
@@ -18,6 +21,7 @@ use App\Models\World;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\View\View;
 use Throwable;
 
@@ -71,7 +75,16 @@ class CharacterController extends Controller
 
     public function store(StoreCharacterRequest $request): RedirectResponse
     {
-        $character = $this->createCharacterAction->execute($request);
+        $user = $this->authenticatedUser($request);
+        $avatar = $request->file('avatar');
+
+        $character = $this->createCharacterAction->execute(
+            new CreateCharacterInput(
+                actor: $user,
+                payload: $request->validated(),
+                avatar: $avatar instanceof UploadedFile ? $avatar : null,
+            ),
+        );
 
         return redirect()
             ->route('characters.show', $character)
@@ -114,8 +127,18 @@ class CharacterController extends Controller
     public function update(UpdateCharacterRequest $request, Character $character): RedirectResponse
     {
         $this->authorize('update', $character);
+        $user = $this->authenticatedUser($request);
+        $avatar = $request->file('avatar');
 
-        $this->updateCharacterAction->execute($request, $character);
+        $this->updateCharacterAction->execute(
+            new UpdateCharacterInput(
+                actor: $user,
+                character: $character,
+                payload: $request->validated(),
+                removeAvatar: $request->boolean('remove_avatar'),
+                avatar: $avatar instanceof UploadedFile ? $avatar : null,
+            ),
+        );
 
         return redirect()
             ->route('characters.show', $character)
@@ -125,7 +148,14 @@ class CharacterController extends Controller
     public function inlineUpdate(Request $request, Character $character): View|RedirectResponse
     {
         $this->authorize('update', $character);
-        $result = $this->updateCharacterInlineAction->execute($request, $character);
+        $validated = $request->validate($this->updateCharacterInlineAction->rules());
+        $result = $this->updateCharacterInlineAction->execute(
+            new InlineUpdateCharacterInput(
+                character: $character,
+                payload: $validated,
+                isHtmxRequest: $request->header('HX-Request') === 'true',
+            ),
+        );
 
         if ($result->shouldRenderFragment) {
             return view('characters.partials.inline-editor', ['character' => $result->character]);

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\Character;
 
-use App\Http\Requests\Character\StoreCharacterRequest;
-use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use App\Models\World;
 use App\Support\CharacterInventoryService;
@@ -14,6 +12,24 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @phpstan-type TraitList list<string>
+ * @phpstan-type TraitPayload array{
+ *     advantages?: TraitList|null,
+ *     disadvantages?: TraitList|null
+ * }
+ * @phpstan-type CharacterTextPayload array{
+ *     origin?: string,
+ *     species?: string,
+ *     calling?: string,
+ *     calling_custom_name?: string|null,
+ *     calling_custom_description?: string|null,
+ *     concept?: string|null,
+ *     gm_secret?: string|null,
+ *     world_connection?: string|null,
+ *     gm_note?: string|null
+ * }
+ */
 class AttributeNormalizer
 {
     /**
@@ -27,14 +43,15 @@ class AttributeNormalizer
     ) {}
 
     /**
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
      * @throws ModelNotFoundException
      * @throws ValidationException
      */
-    public function normalizeForCreate(StoreCharacterRequest $request): array
+    public function normalizeForCreate(array $payload): array
     {
-        $data = array_merge($request->validated(), $request->derivedPools());
+        $data = $payload;
         unset($data['avatar'], $data['remove_avatar']);
 
         $data = $this->backfillLegacyCharacterData($data);
@@ -45,14 +62,15 @@ class AttributeNormalizer
     }
 
     /**
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
      * @throws ModelNotFoundException
      * @throws ValidationException
      */
-    public function normalizeForUpdate(UpdateCharacterRequest $request, Character $character): array
+    public function normalizeForUpdate(array $payload, Character $character): array
     {
-        $data = array_merge($request->validated(), $request->derivedPools());
+        $data = $payload;
         unset($data['avatar'], $data['remove_avatar']);
 
         $data = $this->backfillLegacyCharacterData($data, $character);
@@ -83,13 +101,13 @@ class AttributeNormalizer
 
         $defaultOrigin = array_key_exists('native_vhaltor', $origins)
             ? 'native_vhaltor'
-            : (array_key_first($origins) ?? null);
+            : (($key = array_key_first($origins)) === null ? null : (string) $key);
         $defaultSpecies = array_key_exists('mensch', $speciesOptions)
             ? 'mensch'
-            : (array_key_first($speciesOptions) ?? null);
+            : (($key = array_key_first($speciesOptions)) === null ? null : (string) $key);
         $defaultCalling = array_key_exists('abenteurer', $callingOptions)
             ? 'abenteurer'
-            : (array_key_first($callingOptions) ?? null);
+            : (($key = array_key_first($callingOptions)) === null ? null : (string) $key);
 
         $characterOrigin = $character instanceof Character
             ? $character->origin
@@ -101,17 +119,18 @@ class AttributeNormalizer
             ? $character->calling
             : null;
 
-        $data['origin'] = (string) ($data['origin'] ?? $characterOrigin ?? $defaultOrigin ?? '');
-        $data['species'] = (string) ($data['species'] ?? $characterSpecies ?? $defaultSpecies ?? '');
-        $data['calling'] = (string) ($data['calling'] ?? $characterCalling ?? $defaultCalling ?? '');
+        $data = $this->backfillCoreTextFields(
+            data: $data,
+            characterOrigin: $characterOrigin,
+            characterSpecies: $characterSpecies,
+            characterCalling: $characterCalling,
+            defaultOrigin: $defaultOrigin,
+            defaultSpecies: $defaultSpecies,
+            defaultCalling: $defaultCalling,
+        );
+        $data = $this->backfillOptionalTextFields($data, $character);
 
         foreach ([
-            'calling_custom_name',
-            'calling_custom_description',
-            'concept',
-            'gm_secret',
-            'world_connection',
-            'gm_note',
             'mu_note',
             'kl_note',
             'in_note',
@@ -140,18 +159,16 @@ class AttributeNormalizer
             }
         }
 
+        /** @var TraitList|null $characterAdvantages */
         $characterAdvantages = $character instanceof Character ? $character->advantages : [];
+        /** @var TraitList|null $characterDisadvantages */
         $characterDisadvantages = $character instanceof Character ? $character->disadvantages : [];
         $characterInventory = $character instanceof Character ? $character->inventory : [];
         $characterWeapons = $character instanceof Character ? $character->weapons : [];
         $characterArmors = $character instanceof Character ? $character->armors : [];
 
-        $data['advantages'] = is_array($data['advantages'] ?? null)
-            ? array_values($data['advantages'])
-            : $characterAdvantages;
-        $data['disadvantages'] = is_array($data['disadvantages'] ?? null)
-            ? array_values($data['disadvantages'])
-            : $characterDisadvantages;
+        $data['advantages'] = $this->resolveTraitList($data['advantages'] ?? null, $characterAdvantages);
+        $data['disadvantages'] = $this->resolveTraitList($data['disadvantages'] ?? null, $characterDisadvantages);
         $data['inventory'] = $this->inventoryService->normalize(
             is_array($data['inventory'] ?? null)
                 ? $data['inventory']
@@ -257,6 +274,67 @@ class AttributeNormalizer
     private function clampInt(int $value, int $min, int $max): int
     {
         return max($min, min($value, $max));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>&CharacterTextPayload
+     */
+    private function backfillCoreTextFields(
+        array $data,
+        ?string $characterOrigin,
+        ?string $characterSpecies,
+        ?string $characterCalling,
+        ?string $defaultOrigin,
+        ?string $defaultSpecies,
+        ?string $defaultCalling,
+    ): array {
+        $data['origin'] = (string) ($data['origin'] ?? $characterOrigin ?? $defaultOrigin ?? '');
+        $data['species'] = (string) ($data['species'] ?? $characterSpecies ?? $defaultSpecies ?? '');
+        $data['calling'] = (string) ($data['calling'] ?? $characterCalling ?? $defaultCalling ?? '');
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>&CharacterTextPayload
+     */
+    private function backfillOptionalTextFields(array $data, ?Character $character): array
+    {
+        foreach ([
+            'calling_custom_name',
+            'calling_custom_description',
+            'concept',
+            'gm_secret',
+            'world_connection',
+            'gm_note',
+        ] as $key) {
+            if (! array_key_exists($key, $data) && $character) {
+                /** @var string|null $existingValue */
+                $existingValue = $character->{$key};
+                $data[$key] = $existingValue;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  mixed  $incomingTraits
+     * @param  TraitList|null  $fallbackTraits
+     * @return TraitList|null
+     */
+    private function resolveTraitList(mixed $incomingTraits, ?array $fallbackTraits): ?array
+    {
+        if (! is_array($incomingTraits)) {
+            return $fallbackTraits;
+        }
+
+        /** @var TraitList $normalizedTraits */
+        $normalizedTraits = array_values($incomingTraits);
+
+        return $normalizedTraits;
     }
 
     /**

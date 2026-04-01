@@ -171,7 +171,7 @@ class PostProbeService
                     'effective_damage' => $damageAfterArmor,
                     'effective_le_delta' => $appliedLeDelta,
                 ];
-                $post->meta = $meta;
+                $post->setAttribute('meta', $meta);
                 $post->save();
             }
 

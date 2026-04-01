@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Character;
 
-use App\Models\Character;
-use Illuminate\Http\Request;
+use App\Data\Character\InlineUpdateCharacterInput;
 use Illuminate\Validation\Rule;
 
 class UpdateCharacterInlineAction
 {
-    public function execute(Request $request, Character $character): UpdateCharacterInlineResult
+    /**
+     * @return array<string, array<int, string|\Illuminate\Validation\Rules\In>>
+     */
+    public function rules(): array
     {
         $statusOptions = array_keys((array) config('characters.statuses', []));
 
-        $validated = $request->validate([
+        return [
             'epithet' => ['nullable', 'string', 'max:120'],
             'status' => ['required', Rule::in($statusOptions)],
             'bio' => ['required', 'string', 'max:12000'],
@@ -22,14 +24,17 @@ class UpdateCharacterInlineAction
             'world_connection' => ['nullable', 'string', 'max:2000'],
             'gm_secret' => ['nullable', 'string', 'max:3000'],
             'gm_note' => ['nullable', 'string', 'max:2000'],
-        ]);
+        ];
+    }
 
-        $character->fill($validated);
-        $character->save();
+    public function execute(InlineUpdateCharacterInput $input): UpdateCharacterInlineResult
+    {
+        $input->character->fill($input->payload);
+        $input->character->save();
 
         return new UpdateCharacterInlineResult(
-            character: $character,
-            shouldRenderFragment: $request->header('HX-Request') === 'true',
+            character: $input->character,
+            shouldRenderFragment: $input->isHtmxRequest,
         );
     }
 }

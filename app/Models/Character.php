@@ -325,45 +325,72 @@ class Character extends Model
      */
     public function normalizedArmors(): array
     {
-        $entries = is_array($this->armors) ? $this->armors : [];
+        $entries = $this->armors;
+        if (! is_array($entries)) {
+            return [];
+        }
+
         $normalized = [];
 
         foreach ($entries as $entry) {
-            if (is_string($entry)) {
-                $name = trim($entry);
-                $protection = 0;
-                $equipped = false;
-            } elseif (is_array($entry)) {
-                $name = trim((string) ($entry['name'] ?? $entry['item'] ?? ''));
-                $protection = max(0, min(99, (int) ($entry['protection'] ?? $entry['rs'] ?? 0)));
-                $equipped = (bool) ($entry['equipped'] ?? false);
-            } else {
+            $normalizedEntry = $this->normalizeArmorEntry($entry);
+            if ($normalizedEntry === null) {
                 continue;
             }
 
-            if ($name === '') {
-                continue;
-            }
-
-            $normalized[] = [
-                'name' => $name,
-                'protection' => $protection,
-                'equipped' => $equipped,
-            ];
+            $normalized[] = $normalizedEntry;
         }
 
-        return array_values($normalized);
+        return $normalized;
     }
 
     public function armorProtectionValue(): int
     {
         $armors = $this->normalizedArmors();
-        $equipped = array_values(array_filter($armors, static fn (array $armor): bool => (bool) $armor['equipped']));
+        $equipped = array_filter($armors, static fn (array $armor): bool => $armor['equipped']);
         $effectiveArmors = $equipped !== [] ? $equipped : $armors;
+        $protection = 0;
 
-        return array_sum(array_map(
-            static fn (array $armor): int => max(0, (int) ($armor['protection'] ?? 0)),
-            $effectiveArmors
-        ));
+        foreach ($effectiveArmors as $armor) {
+            $protection += max(0, (int) $armor['protection']);
+        }
+
+        return $protection;
+    }
+
+    /**
+     * @return array{name: string, protection: int, equipped: bool}|null
+     */
+    private function normalizeArmorEntry(mixed $entry): ?array
+    {
+        if (is_string($entry)) {
+            $name = trim($entry);
+            if ($name === '') {
+                return null;
+            }
+
+            return [
+                'name' => $name,
+                'protection' => 0,
+                'equipped' => false,
+            ];
+        }
+
+        if (! is_array($entry)) {
+            return null;
+        }
+
+        $name = trim((string) Arr::get($entry, 'name', Arr::get($entry, 'item', '')));
+        if ($name === '') {
+            return null;
+        }
+
+        $protection = (int) Arr::get($entry, 'protection', Arr::get($entry, 'rs', 0));
+
+        return [
+            'name' => $name,
+            'protection' => max(0, min(99, $protection)),
+            'equipped' => (bool) Arr::get($entry, 'equipped', false),
+        ];
     }
 }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Character;
 
 use App\Exceptions\CharacterCreationFailedException;
-use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Models\Character;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
@@ -16,23 +16,18 @@ class AvatarService
     /**
      * @return array{disk: string, staged_path: string, extension: string}|null
      */
-    public function stageFromRequest(StoreCharacterRequest $request): ?array
+    public function stageUploadedAvatar(?UploadedFile $avatar): ?array
     {
-        if (! $request->hasFile('avatar')) {
+        if (! $avatar instanceof UploadedFile) {
             return null;
         }
 
-        $file = $request->file('avatar');
-        if ($file === null) {
-            return null;
-        }
-
-        $stagedPath = $file->store('character-avatars/staged', 'public');
+        $stagedPath = $avatar->store('character-avatars/staged', 'public');
         if (! is_string($stagedPath) || trim($stagedPath) === '') {
             throw new CharacterCreationFailedException('Unable to stage avatar upload.');
         }
 
-        $extension = strtolower((string) $file->extension());
+        $extension = strtolower((string) $avatar->extension());
 
         return [
             'disk' => 'public',

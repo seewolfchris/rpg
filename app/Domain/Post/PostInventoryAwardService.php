@@ -110,7 +110,7 @@ class PostInventoryAwardService
                 equipped: $equipped,
             );
 
-            $targetCharacter->inventory = $afterInventory;
+            $targetCharacter->setAttribute('inventory', $afterInventory);
             $targetCharacter->save();
 
             $operations = $this->inventoryService->diff($beforeInventory, $afterInventory);
@@ -136,7 +136,7 @@ class PostInventoryAwardService
 
             $meta = is_array($post->meta) ? $post->meta : [];
             $meta['inventory_award'] = $awardMeta;
-            $post->meta = $meta;
+            $post->setAttribute('meta', $meta);
             $post->save();
 
             return $awardMeta;

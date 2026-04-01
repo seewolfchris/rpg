@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Character;
 
-use App\Http\Requests\Character\UpdateCharacterRequest;
+use App\Data\Character\UpdateCharacterInput;
 use App\Models\Character;
 use App\Services\Character\AttributeNormalizer;
 use App\Support\CharacterInventoryService;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
@@ -22,42 +22,34 @@ class UpdateCharacterAction
         private readonly DatabaseManager $db,
     ) {}
 
-    /**
-     * @throws AuthorizationException
-     */
-    public function execute(UpdateCharacterRequest $request, Character $character): void
+    public function execute(UpdateCharacterInput $input): void
     {
-        $user = $request->user();
-        if ($user === null) {
-            throw new AuthorizationException('Missing authenticated user.');
-        }
-
+        $character = $input->character;
         $previousInventory = $this->inventoryService->normalize($character->inventory ?? []);
-        $data = $this->attributeNormalizer->normalizeForUpdate($request, $character);
-        $stagedAvatar = $this->stageAvatarUpload($request);
+        $data = $this->attributeNormalizer->normalizeForUpdate($input->payload, $character);
+        $stagedAvatar = $this->stageAvatarUpload($input->avatar);
         $replaceAvatar = $stagedAvatar !== null;
-        $removeAvatar = $request->boolean('remove_avatar');
         $previousAvatarPath = is_string($character->avatar_path) && $character->avatar_path !== ''
             ? $character->avatar_path
             : null;
 
         try {
             /** @var int<0, max> $actorUserId */
-            $actorUserId = max(0, (int) $user->id);
+            $actorUserId = max(0, (int) $input->actor->id);
 
             $this->db->transaction(function () use (
                 $character,
                 $data,
                 $previousInventory,
                 $replaceAvatar,
-                $removeAvatar,
+                $input,
                 $previousAvatarPath,
                 $stagedAvatar,
                 $actorUserId
             ): void {
                 $character->fill($data);
 
-                if ($removeAvatar && ! $replaceAvatar) {
+                if ($input->removeAvatar && ! $replaceAvatar) {
                     $character->avatar_path = null;
                 }
 
@@ -85,7 +77,7 @@ class UpdateCharacterAction
                     return;
                 }
 
-                if ($removeAvatar && $previousAvatarPath !== null) {
+                if ($input->removeAvatar && $previousAvatarPath !== null) {
                     $this->db->connection()->afterCommit(function () use ($previousAvatarPath): void {
                         $this->deletePublicFile($previousAvatarPath);
                     });
@@ -101,23 +93,18 @@ class UpdateCharacterAction
     /**
      * @return array{disk: string, staged_path: string, extension: string}|null
      */
-    private function stageAvatarUpload(UpdateCharacterRequest $request): ?array
+    private function stageAvatarUpload(?UploadedFile $avatar): ?array
     {
-        if (! $request->hasFile('avatar')) {
+        if (! $avatar instanceof UploadedFile) {
             return null;
         }
 
-        $file = $request->file('avatar');
-        if ($file === null) {
-            return null;
-        }
-
-        $stagedPath = $file->store('character-avatars/staged', 'public');
+        $stagedPath = $avatar->store('character-avatars/staged', 'public');
         if (! is_string($stagedPath) || trim($stagedPath) === '') {
             throw new \RuntimeException('Avatar-Upload konnte nicht zwischengespeichert werden.');
         }
 
-        $extension = strtolower((string) $file->extension());
+        $extension = strtolower((string) $avatar->extension());
 
         return [
             'disk' => 'public',

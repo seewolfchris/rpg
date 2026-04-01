@@ -108,7 +108,7 @@ class SceneInventoryQuickActionService
                 );
             }
 
-            $character->inventory = $afterInventory;
+            $character->setAttribute('inventory', $afterInventory);
             $character->save();
 
             if ($actionType === 'remove') {
