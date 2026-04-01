@@ -38,6 +38,11 @@ final readonly class UpdateCharacterInput
          *         name: string,
          *         quantity: int,
          *         equipped?: bool|null
+         *     }>|null,
+         *     armors?: list<array{
+         *         name: string,
+         *         protection: int,
+         *         equipped?: bool|null
          *     }>|null
          * }
          */

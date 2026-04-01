@@ -44,6 +44,11 @@ use Illuminate\Validation\ValidationException;
  *     quantity: int,
  *     equipped: bool
  * }
+ * @phpstan-type ArmorItem array{
+ *     name: string,
+ *     protection: int,
+ *     equipped: bool
+ * }
  */
 class AttributeNormalizer
 {
@@ -174,9 +179,7 @@ class AttributeNormalizer
         $data['weapons'] = is_array($data['weapons'] ?? null)
             ? $this->sanitizeWeapons($data['weapons'])
             : $this->sanitizeWeapons($characterWeapons);
-        $data['armors'] = is_array($data['armors'] ?? null)
-            ? $this->sanitizeArmors($data['armors'])
-            : $this->sanitizeArmors($characterArmors);
+        $data['armors'] = $this->resolveArmorList($data['armors'] ?? null, $characterArmors);
 
         foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
             if (! array_key_exists($poolKey, $data) && $character) {
@@ -374,6 +377,20 @@ class AttributeNormalizer
             : $fallbackInventory;
 
         return $this->inventoryService->normalize($inventorySource);
+    }
+
+    /**
+     * @param  mixed  $incomingArmors
+     * @param  mixed  $fallbackArmors
+     * @return array<int, ArmorItem>
+     */
+    private function resolveArmorList(mixed $incomingArmors, mixed $fallbackArmors): array
+    {
+        $armorSource = is_array($incomingArmors)
+            ? $incomingArmors
+            : $fallbackArmors;
+
+        return $this->sanitizeArmors($armorSource);
     }
 
     /**
