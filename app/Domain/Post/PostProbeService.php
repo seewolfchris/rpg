@@ -98,10 +98,12 @@ class PostProbeService
                 throw PostProbeInvariantViolationException::targetCharacterMissing($targetCharacterId);
             }
 
-            if (! $participantUserIds->contains((int) $targetCharacter->user_id)) {
+            $targetUserId = (int) $targetCharacter->user_id;
+
+            if ($targetUserId < 1 || ! $participantUserIds->contains($targetUserId)) {
                 throw PostProbeInvariantViolationException::targetCharacterNotParticipant(
                     characterId: (int) $targetCharacter->id,
-                    targetUserId: (int) $targetCharacter->user_id,
+                    targetUserId: $targetUserId,
                     campaignId: $campaignId,
                 );
             }

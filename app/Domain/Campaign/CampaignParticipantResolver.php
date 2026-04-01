@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 class CampaignParticipantResolver
 {
     /**
-     * @return Collection<int, int>
+     * @return Collection<int, int<1, max>>
      */
     public function participantUserIds(Campaign $campaign): Collection
     {

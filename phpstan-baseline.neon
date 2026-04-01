@@ -1,7 +1,2 @@
 parameters:
-	ignoreErrors:
-		-
-			message: '#^Method App\\Domain\\Campaign\\CampaignParticipantResolver\:\:participantUserIds\(\) should return Illuminate\\Support\\Collection\<int, int\> but returns Illuminate\\Support\\Collection\<int, int\<1, max\>\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Domain/Campaign/CampaignParticipantResolver.php
+	ignoreErrors: []

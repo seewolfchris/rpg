@@ -67,10 +67,12 @@ class SceneInventoryQuickActionService
                 throw SceneInventoryQuickActionInvariantViolationException::targetCharacterMissing($characterId);
             }
 
-            if (! $participantUserIds->contains((int) $character->user_id)) {
+            $targetUserId = (int) $character->user_id;
+
+            if ($targetUserId < 1 || ! $participantUserIds->contains($targetUserId)) {
                 throw SceneInventoryQuickActionInvariantViolationException::targetCharacterNotParticipant(
                     characterId: (int) $character->id,
-                    targetUserId: (int) $character->user_id,
+                    targetUserId: $targetUserId,
                     campaignId: (int) $campaign->id,
                 );
             }
