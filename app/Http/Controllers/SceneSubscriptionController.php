@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Scene\BuildSceneThreadPageDataAction;
+use App\Actions\SceneSubscription\BulkUpdateSceneSubscriptionsAction;
+use App\Actions\SceneSubscription\MarkSceneSubscriptionReadAction;
+use App\Actions\SceneSubscription\MarkSceneSubscriptionUnreadAction;
+use App\Actions\SceneSubscription\SubscribeSceneSubscriptionAction;
+use App\Actions\SceneSubscription\ToggleSceneSubscriptionMuteAction;
+use App\Actions\SceneSubscription\UnsubscribeSceneSubscriptionAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\SceneSubscription\BulkUpdateSceneSubscriptionRequest;
 use App\Models\Campaign;
-use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
 use App\Models\User;
@@ -18,6 +24,16 @@ use Illuminate\View\View;
 class SceneSubscriptionController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly BuildSceneThreadPageDataAction $buildSceneThreadPageDataAction,
+        private readonly BulkUpdateSceneSubscriptionsAction $bulkUpdateSceneSubscriptionsAction,
+        private readonly SubscribeSceneSubscriptionAction $subscribeSceneSubscriptionAction,
+        private readonly UnsubscribeSceneSubscriptionAction $unsubscribeSceneSubscriptionAction,
+        private readonly ToggleSceneSubscriptionMuteAction $toggleSceneSubscriptionMuteAction,
+        private readonly MarkSceneSubscriptionReadAction $markSceneSubscriptionReadAction,
+        private readonly MarkSceneSubscriptionUnreadAction $markSceneSubscriptionUnreadAction,
+    ) {}
 
     public function index(Request $request, World $world): View
     {
@@ -67,41 +83,13 @@ class SceneSubscriptionController extends Controller
         $action = (string) $request->validated('bulk_action');
         $status = (string) $request->validated('status', 'all');
         $search = trim((string) $request->validated('q', ''));
-
-        $filteredQuery = $this->visibleSubscriptionsQuery($user, $world);
-        $this->applyFilters($filteredQuery, $status, $search);
-
-        $visibleAllQuery = $this->visibleSubscriptionsQuery($user, $world);
-
-        $affected = match ($action) {
-            'mute_filtered' => (clone $filteredQuery)
-                ->where('is_muted', false)
-                ->update(['is_muted' => true, 'updated_at' => now()]),
-            'unmute_filtered' => (clone $filteredQuery)
-                ->where('is_muted', true)
-                ->update(['is_muted' => false, 'updated_at' => now()]),
-            'unfollow_filtered' => (clone $filteredQuery)->delete(),
-            'mute_all_active' => (clone $visibleAllQuery)
-                ->where('is_muted', false)
-                ->update(['is_muted' => true, 'updated_at' => now()]),
-            'unmute_all_muted' => (clone $visibleAllQuery)
-                ->where('is_muted', true)
-                ->update(['is_muted' => false, 'updated_at' => now()]),
-            'unfollow_all_muted' => (clone $visibleAllQuery)
-                ->where('is_muted', true)
-                ->delete(),
-            default => 0,
-        };
-
-        $message = match ($action) {
-            'mute_filtered' => 'Gefilterte Abos stummgeschaltet.',
-            'unmute_filtered' => 'Gefilterte Abos aktiviert.',
-            'unfollow_filtered' => 'Gefilterte Abos entfernt.',
-            'mute_all_active' => 'Alle aktiven Abos stummgeschaltet.',
-            'unmute_all_muted' => 'Alle stummen Abos aktiviert.',
-            'unfollow_all_muted' => 'Alle stummen Abos entfernt.',
-            default => 'Bulk-Aktion ausgeführt.',
-        };
+        $result = $this->bulkUpdateSceneSubscriptionsAction->execute(
+            user: $user,
+            world: $world,
+            action: $action,
+            status: $status,
+            search: $search,
+        );
 
         return redirect()
             ->route('scene-subscriptions.index', [
@@ -109,7 +97,7 @@ class SceneSubscriptionController extends Controller
                 'status' => $status,
                 'q' => $search !== '' ? $search : null,
             ])
-            ->with('status', $message.' Betroffene Abos: '.$affected.'.');
+            ->with('status', $result->statusMessage());
     }
 
     public function subscribe(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -117,19 +105,9 @@ class SceneSubscriptionController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
+        $result = $this->subscribeSceneSubscriptionAction->execute($user, $scene);
 
-        $latestPostId = $this->latestScenePostId($scene);
-
-        SceneSubscription::query()->updateOrCreate([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-        ], [
-            'is_muted' => false,
-            'last_read_post_id' => $latestPostId > 0 ? $latestPostId : null,
-            'last_read_at' => now(),
-        ]);
-
-        return back()->with('status', 'Szene abonniert.');
+        return back()->with('status', $result->statusMessage());
     }
 
     public function unsubscribe(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -137,13 +115,9 @@ class SceneSubscriptionController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
+        $result = $this->unsubscribeSceneSubscriptionAction->execute($user, $scene);
 
-        SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->delete();
-
-        return back()->with('status', 'Szenen-Abo entfernt.');
+        return back()->with('status', $result->statusMessage());
     }
 
     public function toggleMute(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -151,27 +125,9 @@ class SceneSubscriptionController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
+        $result = $this->toggleSceneSubscriptionMuteAction->execute($user, $scene);
 
-        $latestPostId = $this->latestScenePostId($scene);
-
-        $subscription = SceneSubscription::query()->firstOrCreate([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-        ], [
-            'is_muted' => false,
-            'last_read_post_id' => $latestPostId > 0 ? $latestPostId : null,
-            'last_read_at' => now(),
-        ]);
-
-        $subscription->is_muted = ! $subscription->is_muted;
-        $subscription->save();
-
-        return back()->with(
-            'status',
-            $subscription->is_muted
-                ? 'Szenen-Benachrichtigungen stummgeschaltet.'
-                : 'Szenen-Benachrichtigungen aktiviert.',
-        );
+        return back()->with('status', $result->statusMessage());
     }
 
     public function markRead(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
@@ -179,36 +135,13 @@ class SceneSubscriptionController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
-
-        $latestPostId = $this->latestScenePostId($scene);
-
-        $subscription = SceneSubscription::query()->firstOrCreate([
-            'scene_id' => $scene->id,
-            'user_id' => $user->id,
-        ], [
-            'is_muted' => false,
-            'last_read_post_id' => null,
-            'last_read_at' => null,
-        ]);
-
-        if ($latestPostId > 0) {
-            $subscription->markRead($latestPostId);
-
-            if ($request->header('HX-Request') === 'true') {
-                return $this->threadFeedFragment($request, $scene, $campaign, $subscription);
-            }
-
-            return back()->with('status', 'Szene als gelesen markiert.');
-        }
-
-        $subscription->last_read_at = now();
-        $subscription->save();
+        $result = $this->markSceneSubscriptionReadAction->execute($user, $scene);
 
         if ($request->header('HX-Request') === 'true') {
-            return $this->threadFeedFragment($request, $scene, $campaign, $subscription);
+            return $this->threadFeedFragment($request, $scene, $campaign);
         }
 
-        return back()->with('status', 'Szene enthält noch keine Beiträge.');
+        return back()->with('status', $result->statusMessage());
     }
 
     public function markUnread(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
@@ -216,27 +149,13 @@ class SceneSubscriptionController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
-
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if (! $subscription) {
-            if ($request->header('HX-Request') === 'true') {
-                return $this->threadFeedFragment($request, $scene, $campaign, null);
-            }
-
-            return back()->with('status', 'Szene ist nicht abonniert.');
-        }
-
-        $subscription->markUnread();
+        $result = $this->markSceneSubscriptionUnreadAction->execute($user, $scene);
 
         if ($request->header('HX-Request') === 'true') {
-            return $this->threadFeedFragment($request, $scene, $campaign, $subscription->fresh());
+            return $this->threadFeedFragment($request, $scene, $campaign);
         }
 
-        return back()->with('status', 'Szene als ungelesen markiert.');
+        return back()->with('status', $result->statusMessage());
     }
 
     /**
@@ -260,13 +179,6 @@ class SceneSubscriptionController extends Controller
                 });
             });
         }
-    }
-
-    private function latestScenePostId(Scene $scene): int
-    {
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->max('id');
     }
 
     private function unreadCountForUser(int $userId, World $world): int
@@ -304,39 +216,22 @@ class SceneSubscriptionController extends Controller
         Request $request,
         Scene $scene,
         Campaign $campaign,
-        ?SceneSubscription $subscription,
     ): View {
         $user = $this->authenticatedUser($request);
-        $posts = Post::query()
-            ->where('scene_id', $scene->id)
-            ->with(Post::THREAD_PAGE_RELATIONS)
-            ->latestByIdHotpath()
-            ->paginate(Post::THREAD_POSTS_PER_PAGE)
-            ->withQueryString();
-        $latestPostId = $this->latestScenePostId($scene);
-        $unreadPostsCount = $this->unreadCountForScene($scene, $subscription, $latestPostId);
-        $canModerateScene = $user->isGmOrAdmin() || $campaign->isCoGm($user);
+        $threadPageData = $this->buildSceneThreadPageDataAction->execute(
+            scene: $scene,
+            campaign: $campaign,
+            user: $user,
+        );
 
-        return view('scenes.partials.thread-page', compact(
-            'posts',
-            'campaign',
-            'scene',
-            'subscription',
-            'latestPostId',
-            'unreadPostsCount',
-            'canModerateScene',
-        ));
-    }
-
-    private function unreadCountForScene(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
-    {
-        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
-            return 0;
-        }
-
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
-            ->count();
+        return view('scenes.partials.thread-page', [
+            'posts' => $threadPageData->posts,
+            'campaign' => $campaign,
+            'scene' => $scene,
+            'subscription' => $threadPageData->subscription,
+            'latestPostId' => $threadPageData->latestPostId,
+            'unreadPostsCount' => $threadPageData->unreadPostsCount,
+            'canModerateScene' => $threadPageData->canModerateScene,
+        ]);
     }
 }

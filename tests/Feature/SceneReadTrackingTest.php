@@ -126,6 +126,90 @@ class SceneReadTrackingTest extends TestCase
         ]);
     }
 
+    public function test_hx_mark_read_returns_thread_fragment_with_unread_count_zero(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'scene-thread-feed',
+            ])
+            ->patch(route('campaigns.scenes.subscription.read', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+
+        $response->assertOk();
+        $response->assertViewIs('scenes.partials.thread-page');
+        $response->assertSee('Ungelesen: 0');
+        $response->assertSee('Du bist auf dem aktuellen Stand dieser Szene.');
+        $response->assertDontSee('Nächster ungelesener Post');
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => $latestPost->id,
+        ]);
+    }
+
+    public function test_hx_mark_unread_returns_thread_fragment_with_recomputed_unread_count(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => $latestPost->id,
+            'last_read_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withHeaders([
+                'HX-Request' => 'true',
+                'HX-Target' => 'scene-thread-feed',
+            ])
+            ->patch(route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+
+        $response->assertOk();
+        $response->assertViewIs('scenes.partials.thread-page');
+        $response->assertSee('Ungelesen: 2');
+        $response->assertSee('Nächster ungelesener Post');
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+    }
+
     public function test_scene_view_exposes_jump_link_to_last_read_page_anchor(): void
     {
         $user = User::factory()->create();
