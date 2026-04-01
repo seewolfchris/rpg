@@ -49,6 +49,12 @@ use Illuminate\Validation\ValidationException;
  *     protection: int,
  *     equipped: bool
  * }
+ * @phpstan-type WeaponItem array{
+ *     name: string,
+ *     attack: int,
+ *     parry: int,
+ *     damage: int
+ * }
  */
 class AttributeNormalizer
 {
@@ -176,9 +182,7 @@ class AttributeNormalizer
         $data['advantages'] = $this->resolveTraitList($data['advantages'] ?? null, $characterAdvantages);
         $data['disadvantages'] = $this->resolveTraitList($data['disadvantages'] ?? null, $characterDisadvantages);
         $data['inventory'] = $this->resolveInventoryList($data['inventory'] ?? null, $characterInventory);
-        $data['weapons'] = is_array($data['weapons'] ?? null)
-            ? $this->sanitizeWeapons($data['weapons'])
-            : $this->sanitizeWeapons($characterWeapons);
+        $data['weapons'] = $this->resolveWeaponList($data['weapons'] ?? null, $characterWeapons);
         $data['armors'] = $this->resolveArmorList($data['armors'] ?? null, $characterArmors);
 
         foreach (['le_max', 'le_current', 'ae_max', 'ae_current'] as $poolKey) {
@@ -391,6 +395,20 @@ class AttributeNormalizer
             : $fallbackArmors;
 
         return $this->sanitizeArmors($armorSource);
+    }
+
+    /**
+     * @param  mixed  $incomingWeapons
+     * @param  mixed  $fallbackWeapons
+     * @return array<int, WeaponItem>
+     */
+    private function resolveWeaponList(mixed $incomingWeapons, mixed $fallbackWeapons): array
+    {
+        $weaponSource = is_array($incomingWeapons)
+            ? $incomingWeapons
+            : $fallbackWeapons;
+
+        return $this->sanitizeWeapons($weaponSource);
     }
 
     /**

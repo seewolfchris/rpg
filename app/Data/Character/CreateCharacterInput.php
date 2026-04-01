@@ -41,6 +41,12 @@ final readonly class CreateCharacterInput
          *         name: string,
          *         protection: int,
          *         equipped?: bool|null
+         *     }>|null,
+         *     weapons?: list<array{
+         *         name: string,
+         *         attack: int,
+         *         parry: int,
+         *         damage: int
          *     }>|null
          * }
          */
