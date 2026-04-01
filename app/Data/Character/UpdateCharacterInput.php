@@ -25,7 +25,15 @@ final readonly class UpdateCharacterInput
          *     concept?: string|null,
          *     gm_secret?: string|null,
          *     world_connection?: string|null,
-         *     gm_note?: string|null
+         *     gm_note?: string|null,
+         *     mu_note?: string|null,
+         *     kl_note?: string|null,
+         *     in_note?: string|null,
+         *     ch_note?: string|null,
+         *     ff_note?: string|null,
+         *     ge_note?: string|null,
+         *     ko_note?: string|null,
+         *     kk_note?: string|null
          * }
          */
         public array $payload,

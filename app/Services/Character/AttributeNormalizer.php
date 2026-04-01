@@ -29,6 +29,16 @@ use Illuminate\Validation\ValidationException;
  *     world_connection?: string|null,
  *     gm_note?: string|null
  * }
+ * @phpstan-type CharacterAttributeNotePayload array{
+ *     mu_note?: string|null,
+ *     kl_note?: string|null,
+ *     in_note?: string|null,
+ *     ch_note?: string|null,
+ *     ff_note?: string|null,
+ *     ge_note?: string|null,
+ *     ko_note?: string|null,
+ *     kk_note?: string|null
+ * }
  */
 class AttributeNormalizer
 {
@@ -129,21 +139,7 @@ class AttributeNormalizer
             defaultCalling: $defaultCalling,
         );
         $data = $this->backfillOptionalTextFields($data, $character);
-
-        foreach ([
-            'mu_note',
-            'kl_note',
-            'in_note',
-            'ch_note',
-            'ff_note',
-            'ge_note',
-            'ko_note',
-            'kk_note',
-        ] as $key) {
-            if (! array_key_exists($key, $data) && $character) {
-                $data[$key] = $character->{$key};
-            }
-        }
+        $data = $this->backfillAttributeNoteFields($data, $character);
 
         foreach ($legacyMap as $legacyColumn => $attributeKey) {
             if (! array_key_exists($attributeKey, $data) || $data[$attributeKey] === null) {
@@ -315,6 +311,34 @@ class AttributeNormalizer
                 $existingValue = $character->{$key};
                 $data[$key] = $existingValue;
             }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>&CharacterAttributeNotePayload
+     */
+    private function backfillAttributeNoteFields(array $data, ?Character $character): array
+    {
+        foreach ([
+            'mu_note',
+            'kl_note',
+            'in_note',
+            'ch_note',
+            'ff_note',
+            'ge_note',
+            'ko_note',
+            'kk_note',
+        ] as $key) {
+            if (array_key_exists($key, $data) || ! $character instanceof Character) {
+                continue;
+            }
+
+            /** @var string|null $existingValue */
+            $existingValue = $character->{$key};
+            $data[$key] = $existingValue;
         }
 
         return $data;
