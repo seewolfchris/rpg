@@ -2,6 +2,7 @@
 
 namespace App\Domain\Post;
 
+use App\Domain\Shared\Outbox\OutboxCandidateRecorder;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Models\Post;
@@ -15,6 +16,7 @@ class PostNotificationOrchestrator
         private readonly ScenePostNotificationService $scenePostNotificationService,
         private readonly PostMentionNotificationService $postMentionNotificationService,
         private readonly StructuredLogger $logger,
+        private readonly OutboxCandidateRecorder $outboxCandidateRecorder,
     ) {}
 
     /**
@@ -32,6 +34,18 @@ class PostNotificationOrchestrator
                 'source' => $source,
                 'error' => $throwable->getMessage(),
             ]);
+            $this->outboxCandidateRecorder->record(
+                stream: 'post.notifications',
+                eventKey: 'scene_notifications_failed',
+                payload: [
+                    'user_id' => (int) $author->id,
+                    'scene_id' => (int) $post->scene_id,
+                    'post_id' => (int) $post->id,
+                    'source' => $source,
+                    'retry_job' => RetryScenePostNotificationsJob::class,
+                ],
+                throwable: $throwable,
+            );
 
             $this->dispatchSceneNotificationRetry($post, $author, $source, $throwable);
 
@@ -54,6 +68,18 @@ class PostNotificationOrchestrator
                 'source' => $source,
                 'error' => $throwable->getMessage(),
             ]);
+            $this->outboxCandidateRecorder->record(
+                stream: 'post.notifications',
+                eventKey: 'mention_notifications_failed',
+                payload: [
+                    'user_id' => (int) $author->id,
+                    'scene_id' => (int) $post->scene_id,
+                    'post_id' => (int) $post->id,
+                    'source' => $source,
+                    'retry_job' => RetryPostMentionNotificationsJob::class,
+                ],
+                throwable: $throwable,
+            );
 
             $this->dispatchMentionRetry($post, $author, $source, $throwable);
 
@@ -78,6 +104,18 @@ class PostNotificationOrchestrator
                 'error' => $throwable->getMessage(),
                 'dispatch_error' => $dispatchThrowable->getMessage(),
             ]);
+            $this->outboxCandidateRecorder->record(
+                stream: 'post.notifications',
+                eventKey: 'scene_notification_retry_dispatch_failed',
+                payload: [
+                    'user_id' => (int) $author->id,
+                    'scene_id' => (int) $post->scene_id,
+                    'post_id' => (int) $post->id,
+                    'source' => $source,
+                    'retry_job' => RetryScenePostNotificationsJob::class,
+                ],
+                throwable: $dispatchThrowable,
+            );
         }
     }
 
@@ -98,6 +136,18 @@ class PostNotificationOrchestrator
                 'error' => $throwable->getMessage(),
                 'dispatch_error' => $dispatchThrowable->getMessage(),
             ]);
+            $this->outboxCandidateRecorder->record(
+                stream: 'post.notifications',
+                eventKey: 'mention_notification_retry_dispatch_failed',
+                payload: [
+                    'user_id' => (int) $author->id,
+                    'scene_id' => (int) $post->scene_id,
+                    'post_id' => (int) $post->id,
+                    'source' => $source,
+                    'retry_job' => RetryPostMentionNotificationsJob::class,
+                ],
+                throwable: $dispatchThrowable,
+            );
         }
     }
 }

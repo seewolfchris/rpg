@@ -18,6 +18,7 @@ Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden B
   - `post.mention_notifications_retry_succeeded`
   - `post.scene_notifications_retry_exhausted`
   - `post.mention_notifications_retry_exhausted`
+  - `outbox.candidate` (nur wenn `OUTBOX_SPIKE_LOG_CANDIDATES=true`)
   - `webpush.subscription_upserted`
   - `webpush.subscription_deleted`
   - `webpush.scene_post_sent`
@@ -64,6 +65,7 @@ Log-Hinweise:
 - Erstfehler im Request: `post.scene_notifications_failed` / `post.mention_notifications_failed`
 - Erfolgreicher Retry: `post.*_retry_succeeded`
 - Endgueltig ausgeschopft: `post.*_retry_exhausted`
+- Optionaler Outbox-Spike: `outbox.candidate` (nur bei aktivem Flag)
 
 ## Offline-Post-Queue Schnellcheck
 Wenn Offline-Posts nicht synchronisiert werden:

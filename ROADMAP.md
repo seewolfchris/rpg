@@ -50,6 +50,7 @@ Stand: 2026-04-02
 
 ## Implementierte Kernartefakte
 - ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
+- ADR (Outbox/Read-API-Spike): `docs/adr/2026-04-02-outbox-read-api-strategy.md`
 - Domaenenservices: `app/Domain/Post/*`, `app/Domain/Scene/*`, `app/Domain/Campaign/CampaignParticipantResolver.php`
 - Post-Update-Action:
   - `app/Actions/Post/UpdatePostAction.php`
