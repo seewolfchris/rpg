@@ -6,7 +6,8 @@ use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
 use App\Http\Controllers\GmModerationController;
 use App\Http\Controllers\GmProgressionController;
-use App\Http\Controllers\KnowledgeController;
+use App\Http\Controllers\KnowledgeEncyclopediaController;
+use App\Http\Controllers\KnowledgePageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\SceneBookmarkController;
@@ -19,26 +20,26 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
     Route::get('/', [WorldController::class, 'show'])
         ->name('worlds.show');
 
-    Route::get('/wissen', [KnowledgeController::class, 'index'])
+    Route::get('/wissen', [KnowledgePageController::class, 'index'])
         ->name('knowledge.index');
 
-    Route::get('/wissen/wie-spielt-man', [KnowledgeController::class, 'howToPlay'])
+    Route::get('/wissen/wie-spielt-man', [KnowledgePageController::class, 'howToPlay'])
         ->name('knowledge.how-to-play');
 
-    Route::get('/wissen/regelwerk', [KnowledgeController::class, 'rules'])
+    Route::get('/wissen/regelwerk', [KnowledgePageController::class, 'rules'])
         ->name('knowledge.rules');
 
-    Route::get('/wissen/weltueberblick', [KnowledgeController::class, 'worldOverview'])
+    Route::get('/wissen/weltueberblick', [KnowledgePageController::class, 'worldOverview'])
         ->name('knowledge.world-overview');
 
-    Route::get('/wissen/lore/{category?}', [KnowledgeController::class, 'worldLore'])
+    Route::get('/wissen/lore/{category?}', [KnowledgePageController::class, 'worldLore'])
         ->where('category', '[a-z0-9\\-]+')
         ->name('knowledge.lore');
 
-    Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia'])
+    Route::get('/wissen/enzyklopaedie', [KnowledgeEncyclopediaController::class, 'encyclopedia'])
         ->name('knowledge.encyclopedia');
 
-    Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', [KnowledgeController::class, 'encyclopediaEntry'])
+    Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', [KnowledgeEncyclopediaController::class, 'encyclopediaEntry'])
         ->where([
             'categorySlug' => '(?!admin$)[a-z0-9\\-]+',
             'entrySlug' => '[a-z0-9\\-]+',

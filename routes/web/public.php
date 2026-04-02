@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\KnowledgeController;
+use App\Http\Controllers\KnowledgeEncyclopediaController;
+use App\Http\Controllers\KnowledgePageController;
 use App\Http\Controllers\WorldController;
 use App\Models\World;
 use Illuminate\Http\Request;
@@ -28,16 +29,16 @@ Route::post('/welten/{world:slug}/aktivieren', [WorldController::class, 'activat
     ->middleware('throttle:writes')
     ->name('worlds.activate');
 
-Route::get('/wissen', [KnowledgeController::class, 'index'])
+Route::get('/wissen', [KnowledgePageController::class, 'index'])
     ->name('knowledge.global.index');
 
-Route::get('/wissen/wie-spielt-man', [KnowledgeController::class, 'howToPlay'])
+Route::get('/wissen/wie-spielt-man', [KnowledgePageController::class, 'howToPlay'])
     ->name('knowledge.global.how-to-play');
 
-Route::get('/wissen/regelwerk', [KnowledgeController::class, 'rules'])
+Route::get('/wissen/regelwerk', [KnowledgePageController::class, 'rules'])
     ->name('knowledge.global.rules');
 
-Route::get('/wissen/enzyklopaedie', [KnowledgeController::class, 'encyclopedia'])
+Route::get('/wissen/enzyklopaedie', [KnowledgeEncyclopediaController::class, 'encyclopedia'])
     ->name('knowledge.global.encyclopedia');
 
 Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', function (

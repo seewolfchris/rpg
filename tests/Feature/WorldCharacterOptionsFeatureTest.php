@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Character;
 use App\Models\User;
+use App\Models\WorldCalling;
+use App\Models\WorldSpecies;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -218,5 +220,135 @@ class WorldCharacterOptionsFeatureTest extends TestCase
             'world_id' => (int) $world->id,
             'calling' => 'signalanalyst',
         ]);
+    }
+
+    public function test_admin_can_toggle_and_reorder_world_character_options_with_world_guards(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = World::factory()->create([
+            'name' => 'Rift Delta',
+            'slug' => 'rift-delta',
+            'is_active' => true,
+        ]);
+        $foreignWorld = World::factory()->create([
+            'name' => 'Rift Gamma',
+            'slug' => 'rift-gamma',
+            'is_active' => true,
+        ]);
+
+        $speciesA = WorldSpecies::query()->create([
+            'world_id' => (int) $world->id,
+            'key' => 'mensch',
+            'label' => 'Mensch',
+            'position' => 10,
+            'is_active' => true,
+        ]);
+        $speciesB = WorldSpecies::query()->create([
+            'world_id' => (int) $world->id,
+            'key' => 'xeno',
+            'label' => 'Xeno',
+            'position' => 20,
+            'is_active' => true,
+        ]);
+        $foreignSpecies = WorldSpecies::query()->create([
+            'world_id' => (int) $foreignWorld->id,
+            'key' => 'fremd',
+            'label' => 'Fremd',
+            'position' => 10,
+            'is_active' => true,
+        ]);
+
+        $callingA = WorldCalling::query()->create([
+            'world_id' => (int) $world->id,
+            'key' => 'analyst',
+            'label' => 'Analyst',
+            'position' => 10,
+            'is_active' => true,
+        ]);
+        $callingB = WorldCalling::query()->create([
+            'world_id' => (int) $world->id,
+            'key' => 'operator',
+            'label' => 'Operator',
+            'position' => 20,
+            'is_active' => true,
+        ]);
+        $foreignCalling = WorldCalling::query()->create([
+            'world_id' => (int) $foreignWorld->id,
+            'key' => 'fremd-beruf',
+            'label' => 'Fremd-Beruf',
+            'position' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.species-options.toggle', [
+                'world' => $world,
+                'speciesOption' => $speciesA,
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $world));
+
+        $this->assertDatabaseHas('world_species', [
+            'id' => (int) $speciesA->id,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.species-options.move', [
+                'world' => $world,
+                'speciesOption' => $speciesB,
+                'direction' => 'up',
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $world));
+
+        $speciesOrder = WorldSpecies::query()
+            ->where('world_id', (int) $world->id)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+        $this->assertSame([(int) $speciesB->id, (int) $speciesA->id], array_map('intval', $speciesOrder));
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.calling-options.toggle', [
+                'world' => $world,
+                'callingOption' => $callingA,
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $world));
+
+        $this->assertDatabaseHas('world_callings', [
+            'id' => (int) $callingA->id,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.calling-options.move', [
+                'world' => $world,
+                'callingOption' => $callingB,
+                'direction' => 'up',
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $world));
+
+        $callingOrder = WorldCalling::query()
+            ->where('world_id', (int) $world->id)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+        $this->assertSame([(int) $callingB->id, (int) $callingA->id], array_map('intval', $callingOrder));
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.species-options.toggle', [
+                'world' => $world,
+                'speciesOption' => $foreignSpecies,
+            ]))
+            ->assertNotFound();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.worlds.calling-options.move', [
+                'world' => $world,
+                'callingOption' => $foreignCalling,
+                'direction' => 'up',
+            ]))
+            ->assertNotFound();
     }
 }
