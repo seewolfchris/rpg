@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class LegalPagesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_local_legal_routes_are_not_exposed(): void
     {
         $this->get('/impressum')->assertNotFound();

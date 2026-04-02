@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RequestIdHeaderTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_home_response_contains_request_id_header(): void
     {
         $response = $this->get('/');

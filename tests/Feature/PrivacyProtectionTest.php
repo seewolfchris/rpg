@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PrivacyProtectionTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_home_response_has_noindex_header_and_meta_tags(): void
     {
         $response = $this->get(route('home'));
