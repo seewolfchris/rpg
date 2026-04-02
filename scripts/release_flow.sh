@@ -264,6 +264,24 @@ else
   fi
 
   perf_ran="yes"
+
+  echo "[11/14] Commit Perf-Reports (falls geändert)..."
+  perf_report_changes=()
+  while IFS= read -r changed_path; do
+    if [[ -n "$changed_path" ]]; then
+      perf_report_changes+=("$changed_path")
+    fi
+  done < <(git status --porcelain | awk '/^.. docs\/PERFORMANCE-POSTS-LATEST-BY-ID.*\.md$/ {print substr($0,4)}')
+
+  if [[ "${#perf_report_changes[@]}" -gt 0 ]]; then
+    git add -- "${perf_report_changes[@]}"
+
+    if ! git diff --cached --quiet; then
+      git commit -m "chore(release): perf reports for ${version}"
+    fi
+  else
+    echo "No perf report changes detected."
+  fi
 fi
 
 echo "[12/14] Push main..."

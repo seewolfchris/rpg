@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\DefaultWorldConfigurationException;
 use App\Models\World;
 use App\Support\WorldThemeResolver;
 use Closure;
@@ -17,6 +18,8 @@ class ApplyWorldContext
 
     public function handle(Request $request, Closure $next): Response
     {
+        $this->ensureWorldsTableConfigured();
+
         /** @var Route|null $route */
         $route = $request->route();
         $routeWorld = $route?->parameter('world');
@@ -92,19 +95,11 @@ class ApplyWorldContext
 
     private function fallbackWorldSlug(bool $requireActive): string
     {
-        if (! $this->hasWorldsTable()) {
-            return World::defaultSlug();
-        }
-
         return World::resolveConfiguredDefaultOrFail(requireActive: $requireActive)->slug;
     }
 
     private function activeWorldSlugExists(string $slug): bool
     {
-        if (! $this->hasWorldsTable()) {
-            return true;
-        }
-
         return World::query()
             ->where('slug', $slug)
             ->where('is_active', true)
@@ -113,13 +108,18 @@ class ApplyWorldContext
 
     private function worldSlugExists(string $slug): bool
     {
-        if (! $this->hasWorldsTable()) {
-            return true;
-        }
-
         return World::query()
             ->where('slug', $slug)
             ->exists();
+    }
+
+    private function ensureWorldsTableConfigured(): void
+    {
+        if ($this->hasWorldsTable()) {
+            return;
+        }
+
+        throw DefaultWorldConfigurationException::worldsTableMissing(World::defaultSlug());
     }
 
     private function hasWorldsTable(): bool

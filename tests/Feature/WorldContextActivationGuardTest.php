@@ -6,6 +6,7 @@ use App\Exceptions\DefaultWorldConfigurationException;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class WorldContextActivationGuardTest extends TestCase
@@ -89,6 +90,19 @@ class WorldContextActivationGuardTest extends TestCase
         $this->withoutExceptionHandling();
         $this->expectException(DefaultWorldConfigurationException::class);
         $this->expectExceptionMessage("WORLD_DEFAULT_SLUG 'nachtmeer' points to an inactive world");
+
+        $this->get(route('home'));
+    }
+
+    public function test_home_request_fails_fast_when_worlds_table_is_missing(): void
+    {
+        Schema::shouldReceive('hasTable')
+            ->with('worlds')
+            ->andReturn(false);
+
+        $this->withoutExceptionHandling();
+        $this->expectException(DefaultWorldConfigurationException::class);
+        $this->expectExceptionMessage("the 'worlds' table is missing");
 
         $this->get(route('home'));
     }
