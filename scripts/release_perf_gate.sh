@@ -13,6 +13,7 @@ WARN_AVG_PCT="${PERF_WARN_AVG_PCT:-10}"
 WARN_P95_PCT="${PERF_WARN_P95_PCT:-15}"
 FAIL_AVG_PCT="${PERF_FAIL_AVG_PCT:-25}"
 FAIL_P95_PCT="${PERF_FAIL_P95_PCT:-35}"
+ENFORCE_MODE="${PERF_GATE_ENFORCE:-0}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -288,6 +289,11 @@ require_decimal "$WARN_P95_PCT" "PERF_WARN_P95_PCT"
 require_decimal "$FAIL_AVG_PCT" "PERF_FAIL_AVG_PCT"
 require_decimal "$FAIL_P95_PCT" "PERF_FAIL_P95_PCT"
 
+if [[ "$ENFORCE_MODE" != "0" && "$ENFORCE_MODE" != "1" ]]; then
+  echo "ERROR: PERF_GATE_ENFORCE must be 0 or 1 (received: $ENFORCE_MODE)"
+  exit 1
+fi
+
 LATEST_OUT_ABS="$(absolute_path "$LATEST_OUT")"
 GATE_OUT_ABS="$(absolute_path "$GATE_OUT")"
 GATE_ARCHIVE_OUT_ABS=""
@@ -482,6 +488,9 @@ else
 fi
 
 report_exit_code="0"
+if [[ "$ENFORCE_MODE" == "1" && "$status" == "ROT" ]]; then
+  report_exit_code="2"
+fi
 
 {
   echo "# posts.latest_by_id Release Perf Gate"
@@ -491,6 +500,7 @@ report_exit_code="0"
   echo "- Benchmark generated at: \`$source_generated_at\`"
   echo "- Source report: \`$source_report\`"
   echo "- Scenario: \`$SCENARIO\`"
+  echo "- Enforce mode: \`$ENFORCE_MODE\`"
   echo "- Thresholds:"
   echo "  - warn avg > \`${WARN_AVG_PCT}%\`"
   echo "  - warn p95 > \`${WARN_P95_PCT}%\`"
@@ -539,7 +549,11 @@ report_exit_code="0"
   echo "## Interpretation"
   echo "- \`GRUEN\`: Release kann ohne Performance-Sondermassnahmen weiterlaufen."
   echo "- \`GELB\`: Release moeglich, aber Delta beobachten und bei Bedarf erneut messen."
-  echo "- \`ROT\`: Report-only Signal; Skript endet nur bei technischen Fehlern mit non-zero."
+  if [[ "$ENFORCE_MODE" == "1" ]]; then
+    echo "- \`ROT\`: Enforce aktiv -> Skript endet mit non-zero."
+  else
+    echo "- \`ROT\`: Report-only Signal; Skript endet nur bei technischen Fehlern mit non-zero."
+  fi
 } >"$GATE_OUT_ABS"
 
 if [[ -n "$GATE_ARCHIVE_OUT_ABS" ]]; then
@@ -561,4 +575,4 @@ echo "Saved gate report: $GATE_OUT_ABS"
 
 echo "Hint decision: $hint_decision ($hint_reason)"
 
-exit 0
+exit "$report_exit_code"

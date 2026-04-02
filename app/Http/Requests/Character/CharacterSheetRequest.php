@@ -148,7 +148,7 @@ abstract class CharacterSheetRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $merged = [
-            'world_id' => (int) $this->input('world_id', World::resolveDefaultId()),
+            'world_id' => $this->resolveInputWorldId(),
             'status' => Str::lower(trim((string) $this->input('status', (string) config('characters.default_status', 'active')))),
             'species' => Str::lower(trim((string) $this->input('species', ''))),
             'calling' => Str::lower(trim((string) $this->input('calling', ''))),
@@ -219,6 +219,17 @@ abstract class CharacterSheetRequest extends FormRequest
         $routeCharacter = $this->route('character');
         if ($routeCharacter !== null && is_numeric($routeCharacter->world_id ?? null)) {
             return (int) $routeCharacter->world_id;
+        }
+
+        return World::resolveDefaultId();
+    }
+
+    protected function resolveInputWorldId(): int
+    {
+        $inputWorldId = $this->input('world_id');
+
+        if ($inputWorldId !== null && $inputWorldId !== '') {
+            return (int) $inputWorldId;
         }
 
         return World::resolveDefaultId();

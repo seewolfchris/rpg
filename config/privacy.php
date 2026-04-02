@@ -40,7 +40,6 @@ return [
         'discordbot',
         'telegrambot',
         'whatsapp',
-        'applebot',
     ],
 
     'blocked_user_agents' => [

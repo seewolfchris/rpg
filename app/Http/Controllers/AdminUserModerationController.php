@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Http\Requests\Admin\UpdateUserModerationRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,11 +31,9 @@ class AdminUserModerationController extends Controller
         return view('admin.users.moderation', compact('users', 'search'));
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserModerationRequest $request, User $user): RedirectResponse
     {
-        $validated = $request->validate([
-            'can_post_without_moderation' => ['required', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $isEnabled = (bool) $validated['can_post_without_moderation'];
         $isTargetPlayer = $user->hasRole(UserRole::PLAYER);

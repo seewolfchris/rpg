@@ -10,17 +10,19 @@ Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampag
 Kurzvarianten:
 - Lokal ohne Git-Write: `scripts/release_flow.sh vX.Y-beta --dry-run --iter 500 --archive`
 - Ohne Perf-Gate: `scripts/release_flow.sh vX.Y-beta --skip-perf`
+- Mit expliziten Skip-Gates (nur bei begruendetem Sonderfall): `--skip-backend-tests`, `--skip-js-tests`, `--skip-e2e-tests`, `--skip-build`, `--skip-smoke`
 
 Wichtige Regeln:
 - Version muss dem Format `vX.Y`, `vX.Y-beta` oder `vX.Y-rcN` entsprechen.
 - `--world <slug>` ist Pflicht fuer echte Perf-Laeufe (wenn weder `--dry-run` noch `--skip-perf` gesetzt ist).
+- Perf-Enforce ist standardmaessig aktiv fuer stabile Tags (`vX.Y`) und aus fuer `-beta`/`-rcN`; ueberschreibbar per `--enforce-perf` bzw. `--no-enforce-perf`.
 - Perf-Gate schreibt immer `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 - Mit `--archive` wird zusaetzlich ein UTC-Archiv geschrieben:
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-YYYYMMDDTHHMMSSZ.md`
 - Runtime-Hint bleibt report-basiert (keine automatische `.env`-Mutation):
   - Normalfall (echtes Median/P99): `Median <=95%` und `P99 <=110%` gegen Vorfenster.
   - Fallback (`avg->Median`, `p95->P99`): strengere Schwellen `<=90%` und `<=105%`.
-- Roter Perf-Status ist report-only. Non-zero Exit nur bei technischen Fehlern.
+- Roter Perf-Status ist report-only, solange Perf-Enforce aus ist. Mit Perf-Enforce endet ROT als non-zero.
 
 ## Dokumentations-Uebersicht
 

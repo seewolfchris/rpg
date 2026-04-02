@@ -14,6 +14,7 @@ use App\Data\Character\CreateCharacterInput;
 use App\Data\Character\InlineUpdateCharacterInput;
 use App\Data\Character\UpdateCharacterInput;
 use App\Exceptions\CharacterDeletionFailedException;
+use App\Http\Requests\Character\InlineUpdateCharacterRequest;
 use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
@@ -145,10 +146,10 @@ class CharacterController extends Controller
             ->with('status', 'Charakter aktualisiert.');
     }
 
-    public function inlineUpdate(Request $request, Character $character): View|RedirectResponse
+    public function inlineUpdate(InlineUpdateCharacterRequest $request, Character $character): View|RedirectResponse
     {
         $this->authorize('update', $character);
-        $validated = $request->validate($this->updateCharacterInlineAction->rules());
+        $validated = $request->validated();
         $result = $this->updateCharacterInlineAction->execute(
             new InlineUpdateCharacterInput(
                 character: $character,

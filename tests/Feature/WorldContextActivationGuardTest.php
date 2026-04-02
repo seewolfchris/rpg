@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\DefaultWorldConfigurationException;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,5 +59,37 @@ class WorldContextActivationGuardTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.worlds.edit', ['world' => $world]))
             ->assertOk();
+    }
+
+    public function test_home_request_fails_fast_when_default_world_slug_is_missing(): void
+    {
+        config(['worlds.default_slug' => 'nicht-vorhanden']);
+
+        World::factory()->create([
+            'slug' => 'aktive-ersatzwelt',
+            'is_active' => true,
+        ]);
+
+        $this->withoutExceptionHandling();
+        $this->expectException(DefaultWorldConfigurationException::class);
+        $this->expectExceptionMessage("WORLD_DEFAULT_SLUG 'nicht-vorhanden' does not exist");
+
+        $this->get(route('home'));
+    }
+
+    public function test_home_request_fails_fast_when_default_world_is_inactive(): void
+    {
+        config(['worlds.default_slug' => 'nachtmeer']);
+
+        World::factory()->create([
+            'slug' => 'nachtmeer',
+            'is_active' => false,
+        ]);
+
+        $this->withoutExceptionHandling();
+        $this->expectException(DefaultWorldConfigurationException::class);
+        $this->expectExceptionMessage("WORLD_DEFAULT_SLUG 'nachtmeer' points to an inactive world");
+
+        $this->get(route('home'));
     }
 }

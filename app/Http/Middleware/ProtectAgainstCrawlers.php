@@ -45,20 +45,12 @@ class ProtectAgainstCrawlers
 
         $normalizedUserAgent = Str::lower($userAgent);
 
-        if ($this->isAllowedUserAgent($normalizedUserAgent)) {
-            return false;
+        if ($this->isBlockedUserAgent($normalizedUserAgent)) {
+            return true;
         }
 
-        $blockedUserAgents = config('privacy.blocked_user_agents', []);
-
-        foreach ($blockedUserAgents as $needle) {
-            if (! is_string($needle) || $needle === '') {
-                continue;
-            }
-
-            if (Str::contains($normalizedUserAgent, Str::lower($needle))) {
-                return true;
-            }
+        if ($this->isAllowedUserAgent($normalizedUserAgent)) {
+            return false;
         }
 
         return false;
@@ -73,6 +65,23 @@ class ProtectAgainstCrawlers
         $allowedUserAgents = config('privacy.allowed_user_agents', []);
 
         foreach ($allowedUserAgents as $needle) {
+            if (! is_string($needle) || $needle === '') {
+                continue;
+            }
+
+            if (Str::contains($normalizedUserAgent, Str::lower($needle))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isBlockedUserAgent(string $normalizedUserAgent): bool
+    {
+        $blockedUserAgents = config('privacy.blocked_user_agents', []);
+
+        foreach ($blockedUserAgents as $needle) {
             if (! is_string($needle) || $needle === '') {
                 continue;
             }

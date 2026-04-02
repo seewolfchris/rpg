@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\WorldCharacterOptions\ImportWorldCharacterOptionTemplateRequest;
+use App\Http\Requests\WorldCharacterOptions\StoreWorldCallingOptionRequest;
+use App\Http\Requests\WorldCharacterOptions\StoreWorldSpeciesOptionRequest;
+use App\Http\Requests\WorldCharacterOptions\UpdateWorldCallingOptionRequest;
+use App\Http\Requests\WorldCharacterOptions\UpdateWorldSpeciesOptionRequest;
 use App\Models\World;
 use App\Models\WorldCalling;
 use App\Models\WorldSpecies;
 use App\Support\WorldCharacterOptionTemplateService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class WorldCharacterOptionsAdminController extends Controller
@@ -16,13 +20,9 @@ class WorldCharacterOptionsAdminController extends Controller
         private readonly WorldCharacterOptionTemplateService $templateService,
     ) {}
 
-    public function importTemplate(Request $request, World $world): RedirectResponse
+    public function importTemplate(ImportWorldCharacterOptionTemplateRequest $request, World $world): RedirectResponse
     {
-        $templateOptions = array_keys($this->templateService->templateSelectOptions());
-
-        $validated = $request->validate([
-            'template_key' => ['required', 'string', 'in:'.implode(',', $templateOptions)],
-        ]);
+        $validated = $request->validated();
 
         $result = $this->templateService->importTemplate($world, (string) $validated['template_key']);
 
@@ -31,20 +31,9 @@ class WorldCharacterOptionsAdminController extends Controller
             ->with('status', 'Vorlage importiert: '.$result['species'].' Spezies, '.$result['callings'].' Berufungen.');
     }
 
-    public function storeSpecies(Request $request, World $world): RedirectResponse
+    public function storeSpecies(StoreWorldSpeciesOptionRequest $request, World $world): RedirectResponse
     {
-        $validated = $request->validate([
-            'key' => ['required', 'string', 'alpha_dash', 'max:80', 'unique:world_species,key,NULL,id,world_id,'.$world->id],
-            'label' => ['required', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'modifiers_json' => ['nullable', 'json'],
-            'le_bonus' => ['nullable', 'integer', 'between:-50,50'],
-            'ae_bonus' => ['nullable', 'integer', 'between:-50,50'],
-            'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'is_magic_capable' => ['sometimes', 'boolean'],
-            'is_template' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         WorldSpecies::query()->create([
             'world_id' => (int) $world->id,
@@ -65,22 +54,11 @@ class WorldCharacterOptionsAdminController extends Controller
             ->with('status', 'Spezies hinzugefuegt.');
     }
 
-    public function updateSpecies(Request $request, World $world, WorldSpecies $speciesOption): RedirectResponse
+    public function updateSpecies(UpdateWorldSpeciesOptionRequest $request, World $world, WorldSpecies $speciesOption): RedirectResponse
     {
         $this->ensureSpeciesBelongsToWorld($world, $speciesOption);
 
-        $validated = $request->validate([
-            'key' => ['required', 'string', 'alpha_dash', 'max:80', 'unique:world_species,key,'.$speciesOption->id.',id,world_id,'.$world->id],
-            'label' => ['required', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'modifiers_json' => ['nullable', 'json'],
-            'le_bonus' => ['nullable', 'integer', 'between:-50,50'],
-            'ae_bonus' => ['nullable', 'integer', 'between:-50,50'],
-            'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'is_magic_capable' => ['sometimes', 'boolean'],
-            'is_template' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $speciesOption->update([
             'key' => (string) $validated['key'],
@@ -122,20 +100,9 @@ class WorldCharacterOptionsAdminController extends Controller
             ->with('status', 'Spezies-Sortierung aktualisiert.');
     }
 
-    public function storeCalling(Request $request, World $world): RedirectResponse
+    public function storeCalling(StoreWorldCallingOptionRequest $request, World $world): RedirectResponse
     {
-        $validated = $request->validate([
-            'key' => ['required', 'string', 'alpha_dash', 'max:80', 'unique:world_callings,key,NULL,id,world_id,'.$world->id],
-            'label' => ['required', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'minimums_json' => ['nullable', 'json'],
-            'bonuses_json' => ['nullable', 'json'],
-            'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'is_magic_capable' => ['sometimes', 'boolean'],
-            'is_custom' => ['sometimes', 'boolean'],
-            'is_template' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         WorldCalling::query()->create([
             'world_id' => (int) $world->id,
@@ -156,22 +123,11 @@ class WorldCharacterOptionsAdminController extends Controller
             ->with('status', 'Berufung hinzugefuegt.');
     }
 
-    public function updateCalling(Request $request, World $world, WorldCalling $callingOption): RedirectResponse
+    public function updateCalling(UpdateWorldCallingOptionRequest $request, World $world, WorldCalling $callingOption): RedirectResponse
     {
         $this->ensureCallingBelongsToWorld($world, $callingOption);
 
-        $validated = $request->validate([
-            'key' => ['required', 'string', 'alpha_dash', 'max:80', 'unique:world_callings,key,'.$callingOption->id.',id,world_id,'.$world->id],
-            'label' => ['required', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'minimums_json' => ['nullable', 'json'],
-            'bonuses_json' => ['nullable', 'json'],
-            'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
-            'is_magic_capable' => ['sometimes', 'boolean'],
-            'is_custom' => ['sometimes', 'boolean'],
-            'is_template' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $callingOption->update([
             'key' => (string) $validated['key'],

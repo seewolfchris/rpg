@@ -10,6 +10,7 @@ use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
 use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
+use App\Http\Requests\Post\PreviewPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Campaign;
@@ -24,7 +25,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -236,14 +236,11 @@ class PostController extends Controller
         return back()->with('status', 'Pin entfernt.');
     }
 
-    public function preview(Request $request, World $world): JsonResponse
+    public function preview(PreviewPostRequest $request, World $world): JsonResponse
     {
         abort_unless((bool) config('features.wave3.editor_preview', false), 404);
 
-        $data = $request->validate([
-            'content_format' => ['required', Rule::in(['markdown'])],
-            'content' => ['nullable', 'string', 'max:10000'],
-        ]);
+        $data = $request->validated();
 
         $html = app(PostContentRenderer::class)
             ->render((string) ($data['content'] ?? ''), (string) $data['content_format'])

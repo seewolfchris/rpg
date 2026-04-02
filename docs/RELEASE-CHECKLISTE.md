@@ -172,7 +172,8 @@ $PHP_BIN artisan config:cache
   - Ampel-Interpretation:
     - `GRUEN`: weiter im Release-Flow.
     - `GELB`: weiter moeglich, aber Delta beobachten.
-    - `ROT`: report-only Signal, Skript bleibt nur bei technischen Fehlern non-zero.
+    - `ROT`: report-only Signal, solange `PERF_GATE_ENFORCE=0`.
+    - `ROT` mit `PERF_GATE_ENFORCE=1`: harter non-zero-Abbruch (Standard bei stabilen Tags im `release_flow.sh`).
 - Fallback ohne Gate:
   - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
   - Fallback direkt via Artisan:

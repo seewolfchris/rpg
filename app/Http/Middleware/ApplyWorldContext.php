@@ -92,38 +92,11 @@ class ApplyWorldContext
 
     private function fallbackWorldSlug(bool $requireActive): string
     {
-        $defaultSlug = World::defaultSlug();
-
         if (! $this->hasWorldsTable()) {
-            return $defaultSlug;
+            return World::defaultSlug();
         }
 
-        if ($requireActive) {
-            if ($this->activeWorldSlugExists($defaultSlug)) {
-                return $defaultSlug;
-            }
-
-            $firstActiveSlug = World::query()
-                ->active()
-                ->ordered()
-                ->value('slug');
-
-            return is_string($firstActiveSlug) && $firstActiveSlug !== ''
-                ? $firstActiveSlug
-                : $defaultSlug;
-        }
-
-        if ($this->worldSlugExists($defaultSlug)) {
-            return $defaultSlug;
-        }
-
-        $firstWorldSlug = World::query()
-            ->ordered()
-            ->value('slug');
-
-        return is_string($firstWorldSlug) && $firstWorldSlug !== ''
-            ? $firstWorldSlug
-            : $defaultSlug;
+        return World::resolveConfiguredDefaultOrFail(requireActive: $requireActive)->slug;
     }
 
     private function activeWorldSlugExists(string $slug): bool

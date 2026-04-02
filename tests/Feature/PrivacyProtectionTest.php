@@ -46,4 +46,28 @@ class PrivacyProtectionTest extends TestCase
         $response->assertOk();
         $response->assertHeader('X-Robots-Tag');
     }
+
+    public function test_applebot_user_agent_is_blocked_by_default_configuration(): void
+    {
+        $response = $this
+            ->withHeader('User-Agent', 'Mozilla/5.0 (compatible; Applebot/1.0; +http://www.apple.com/go/applebot)')
+            ->get(route('home'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_blocklist_takes_precedence_when_user_agent_is_in_both_lists(): void
+    {
+        config([
+            'privacy.allow_link_preview_bots' => true,
+            'privacy.allowed_user_agents' => ['dupebot'],
+            'privacy.blocked_user_agents' => ['dupebot'],
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', 'Mozilla/5.0 (compatible; DupeBot/1.0)')
+            ->get(route('home'));
+
+        $response->assertForbidden();
+    }
 }

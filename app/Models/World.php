@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Exceptions\DefaultWorldConfigurationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 
 class World extends Model
 {
@@ -107,30 +109,34 @@ class World extends Model
 
     public static function resolveDefault(): self
     {
-        $defaultSlug = static::defaultSlug();
-
-        return static::query()->firstOrCreate(
-            ['slug' => $defaultSlug],
-            [
-                'name' => 'Chroniken der Asche',
-                'tagline' => 'Duestere Fantasy in den Aschelanden.',
-                'description' => 'Die Standardwelt fuer bestehende Kampagnen und Inhalte.',
-                'is_active' => true,
-                'position' => 10,
-            ],
-        );
+        return static::resolveConfiguredDefaultOrFail(requireActive: false);
     }
 
     public static function resolveDefaultId(): int
     {
-        $existingId = static::query()
-            ->where('slug', static::defaultSlug())
-            ->value('id');
+        return (int) static::resolveConfiguredDefaultOrFail(requireActive: true)->id;
+    }
 
-        if ($existingId !== null) {
-            return (int) $existingId;
+    public static function resolveConfiguredDefaultOrFail(bool $requireActive = true): self
+    {
+        $defaultSlug = static::defaultSlug();
+
+        if (! Schema::hasTable('worlds')) {
+            throw DefaultWorldConfigurationException::worldsTableMissing($defaultSlug);
         }
 
-        return (int) static::resolveDefault()->id;
+        $defaultWorld = static::query()
+            ->where('slug', $defaultSlug)
+            ->first();
+
+        if (! $defaultWorld instanceof self) {
+            throw DefaultWorldConfigurationException::worldMissing($defaultSlug);
+        }
+
+        if ($requireActive && ! (bool) $defaultWorld->is_active) {
+            throw DefaultWorldConfigurationException::worldInactive($defaultSlug);
+        }
+
+        return $defaultWorld;
     }
 }
