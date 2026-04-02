@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Post\BuildPostThreadItemFragmentAction;
 use App\Actions\Post\UpdatePostAction;
 use App\Actions\Post\ModeratePostAction;
 use App\Actions\Post\SetPostPinStateAction;
@@ -14,18 +15,16 @@ use App\Http\Requests\Post\PreviewPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
 use App\Support\Gamification\PointService;
 use App\Support\PostContentRenderer;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 
 class PostController extends Controller
 {
@@ -37,6 +36,7 @@ class PostController extends Controller
         private readonly UpdatePostAction $updatePostAction,
         private readonly ModeratePostAction $moderatePostAction,
         private readonly SetPostPinStateAction $setPostPinStateAction,
+        private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
     ) {}
 
     public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -183,16 +183,17 @@ class PostController extends Controller
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
 
+        $moderator = $this->authenticatedUser($request);
         $status = $request->validated('moderation_status');
         $this->moderatePostAction->execute(
             post: $post,
-            moderator: $this->authenticatedUser($request),
+            moderator: $moderator,
             status: $status,
             moderationNote: (string) $request->validated('moderation_note', ''),
         );
 
         if ($this->expectsThreadItemFragment($request)) {
-            return $this->threadItemFragment($post);
+            return $this->buildPostThreadItemFragmentAction->execute($post, $moderator);
         }
 
         return back()->with('status', 'Moderationsstatus aktualisiert.');
@@ -203,16 +204,17 @@ class PostController extends Controller
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
-        $pinnedById = auth()->id();
+        $actor = $this->authenticatedUser($request);
+        $pinnedById = (int) $actor->id;
 
         $this->setPostPinStateAction->execute(
             post: $post,
             isPinned: true,
-            pinnedByUserId: $pinnedById === null ? null : (int) $pinnedById,
+            pinnedByUserId: $pinnedById,
         );
 
         if ($request->header('HX-Request') === 'true') {
-            return $this->threadItemFragment($post);
+            return $this->buildPostThreadItemFragmentAction->execute($post, $actor);
         }
 
         return back()->with('status', 'Beitrag angepinnt.');
@@ -223,6 +225,7 @@ class PostController extends Controller
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('moderate', $post);
+        $actor = $this->authenticatedUser($request);
 
         $this->setPostPinStateAction->execute(
             post: $post,
@@ -230,7 +233,7 @@ class PostController extends Controller
         );
 
         if ($request->header('HX-Request') === 'true') {
-            return $this->threadItemFragment($post);
+            return $this->buildPostThreadItemFragmentAction->execute($post, $actor);
         }
 
         return back()->with('status', 'Pin entfernt.');
@@ -292,44 +295,5 @@ class PostController extends Controller
         $hxTarget = trim((string) $request->header('HX-Target', ''));
 
         return str_starts_with($hxTarget, 'post-');
-    }
-
-    private function threadItemFragment(Post $post): View
-    {
-        $post->load(Post::THREAD_ITEM_RELATIONS);
-
-        /** @var Scene $scene */
-        $scene = $post->scene;
-        /** @var Campaign $campaign */
-        $campaign = $scene->campaign;
-        $bookmarkCountForNav = $this->visibleBookmarkCountForUser(auth()->user());
-
-        return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
-    }
-
-    private function visibleBookmarkCountForUser(?User $user): int
-    {
-        if (! $user) {
-            return 0;
-        }
-
-        return (int) $user->sceneBookmarks()
-            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
-                if ($user->isGmOrAdmin()) {
-                    return;
-                }
-
-                $campaignQuery->where(function (Builder $innerQuery) use ($user): void {
-                    $innerQuery
-                        ->where('is_public', true)
-                        ->orWhere('owner_id', $user->id)
-                        ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                            $invitationQuery
-                                ->where('user_id', $user->id)
-                                ->where('status', CampaignInvitation::STATUS_ACCEPTED);
-                        });
-                });
-            })
-            ->count();
     }
 }
