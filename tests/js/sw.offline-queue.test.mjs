@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const SERVICE_WORKER_PATH = new URL('../../public/sw.js', import.meta.url);
@@ -10,6 +12,7 @@ const POSTS_PATH = `${SCENE_PATH}/posts`;
 const SOURCE_URL = `${APP_ORIGIN}${SCENE_PATH}`;
 const POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}`;
 const RESIGNED_POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}?signature=fresh`;
+const PROJECT_ROOT_URL = new URL('../../', import.meta.url);
 
 test('resolveOfflineFallbackUrl adds world and path context for scene routes', async () => {
     const harness = await createServiceWorkerHarness({
@@ -418,6 +421,19 @@ async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue =
         },
     };
 
+    const importScripts = (...scriptPaths) => {
+        for (const scriptPath of scriptPaths) {
+            const fileUrl = resolveServiceWorkerImportUrl(scriptPath);
+            const source = readFileSync(fileUrl, 'utf8');
+            vm.runInContext(source, context, {
+                filename: fileURLToPath(fileUrl),
+            });
+        }
+    };
+
+    context.importScripts = importScripts;
+    context.self.importScripts = importScripts;
+
     vm.createContext(context);
     vm.runInContext(scriptSource, context, {
         filename: 'public/sw.js',
@@ -476,6 +492,24 @@ async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue =
             dateState.nowMs += Number(milliseconds || 0);
         },
     };
+}
+
+function resolveServiceWorkerImportUrl(scriptPath) {
+    if (typeof scriptPath !== 'string' || scriptPath.trim() === '') {
+        throw new Error(`Invalid importScripts path: ${String(scriptPath)}`);
+    }
+
+    const normalizedUrl = new URL(scriptPath, APP_ORIGIN);
+
+    if (normalizedUrl.origin !== APP_ORIGIN) {
+        throw new Error(`Cross-origin importScripts path is not allowed in tests: ${scriptPath}`);
+    }
+
+    const pathname = normalizedUrl.pathname.startsWith('/')
+        ? normalizedUrl.pathname
+        : `/${normalizedUrl.pathname}`;
+
+    return new URL(`./public${pathname}`, PROJECT_ROOT_URL);
 }
 
 function createDateClass(state) {
