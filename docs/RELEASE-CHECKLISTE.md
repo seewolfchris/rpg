@@ -169,6 +169,10 @@ $PHP_BIN artisan config:cache
   - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md PERF_GATE_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md scripts/release_perf_gate.sh`
   - Runtime-Hint kommt aus dem Gate-Report (`FORCE_INDEX=1/0`), keine automatische `.env`-Mutation.
   - Gate-Report pruefen: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
+  - Default-Budgets (override via `PERF_*`):
+    - Warnung: `median > 25 ms`, `p99 > 120 ms`
+    - Fail: `median > 40 ms`, `p99 > 180 ms`
+  - Wichtig: Messwerte nur innerhalb derselben DB-Engine vergleichen (`sqlite` vs `mysql/mariadb`).
   - Ampel-Interpretation:
     - `GRUEN`: weiter im Release-Flow.
     - `GELB`: weiter moeglich, aber Delta beobachten.

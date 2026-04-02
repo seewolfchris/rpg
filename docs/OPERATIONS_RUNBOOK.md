@@ -141,7 +141,8 @@ SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_s
    - Dry-Run: `scripts/release_flow.sh vX.Y-beta --dry-run --iter 500 --archive`
    - Ohne Perf-Gate: `scripts/release_flow.sh vX.Y-beta --skip-perf`
 4. Perf-Gate Verhalten:
-   - `ROT` ist report-only; non-zero Exit nur bei technischen Fehlern.
+   - `ROT` ist report-only, wenn Enforce aus ist (`PERF_GATE_ENFORCE=0`).
+   - Mit Enforce (`PERF_GATE_ENFORCE=1`, Standard fuer stabile `vX.Y`-Tags im `release_flow.sh`) endet `ROT` als non-zero.
    - Runtime-Hint wird nicht automatisch in `.env` geschrieben.
    - Hint-Entscheidung kommt aus `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 

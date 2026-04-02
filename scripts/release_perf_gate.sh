@@ -13,6 +13,10 @@ WARN_AVG_PCT="${PERF_WARN_AVG_PCT:-10}"
 WARN_P95_PCT="${PERF_WARN_P95_PCT:-15}"
 FAIL_AVG_PCT="${PERF_FAIL_AVG_PCT:-25}"
 FAIL_P95_PCT="${PERF_FAIL_P95_PCT:-35}"
+WARN_MEDIAN_MS="${PERF_WARN_MEDIAN_MS:-25}"
+WARN_P99_MS="${PERF_WARN_P99_MS:-120}"
+FAIL_MEDIAN_MS="${PERF_FAIL_MEDIAN_MS:-40}"
+FAIL_P99_MS="${PERF_FAIL_P99_MS:-180}"
 ENFORCE_MODE="${PERF_GATE_ENFORCE:-0}"
 
 require_cmd() {
@@ -30,6 +34,17 @@ require_decimal() {
     echo "ERROR: ${label} must be a positive decimal number (received: ${value})"
     exit 1
   fi
+}
+
+require_optional_decimal() {
+  local value="$1"
+  local label="$2"
+
+  if [[ -z "$value" ]]; then
+    return
+  fi
+
+  require_decimal "$value" "$label"
 }
 
 is_numeric() {
@@ -288,6 +303,10 @@ require_decimal "$WARN_AVG_PCT" "PERF_WARN_AVG_PCT"
 require_decimal "$WARN_P95_PCT" "PERF_WARN_P95_PCT"
 require_decimal "$FAIL_AVG_PCT" "PERF_FAIL_AVG_PCT"
 require_decimal "$FAIL_P95_PCT" "PERF_FAIL_P95_PCT"
+require_optional_decimal "$WARN_MEDIAN_MS" "PERF_WARN_MEDIAN_MS"
+require_optional_decimal "$WARN_P99_MS" "PERF_WARN_P99_MS"
+require_optional_decimal "$FAIL_MEDIAN_MS" "PERF_FAIL_MEDIAN_MS"
+require_optional_decimal "$FAIL_P99_MS" "PERF_FAIL_P99_MS"
 
 if [[ "$ENFORCE_MODE" != "0" && "$ENFORCE_MODE" != "1" ]]; then
   echo "ERROR: PERF_GATE_ENFORCE must be 0 or 1 (received: $ENFORCE_MODE)"
@@ -319,6 +338,24 @@ fi
 generated_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 source_generated_at="$(extract_meta "$LATEST_OUT_ABS" "Generated at")"
 source_report="$(extract_meta "$LATEST_OUT_ABS" "Source report")"
+source_connection="$(extract_meta "$LATEST_OUT_ABS" "Connection")"
+source_driver="$(extract_meta "$LATEST_OUT_ABS" "Driver")"
+
+if [[ -z "$source_generated_at" ]]; then
+  source_generated_at="n/a"
+fi
+
+if [[ -z "$source_report" ]]; then
+  source_report="n/a"
+fi
+
+if [[ -z "$source_connection" ]]; then
+  source_connection="n/a"
+fi
+
+if [[ -z "$source_driver" ]]; then
+  source_driver="n/a"
+fi
 
 status="GELB"
 reason="Keine Baseline-Deltas verfuegbar."
@@ -366,6 +403,41 @@ fi
 if ! is_numeric "$current_median_ms" || ! is_numeric "$current_p99_ms"; then
   echo "ERROR: could not resolve median/p99 metrics from benchmark latest for scenario '${SCENARIO}'"
   exit 1
+fi
+
+declare -a budget_notes=()
+if [[ -n "$FAIL_MEDIAN_MS" ]] && is_gt "$current_median_ms" "$FAIL_MEDIAN_MS"; then
+  status="ROT"
+  budget_notes+=("median>${FAIL_MEDIAN_MS}ms (fail)")
+fi
+
+if [[ -n "$FAIL_P99_MS" ]] && is_gt "$current_p99_ms" "$FAIL_P99_MS"; then
+  status="ROT"
+  budget_notes+=("p99>${FAIL_P99_MS}ms (fail)")
+fi
+
+if [[ -n "$WARN_MEDIAN_MS" ]] && is_gt "$current_median_ms" "$WARN_MEDIAN_MS"; then
+  if [[ "$status" == "GRUEN" ]]; then
+    status="GELB"
+  fi
+  budget_notes+=("median>${WARN_MEDIAN_MS}ms (warn)")
+fi
+
+if [[ -n "$WARN_P99_MS" ]] && is_gt "$current_p99_ms" "$WARN_P99_MS"; then
+  if [[ "$status" == "GRUEN" ]]; then
+    status="GELB"
+  fi
+  budget_notes+=("p99>${WARN_P99_MS}ms (warn)")
+fi
+
+budget_summary="ok"
+if [[ "${#budget_notes[@]}" -gt 0 ]]; then
+  budget_summary="$(printf '%s; ' "${budget_notes[@]}")"
+  budget_summary="${budget_summary%; }"
+fi
+
+if [[ "$budget_summary" != "ok" ]]; then
+  reason="${reason} Budget-Check: ${budget_summary}."
 fi
 
 fallback_active=false
@@ -499,6 +571,8 @@ fi
   echo "- Benchmark latest: \`${LATEST_OUT}\`"
   echo "- Benchmark generated at: \`$source_generated_at\`"
   echo "- Source report: \`$source_report\`"
+  echo "- Benchmark connection: \`$source_connection\`"
+  echo "- Benchmark driver: \`$source_driver\`"
   echo "- Scenario: \`$SCENARIO\`"
   echo "- Enforce mode: \`$ENFORCE_MODE\`"
   echo "- Thresholds:"
@@ -506,6 +580,18 @@ fi
   echo "  - warn p95 > \`${WARN_P95_PCT}%\`"
   echo "  - fail avg > \`${FAIL_AVG_PCT}%\`"
   echo "  - fail p95 > \`${FAIL_P95_PCT}%\`"
+  if [[ -n "$WARN_MEDIAN_MS" ]]; then
+    echo "  - warn median > \`${WARN_MEDIAN_MS} ms\`"
+  fi
+  if [[ -n "$WARN_P99_MS" ]]; then
+    echo "  - warn p99 > \`${WARN_P99_MS} ms\`"
+  fi
+  if [[ -n "$FAIL_MEDIAN_MS" ]]; then
+    echo "  - fail median > \`${FAIL_MEDIAN_MS} ms\`"
+  fi
+  if [[ -n "$FAIL_P99_MS" ]]; then
+    echo "  - fail p99 > \`${FAIL_P99_MS} ms\`"
+  fi
   echo
   echo "## Result"
   echo "- Exit-Code: \`${report_exit_code}\`"
@@ -518,6 +604,7 @@ fi
   fi
   echo "- Median latency: \`$(format_ms "$current_median_ms") ms\`"
   echo "- P99 latency: \`$(format_ms "$current_p99_ms") ms\`"
+  echo "- Budget check: \`${budget_summary}\`"
   echo "- Reason: $reason"
   echo
   echo "## Hint-Entscheidung"
@@ -549,6 +636,7 @@ fi
   echo "## Interpretation"
   echo "- \`GRUEN\`: Release kann ohne Performance-Sondermassnahmen weiterlaufen."
   echo "- \`GELB\`: Release moeglich, aber Delta beobachten und bei Bedarf erneut messen."
+  echo "- Benchmarks sind nur innerhalb derselben DB-Engine direkt vergleichbar (z. B. SQLite vs MySQL)."
   if [[ "$ENFORCE_MODE" == "1" ]]; then
     echo "- \`ROT\`: Enforce aktiv -> Skript endet mit non-zero."
   else
@@ -559,9 +647,18 @@ fi
 if [[ -n "$GATE_ARCHIVE_OUT_ABS" ]]; then
   allowed_latest="$(to_repo_relative "$LATEST_OUT_ABS")"
   allowed_gate="$(to_repo_relative "$GATE_OUT_ABS")"
-  allowed_source="$(to_repo_relative "$source_report")"
+  allowed_source=""
 
-  require_clean_tree_for_archive "$allowed_latest" "$allowed_gate" "$allowed_source"
+  if [[ "$source_report" != "n/a" ]]; then
+    allowed_source_abs="$(absolute_path "$source_report")"
+    allowed_source="$(to_repo_relative "$allowed_source_abs")"
+  fi
+
+  if [[ -n "$allowed_source" ]]; then
+    require_clean_tree_for_archive "$allowed_latest" "$allowed_gate" "$allowed_source"
+  else
+    require_clean_tree_for_archive "$allowed_latest" "$allowed_gate"
+  fi
   cp "$GATE_OUT_ABS" "$GATE_ARCHIVE_OUT_ABS"
   echo "Saved gate archive: $GATE_ARCHIVE_OUT_ABS"
 fi
@@ -571,6 +668,7 @@ if [[ -n "$avg_delta_pct" && -n "$p95_delta_pct" ]]; then
   echo "  avg delta: $avg_delta_pct"
   echo "  p95 delta: $p95_delta_pct"
 fi
+echo "  budget check: $budget_summary"
 echo "Saved gate report: $GATE_OUT_ABS"
 
 echo "Hint decision: $hint_decision ($hint_reason)"

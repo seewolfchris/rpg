@@ -19,9 +19,13 @@ Wichtige Regeln:
 - Perf-Gate schreibt immer `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 - Mit `--archive` wird zusaetzlich ein UTC-Archiv geschrieben:
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-YYYYMMDDTHHMMSSZ.md`
+- Default-Budgets fuer `posts.latest_by_id` (override via `PERF_*`):
+  - Warnung: `median > 25 ms`, `p99 > 120 ms`
+  - Fail: `median > 40 ms`, `p99 > 180 ms`
 - Runtime-Hint bleibt report-basiert (keine automatische `.env`-Mutation):
   - Normalfall (echtes Median/P99): `Median <=95%` und `P99 <=110%` gegen Vorfenster.
   - Fallback (`avg->Median`, `p95->P99`): strengere Schwellen `<=90%` und `<=105%`.
+- Benchmarks sind nur innerhalb derselben DB-Engine direkt vergleichbar (SQLite != MySQL).
 - Roter Perf-Status ist report-only, solange Perf-Enforce aus ist. Mit Perf-Enforce endet ROT als non-zero.
 
 ## Dokumentations-Uebersicht
