@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Post;
 
-use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\PostModerationService;
+use App\Domain\Post\PostNotificationOrchestrator;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
@@ -18,7 +18,7 @@ class UpdatePostAction
 {
     public function __construct(
         private readonly PostModerationService $postModerationService,
-        private readonly PostMentionNotificationService $postMentionNotificationService,
+        private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
     ) {}
 
     /**
@@ -34,72 +34,118 @@ class UpdatePostAction
      */
     public function execute(Post $post, User $editor, array $data): void
     {
-        $scene = $this->resolveScene($post);
-        $campaign = $this->resolveCampaign($scene);
-
-        $isModerator = $editor->can('moderate', $post);
-        $requiresApproval = $campaign->requiresPostModeration()
-            && ! $campaign->userCanPostWithoutModeration($editor)
-            && ! $isModerator;
-        $previousModerationStatus = (string) $post->moderation_status;
-        $moderationNote = $isModerator
-            ? $this->normalizeModerationNote((string) ($data['moderation_note'] ?? ''))
-            : null;
-
-        $moderationStatus = $requiresApproval ? 'pending' : 'approved';
-        $approvedAt = $requiresApproval ? null : Carbon::now();
-        $approvedBy = null;
-
-        if ($isModerator && isset($data['moderation_status'])) {
-            $moderationStatus = (string) $data['moderation_status'];
-
-            if ($moderationStatus === 'approved') {
-                $approvedAt = Carbon::now();
-                $approvedBy = (int) $editor->id;
-            }
-        }
-
+        $postId = (int) $post->getKey();
         $postType = (string) $data['post_type'];
         $nextCharacterId = $postType === 'ic'
             ? (int) ($data['character_id'] ?? 0)
             : null;
-        $normalizedNextMeta = $this->normalizedNextMeta($post, $postType, (string) ($data['ic_quote'] ?? ''));
+        $contentFormat = (string) $data['content_format'];
+        $content = (string) $data['content'];
+        $icQuote = (string) ($data['ic_quote'] ?? '');
+        $providedModerationStatus = isset($data['moderation_status'])
+            ? (string) $data['moderation_status']
+            : null;
+        $providedModerationNote = (string) ($data['moderation_note'] ?? '');
 
-        $hasContentChange = $this->hasTrackedChanges($post, [
-            'character_id' => $nextCharacterId,
-            'post_type' => $postType,
-            'content_format' => (string) $data['content_format'],
-            'content' => (string) $data['content'],
-            'meta' => $normalizedNextMeta,
-        ]);
+        $updatedPost = null;
+        $isModerator = false;
+        $previousModerationStatus = '';
+        $moderationNote = null;
+        $hasContentChange = false;
 
-        if ($hasContentChange) {
-            $this->createRevisionSnapshot($post, $editor);
+        DB::transaction(function () use (
+            $postId,
+            $editor,
+            $postType,
+            $nextCharacterId,
+            $contentFormat,
+            $content,
+            $icQuote,
+            $providedModerationStatus,
+            $providedModerationNote,
+            &$updatedPost,
+            &$isModerator,
+            &$previousModerationStatus,
+            &$moderationNote,
+            &$hasContentChange,
+        ): void {
+            $lockedPost = Post::query()
+                ->whereKey($postId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedPost->loadMissing('scene.campaign');
+
+            $scene = $this->resolveScene($lockedPost);
+            $campaign = $this->resolveCampaign($scene);
+
+            $isModerator = $editor->can('moderate', $lockedPost);
+            $requiresApproval = $campaign->requiresPostModeration()
+                && ! $campaign->userCanPostWithoutModeration($editor)
+                && ! $isModerator;
+            $previousModerationStatus = (string) $lockedPost->moderation_status;
+            $moderationNote = $isModerator
+                ? $this->normalizeModerationNote($providedModerationNote)
+                : null;
+
+            $moderationStatus = $requiresApproval ? 'pending' : 'approved';
+            $approvedAt = $requiresApproval ? null : Carbon::now();
+            $approvedBy = null;
+
+            if ($isModerator && $providedModerationStatus !== null) {
+                $moderationStatus = $providedModerationStatus;
+
+                if ($moderationStatus === 'approved') {
+                    $approvedAt = Carbon::now();
+                    $approvedBy = (int) $editor->id;
+                }
+            }
+
+            $normalizedNextMeta = $this->normalizedNextMeta($lockedPost, $postType, $icQuote);
+            $hasContentChange = $this->hasTrackedChanges($lockedPost, [
+                'character_id' => $nextCharacterId,
+                'post_type' => $postType,
+                'content_format' => $contentFormat,
+                'content' => $content,
+                'meta' => $normalizedNextMeta,
+            ]);
+
+            if ($hasContentChange) {
+                $this->createRevisionSnapshot($lockedPost, $editor);
+            }
+
+            $lockedPost->update([
+                'character_id' => $nextCharacterId,
+                'post_type' => $postType,
+                'content_format' => $contentFormat,
+                'content' => $content,
+                'meta' => $normalizedNextMeta,
+                'moderation_status' => $moderationStatus,
+                'approved_at' => $approvedAt,
+                'approved_by' => $approvedBy,
+                'is_edited' => $hasContentChange ? true : $lockedPost->is_edited,
+                'edited_at' => $hasContentChange ? now() : $lockedPost->edited_at,
+            ]);
+
+            $updatedPost = $lockedPost;
+        }, 3);
+
+        if (! $updatedPost instanceof Post) {
+            throw new RuntimeException('Post update failed unexpectedly.');
         }
 
-        $post->update([
-            'character_id' => $nextCharacterId,
-            'post_type' => $postType,
-            'content_format' => (string) $data['content_format'],
-            'content' => (string) $data['content'],
-            'meta' => $normalizedNextMeta,
-            'moderation_status' => $moderationStatus,
-            'approved_at' => $approvedAt,
-            'approved_by' => $approvedBy,
-            'is_edited' => $hasContentChange ? true : $post->is_edited,
-            'edited_at' => $hasContentChange ? now() : $post->edited_at,
-        ]);
-
         $this->postModerationService->synchronize(
-            post: $post,
+            post: $updatedPost,
             moderator: $isModerator ? $editor : null,
             previousStatus: $previousModerationStatus,
             moderationNote: $moderationNote,
         );
 
         if ($hasContentChange) {
-            $this->postMentionNotificationService->notifyMentions($post, $editor);
+            $this->postNotificationOrchestrator->notifyMentionsWithRetry($updatedPost, $editor, 'update_post');
         }
+
+        $post->refresh();
     }
 
     private function resolveScene(Post $post): Scene
@@ -165,25 +211,18 @@ class UpdatePostAction
 
     private function createRevisionSnapshot(Post $post, User $editor): void
     {
-        DB::transaction(function () use ($post, $editor): void {
-            $lockedPost = Post::query()
-                ->whereKey($post->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
+        $nextVersion = ((int) $post->revisions()->max('version')) + 1;
 
-            $nextVersion = ((int) $lockedPost->revisions()->max('version')) + 1;
-
-            $lockedPost->revisions()->create([
-                'version' => $nextVersion,
-                'editor_id' => $editor->id,
-                'character_id' => $lockedPost->character_id,
-                'post_type' => $lockedPost->post_type,
-                'content_format' => $lockedPost->content_format,
-                'content' => $lockedPost->content,
-                'meta' => $lockedPost->meta,
-                'moderation_status' => $lockedPost->moderation_status,
-                'created_at' => now(),
-            ]);
-        }, 3);
+        $post->revisions()->create([
+            'version' => $nextVersion,
+            'editor_id' => $editor->id,
+            'character_id' => $post->character_id,
+            'post_type' => $post->post_type,
+            'content_format' => $post->content_format,
+            'content' => $post->content,
+            'meta' => $post->meta,
+            'moderation_status' => $post->moderation_status,
+            'created_at' => now(),
+        ]);
     }
 }

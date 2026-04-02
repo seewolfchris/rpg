@@ -80,7 +80,9 @@ VAPID_PRIVATE_KEY=...
 Wichtig fuer Retry-Jobs in Produktion:
 
 ```env
-QUEUE_CONNECTION=database
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
+SESSION_DRIVER=redis
 ```
 
 ## 5) Erster Deploy

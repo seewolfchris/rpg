@@ -267,6 +267,14 @@ class User extends Authenticatable
         return $this->hasAnyRole(UserRole::GM, UserRole::ADMIN);
     }
 
+    public function hasAnyCoGmCampaignAccess(): bool
+    {
+        return $this->campaignInvitations()
+            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+            ->where('role', CampaignInvitation::ROLE_CO_GM)
+            ->exists();
+    }
+
     public function canPostWithoutModeration(): bool
     {
         return (bool) $this->can_post_without_moderation;

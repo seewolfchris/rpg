@@ -86,7 +86,9 @@ Für Mail später SMTP eintragen. Zum Start kann Mail notfalls auf `log` bleiben
 Wichtig für Retry-/Notification-Stabilität:
 
 ```env
-QUEUE_CONNECTION=database
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
+SESSION_DRIVER=redis
 ```
 
 Für Web Push (aktiv seit `v0.20-beta`) ergänzen:

@@ -1,7 +1,12 @@
 # A3 Invarianten-Report
 
-Stand: 2026-03-31  
-Quelle: `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
+Stand: 2026-04-02  
+Quelle:
+- `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationTestCase.php`
+- `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCoreTest.php`
+- `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationScopeTest.php`
+- `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCrudTest.php`
+- `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationHxTest.php`
 
 ## 1) `campaigns.store`
 - Erwarteter Statuscode: `302` fuer `GM`/`Admin`, `403` fuer `Co-GM`/`Player`/`Outsider`.

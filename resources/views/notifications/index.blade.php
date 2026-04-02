@@ -130,6 +130,12 @@
                         @endif
                     @endforeach
                 </div>
+
+                @if ($subscriptions->hasPages())
+                    <div class="mb-8">
+                        {{ $subscriptions->links() }}
+                    </div>
+                @endif
             @endif
 
             @include('notifications.partials.inbox', ['notifications' => $notifications, 'unreadCount' => $unreadCount])

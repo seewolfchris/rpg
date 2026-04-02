@@ -77,7 +77,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($player)
-            ->patch(route('campaign-invitations.accept', $invitation))
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $invitation]))
             ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
         $invitation->refresh();
@@ -135,7 +135,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->firstOrFail();
 
         $this->actingAs($player)
-            ->patch(route('campaign-invitations.decline', $invitation))
+            ->patch(route('campaign-invitations.decline', ['world' => $campaign->world, 'invitation' => $invitation]))
             ->assertRedirect(route('campaign-invitations.index'));
 
         $this->assertDatabaseHas('campaign_invitations', [
@@ -146,6 +146,37 @@ class CampaignAccessInvitationTest extends TestCase
         $this->actingAs($player)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertForbidden();
+    }
+
+    public function test_legacy_invitation_accept_endpoint_remains_compatible_during_transition(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+            'email' => $player->email,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ])->assertRedirect();
+
+        $invitation = CampaignInvitation::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('user_id', $player->id)
+            ->firstOrFail();
+
+        $this->actingAs($player)
+            ->patch(route('campaign-invitations.accept.legacy', ['invitation' => $invitation]))
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->assertDatabaseHas('campaign_invitations', [
+            'id' => $invitation->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+        ]);
     }
 
     public function test_invited_co_gm_can_manage_scenes_and_moderate_posts_but_cannot_delete_campaign(): void
@@ -178,7 +209,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->firstOrFail();
 
         $this->actingAs($coGm)
-            ->patch(route('campaign-invitations.accept', $coGmInvitation))
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $coGmInvitation]))
             ->assertRedirect();
 
         $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
@@ -192,7 +223,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->firstOrFail();
 
         $this->actingAs($player)
-            ->patch(route('campaign-invitations.accept', $playerInvitation))
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $playerInvitation]))
             ->assertRedirect();
 
         $character = Character::factory()->create([
@@ -305,7 +336,7 @@ class CampaignAccessInvitationTest extends TestCase
         $this->assertSame(CampaignInvitation::ROLE_TRUSTED_PLAYER, $invitation->role);
 
         $this->actingAs($player)
-            ->patch(route('campaign-invitations.accept', $invitation))
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $invitation]))
             ->assertRedirect();
 
         $character = Character::factory()->create([
@@ -499,7 +530,7 @@ class CampaignAccessInvitationTest extends TestCase
             ->firstOrFail();
 
         $this->actingAs($player)
-            ->patch(route('campaign-invitations.accept', $invitation))
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $invitation]))
             ->assertRedirect();
 
         SceneSubscription::query()->create([

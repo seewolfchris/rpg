@@ -83,7 +83,7 @@
 
                             <div class="mt-4 flex flex-wrap items-center gap-2">
                                 @if ($invitation->status === 'pending')
-                                    <form method="POST" action="{{ route('campaign-invitations.accept', $invitation) }}">
+                                    <form method="POST" action="{{ route('campaign-invitations.accept', ['world' => $invitation->campaign->world, 'invitation' => $invitation]) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button
@@ -94,7 +94,7 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('campaign-invitations.decline', $invitation) }}">
+                                    <form method="POST" action="{{ route('campaign-invitations.decline', ['world' => $invitation->campaign->world, 'invitation' => $invitation]) }}">
                                         @csrf
                                         @method('PATCH')
                                         <button

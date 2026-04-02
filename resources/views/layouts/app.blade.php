@@ -15,6 +15,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="auth-user-id" content="{{ auth()->check() ? (string) auth()->id() : 'guest' }}">
         <meta name="theme-color" content="{{ data_get($activeWorldTheme ?? [], 'theme_color', '#0f0f14') }}">
         <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
         <meta name="sw-version" content="{{ $swVersion }}">
@@ -176,7 +177,7 @@
                                 </span>
                             @endif
                         </a>
-                        @if (auth()->user()->isGmOrAdmin())
+                        @if (auth()->user()->isGmOrAdmin() || auth()->user()->hasAnyCoGmCampaignAccess())
                             <a
                                 href="{{ route('gm.index') }}"
                                 class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"

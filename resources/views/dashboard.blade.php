@@ -13,7 +13,7 @@
             <p class="ui-badge mt-4 !rounded-md !border-amber-500/50 !bg-amber-500/10 !px-3 !py-1.5 !text-amber-100">
                 Ruhmpunkte: {{ auth()->user()->points }}
             </p>
-            @if (auth()->user()->isGmOrAdmin())
+            @if ($canAccessModerationQueue)
                 <p class="ui-badge mt-3 !rounded-md !border-red-700/60 !bg-red-900/20 !px-3 !py-1.5 !text-red-200">
                     Ausstehende Moderation: {{ $pendingModerationCount }}
                 </p>

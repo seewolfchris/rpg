@@ -24,6 +24,12 @@ const BROWSER_NOTIFICATION_ENABLE_SELECTOR = '[data-browser-notifications-enable
 const PARALLAX_SCENE_SELECTOR = '[data-parallax-scene]';
 const LOGOUT_FORM_SELECTOR = 'form[data-logout-form]';
 const POST_EDITOR_SELECTOR = 'form[data-post-editor]';
+const AUTH_USER_BOUNDARY_META_SELECTOR = 'meta[name="auth-user-id"]';
+const AUTH_USER_BOUNDARY_STORAGE_KEY = 'c76:auth-user-boundary';
+const PRIVATE_PAGE_CACHE_PREFIX = 'chroniken-pages-';
+const PRIVATE_CONTENT_CACHE_PREFIX = 'chroniken-content-';
+const OFFLINE_QUEUE_DB_NAME = 'chroniken-pbp';
+const DEFAULT_WORLD_SLUG = 'default';
 const POST_PREVIEW_DEBOUNCE_MS = 450;
 const POST_DRAFT_DEBOUNCE_MS = 350;
 
@@ -74,6 +80,7 @@ const bootApplication = async () => {
     setupOnlineSyncTrigger();
     setupServiceWorkerMessageHandling();
     setupServiceWorkerLogoutCleanup();
+    await enforcePrivateDataBoundaryOnAuthChange();
     await renderDeadLetterPanel();
     await renderOfflineQueueStatusPanel();
 
@@ -351,7 +358,12 @@ async function registerServiceWorker() {
 
     try {
         const versionTag = encodeURIComponent(resolveServiceWorkerVersionTag());
-        const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}`);
+        const worldSlug = encodeURIComponent(
+            resolveActiveWorldSlug()
+            || resolveStoredWorldSlugContext()
+            || DEFAULT_WORLD_SLUG
+        );
+        const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}&world=${worldSlug}`);
         const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
 
         if (readyRegistration) {
@@ -456,7 +468,7 @@ function setupBrowserNotifications() {
         subscribeUrl,
         unsubscribeUrl,
         vapidPublicKey,
-        worldSlug: root.dataset.worldSlug || 'chroniken-der-asche',
+        worldSlug: String(root.dataset.worldSlug || '').trim(),
         appName: root.dataset.appName || 'C76-RPG',
         enabledKinds: normalizeBrowserNotificationKinds(root.dataset.enabledKinds),
         csrfToken: getCsrfToken(),
@@ -736,20 +748,26 @@ function normalizePushSubscriptionPayload(subscription) {
 }
 
 function resolveBrowserNotificationWorldSlug() {
-    if (!browserNotificationConfig) {
-        return 'chroniken-der-asche';
-    }
-
     const fromPath = window.location.pathname.match(/^\/w\/([^/]+)/);
     if (fromPath && fromPath[1]) {
         return decodeURIComponent(fromPath[1]);
     }
 
-    if (typeof browserNotificationConfig.worldSlug === 'string' && browserNotificationConfig.worldSlug.trim() !== '') {
+    if (browserNotificationConfig && browserNotificationConfig.worldSlug.trim() !== '') {
         return browserNotificationConfig.worldSlug.trim();
     }
 
-    return 'chroniken-der-asche';
+    const activeWorld = resolveActiveWorldSlug();
+    if (activeWorld !== '') {
+        return activeWorld;
+    }
+
+    const storedWorld = resolveStoredWorldSlugContext();
+    if (storedWorld !== '') {
+        return storedWorld;
+    }
+
+    return DEFAULT_WORLD_SLUG;
 }
 
 function getCsrfToken() {
@@ -772,6 +790,13 @@ function persistActiveWorldSlugContext() {
     writeLocalStorageValue('c76:last-world-slug', worldSlug);
 }
 
+function resolveStoredWorldSlugContext() {
+    const storedValue = readLocalStorageValue('c76:last-world-slug');
+    const normalized = normalizeWorldSlug(storedValue);
+
+    return normalized ?? '';
+}
+
 function resolveActiveWorldSlug() {
     const htmlSlug = document.documentElement?.dataset?.worldSlug || '';
     const bodySlug = document.body?.dataset?.worldSlug || '';
@@ -786,10 +811,18 @@ function resolveActiveWorldSlug() {
         }
     }
 
-    const slug = String(htmlSlug || bodySlug || fromPath || '').trim().toLowerCase();
+    return normalizeWorldSlug(htmlSlug || bodySlug || fromPath || '') ?? '';
+}
+
+function normalizeWorldSlug(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const slug = value.trim().toLowerCase();
 
     if (slug === '' || /^[a-z0-9-]+$/.test(slug) !== true) {
-        return '';
+        return null;
     }
 
     return slug;
@@ -908,6 +941,98 @@ function setupServiceWorkerLogoutCleanup() {
                 type: 'CLEAR_PRIVATE_DATA',
             });
         }, { once: true });
+    });
+}
+
+async function enforcePrivateDataBoundaryOnAuthChange() {
+    const currentBoundary = resolveCurrentAuthBoundary();
+    const previousBoundary = readLocalStorageValue(AUTH_USER_BOUNDARY_STORAGE_KEY);
+
+    if (previousBoundary === currentBoundary) {
+        return;
+    }
+
+    try {
+        await clearPrivateOfflineData();
+    } finally {
+        writeLocalStorageValue(AUTH_USER_BOUNDARY_STORAGE_KEY, currentBoundary);
+    }
+}
+
+function resolveCurrentAuthBoundary() {
+    const boundaryMeta = document.querySelector(AUTH_USER_BOUNDARY_META_SELECTOR);
+
+    if (!(boundaryMeta instanceof HTMLMetaElement)) {
+        return 'guest';
+    }
+
+    const value = String(boundaryMeta.content || '').trim();
+
+    return value !== '' ? value : 'guest';
+}
+
+async function clearPrivateOfflineData() {
+    await Promise.all([
+        postMessageToActiveServiceWorker({
+            type: 'CLEAR_PRIVATE_DATA',
+        }),
+        clearPrivateOfflineCaches(),
+        clearPrivateOfflineQueueDatabase(),
+    ]);
+}
+
+async function clearPrivateOfflineCaches() {
+    if (!('caches' in window)) {
+        return;
+    }
+
+    let cacheKeys = [];
+
+    try {
+        cacheKeys = await window.caches.keys();
+    } catch {
+        return;
+    }
+
+    const privateCacheKeys = cacheKeys.filter((cacheKey) => (
+        typeof cacheKey === 'string'
+        && (
+            cacheKey.startsWith(PRIVATE_PAGE_CACHE_PREFIX)
+            || cacheKey.startsWith(PRIVATE_CONTENT_CACHE_PREFIX)
+        )
+    ));
+
+    if (privateCacheKeys.length === 0) {
+        return;
+    }
+
+    await Promise.all(privateCacheKeys.map(async (cacheKey) => {
+        try {
+            await window.caches.delete(cacheKey);
+        } catch {
+            // Ignore cache clear failures in privacy mode / unsupported browser contexts.
+        }
+    }));
+}
+
+async function clearPrivateOfflineQueueDatabase() {
+    if (typeof window.indexedDB === 'undefined' || typeof window.indexedDB.deleteDatabase !== 'function') {
+        return;
+    }
+
+    await new Promise((resolve) => {
+        let request;
+
+        try {
+            request = window.indexedDB.deleteDatabase(OFFLINE_QUEUE_DB_NAME);
+        } catch {
+            resolve(undefined);
+            return;
+        }
+
+        request.onsuccess = () => resolve(undefined);
+        request.onerror = () => resolve(undefined);
+        request.onblocked = () => resolve(undefined);
     });
 }
 

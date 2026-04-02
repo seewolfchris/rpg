@@ -16,6 +16,7 @@ Repository-Branch: `main`
 - Benchmark `posts.latest_by_id` Gate/Ampel: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
 - Benchmark `posts.latest_by_id` Staging/Prod: `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 - Smoke-Report lokal (Referenzlauf): `docs/SMOKE-PASS-2026-03-09.md`
+- Smoke-Report lokal (Hardening): `docs/SMOKE-PASS-2026-04-02.md`
 - Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
 - Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
@@ -24,10 +25,11 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.26-beta`**.
+- Laufende Versionslinie: **`v0.27-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **314 passed, 1846 assertions** (2026-04-02)
+  - `php artisan test --without-tty --do-not-cache-result` -> **323 passed, 1874 assertions** (2026-04-02)
   - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-02)
+  - `npm run test:e2e` -> **4 passed** (2026-04-02)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-02)
   - `npm run build` -> **gruen** (2026-04-02)
 - Delivery-Basis steht:
@@ -145,12 +147,25 @@ Repository-Branch: `main`
   - Payload-Typisierung entlang DTOs + Request-Grenze (`CharacterSheetRequest`) auf konsistente Shapes erweitert
   - PHPStan-Baseline auf null reduziert (`phpstan-baseline.neon` ohne verbleibende Ignored Errors)
 - A3 Invarianten-Matrix fuer Mutationsrouten ist eingeführt:
-  - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationTestCase.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCoreTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationScopeTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCrudTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationHxTest.php`
   - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) fuer zentrale Write-Routen ab
   - Konkrete Schreibpfade: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
   - Co-GM-Scope-Negativfaelle sind explizit abgedeckt (fremde Kampagne in gleicher Welt + Fremdwelt) fuer die High-Risk-Write-Pfade
   - HTMX-Mutationspfade sind explizit abgesichert (`HX-Request=true`) inklusive Response-Grenzen (Fragment vs. Redirect), Rechte und Weltkontext fuer `posts.moderate`, `posts.pin/unpin` und `gm.moderation.bulk-update`
   - Abnahme-/Referenzdoku liegt als Route-Report vor: `docs/A3-INVARIANTEN-REPORT.md`
+- Routing-Monolith wurde auf thematische Dateien gesplittet:
+  - `routes/web.php`
+  - `routes/web/public.php`
+  - `routes/web/world.php`
+  - `routes/web/guest.php`
+  - `routes/web/authenticated.php`
+- Browserbasierte E2E-Hardening-Flows eingeführt:
+  - `tests/e2e/offline-auth-boundary.spec.mjs`
+  - `tests/e2e/offline-queue-retry.spec.mjs`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 

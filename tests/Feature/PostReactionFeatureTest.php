@@ -47,6 +47,35 @@ class PostReactionFeatureTest extends TestCase
         ]);
     }
 
+    public function test_duplicate_reaction_requests_remain_idempotent(): void
+    {
+        config(['features.wave4.reactions' => true]);
+
+        [$campaign, , $post, $reactor] = $this->seedContext();
+
+        $firstResponse = $this->actingAs($reactor)->post(route('posts.reactions.store', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'emoji' => 'joy',
+        ]);
+        $firstResponse->assertRedirect();
+
+        $secondResponse = $this->actingAs($reactor)->post(route('posts.reactions.store', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'emoji' => 'joy',
+        ]);
+        $secondResponse->assertRedirect();
+
+        $this->assertSame(1, PostReaction::query()
+            ->where('post_id', $post->id)
+            ->where('user_id', $reactor->id)
+            ->where('emoji', 'joy')
+            ->count());
+    }
+
     public function test_reaction_rejects_invalid_emoji(): void
     {
         config(['features.wave4.reactions' => true]);

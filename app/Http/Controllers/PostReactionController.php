@@ -27,10 +27,20 @@ class PostReactionController extends Controller
             'emoji' => ['required', 'string', Rule::in(PostReaction::ALLOWED_EMOJIS)],
         ]);
 
-        PostReaction::query()->firstOrCreate([
-            'post_id' => $post->id,
-            'user_id' => $user->id,
-            'emoji' => (string) $data['emoji'],
+        PostReaction::query()->upsert([
+            [
+                'post_id' => $post->id,
+                'user_id' => $user->id,
+                'emoji' => (string) $data['emoji'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ], [
+            'post_id',
+            'user_id',
+            'emoji',
+        ], [
+            'updated_at',
         ]);
 
         return back();

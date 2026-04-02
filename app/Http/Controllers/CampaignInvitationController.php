@@ -128,38 +128,63 @@ class CampaignInvitationController extends Controller
             ->with('status', $status);
     }
 
-    public function accept(Request $request, CampaignInvitation $invitation): RedirectResponse
+    public function decline(Request $request, World $world, CampaignInvitation $invitation): RedirectResponse
     {
-        $user = $this->authenticatedUser($request);
-        $this->ensureUserOwnsInvitation($user, $invitation);
-
-        if ($invitation->status !== CampaignInvitation::STATUS_PENDING) {
-            return redirect()
-                ->route('campaign-invitations.index')
-                ->with('status', 'Einladung ist nicht mehr offen.');
-        }
-
-        $invitation->status = CampaignInvitation::STATUS_ACCEPTED;
-        $invitation->accepted_at = now();
-        $invitation->responded_at = now();
-        $invitation->save();
-
-        $campaign = Campaign::query()
-            ->with('world')
-            ->findOrFail((int) $invitation->campaign_id);
-
-        return redirect()
-            ->route('campaigns.show', [
-                'world' => $campaign->world,
-                'campaign' => $campaign,
-            ])
-            ->with('status', 'Einladung angenommen.');
+        return $this->respondToInvitation(
+            request: $request,
+            world: $world,
+            invitation: $invitation,
+            decision: CampaignInvitation::STATUS_DECLINED,
+        );
     }
 
-    public function decline(Request $request, CampaignInvitation $invitation): RedirectResponse
+    public function acceptLegacy(Request $request, CampaignInvitation $invitation): RedirectResponse
     {
+        $campaign = $this->resolveCampaignForInvitation($invitation);
+        $world = $this->resolveWorldForCampaign($campaign);
+
+        return $this->respondToInvitation(
+            request: $request,
+            world: $world,
+            invitation: $invitation,
+            decision: CampaignInvitation::STATUS_ACCEPTED,
+        );
+    }
+
+    public function declineLegacy(Request $request, CampaignInvitation $invitation): RedirectResponse
+    {
+        $campaign = $this->resolveCampaignForInvitation($invitation);
+        $world = $this->resolveWorldForCampaign($campaign);
+
+        return $this->respondToInvitation(
+            request: $request,
+            world: $world,
+            invitation: $invitation,
+            decision: CampaignInvitation::STATUS_DECLINED,
+        );
+    }
+
+    public function accept(Request $request, World $world, CampaignInvitation $invitation): RedirectResponse
+    {
+        return $this->respondToInvitation(
+            request: $request,
+            world: $world,
+            invitation: $invitation,
+            decision: CampaignInvitation::STATUS_ACCEPTED,
+        );
+    }
+
+    private function respondToInvitation(
+        Request $request,
+        World $world,
+        CampaignInvitation $invitation,
+        string $decision,
+    ): RedirectResponse {
         $user = $this->authenticatedUser($request);
         $this->ensureUserOwnsInvitation($user, $invitation);
+        $campaign = $this->resolveCampaignForInvitation($invitation);
+        $campaignWorld = $this->resolveWorldForCampaign($campaign);
+        $this->ensureCampaignBelongsToWorld($world, $campaign);
 
         if ($invitation->status !== CampaignInvitation::STATUS_PENDING) {
             return redirect()
@@ -167,14 +192,25 @@ class CampaignInvitationController extends Controller
                 ->with('status', 'Einladung ist nicht mehr offen.');
         }
 
-        $invitation->status = CampaignInvitation::STATUS_DECLINED;
-        $invitation->accepted_at = null;
+        $isAccept = $decision === CampaignInvitation::STATUS_ACCEPTED;
+
+        $invitation->status = $isAccept
+            ? CampaignInvitation::STATUS_ACCEPTED
+            : CampaignInvitation::STATUS_DECLINED;
+        $invitation->accepted_at = $isAccept ? now() : null;
         $invitation->responded_at = now();
         $invitation->save();
 
-        return redirect()
-            ->route('campaign-invitations.index')
-            ->with('status', 'Einladung abgelehnt.');
+        if ($isAccept) {
+            return redirect()
+                ->route('campaigns.show', [
+                    'world' => $campaignWorld,
+                    'campaign' => $campaign,
+                ])
+                ->with('status', 'Einladung angenommen.');
+        }
+
+        return redirect()->route('campaign-invitations.index')->with('status', 'Einladung abgelehnt.');
     }
 
     public function destroy(Request $request, World $world, Campaign $campaign, CampaignInvitation $invitation): RedirectResponse
@@ -222,6 +258,21 @@ class CampaignInvitationController extends Controller
     private function ensureUserOwnsInvitation(User $user, CampaignInvitation $invitation): void
     {
         abort_unless($invitation->user_id === $user->id, 403);
+    }
+
+    private function resolveCampaignForInvitation(CampaignInvitation $invitation): Campaign
+    {
+        return Campaign::query()
+            ->with('world')
+            ->findOrFail((int) $invitation->campaign_id);
+    }
+
+    private function resolveWorldForCampaign(Campaign $campaign): World
+    {
+        $world = $campaign->world;
+        abort_unless($world instanceof World, 404);
+
+        return $world;
     }
 
     private function canManageInvitations(User $user, Campaign $campaign): bool

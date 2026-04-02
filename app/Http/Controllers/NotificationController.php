@@ -45,17 +45,24 @@ class NotificationController extends Controller
             ->withQueryString();
 
         $unreadCount = $user->unreadNotifications()->count();
-        $subscriptions = SceneSubscription::query()
+        $subscriptionsBaseQuery = SceneSubscription::query()
             ->where('user_id', $user->id)
             ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
                 $campaignQuery->whereIn('id', Campaign::query()->visibleTo($user)->select('id'));
-            })
+            });
+
+        $subscriptions = (clone $subscriptionsBaseQuery)
             ->with(['scene.campaign.world'])
             ->latest('updated_at')
-            ->get();
+            ->paginate(20, ['*'], 'subscriptions_page')
+            ->withQueryString();
 
-        $activeSubscriptionCount = $subscriptions->where('is_muted', false)->count();
-        $mutedSubscriptionCount = $subscriptions->where('is_muted', true)->count();
+        $activeSubscriptionCount = (clone $subscriptionsBaseQuery)
+            ->where('is_muted', false)
+            ->count();
+        $mutedSubscriptionCount = (clone $subscriptionsBaseQuery)
+            ->where('is_muted', true)
+            ->count();
 
         return view('notifications.index', compact(
             'notifications',

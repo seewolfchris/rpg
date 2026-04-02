@@ -35,7 +35,7 @@ test('resolveOfflineFallbackUrl keeps default world context for non-world routes
 
     assert.equal(
         fallbackUrl,
-        '/offline.html?world=chroniken-der-asche&path=%2Fcharacters%2F42',
+        '/offline.html?world=default&path=%2Fcharacters%2F42',
     );
 });
 

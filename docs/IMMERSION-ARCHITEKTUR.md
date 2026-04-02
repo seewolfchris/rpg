@@ -1,4 +1,4 @@
-# Immersion-Architektur (v0.26-beta)
+# Immersion-Architektur (v0.27-beta)
 
 Stand: 2026-04-02
 

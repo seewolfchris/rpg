@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Post\PostModerationScope;
 use App\Models\Character;
 use App\Models\Campaign;
 use App\Models\DiceRoll;
@@ -18,6 +19,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly NavigationCounters $navigationCounters,
+        private readonly PostModerationScope $postModerationScope,
     ) {}
 
     public function __invoke(Request $request): View
@@ -43,8 +45,13 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $pendingModerationCount = $user->isGmOrAdmin()
-            ? Post::query()->where('moderation_status', 'pending')->count()
+        $canAccessModerationQueue = $selectedWorld instanceof World
+            && $this->postModerationScope->canAccessWorldQueue($user, $selectedWorld);
+        $pendingModerationCount = $canAccessModerationQueue
+            ? (clone $this->postModerationScope
+                ->baseQuery($user, $selectedWorld))
+                ->where('moderation_status', 'pending')
+                ->count()
             : 0;
 
         $latestPostsPerScene = Post::query()
@@ -136,6 +143,7 @@ class DashboardController extends Controller
         return view('dashboard', [
             'topPlayers' => $topPlayers,
             'pendingModerationCount' => $pendingModerationCount,
+            'canAccessModerationQueue' => $canAccessModerationQueue,
             'unreadSceneCount' => $unreadSceneCount,
             'bookmarkCount' => $bookmarkCount,
             'tutorialSteps' => $tutorialSteps,

@@ -7,6 +7,7 @@ const QUEUE_STORE_NAME = 'postQueue';
 const DEAD_LETTER_STORE_NAME = 'postDeadLetters';
 const SYNC_TAG_POSTS = 'pbp-sync-posts';
 const OFFLINE_URL = '/offline.html';
+const DEFAULT_WORLD_SLUG = resolveDefaultWorldSlug();
 const RETRY_MIN_DELAY_MS = 5 * 1000;
 const RETRY_BASE_DELAY_MS = 30 * 1000;
 const RETRY_MAX_DELAY_MS = 15 * 60 * 1000;
@@ -48,6 +49,22 @@ function resolveCacheVersionTag() {
         return normalizedVersion !== '' ? normalizedVersion : 'dev';
     } catch {
         return 'dev';
+    }
+}
+
+function resolveDefaultWorldSlug() {
+    try {
+        const parsed = new URL(self.location.href);
+        const rawWorld = parsed.searchParams.get('world') || 'default';
+        const normalizedWorld = rawWorld
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        return normalizedWorld !== '' ? normalizedWorld : 'default';
+    } catch {
+        return 'default';
     }
 }
 
@@ -399,17 +416,19 @@ function resolveRequestPathname(request) {
 
 function resolveOfflineWorldSlug(pathname) {
     if (typeof pathname !== 'string') {
-        return 'chroniken-der-asche';
+        return DEFAULT_WORLD_SLUG;
     }
 
     const worldMatch = pathname.match(/^\/w\/([^/]+)/);
 
     if (!worldMatch || !worldMatch[1]) {
-        return 'chroniken-der-asche';
+        return DEFAULT_WORLD_SLUG;
     }
 
     try {
-        return decodeURIComponent(worldMatch[1]) || 'chroniken-der-asche';
+        const decodedWorldSlug = decodeURIComponent(worldMatch[1]);
+
+        return decodedWorldSlug !== '' ? decodedWorldSlug : DEFAULT_WORLD_SLUG;
     } catch {
         return worldMatch[1];
     }

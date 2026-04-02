@@ -1,6 +1,6 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
-Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt  
+Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt, v0.27-Hardening umgesetzt  
 Stand: 2026-04-02
 
 ## Zielbild
@@ -89,7 +89,11 @@ Stand: 2026-04-02
   - `app/Actions/Character/CharacterEditData.php`
   - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
 - A3 Invarianten-Matrix:
-  - `tests/Feature/AuthorizationWorldContextMutationMatrixTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationTestCase.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCoreTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationScopeTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCrudTest.php`
+  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationHxTest.php`
   - Abdeckung: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
   - HTMX-Response-Grenzen explizit abgesichert fuer `posts.moderate` sowie `posts.pin/unpin` (Fragment vs. Redirect)
   - HTMX-Response-Grenzen explizit abgesichert fuer `gm.moderation.bulk-update` (Fragment vs. Redirect)
@@ -105,7 +109,10 @@ Stand: 2026-04-02
   - `.github/workflows/ci.yml`
   - `scripts/release_smoke.sh` (inkl. Weltkontext-/Global-Wissen-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
   - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
+  - `docs/SMOKE-PASS-2026-04-02.md` (lokales Hardening-Protokoll)
   - `docs/SMOKE-PASS-STAGING-PROD.md` (echter HTTP-Prod-Smoke)
+  - Routing-Split: `routes/web.php` + `routes/web/public.php` + `routes/web/world.php` + `routes/web/guest.php` + `routes/web/authenticated.php`
+  - Browser-E2E (Offline/Auth-Boundary/Queue-Retry): `tests/e2e/*` + `playwright.config.mjs`
 - Immersion-Rollout:
   - `docs/IMMERSION_ROLLOUT_PHASED.md` (Phase A/B/C Betriebsablauf)
   - `scripts/release_phase_a_flow.sh` (Go/No-Go Rollout fuer Welle 1/2)
@@ -127,8 +134,9 @@ Stand: 2026-04-02
   - `docs/OPERATIONS_RUNBOOK.md`
 
 ## Aktueller Verifikationsstand (2026-04-02)
-- `php artisan test --without-tty --do-not-cache-result` -> **314 passed, 1846 assertions**
+- `php artisan test --without-tty --do-not-cache-result` -> **323 passed, 1874 assertions**
 - `node --test tests/js/*.mjs` -> **19 passed**
+- `npm run test:e2e` -> **4 passed**
 - `npm run build` -> **gruen**
 - `composer analyse` -> **keine Fehler (PHPStan Level 8)**
 - GitHub Actions (`main`) -> **gruen**

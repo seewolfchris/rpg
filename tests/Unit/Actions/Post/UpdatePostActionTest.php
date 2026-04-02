@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Post;
 
 use App\Actions\Post\UpdatePostAction;
-use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\PostModerationService;
+use App\Domain\Post\PostNotificationOrchestrator;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Post;
@@ -33,15 +33,17 @@ class UpdatePostActionTest extends TestCase
                 null,
             );
 
-        $mentionService = $this->createMock(PostMentionNotificationService::class);
-        $mentionService->expects($this->once())
-            ->method('notifyMentions')
+        $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
+        $notificationOrchestrator->expects($this->once())
+            ->method('notifyMentionsWithRetry')
             ->with(
                 $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
                 $this->callback(static fn (User $author): bool => $author->is($player)),
-            );
+                'update_post',
+            )
+            ->willReturn(0);
 
-        $action = new UpdatePostAction($moderationService, $mentionService);
+        $action = new UpdatePostAction($moderationService, $notificationOrchestrator);
 
         $action->execute($post, $player, [
             'post_type' => 'ic',
@@ -82,10 +84,10 @@ class UpdatePostActionTest extends TestCase
                 'Freigabe durch Spielleitung',
             );
 
-        $mentionService = $this->createMock(PostMentionNotificationService::class);
-        $mentionService->expects($this->never())->method('notifyMentions');
+        $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
+        $notificationOrchestrator->expects($this->never())->method('notifyMentionsWithRetry');
 
-        $action = new UpdatePostAction($moderationService, $mentionService);
+        $action = new UpdatePostAction($moderationService, $notificationOrchestrator);
 
         $action->execute($post, $gm, [
             'post_type' => 'ic',

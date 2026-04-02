@@ -26,6 +26,8 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
   - `php artisan test --without-tty --do-not-cache-result`
 - Frontend-JS Regression:
   - `npm run test:js`
+- Browser-E2E (Offline/Auth-Boundary/Queue-Retry):
+  - `npm run test:e2e`
 - Frontend-Build:
   - `npm run build`
 
@@ -99,7 +101,9 @@ Queue-Retry in Produktion sicherstellen:
 
 ```bash
 # .env
-QUEUE_CONNECTION=database
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
+SESSION_DRIVER=redis
 
 # Worker (Scheduled Task/Prozess)
 PHP_BIN=/opt/plesk/php/8.5/bin/php
