@@ -122,6 +122,45 @@ class SceneBookmarkTest extends TestCase
         ]);
     }
 
+    public function test_htmx_bookmark_store_returns_thread_item_fragment_from_shared_builder(): void
+    {
+        $user = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withHeaders(['HX-Request' => 'true'])
+            ->post(route('campaigns.scenes.bookmark.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_id' => $post->id,
+            ]);
+
+        $response->assertOk()
+            ->assertViewIs('posts._thread-item')
+            ->assertViewHas('post', fn (Post $viewPost): bool => $viewPost->is($post))
+            ->assertViewHas('bookmarkCountForNav', 1);
+    }
+
     public function test_bookmark_index_hides_entries_for_inaccessible_private_campaigns(): void
     {
         $user = User::factory()->create();

@@ -2,25 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Post\BuildPostThreadItemFragmentAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\SceneBookmark\StoreSceneBookmarkRequest;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
-use App\Models\User;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SceneBookmarkController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
+    ) {}
 
     public function index(Request $request, World $world): View
     {
@@ -115,13 +118,10 @@ class SceneBookmarkController extends Controller
             $post = Post::query()
                 ->where('scene_id', $scene->id)
                 ->whereKey($postId)
-                ->with(Post::THREAD_ITEM_RELATIONS)
                 ->first();
 
             if ($post instanceof Post) {
-                $bookmarkCountForNav = $this->visibleBookmarkCountForUser($user);
-
-                return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
+                return $this->buildPostThreadItemFragmentAction->execute($post, $user);
             }
         }
 
@@ -232,31 +232,5 @@ class SceneBookmarkController extends Controller
         }
 
         return route('campaigns.scenes.show', $parameters);
-    }
-
-    private function visibleBookmarkCountForUser(?\App\Models\User $user): int
-    {
-        if (! $user) {
-            return 0;
-        }
-
-        return (int) $user->sceneBookmarks()
-            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
-                if ($user->isGmOrAdmin()) {
-                    return;
-                }
-
-                $campaignQuery->where(function (Builder $innerQuery) use ($user): void {
-                    $innerQuery
-                        ->where('is_public', true)
-                        ->orWhere('owner_id', $user->id)
-                        ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                            $invitationQuery
-                                ->where('user_id', $user->id)
-                                ->where('status', CampaignInvitation::STATUS_ACCEPTED);
-                        });
-                });
-            })
-            ->count();
     }
 }
