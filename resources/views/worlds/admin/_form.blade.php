@@ -1,16 +1,4 @@
-@if ($errors->any())
-    <section
-        class="mb-6 rounded-md border border-red-700/70 bg-red-900/20 px-4 py-3 text-sm text-red-100"
-        data-world-admin-error-summary
-    >
-        <p class="font-semibold uppercase tracking-widest text-red-200">Bitte Eingaben prüfen</p>
-        <ul class="mt-2 list-disc space-y-1 pl-5 text-red-100/95">
-            @foreach ($errors->all() as $message)
-                <li>{{ $message }}</li>
-            @endforeach
-        </ul>
-    </section>
-@endif
+<x-form-error-summary class="mb-6" data-world-admin-error-summary />
 
 <div class="grid gap-6 lg:grid-cols-2">
     <div>

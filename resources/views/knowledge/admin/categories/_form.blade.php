@@ -1,4 +1,6 @@
 <div class="space-y-5">
+    <x-form-error-summary data-knowledge-admin-error-summary />
+
     <div>
         <label for="name" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Name</label>
         <input

@@ -2,7 +2,7 @@
 
 namespace App\Domain\Post;
 
-use App\Models\CampaignInvitation;
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\World;
@@ -10,20 +10,18 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PostModerationScope
 {
+    public function __construct(
+        private readonly CampaignParticipantResolver $campaignParticipantResolver,
+    ) {}
+
     public function canAccessWorldQueue(User $user, World $world): bool
     {
         if ($user->isGmOrAdmin()) {
             return true;
         }
 
-        return CampaignInvitation::query()
-            ->where('user_id', (int) $user->id)
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->where('role', CampaignInvitation::ROLE_CO_GM)
-            ->whereHas('campaign', function (Builder $campaignQuery) use ($world): void {
-                $campaignQuery->where('world_id', (int) $world->id);
-            })
-            ->exists();
+        return $this->campaignParticipantResolver
+            ->hasCoGmAccessInWorld($user, $world);
     }
 
     /**
@@ -40,11 +38,15 @@ class PostModerationScope
             return $query;
         }
 
-        return $query->whereHas('scene.campaign.invitations', function (Builder $invitationQuery) use ($user): void {
-            $invitationQuery
-                ->where('user_id', (int) $user->id)
-                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                ->where('role', CampaignInvitation::ROLE_CO_GM);
+        $coGmCampaignIds = $this->campaignParticipantResolver
+            ->coGmCampaignIdsForWorld($user, $world);
+
+        if ($coGmCampaignIds->isEmpty()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('scene', function (Builder $sceneQuery) use ($coGmCampaignIds): void {
+            $sceneQuery->whereIn('campaign_id', $coGmCampaignIds->all());
         });
     }
 }

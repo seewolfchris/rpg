@@ -137,6 +137,37 @@ class WorldAdminUpdateInvariantTest extends TestCase
             ->assertSeeText('Die Standardwelt kann nicht deaktiviert werden.');
     }
 
+    public function test_admin_world_edit_form_renders_multi_error_summary_for_htmx_request(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $defaultWorld = World::query()
+            ->where('slug', (string) config('worlds.default_slug'))
+            ->firstOrFail();
+        World::factory()->create([
+            'slug' => 'aktive-nebenwelt-fuer-multierror',
+            'is_active' => true,
+            'position' => 1800,
+        ]);
+
+        $this->actingAs($admin)
+            ->withHeaders(['HX-Request' => 'true', 'HX-Target' => 'world-edit-form'])
+            ->from(route('admin.worlds.edit', $defaultWorld))
+            ->put(route('admin.worlds.update', $defaultWorld), $this->worldUpdatePayload($defaultWorld, [
+                'slug' => 'default-slug-verboten',
+                'is_active' => false,
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $defaultWorld))
+            ->assertSessionHasErrors(['slug', 'is_active']);
+
+        $this->actingAs($admin)
+            ->withHeaders(['HX-Request' => 'true'])
+            ->get(route('admin.worlds.edit', $defaultWorld))
+            ->assertOk()
+            ->assertSee('data-world-admin-error-summary', false)
+            ->assertSeeText('Der Slug der Standardwelt kann nicht geändert werden.')
+            ->assertSeeText('Die Standardwelt kann nicht deaktiviert werden.');
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

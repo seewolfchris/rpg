@@ -2,8 +2,8 @@
 
 namespace App\Domain\Post;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\PostMention;
@@ -15,6 +15,10 @@ use Illuminate\Support\Str;
 
 class PostMentionNotificationService
 {
+    public function __construct(
+        private readonly CampaignParticipantResolver $campaignParticipantResolver,
+    ) {}
+
     /**
      * @return int Anzahl benachrichtigter Nutzer
      */
@@ -34,20 +38,15 @@ class PostMentionNotificationService
             return 0;
         }
 
-        $post->loadMissing(['scene.campaign.invitations']);
+        $post->loadMissing(['scene.campaign']);
         /** @var Scene $scene */
         $scene = $post->scene;
         /** @var Campaign $campaign */
         $campaign = $scene->campaign;
         $worldId = (int) $campaign->world_id;
 
-        $participantUserIds = $campaign->invitations
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->pluck('user_id')
-            ->map(static fn ($id): int => (int) $id)
-            ->push((int) $campaign->owner_id)
-            ->unique()
-            ->values();
+        $participantUserIds = $this->campaignParticipantResolver
+            ->participantUserIds($campaign);
 
         $characters = Character::query()
             ->where('world_id', $worldId)

@@ -2,8 +2,8 @@
 
 namespace App\Domain\Character;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\CharacterProgressionEvent;
 use App\Models\Scene;
@@ -15,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class CharacterProgressionService
 {
+    public function __construct(
+        private readonly CampaignParticipantResolver $campaignParticipantResolver,
+    ) {}
+
     /**
      * @param  array<int, array{character_id: int, xp_delta: int}>  $awards
      * @return array{affected_characters: int, total_xp_delta: int}
@@ -31,7 +35,8 @@ class CharacterProgressionService
         $normalizedReason = $this->normalizeReason($reason);
 
         return DB::transaction(function () use ($actor, $campaign, $scene, $eventMode, $eventType, $awards, $normalizedReason): array {
-            $participantUserIds = $this->campaignParticipantUserIds($campaign);
+            $participantUserIds = $this->campaignParticipantResolver
+                ->participantUserIds($campaign);
             $characterIds = collect($awards)
                 ->pluck('character_id')
                 ->map(static fn ($id): int => (int) $id)
@@ -476,21 +481,6 @@ class CharacterProgressionService
         }
 
         return $totals;
-    }
-
-    /**
-     * @return Collection<int, int<1, max>>
-     */
-    private function campaignParticipantUserIds(Campaign $campaign): Collection
-    {
-        return $campaign->invitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->pluck('user_id')
-            ->merge([(int) $campaign->owner_id])
-            ->map(static fn ($id): int => (int) $id)
-            ->filter(static fn (int $id): bool => $id > 0)
-            ->unique()
-            ->values();
     }
 
     private function historicalSpendAlias(string $attributeKey): string
