@@ -53,7 +53,7 @@ Wenn Szenen-/Mention-Benachrichtigungen ausfallen:
 0. `.env` prüfen:
    - `QUEUE_CONNECTION=redis` (nicht `sync`)
    - `CACHE_STORE=redis`
-   - `SESSION_DRIVER=redis`
+   - `SESSION_DRIVER=database` (optional `redis`, falls Session-Layer dafuer stabil betrieben wird)
 1. Queue-Worker pruefen (redis-queue):
    - `php artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90`
 2. Fehlgeschlagene Jobs pruefen:

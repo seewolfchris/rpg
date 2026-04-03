@@ -1,6 +1,6 @@
 # Docs-Uebersicht
 
-Stand: 2026-04-02
+Stand: 2026-04-03
 
 ## Kern-Dokumente (pflegepflichtig)
 - `PROJEKT-ÜBERSICHT.md`
@@ -25,3 +25,4 @@ Stand: 2026-04-02
    - die Baseline, auf die `LATEST` aktuell verweist.
 3. Aeltere datierte Reports entweder loeschen oder in einen Archivpfad verschieben.
 4. Bei inhaltlichen Aenderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
+5. Bei CI-Workflow-Aenderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `PLESK_DEPLOYMENT_FUER_ANFAENGER.md` synchronisieren.

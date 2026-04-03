@@ -12,7 +12,7 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
 
 - `git pull --rebase origin main`
 - Alle geplanten Aenderungen finalisieren.
-- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.26-beta`).
+- Sicherstellen, dass `APP_VERSION` fuer den Release feststeht (z. B. `v0.27-beta`).
 
 ## 2. Qualitaet lokal pruefen
 
@@ -24,6 +24,7 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
   - `composer analyse`
 - Tests:
   - `php artisan test --without-tty --do-not-cache-result`
+  - Optional lokal bei verfuegbarem MySQL: `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency`
 - Frontend-JS Regression:
   - `npm run test:js`
 - Browser-E2E (Offline/Auth-Boundary/Queue-Retry):
@@ -103,7 +104,9 @@ Queue-Retry in Produktion sicherstellen:
 # .env
 QUEUE_CONNECTION=redis
 CACHE_STORE=redis
-SESSION_DRIVER=redis
+SESSION_DRIVER=database
+# Optional bei stabiler Redis-Session-Infrastruktur:
+# SESSION_DRIVER=redis
 
 # Worker (Scheduled Task/Prozess)
 PHP_BIN=/opt/plesk/php/8.5/bin/php

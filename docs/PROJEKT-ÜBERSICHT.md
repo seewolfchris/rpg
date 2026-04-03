@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-04-02  
+Stand: 2026-04-03  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -32,6 +32,8 @@ Repository-Branch: `main`
   - `npm run test:e2e` -> **4 passed** (2026-04-02)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-02)
   - `npm run build` -> **gruen** (2026-04-02)
+- Verifikation CI (letzter Lauf):
+  - GitHub Actions Run `23955451147` -> **test-and-build + mysql-concurrency gruen** (2026-04-03)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -169,13 +171,32 @@ Repository-Branch: `main`
 - Architekturentscheidung dokumentiert in:
   - `docs/adr/2026-03-08-post-scene-domain-services.md`
 
+### 4.1 Hardening-Update (2026-04-03)
+- Campaign-Invite- und Teilnehmerlogik ist konsolidiert:
+  - `CampaignParticipantResolver` wird einheitlich in Requests und Domain-Services verwendet (`StoreSceneInventoryActionRequest`, `StoreCharacterProgressionAwardRequest`, `PostMentionNotificationService`, `PostModerationScope`, `CharacterProgressionService`).
+- Post-Rechte wurden gehaertet:
+  - `PostPolicy` koppelt `update`/`delete` an Kampagnen-Sichtbarkeit plus Teilnahme.
+  - `UpdatePostRequest` erzwingt Autorbezug + Kampagnen-Teilnahme.
+  - Entzogene Einladungen blockieren `posts.update`/`posts.destroy` verifiziert mit `403`.
+- Welt-Admin-Invarianten sind action-zentriert abgesichert:
+  - Default-Slug ist unveraenderlich bzw. Config-Drift wird als Feldfehler gespiegelt.
+  - Default-Welt bleibt aktiv; mindestens eine aktive Welt bleibt erhalten.
+  - Loeschen der Default-Welt ist unterbunden.
+- HTMX/Admin-UX-Hardening:
+  - Wiederverwendbare Fehlerzusammenfassung `resources/views/components/form-error-summary.blade.php` in Admin-Formularen integriert.
+  - Feature-Tests pruefen explizit den Fehlerblock (`data-world-admin-error-summary`) inkl. Mehrfachfehlerfall.
+- Concurrency- und Retry-Hardening:
+  - Invite-Store nutzt atomaren Upsert mit Duplicate-Key-Fallback (`1062`) in `UpsertCampaignInvitationAction`.
+  - MySQL-Concurrency-Tests sind als eigener CI-Job (`mysql-concurrency`) verankert.
+
 ## 5) Delivery, Betrieb und Compliance
 
 ### 5.1 CI / Release
 - CI Gates:
   - `composer validate --strict`
   - `composer analyse`
-  - `php artisan test --without-tty --do-not-cache-result`
+  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency`
+  - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency` (separater MySQL-Job)
   - `npm run test:js`
   - `npm run build`
 - Wichtiger Test-Hinweis:
@@ -192,7 +213,8 @@ Repository-Branch: `main`
   - Bei externer `SMOKE_BASE_URL` startet `release_smoke.sh` keinen lokalen `artisan serve`
 - DB-Betriebsmodus:
   - Produktion: MySQL/MariaDB
-  - CI-Tests: SQLite in-memory (`phpunit.xml`)
+  - CI-Standardjob: SQLite in-memory (`phpunit.xml`)
+  - CI-Concurrency-Job: MySQL 8.4 (`mysql-concurrency` Testgruppe)
   - WebPush-DB folgt standardmaessig `DB_CONNECTION` (Override nur bei Bedarf via `WEBPUSH_DB_CONNECTION`)
 
 ### 5.2 Observability

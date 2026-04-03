@@ -45,6 +45,7 @@ Wichtige Regeln:
 Stand: **Release-Beta `v0.27-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
+- v0.27-beta (2026-04-03): Hardening-Nachzug mit konsolidiertem `CampaignParticipantResolver` entlang Requests/Domain-Services, gehaerteten Post-/World-Invarianten (inkl. Default-Welt-Loeschschutz), atomarem Invite-Upsert (`1062`-Fallback) und separatem CI-MySQL-Concurrency-Job.
 - v0.27-beta (2026-04-02): Hardening-Release mit atomarem Post-Update-Flow, PWA-Privacy-Boundary bei Auth-Wechseln, idempotentem Reaction-Upsert, kanonischem Invite-Weltkontext, Redis-Produktionsdefaults, scope-korrektem GM-/Dashboard-Count, paginiertem Notification-Center, gesplitteten Web-Routen, modularisierter Authorization-Matrix und browserbasierten Playwright-E2E-Flows fuer Offline/Auth-Queue-Retry.
 - v0.26-beta (2026-04-02): Architektur-Konsolidierung nach Multi-Welt-Rollout: d100-Probenpfad vereinheitlicht, Moderations-Readlogik dedupliziert, Character-/Progression-Autorisierung policy-first konsolidiert, Bookmark-Jump-Querylast reduziert, Character-Actions auf request-freie Inputs umgestellt und Payload-Typisierung bis inkl. Request-Grenze nachgezogen; PHPStan-Baseline auf null reduziert.
 - v0.25-beta (2026-03-29): Immersion-Upgrade Phasen 1-4 abgeschlossen (World-Theme-Resolver + CSS-Variablen am Root, erweiterter Romanmodus inkl. Fullscreen/Progress-Lesezeichen/Shortcut-Navigation, Hero-/Card-Parallax-light mit reduced-motion-Fallback, PWA-Offline-/Queue-Narrativ, DE-first Sprachkonsistenz und Fokus-/Scroll-Polish)
@@ -188,7 +189,8 @@ npm run build
 
 Hinweis zur DB in Tests/CI:
 - Produktion und lokale Standard-Entwicklung laufen auf MySQL/MariaDB.
-- Der Testlauf in CI nutzt SQLite in-memory (`phpunit.xml`), damit die Pipeline ohne externe DB reproduzierbar bleibt.
+- Der Haupt-Testlauf in CI nutzt SQLite in-memory (`phpunit.xml`) fuer schnelle Reproduzierbarkeit.
+- Zusätzlich laeuft ein separater CI-Job gegen MySQL fuer `--group=mysql-concurrency`.
 
 Statische Analyse (Larastan/PHPStan):
 

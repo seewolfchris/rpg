@@ -82,7 +82,9 @@ Wichtig fuer Retry-Jobs in Produktion:
 ```env
 QUEUE_CONNECTION=redis
 CACHE_STORE=redis
-SESSION_DRIVER=redis
+SESSION_DRIVER=database
+# Optional bei stabiler Redis-Session-Infrastruktur:
+# SESSION_DRIVER=redis
 ```
 
 ## 5) Erster Deploy

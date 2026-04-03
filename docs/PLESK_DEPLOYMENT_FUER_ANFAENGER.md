@@ -5,7 +5,9 @@ Diese Anleitung ist bewusst simpel. Arbeite sie von oben nach unten ab.
 ## 0) Was du wissen musst
 
 - Lokal und in Produktion ist **MySQL/MariaDB** der Standard.
-- CI-Tests laufen reproduzierbar mit **SQLite in-memory** (kein Produktiv-Setup).
+- CI-Tests laufen zweistufig:
+  - Standard-Suite auf **SQLite in-memory** (schnell/reproduzierbar)
+  - Concurrency-Suite auf **MySQL** (`mysql-concurrency`)
 - Du lädst **nicht einfach nur Dateien hoch und fertig**.
 - Nach Upload müssen auf dem Server Laravel-Befehle laufen.
 
@@ -88,7 +90,9 @@ Wichtig für Retry-/Notification-Stabilität:
 ```env
 QUEUE_CONNECTION=redis
 CACHE_STORE=redis
-SESSION_DRIVER=redis
+SESSION_DRIVER=database
+# Optional bei stabiler Redis-Session-Infrastruktur:
+# SESSION_DRIVER=redis
 ```
 
 Für Web Push (aktiv seit `v0.20-beta`) ergänzen:
