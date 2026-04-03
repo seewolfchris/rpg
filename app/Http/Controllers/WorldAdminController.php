@@ -155,6 +155,12 @@ class WorldAdminController extends Controller
 
     public function destroy(World $world): RedirectResponse
     {
+        if ($world->slug === World::defaultSlug()) {
+            return back()->withErrors([
+                'world' => 'Die Standardwelt kann nicht gelöscht werden.',
+            ]);
+        }
+
         $hasDependencies = $world->campaigns()->exists()
             || $world->characters()->exists()
             || $world->encyclopediaCategories()->exists();

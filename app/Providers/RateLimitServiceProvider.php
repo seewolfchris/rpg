@@ -56,9 +56,8 @@ class RateLimitServiceProvider extends ServiceProvider
             $key = $request->user()
                 ? 'user:'.$request->user()->id
                 : 'ip:'.$request->ip();
-            $worldSlug = (string) $request->input('world_slug', 'unknown-world');
 
-            return Limit::perMinute(20)->by('webpush-subscriptions|'.$key.'|'.$worldSlug);
+            return Limit::perMinute(20)->by('webpush-subscriptions|'.$key);
         });
     }
 }

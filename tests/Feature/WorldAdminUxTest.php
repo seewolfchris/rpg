@@ -79,6 +79,23 @@ class WorldAdminUxTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_delete_default_world(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $defaultWorld = World::query()
+            ->where('slug', (string) config('worlds.default_slug'))
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.worlds.destroy', $defaultWorld))
+            ->assertSessionHasErrors('world');
+
+        $this->assertDatabaseHas('worlds', [
+            'id' => $defaultWorld->id,
+            'slug' => (string) config('worlds.default_slug'),
+        ]);
+    }
+
     public function test_admin_can_reorder_worlds_with_move_actions(): void
     {
         $admin = User::factory()->admin()->create();

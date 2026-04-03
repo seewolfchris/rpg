@@ -88,6 +88,39 @@ class MutatingRoutesRateLimitTest extends TestCase
         ])->assertStatus(429);
     }
 
+    public function test_webpush_subscription_rate_limit_cannot_be_bypassed_by_rotating_world_slug(): void
+    {
+        $user = User::factory()->create();
+        $defaultWorld = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+        $otherWorld = World::factory()->create([
+            'slug' => 'rate-limit-nebenwelt',
+            'is_active' => true,
+            'position' => 1337,
+        ]);
+
+        for ($attempt = 0; $attempt < 20; $attempt++) {
+            $worldSlug = $attempt % 2 === 0
+                ? $defaultWorld->slug
+                : $otherWorld->slug;
+
+            $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+                'world_slug' => $worldSlug,
+                'endpoint' => 'https://fcm.googleapis.com/fcm/send/rate-limit-rotate-'.$attempt,
+                'public_key' => 'public-key-rotate-'.$attempt,
+                'auth_token' => 'auth-token-rotate-'.$attempt,
+                'content_encoding' => 'aes128gcm',
+            ])->assertStatus(200);
+        }
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $otherWorld->slug,
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/rate-limit-rotate-blocked',
+            'public_key' => 'public-key-rotate-blocked',
+            'auth_token' => 'auth-token-rotate-blocked',
+            'content_encoding' => 'aes128gcm',
+        ])->assertStatus(429);
+    }
+
     /**
      * @return array{0: User, 1: User, 2: Post}
      */
