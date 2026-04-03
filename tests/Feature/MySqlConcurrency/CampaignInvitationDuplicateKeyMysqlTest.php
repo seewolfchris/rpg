@@ -5,7 +5,6 @@ namespace Tests\Feature\MySqlConcurrency;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Process\Process;
@@ -14,8 +13,6 @@ use Tests\TestCase;
 #[Group('mysql-concurrency')]
 class CampaignInvitationDuplicateKeyMysqlTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_invitation_upsert_recovers_from_mysql_duplicate_key_violation_1062(): void
     {
         if (DB::connection()->getDriverName() !== 'mysql') {
@@ -73,4 +70,3 @@ class CampaignInvitationDuplicateKeyMysqlTest extends TestCase
         return $decoded;
     }
 }
-
