@@ -1,7 +1,8 @@
-# C76-RPG (Laravel Multi-World Beta)
+# C76-RPG
 
-Play-by-Post (PbP) RPG-Plattform auf Laravel mit Weltkatalog, asynchronen Kampagnen/Szenen, Post-Moderation, GM-Proben, Benachrichtigungen, Gamification und PWA-Basis.  
-`Chroniken der Asche` bleibt als Startwelt erhalten, ist jetzt aber nur eine von mehreren Welten.
+C76-RPG ist eine deutschsprachige Play-by-Post-(PbP)-RPG-Plattform mit Multi-World-Konzept, asynchronen Kampagnen/Szenen, Moderation, Benachrichtigungen und PWA-Basis.
+Die Startwelt `Chroniken der Asche` bleibt erhalten und ist Teil eines mehrweltfaehigen Produktmodells.
+Lizenz: proprietaer (`LICENSE`).
 
 ## Releases
 
