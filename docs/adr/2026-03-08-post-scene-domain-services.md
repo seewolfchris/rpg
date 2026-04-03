@@ -53,3 +53,10 @@ Wir verschieben Domänenlogik in klar getrennte Services und lassen Controller n
 ### Negativ
 - Mehr Klassen und höhere Strukturbreite.
 - Saubere Service-Grenzen müssen künftig konsistent gehalten werden.
+
+## Follow-up 2026-04-04: Architektur-Guardrails
+- Die Schichtgrenze wird zusätzlich technisch abgesichert durch einen schnellen Architekturtest:
+  - keine `DB::transaction` oder `beginTransaction` in `app/Http/Controllers/*`
+  - kein `lockForUpdate` in `app/Http/Controllers/*`
+  - keine mutierenden Route-Closures (`post/patch/put/delete`) im Auth-Routing (`routes/web/authenticated.php`, `routes/web/auth/*.php`)
+- Ziel: frühes, verständliches CI-Feedback statt rein konventioneller Disziplin.

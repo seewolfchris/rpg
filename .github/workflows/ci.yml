@@ -52,6 +52,9 @@ jobs:
       - name: Run static analysis
         run: composer analyse
 
+      - name: Run architecture guardrails
+        run: php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php
+
       - name: Run backend tests
         run: php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency
 

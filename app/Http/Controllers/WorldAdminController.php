@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\World\ReorderWorldsAction;
 use App\Actions\World\UpdateWorldAction;
 use App\Http\Requests\World\StoreWorldRequest;
 use App\Http\Requests\World\UpdateWorldRequest;
 use App\Models\World;
 use App\Support\WorldCharacterOptionTemplateService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -16,6 +16,7 @@ class WorldAdminController extends Controller
 {
     public function __construct(
         private readonly UpdateWorldAction $updateWorldAction,
+        private readonly ReorderWorldsAction $reorderWorldsAction,
     ) {}
 
     public function index(): View
@@ -128,13 +129,7 @@ class WorldAdminController extends Controller
 
         [$orderedIds[$currentIndex], $orderedIds[$targetIndex]] = [$orderedIds[$targetIndex], $orderedIds[$currentIndex]];
 
-        DB::transaction(function () use ($orderedIds): void {
-            foreach ($orderedIds as $index => $worldId) {
-                World::query()
-                    ->whereKey($worldId)
-                    ->update(['position' => ($index + 1) * 10]);
-            }
-        });
+        $this->reorderWorldsAction->execute($orderedIds);
 
         return redirect()
             ->route('admin.worlds.index')
