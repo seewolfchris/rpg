@@ -1,6 +1,6 @@
 # Content-Plan C76-RPG
 
-Stand: 2026-04-02 (v0.27-beta)
+Stand: 2026-04-04 (v0.28-beta)
 
 ## 1. Projekt-Definition (kurz, spielbar)
 

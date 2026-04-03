@@ -9,7 +9,7 @@
     @endif
 >
     <head>
-        @php($appVersion = (string) config('app.version', 'v0.27-beta'))
+        @php($appVersion = (string) config('app.version', 'v0.28-beta'))
         @php($appBuild = (string) config('app.build', ''))
         @php($swVersion = $appBuild !== '' ? $appVersion.'-'.$appBuild : $appVersion)
         <meta charset="utf-8">

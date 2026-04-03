@@ -25,7 +25,7 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-faehig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.27-beta`**.
+- Laufende Versionslinie: **`v0.28-beta`**.
 - Verifikation lokal (letzter Lauf):
   - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions** (2026-04-04)
   - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-04)

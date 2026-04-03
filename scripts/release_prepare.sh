@@ -184,7 +184,7 @@ $upsertEnvKey = static function (string $relativePath, string $key, string $valu
 
 $replaceRegex('.env.example', '/^APP_VERSION=.*$/m', 'APP_VERSION='.$version, '.env.example APP_VERSION');
 $replaceRegex('config/app.php', "/'version'\\s*=>\\s*env\\('APP_VERSION',\\s*'[^']*'\\),/", "'version' => env('APP_VERSION', '".$version."'),", 'config app.version fallback');
-$replaceRegex('resources/views/layouts/auth.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'auth layout fallback version');
+$replaceRegex('resources/views/layouts/app.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'app layout fallback version');
 $replaceRegex('resources/views/partials/version-footer.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'footer fallback version');
 $replaceRegex('README.md', '/Stand:\\s+\\*\\*Release-Beta\\s+`[^`]+`\\*\\*/', 'Stand: **Release-Beta `'.$version.'`**', 'README beta version line');
 $replaceRegex('docs/PROJEKT-ÜBERSICHT.md', '/- Laufende Versionslinie:\\s+\\*\\*`[^`]+`\\*\\*\\./', '- Laufende Versionslinie: **`'.$version.'`**.', 'project overview version line');
@@ -220,4 +220,3 @@ echo "Next steps:"
 echo "  1) git diff --stat"
 echo "  2) scripts/release_smoke.sh"
 echo "  3) git add -A && git commit -m \"release: ${VERSION}\" && git push origin main"
-

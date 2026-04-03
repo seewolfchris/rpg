@@ -42,9 +42,10 @@ Source of Truth je Thema:
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.27-beta`** (funktional, getestet, build-faehig)
+Stand: **Release-Beta `v0.28-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
+- v0.28-beta (2026-04-04): Release-Welle A/B/C abgeschlossen mit produktkonformen Composer-Metadaten (`c76/rpg`), zentraler Security-Header-Middleware, modularem Auth-Routing ohne Vertragsdrift, Architektur-Guardrails, MySQL-Critical-Gates, standardisiertem Domain-Event-Logging und Doku-Konsolidierung.
 - v0.27-beta (2026-04-03): Hardening-Nachzug mit konsolidiertem `CampaignParticipantResolver` entlang Requests/Domain-Services, gehaerteten Post-/World-Invarianten (inkl. Default-Welt-Loeschschutz), atomarem Invite-Upsert (`1062`-Fallback) und separatem CI-MySQL-Concurrency-Job.
 - v0.27-beta (2026-04-02): Hardening-Release mit atomarem Post-Update-Flow, PWA-Privacy-Boundary bei Auth-Wechseln, idempotentem Reaction-Upsert, kanonischem Invite-Weltkontext, Redis-Produktionsdefaults, scope-korrektem GM-/Dashboard-Count, paginiertem Notification-Center, gesplitteten Web-Routen, modularisierter Authorization-Matrix und browserbasierten Playwright-E2E-Flows fuer Offline/Auth-Queue-Retry.
 - v0.26-beta (2026-04-02): Architektur-Konsolidierung nach Multi-Welt-Rollout: d100-Probenpfad vereinheitlicht, Moderations-Readlogik dedupliziert, Character-/Progression-Autorisierung policy-first konsolidiert, Bookmark-Jump-Querylast reduziert, Character-Actions auf request-freie Inputs umgestellt und Payload-Typisierung bis inkl. Request-Grenze nachgezogen; PHPStan-Baseline auf null reduziert.
@@ -268,19 +269,19 @@ Hinweis: `npm run build` synchronisiert automatisch `public/js/character-sheet.g
 Release-Metadaten (Version/Build/Doku) vorbereiten:
 
 ```bash
-scripts/release_prepare.sh --version v0.27-beta
+scripts/release_prepare.sh --version v0.28-beta
 ```
 
 Optional auch lokale `.env` aktualisieren:
 
 ```bash
-scripts/release_prepare.sh --version v0.27-beta --update-dotenv
+scripts/release_prepare.sh --version v0.28-beta --update-dotenv
 ```
 
 Kompletter lokaler Release-Flow (inkl. `release_prepare`, Quality Gates, Perf-Gate, Smoke):
 
 ```bash
-scripts/release_flow.sh v0.27-beta --world chroniken-der-asche --archive
+scripts/release_flow.sh v0.28-beta --world chroniken-der-asche --archive
 ```
 
 Release-Smoke automatisiert:
