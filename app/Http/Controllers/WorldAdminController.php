@@ -9,6 +9,7 @@ use App\Models\World;
 use App\Support\WorldCharacterOptionTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class WorldAdminController extends Controller
@@ -79,30 +80,17 @@ class WorldAdminController extends Controller
 
     public function toggleActive(World $world): RedirectResponse
     {
-        if ($world->is_active) {
-            if ($world->slug === World::defaultSlug()) {
-                return back()->withErrors([
-                    'world' => 'Die Standardwelt kann nicht deaktiviert werden.',
-                ]);
-            }
-
-            $activeWorldCount = World::query()
-                ->where('is_active', true)
-                ->count();
-
-            if ($activeWorldCount <= 1) {
-                return back()->withErrors([
-                    'world' => 'Mindestens eine aktive Welt muss bestehen bleiben.',
-                ]);
-            }
+        try {
+            $nextIsActive = $this->updateWorldAction->toggleActive($world);
+        } catch (ValidationException $exception) {
+            return back()->withErrors([
+                'world' => $this->firstValidationMessage($exception),
+            ]);
         }
-
-        $world->is_active = ! $world->is_active;
-        $world->save();
 
         return redirect()
             ->route('admin.worlds.index')
-            ->with('status', $world->is_active ? 'Welt aktiviert.' : 'Welt deaktiviert.');
+            ->with('status', $nextIsActive ? 'Welt aktiviert.' : 'Welt deaktiviert.');
     }
 
     public function move(World $world, string $direction): RedirectResponse
@@ -176,5 +164,18 @@ class WorldAdminController extends Controller
         return redirect()
             ->route('admin.worlds.index')
             ->with('status', 'Welt gelöscht.');
+    }
+
+    private function firstValidationMessage(ValidationException $exception): string
+    {
+        foreach ($exception->errors() as $messages) {
+            $firstMessage = $messages[0] ?? null;
+
+            if (is_string($firstMessage) && $firstMessage !== '') {
+                return $firstMessage;
+            }
+        }
+
+        return 'Die Welt konnte nicht aktualisiert werden.';
     }
 }

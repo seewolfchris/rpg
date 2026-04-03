@@ -6,16 +6,72 @@ namespace App\Actions\World;
 
 use App\Exceptions\DefaultWorldConfigurationException;
 use App\Models\World;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Validation\ValidationException;
 
 class UpdateWorldAction
 {
+    public function __construct(
+        private readonly DatabaseManager $db,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      *
      * @throws ValidationException
      */
     public function execute(World $world, array $data): void
+    {
+        $worldId = (int) $world->id;
+
+        $this->db->transaction(function () use ($worldId, $data): void {
+            $lockedWorld = $this->lockWorldOrFail($worldId);
+
+            $this->validateAndApplyUpdate($lockedWorld, $data);
+        }, 3);
+
+        $world->refresh();
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function toggleActive(World $world): bool
+    {
+        $worldId = (int) $world->id;
+        $nextIsActive = false;
+
+        $this->db->transaction(function () use ($worldId, &$nextIsActive): void {
+            $lockedWorld = $this->lockWorldOrFail($worldId);
+            $nextIsActive = ! (bool) $lockedWorld->is_active;
+
+            $this->validateAndApplyUpdate($lockedWorld, [
+                'is_active' => $nextIsActive,
+            ]);
+        }, 3);
+
+        $world->refresh();
+
+        return $nextIsActive;
+    }
+
+    private function lockWorldOrFail(int $worldId): World
+    {
+        /** @var World $world */
+        $world = World::query()
+            ->whereKey($worldId)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        return $world;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     *
+     * @throws ValidationException
+     */
+    private function validateAndApplyUpdate(World $world, array $data): void
     {
         try {
             $configuredDefaultWorld = World::resolveConfiguredDefaultOrFail(requireActive: false);
@@ -47,6 +103,7 @@ class UpdateWorldAction
             $otherActiveWorldExists = World::query()
                 ->whereKeyNot((int) $world->id)
                 ->where('is_active', true)
+                ->lockForUpdate()
                 ->exists();
 
             if (! $otherActiveWorldExists && ! array_key_exists('is_active', $errors)) {

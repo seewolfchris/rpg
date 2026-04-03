@@ -303,6 +303,46 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
     }
 
+    public function test_repeated_invitation_store_requests_keep_single_invitation_record(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $payload = [
+            'email' => $player->email,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ];
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), $payload)
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), $payload)
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->assertSame(
+            1,
+            CampaignInvitation::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('user_id', $player->id)
+                ->count()
+        );
+
+        $this->assertDatabaseHas('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'status' => CampaignInvitation::STATUS_PENDING,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ]);
+    }
+
     public function test_admin_can_assign_trusted_player_role_and_player_posts_without_moderation(): void
     {
         $owner = User::factory()->gm()->create();

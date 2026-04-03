@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Campaign\UpsertCampaignInvitationAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
@@ -19,6 +20,10 @@ use Illuminate\View\View;
 class CampaignInvitationController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly UpsertCampaignInvitationAction $upsertCampaignInvitationAction,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -89,28 +94,16 @@ class CampaignInvitationController extends Controller
                 ]);
         }
 
-        $invitation = CampaignInvitation::query()->firstOrNew([
-            'campaign_id' => $campaign->id,
-            'user_id' => $invitee->id,
-        ]);
+        $result = $this->upsertCampaignInvitationAction->execute(
+            campaign: $campaign,
+            inviteeUserId: (int) $invitee->id,
+            inviterUserId: (int) $user->id,
+            requestedRole: $requestedRole,
+        );
 
-        $isNew = ! $invitation->exists;
-        $wasAccepted = $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
-
-        $invitation->invited_by = $user->id;
-        $invitation->role = $requestedRole;
-
-        if (! $wasAccepted) {
-            $invitation->status = CampaignInvitation::STATUS_PENDING;
-            $invitation->accepted_at = null;
-            $invitation->responded_at = null;
-        }
-
-        if ($isNew) {
-            $invitation->created_at = now();
-        }
-
-        $invitation->save();
+        $invitation = $result->invitation;
+        $isNew = $result->isNew;
+        $wasAccepted = $result->wasAccepted;
 
         if (! $wasAccepted) {
             $invitation->loadMissing(['campaign.owner', 'inviter']);

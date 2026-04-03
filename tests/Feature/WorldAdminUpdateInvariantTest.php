@@ -168,6 +168,51 @@ class WorldAdminUpdateInvariantTest extends TestCase
             ->assertSeeText('Die Standardwelt kann nicht deaktiviert werden.');
     }
 
+    public function test_interleaved_update_and_toggle_requests_preserve_active_world_invariant_under_drift(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $defaultWorld = World::query()
+            ->where('slug', (string) config('worlds.default_slug'))
+            ->firstOrFail();
+        World::query()->update(['is_active' => false]);
+        $defaultWorld->refresh();
+
+        $worldA = World::factory()->create([
+            'slug' => 'interleave-a',
+            'is_active' => true,
+            'position' => 2500,
+        ]);
+        $worldB = World::factory()->create([
+            'slug' => 'interleave-b',
+            'is_active' => true,
+            'position' => 2510,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.worlds.edit', $worldA))
+            ->put(route('admin.worlds.update', $worldA), $this->worldUpdatePayload($worldA, [
+                'is_active' => false,
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $worldA))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('worlds', [
+            'id' => $worldA->id,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.worlds.index'))
+            ->patch(route('admin.worlds.toggle-active', $worldB))
+            ->assertRedirect(route('admin.worlds.index'))
+            ->assertSessionHasErrors('world');
+
+        $this->assertDatabaseHas('worlds', [
+            'id' => $worldB->id,
+            'is_active' => true,
+        ]);
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
