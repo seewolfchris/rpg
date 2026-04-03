@@ -16,12 +16,8 @@ class PostModerationScope
 
     public function canAccessWorldQueue(User $user, World $world): bool
     {
-        if ($user->isGmOrAdmin()) {
-            return true;
-        }
-
         return $this->campaignParticipantResolver
-            ->hasCoGmAccessInWorld($user, $world);
+            ->canModerateWorldQueue($user, $world);
     }
 
     /**

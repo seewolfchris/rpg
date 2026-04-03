@@ -42,6 +42,15 @@ class CampaignParticipantResolver
         return $this->hasCampaignRole($campaign, $user, CampaignInvitation::ROLE_CO_GM);
     }
 
+    public function canModerateWorldQueue(User $user, World $world): bool
+    {
+        if ($user->isGmOrAdmin()) {
+            return true;
+        }
+
+        return $this->hasCoGmAccessInWorld($user, $world);
+    }
+
     /**
      * @param  Collection<int, int<1, max>>|null  $participantUserIds
      */

@@ -79,6 +79,10 @@ class PostMentionNotificationService
             }
 
             $userId = (int) $matchedCharacter->user_id;
+            if (! $this->campaignParticipantResolver->isParticipantUserId($campaign, $userId, $participantUserIds)) {
+                continue;
+            }
+
             $mentionsByUser[$userId] ??= [];
             $mentionsByUser[$userId][(int) $matchedCharacter->id] = (string) $matchedCharacter->name;
         }

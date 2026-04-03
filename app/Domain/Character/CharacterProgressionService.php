@@ -85,7 +85,7 @@ class CharacterProgressionService
                 }
 
                 $characterUserId = $this->nonNegativeInt((int) $character->user_id);
-                if ($characterUserId < 1 || ! $participantUserIds->contains($characterUserId)) {
+                if (! $this->campaignParticipantResolver->isParticipantUserId($campaign, $characterUserId, $participantUserIds)) {
                     $errors['awards.'.$index.'.character_id'] = 'Der Ziel-Charakter ist kein aktiver Teilnehmer dieser Kampagne.';
 
                     continue;
