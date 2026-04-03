@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ApplyWorldContext;
+use App\Http\Middleware\ApplySecurityHeaders;
 use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ProtectAgainstCrawlers;
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(ApplySecurityHeaders::class);
+
         $middleware->web(append: [
             AttachRequestId::class,
             ProtectAgainstCrawlers::class,

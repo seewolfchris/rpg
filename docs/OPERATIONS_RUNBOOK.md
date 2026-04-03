@@ -2,6 +2,7 @@
 
 ## Zweck
 Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden Betrieb.
+Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 
 ## Korrelation und Logs
 - Jede Web-Response enthält `X-Request-Id`.

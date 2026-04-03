@@ -3,6 +3,7 @@
 C76-RPG ist eine deutschsprachige Play-by-Post-(PbP)-RPG-Plattform mit Multi-World-Konzept, asynchronen Kampagnen/Szenen, Moderation, Benachrichtigungen und PWA-Basis.
 Die Startwelt `Chroniken der Asche` bleibt erhalten und ist Teil eines mehrweltfaehigen Produktmodells.
 Lizenz: proprietaer (`LICENSE`).
+Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 
 ## Releases
 

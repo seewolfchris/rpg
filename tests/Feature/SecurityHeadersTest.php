@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class SecurityHeadersTest extends TestCase
@@ -40,5 +41,35 @@ class SecurityHeadersTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+
+    public function test_health_endpoint_contains_security_headers(): void
+    {
+        $response = $this->get('/up');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Security-Policy');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
+        $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+        $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->assertHeader(
+            'Permissions-Policy',
+            'accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+        );
+    }
+
+    public function test_existing_csp_header_is_extended_with_frame_ancestors_when_missing(): void
+    {
+        Route::middleware('web')->get('/_security-csp-merge-test', static function () {
+            return response('ok')->header('Content-Security-Policy', "default-src 'self'; script-src 'self'");
+        });
+
+        $response = $this->get('/_security-csp-merge-test');
+
+        $response->assertOk();
+        $policy = (string) $response->headers->get('Content-Security-Policy', '');
+
+        $this->assertStringContainsString("default-src 'self'; script-src 'self'", $policy);
+        $this->assertStringContainsString("frame-ancestors 'self'", $policy);
     }
 }
