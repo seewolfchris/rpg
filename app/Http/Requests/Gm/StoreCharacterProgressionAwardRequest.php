@@ -33,7 +33,7 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
             return true;
         }
 
-        return $campaign->isCoGm($user);
+        return $this->campaignParticipantResolver()->canModerateCampaign($user, $campaign);
     }
 
     /**
@@ -97,7 +97,8 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
             }
 
             $eventMode = (string) $this->input('event_mode', 'milestone');
-            $participantUserIds = $this->campaignParticipantResolver()
+            $resolver = $this->campaignParticipantResolver();
+            $participantUserIds = $resolver
                 ->participantUserIds($campaign);
 
             $awards = $this->normalizeAwards($this->input('awards', []));
@@ -130,7 +131,7 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
                     $validator->errors()->add('awards.'.$index.'.character_id', 'Charakter gehört nicht zur Kampagnen-Welt.');
                 }
 
-                if ((int) $character->user_id <= 0 || ! $participantUserIds->contains((int) $character->user_id)) {
+                if (! $resolver->isParticipantUserId($campaign, (int) $character->user_id, $participantUserIds)) {
                     $validator->errors()->add('awards.'.$index.'.character_id', 'Charakter ist kein aktiver Kampagnen-Teilnehmer.');
                 }
 

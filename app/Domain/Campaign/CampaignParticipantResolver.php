@@ -29,6 +29,33 @@ class CampaignParticipantResolver
             ->values();
     }
 
+    public function canModerateCampaign(?User $user, Campaign $campaign): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        if ($user->isGmOrAdmin()) {
+            return true;
+        }
+
+        return $this->hasCampaignRole($campaign, $user, CampaignInvitation::ROLE_CO_GM);
+    }
+
+    /**
+     * @param  Collection<int, int<1, max>>|null  $participantUserIds
+     */
+    public function isParticipantUserId(Campaign $campaign, int $userId, ?Collection $participantUserIds = null): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $resolvedParticipantUserIds = $participantUserIds ?? $this->participantUserIds($campaign);
+
+        return $resolvedParticipantUserIds->contains($userId);
+    }
+
     /**
      * @return Collection<int, Character>
      */
@@ -70,5 +97,14 @@ class CampaignParticipantResolver
     public function hasCoGmAccessInWorld(User $user, World $world): bool
     {
         return $this->coGmCampaignIdsForWorld($user, $world)->isNotEmpty();
+    }
+
+    private function hasCampaignRole(Campaign $campaign, User $user, string $role): bool
+    {
+        return $campaign->invitations()
+            ->where('user_id', (int) $user->id)
+            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+            ->where('role', $role)
+            ->exists();
     }
 }

@@ -58,8 +58,8 @@ class StoreSceneInventoryActionRequest extends FormRequest
             $campaign = $scene->campaign;
 
             $user = $this->user();
-            $canModerate = $user
-                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
+            $resolver = $this->campaignParticipantResolver();
+            $canModerate = $resolver->canModerateCampaign($user, $campaign);
 
             if (! $canModerate) {
                 $validator->errors()->add(
@@ -89,15 +89,10 @@ class StoreSceneInventoryActionRequest extends FormRequest
                 return;
             }
 
-            $campaignParticipantUserIds = $this->campaignParticipantResolver()
+            $campaignParticipantUserIds = $resolver
                 ->participantUserIds($campaign);
 
-            if ((int) $targetCharacter->user_id <= 0) {
-                $validator->errors()->add(
-                    'inventory_action_character_id',
-                    'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
-                );
-            } elseif (! $campaignParticipantUserIds->contains((int) $targetCharacter->user_id)) {
+            if (! $resolver->isParticipantUserId($campaign, (int) $targetCharacter->user_id, $campaignParticipantUserIds)) {
                 $validator->errors()->add(
                     'inventory_action_character_id',
                     'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'

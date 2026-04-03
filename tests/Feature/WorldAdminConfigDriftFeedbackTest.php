@@ -37,6 +37,34 @@ class WorldAdminConfigDriftFeedbackTest extends TestCase
             ->assertSeeText('Die Standardwelt-Konfiguration ist inkonsistent. Bitte worlds.default_slug und Datenbank synchronisieren.');
     }
 
+    public function test_admin_world_edit_form_renders_inline_slug_error_for_config_drift(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = World::factory()->create([
+            'slug' => 'drift-inline-target',
+            'is_active' => true,
+            'position' => 2410,
+        ]);
+        config(['worlds.default_slug' => 'fehlende-default-welt']);
+
+        $this->actingAs($admin)
+            ->from(route('admin.worlds.edit', $world))
+            ->put(route('admin.worlds.update', $world), $this->worldUpdatePayload($world, [
+                'name' => 'Drift Inline Target Prime',
+            ]))
+            ->assertRedirect(route('admin.worlds.edit', $world))
+            ->assertSessionHasErrors('slug');
+
+        $this->actingAs($admin)
+            ->get(route('admin.worlds.edit', $world))
+            ->assertOk()
+            ->assertSee('name="slug"', false)
+            ->assertSee(
+                '<p class="mt-2 text-sm text-red-300">Die Standardwelt-Konfiguration ist inkonsistent. Bitte worlds.default_slug und Datenbank synchronisieren.</p>',
+                false
+            );
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
@@ -53,4 +81,3 @@ class WorldAdminConfigDriftFeedbackTest extends TestCase
         ], $overrides);
     }
 }
-
