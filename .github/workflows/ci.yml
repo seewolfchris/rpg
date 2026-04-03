@@ -56,7 +56,7 @@ jobs:
         run: php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php
 
       - name: Run backend tests
-        run: php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency
+        run: php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical
 
       - name: Install frontend dependencies
         run: npm ci
@@ -133,3 +133,6 @@ jobs:
 
       - name: Run MySQL concurrency tests
         run: php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency
+
+      - name: Run MySQL critical tests
+        run: php artisan test --without-tty --do-not-cache-result --group=mysql-critical
