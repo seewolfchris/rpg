@@ -7,7 +7,7 @@ use App\Models\Scene;
 use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Support\Gamification\PointService;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Database\DatabaseManager;
 
 class StorePostService
@@ -17,7 +17,7 @@ class StorePostService
         private readonly PostInventoryAwardService $postInventoryAwardService,
         private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
         private readonly PointService $pointService,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
         private readonly DatabaseManager $db,
     ) {}
 
@@ -88,8 +88,10 @@ class StorePostService
 
         $notificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $user, 'store_post');
         $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $user, 'store_post');
+        $worldSlug = (string) data_get($scene, 'campaign.world.slug', 'unknown');
 
         $this->logger->info('post.created', [
+            'world_slug' => $worldSlug,
             'user_id' => $user->id,
             'scene_id' => $scene->id,
             'post_id' => $post->id,
@@ -101,6 +103,7 @@ class StorePostService
             'notification_recipients' => $notificationResult['in_app_recipients'],
             'webpush_recipients' => $notificationResult['webpush_recipients'],
             'mention_recipients' => $mentionRecipientCount,
+            'outcome' => 'succeeded',
         ]);
 
         return new StorePostResult(

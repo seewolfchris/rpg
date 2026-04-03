@@ -10,7 +10,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Support\CharacterInventoryService;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Support\Facades\DB;
 
 class PostInventoryAwardService
@@ -18,7 +18,7 @@ class PostInventoryAwardService
     public function __construct(
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
         private readonly CharacterInventoryService $inventoryService,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
     ) {}
 
     /**
@@ -145,6 +145,7 @@ class PostInventoryAwardService
         });
 
         $this->logger->info('inventory.post_award_applied', [
+            'world_slug' => (string) data_get($scene, 'campaign.world.slug', 'unknown'),
             'user_id' => $user->id,
             'scene_id' => $scene->id,
             'post_id' => $post->id,
@@ -152,6 +153,7 @@ class PostInventoryAwardService
             'item' => $award['item'],
             'quantity' => $award['quantity'],
             'equipped' => $award['equipped'],
+            'outcome' => 'succeeded',
         ]);
 
         return $award;

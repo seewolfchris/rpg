@@ -7,13 +7,13 @@ use App\Http\Requests\WebPush\DestroyWebPushSubscriptionRequest;
 use App\Http\Requests\WebPush\StoreWebPushSubscriptionRequest;
 use App\Models\PushSubscription;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Http\JsonResponse;
 
 class WebPushSubscriptionController extends Controller
 {
     public function __construct(
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
     ) {}
 
     public function subscribe(StoreWebPushSubscriptionRequest $request): JsonResponse
@@ -41,6 +41,9 @@ class WebPushSubscriptionController extends Controller
             'world_id' => $world->id,
             'world_slug' => $world->slug,
             'endpoint_hash' => sha1($request->endpoint()),
+            'target_type' => 'push_endpoint',
+            'target_id' => sha1($request->endpoint()),
+            'outcome' => 'succeeded',
         ]);
 
         return response()->json([
@@ -75,7 +78,10 @@ class WebPushSubscriptionController extends Controller
             'world_id' => $world->id,
             'world_slug' => $world->slug,
             'endpoint_hash' => sha1($request->endpoint()),
+            'target_type' => 'push_endpoint',
+            'target_id' => sha1($request->endpoint()),
             'deleted' => $deleted,
+            'outcome' => $deleted ? 'succeeded' : 'skipped',
         ]);
 
         return response()->json([

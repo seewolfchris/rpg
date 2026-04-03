@@ -8,7 +8,7 @@ use App\Models\Post;
 use App\Models\PostModerationLog;
 use App\Models\User;
 use App\Support\Gamification\PointService;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Throwable;
 
 class PostModerationService
@@ -16,7 +16,7 @@ class PostModerationService
     public function __construct(
         private readonly PostModerationNotificationDispatcher $postModerationNotificationDispatcher,
         private readonly PointService $pointService,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
     ) {}
 
     public function synchronize(
@@ -55,17 +55,20 @@ class PostModerationService
                         'previous_status' => $previousStatus,
                         'new_status' => $newStatus,
                         'error' => $throwable->getMessage(),
+                        'outcome' => 'failed',
                     ]);
                 }
             }
 
             $this->logger->info('moderation.post_status_changed', [
+                'world_slug' => (string) data_get($post, 'scene.campaign.world.slug', 'unknown'),
                 'user_id' => $moderator?->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
                 'previous_status' => $previousStatus,
                 'new_status' => $newStatus,
                 'has_reason' => $moderationNote !== null,
+                'outcome' => 'succeeded',
             ]);
         }
 

@@ -5,7 +5,7 @@ namespace App\Jobs\Post;
 use App\Domain\Post\PostMentionNotificationService;
 use App\Models\Post;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -42,7 +42,7 @@ class RetryPostMentionNotificationsJob implements ShouldQueue
 
     public function handle(
         PostMentionNotificationService $postMentionNotificationService,
-        StructuredLogger $logger,
+        DomainEventLogger $logger,
     ): void {
         $post = Post::query()
             ->with('scene.campaign')
@@ -56,6 +56,7 @@ class RetryPostMentionNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'reason' => 'post_or_author_missing',
+                'outcome' => 'skipped',
             ]);
 
             return;
@@ -71,6 +72,7 @@ class RetryPostMentionNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'recipient_count' => $recipientCount,
+                'outcome' => 'succeeded',
             ]);
         } catch (Throwable $throwable) {
             $logger->info('post.mention_notifications_retry_failed', [
@@ -80,6 +82,7 @@ class RetryPostMentionNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'error' => $throwable->getMessage(),
+                'outcome' => 'failed',
             ]);
 
             throw $throwable;
@@ -88,12 +91,13 @@ class RetryPostMentionNotificationsJob implements ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
-        app(StructuredLogger::class)->info('post.mention_notifications_retry_exhausted', [
+        app(DomainEventLogger::class)->info('post.mention_notifications_retry_exhausted', [
             'post_id' => $this->postId,
             'author_id' => $this->authorId,
             'source' => $this->source,
             'attempt' => $this->attempts(),
             'error' => $throwable->getMessage(),
+            'outcome' => 'failed',
         ]);
     }
 }

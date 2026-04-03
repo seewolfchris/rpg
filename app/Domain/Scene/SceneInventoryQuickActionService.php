@@ -8,14 +8,14 @@ use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Scene;
 use App\Support\CharacterInventoryService;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Support\Facades\DB;
 
 class SceneInventoryQuickActionService
 {
     public function __construct(
         private readonly CharacterInventoryService $inventoryService,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
     ) {}
 
@@ -164,6 +164,7 @@ class SceneInventoryQuickActionService
         }
 
         $this->logger->info('inventory.scene_quick_action_applied', [
+            'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
             'user_id' => $actorUserId,
             'scene_id' => $scene->id,
             'character_name' => $result['character_name'],
@@ -171,6 +172,7 @@ class SceneInventoryQuickActionService
             'quantity' => $displayQuantity,
             'action' => $result['action_type'],
             'equipped' => (bool) $result['equipped'],
+            'outcome' => 'succeeded',
         ]);
 
         return [

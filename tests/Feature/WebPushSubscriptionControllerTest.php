@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\World;
+use App\Support\Observability\StructuredLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -140,5 +141,55 @@ class WebPushSubscriptionControllerTest extends TestCase
             'auth_token' => 'auth-token-1',
             'content_encoding' => 'aes128gcm',
         ])->assertUnprocessable()->assertJsonValidationErrors(['endpoint']);
+    }
+
+    public function test_webpush_subscribe_log_context_contains_standardized_domain_event_fields(): void
+    {
+        $user = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+        $sawExpectedEvent = false;
+
+        $logger = $this->createMock(StructuredLogger::class);
+        $logger->expects($this->atLeastOnce())
+            ->method('info')
+            ->willReturnCallback(function (string $event, array $context) use (&$sawExpectedEvent, $user, $world): void {
+                if ($event !== 'webpush.subscription_upserted') {
+                    return;
+                }
+
+                $sawExpectedEvent = true;
+
+                foreach ([
+                    'event',
+                    'event_version',
+                    'occurred_at',
+                    'request_id',
+                    'world_slug',
+                    'actor_user_id',
+                    'target_type',
+                    'target_id',
+                    'outcome',
+                ] as $requiredKey) {
+                    $this->assertArrayHasKey($requiredKey, $context);
+                }
+
+                $this->assertSame('webpush.subscription_upserted', $context['event']);
+                $this->assertSame($world->slug, $context['world_slug']);
+                $this->assertSame((int) $user->id, $context['actor_user_id']);
+                $this->assertSame('push_endpoint', $context['target_type']);
+                $this->assertSame('succeeded', $context['outcome']);
+            });
+
+        $this->app->instance(StructuredLogger::class, $logger);
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/context-check',
+            'public_key' => 'public-key-x',
+            'auth_token' => 'auth-token-x',
+            'content_encoding' => 'aes128gcm',
+        ])->assertOk();
+
+        $this->assertTrue($sawExpectedEvent);
     }
 }

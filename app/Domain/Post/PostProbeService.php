@@ -9,7 +9,7 @@ use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use App\Support\ProbeRoller;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +18,7 @@ class PostProbeService
     public function __construct(
         private readonly ProbeRoller $probeRoller,
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
     ) {}
 
     /**
@@ -189,6 +189,7 @@ class PostProbeService
         });
 
         $this->logger->info('probe.post_applied', [
+            'world_slug' => (string) data_get($scene, 'campaign.world.slug', 'unknown'),
             'user_id' => $user->id,
             'scene_id' => $scene->id,
             'post_id' => $post->id,
@@ -201,6 +202,7 @@ class PostProbeService
             'applied_le_delta' => $result['applied_le_delta'],
             'requested_ae_delta' => $result['requested_ae_delta'],
             'applied_ae_delta' => $result['applied_ae_delta'],
+            'outcome' => 'succeeded',
         ]);
 
         return true;

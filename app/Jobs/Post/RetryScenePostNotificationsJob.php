@@ -5,7 +5,7 @@ namespace App\Jobs\Post;
 use App\Domain\Post\ScenePostNotificationService;
 use App\Models\Post;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -42,7 +42,7 @@ class RetryScenePostNotificationsJob implements ShouldQueue
 
     public function handle(
         ScenePostNotificationService $scenePostNotificationService,
-        StructuredLogger $logger,
+        DomainEventLogger $logger,
     ): void {
         $post = Post::query()
             ->with('scene.campaign')
@@ -56,6 +56,7 @@ class RetryScenePostNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'reason' => 'post_or_author_missing',
+                'outcome' => 'skipped',
             ]);
 
             return;
@@ -72,6 +73,7 @@ class RetryScenePostNotificationsJob implements ShouldQueue
                 'attempt' => $this->attempts(),
                 'in_app_recipients' => (int) ($result['in_app_recipients'] ?? 0),
                 'webpush_recipients' => (int) ($result['webpush_recipients'] ?? 0),
+                'outcome' => 'succeeded',
             ]);
         } catch (Throwable $throwable) {
             $logger->info('post.scene_notifications_retry_failed', [
@@ -81,6 +83,7 @@ class RetryScenePostNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'error' => $throwable->getMessage(),
+                'outcome' => 'failed',
             ]);
 
             throw $throwable;
@@ -89,12 +92,13 @@ class RetryScenePostNotificationsJob implements ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
-        app(StructuredLogger::class)->info('post.scene_notifications_retry_exhausted', [
+        app(DomainEventLogger::class)->info('post.scene_notifications_retry_exhausted', [
             'post_id' => $this->postId,
             'author_id' => $this->authorId,
             'source' => $this->source,
             'attempt' => $this->attempts(),
             'error' => $throwable->getMessage(),
+            'outcome' => 'failed',
         ]);
     }
 }

@@ -7,7 +7,7 @@ namespace App\Jobs\Post;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\PostModerationStatusNotification;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -44,7 +44,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
         return [30, 120, 300];
     }
 
-    public function handle(StructuredLogger $logger): void
+    public function handle(DomainEventLogger $logger): void
     {
         $post = Post::query()
             ->with(['scene.campaign', 'user'])
@@ -57,6 +57,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
                 'moderator_id' => $this->moderatorId,
                 'attempt' => $this->attempts(),
                 'reason' => 'post_or_moderator_missing',
+                'outcome' => 'skipped',
             ]);
 
             return;
@@ -68,6 +69,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
                 'moderator_id' => $moderator->id,
                 'attempt' => $this->attempts(),
                 'reason' => 'author_is_moderator',
+                'outcome' => 'skipped',
             ]);
 
             return;
@@ -80,6 +82,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
                 'moderator_id' => $moderator->id,
                 'attempt' => $this->attempts(),
                 'reason' => 'recipient_missing',
+                'outcome' => 'skipped',
             ]);
 
             return;
@@ -103,6 +106,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
                 'previous_status' => $this->previousStatus,
                 'new_status' => $this->newStatus,
                 'has_reason' => $this->moderationNote !== null,
+                'outcome' => 'succeeded',
             ]);
         } catch (Throwable $throwable) {
             $logger->info('moderation.post_notification_failed', [
@@ -114,6 +118,7 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
                 'previous_status' => $this->previousStatus,
                 'new_status' => $this->newStatus,
                 'error' => $throwable->getMessage(),
+                'outcome' => 'failed',
             ]);
 
             throw $throwable;
@@ -122,13 +127,14 @@ class SendPostModerationStatusNotificationJob implements ShouldQueue
 
     public function failed(Throwable $throwable): void
     {
-        app(StructuredLogger::class)->info('moderation.post_notification_exhausted', [
+        app(DomainEventLogger::class)->info('moderation.post_notification_exhausted', [
             'post_id' => $this->postId,
             'moderator_id' => $this->moderatorId,
             'attempt' => $this->attempts(),
             'previous_status' => $this->previousStatus,
             'new_status' => $this->newStatus,
             'error' => $throwable->getMessage(),
+            'outcome' => 'failed',
         ]);
     }
 }

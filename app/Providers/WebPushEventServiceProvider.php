@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use NotificationChannels\WebPush\Events\NotificationFailed;
@@ -18,13 +18,17 @@ class WebPushEventServiceProvider extends ServiceProvider
                 $event->subscription->delete();
             }
 
-            app(StructuredLogger::class)->info('webpush.delivery_failed', [
+            app(DomainEventLogger::class)->info('webpush.delivery_failed', [
                 'user_id' => data_get($event->subscription, 'user_id'),
                 'world_id' => data_get($event->subscription, 'world_id'),
+                'world_slug' => data_get($event->subscription, 'world.slug', 'unknown'),
                 'endpoint_hash' => sha1((string) $event->subscription->endpoint),
+                'target_type' => 'push_endpoint',
+                'target_id' => sha1((string) $event->subscription->endpoint),
                 'status_code' => $statusCode,
                 'reason' => $event->report->getReason(),
                 'expired' => $event->report->isSubscriptionExpired(),
+                'outcome' => 'failed',
             ]);
         });
     }

@@ -11,14 +11,14 @@ use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Notifications\SceneNewPostNotification;
 use App\Notifications\SceneNewPostWebPush;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Support\Facades\Notification;
 use Throwable;
 
 class ScenePostNotificationService
 {
     public function __construct(
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
     ) {}
 
     /**
@@ -112,7 +112,9 @@ class ScenePostNotificationService
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
                 'world_id' => $worldId,
+                'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
                 'recipient_count' => $webPushRecipients->count(),
+                'outcome' => 'succeeded',
             ]);
         } catch (Throwable $exception) {
             $this->logger->info('webpush.scene_post_failed', [
@@ -120,8 +122,10 @@ class ScenePostNotificationService
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
                 'world_id' => $worldId,
+                'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
                 'recipient_count' => $webPushRecipients->count(),
                 'error' => $exception->getMessage(),
+                'outcome' => 'failed',
             ]);
         }
 

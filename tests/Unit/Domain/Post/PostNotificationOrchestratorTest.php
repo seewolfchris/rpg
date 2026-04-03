@@ -12,7 +12,7 @@ use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Models\Post;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -37,7 +37,7 @@ class PostNotificationOrchestratorTest extends TestCase
             ->willThrowException(new RuntimeException('scene failed'));
 
         $mentionService = $this->createMock(PostMentionNotificationService::class);
-        $logger = $this->createMock(StructuredLogger::class);
+        $logger = $this->createMock(DomainEventLogger::class);
         $logger->expects($this->once())
             ->method('info')
             ->with(
@@ -89,7 +89,7 @@ class PostNotificationOrchestratorTest extends TestCase
             ->with($post, $author)
             ->willThrowException(new RuntimeException('mention failed'));
 
-        $logger = $this->createMock(StructuredLogger::class);
+        $logger = $this->createMock(DomainEventLogger::class);
         $logger->expects($this->once())
             ->method('info')
             ->with(

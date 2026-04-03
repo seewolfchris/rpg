@@ -7,7 +7,7 @@ use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Models\Post;
 use App\Models\User;
-use App\Support\Observability\StructuredLogger;
+use App\Support\Observability\DomainEventLogger;
 use Throwable;
 
 class PostNotificationOrchestrator
@@ -15,7 +15,7 @@ class PostNotificationOrchestrator
     public function __construct(
         private readonly ScenePostNotificationService $scenePostNotificationService,
         private readonly PostMentionNotificationService $postMentionNotificationService,
-        private readonly StructuredLogger $logger,
+        private readonly DomainEventLogger $logger,
         private readonly OutboxCandidateRecorder $outboxCandidateRecorder,
     ) {}
 
@@ -33,6 +33,7 @@ class PostNotificationOrchestrator
                 'post_id' => $post->id,
                 'source' => $source,
                 'error' => $throwable->getMessage(),
+                'outcome' => 'failed',
             ]);
             $this->outboxCandidateRecorder->record(
                 stream: 'post.notifications',
@@ -67,6 +68,7 @@ class PostNotificationOrchestrator
                 'post_id' => $post->id,
                 'source' => $source,
                 'error' => $throwable->getMessage(),
+                'outcome' => 'failed',
             ]);
             $this->outboxCandidateRecorder->record(
                 stream: 'post.notifications',
@@ -103,6 +105,7 @@ class PostNotificationOrchestrator
                 'source' => $source,
                 'error' => $throwable->getMessage(),
                 'dispatch_error' => $dispatchThrowable->getMessage(),
+                'outcome' => 'failed',
             ]);
             $this->outboxCandidateRecorder->record(
                 stream: 'post.notifications',
@@ -135,6 +138,7 @@ class PostNotificationOrchestrator
                 'source' => $source,
                 'error' => $throwable->getMessage(),
                 'dispatch_error' => $dispatchThrowable->getMessage(),
+                'outcome' => 'failed',
             ]);
             $this->outboxCandidateRecorder->record(
                 stream: 'post.notifications',
