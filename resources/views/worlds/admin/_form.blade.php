@@ -1,3 +1,17 @@
+@if ($errors->any())
+    <section
+        class="mb-6 rounded-md border border-red-700/70 bg-red-900/20 px-4 py-3 text-sm text-red-100"
+        data-world-admin-error-summary
+    >
+        <p class="font-semibold uppercase tracking-widest text-red-200">Bitte Eingaben prüfen</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-red-100/95">
+            @foreach ($errors->all() as $message)
+                <li>{{ $message }}</li>
+            @endforeach
+        </ul>
+    </section>
+@endif
+
 <div class="grid gap-6 lg:grid-cols-2">
     <div>
         <label for="name" class="mb-2 block text-xs font-semibold uppercase tracking-widest text-stone-300">Name</label>
@@ -22,6 +36,9 @@
             required
             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/35"
         >
+        @error('slug')
+            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+        @enderror
     </div>
     <div class="lg:col-span-2">
         <label for="tagline" class="mb-2 block text-xs font-semibold uppercase tracking-widest text-stone-300">Tagline</label>
@@ -68,6 +85,9 @@
             >
             Aktiv
         </label>
+        @error('is_active')
+            <p class="ml-3 text-sm text-red-300">{{ $message }}</p>
+        @enderror
     </div>
 </div>
 

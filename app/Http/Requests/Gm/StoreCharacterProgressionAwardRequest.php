@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Gm;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Scene;
 use App\Models\World;
@@ -97,12 +97,8 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
             }
 
             $eventMode = (string) $this->input('event_mode', 'milestone');
-            $participantUserIds = $campaign->invitations()
-                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                ->pluck('user_id')
-                ->push((int) $campaign->owner_id)
-                ->map(static fn ($id): int => (int) $id)
-                ->unique();
+            $participantUserIds = $this->campaignParticipantResolver()
+                ->participantUserIds($campaign);
 
             $awards = $this->normalizeAwards($this->input('awards', []));
             $characterIds = collect($awards)
@@ -134,7 +130,7 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
                     $validator->errors()->add('awards.'.$index.'.character_id', 'Charakter gehört nicht zur Kampagnen-Welt.');
                 }
 
-                if (! $participantUserIds->contains((int) $character->user_id)) {
+                if ((int) $character->user_id <= 0 || ! $participantUserIds->contains((int) $character->user_id)) {
                     $validator->errors()->add('awards.'.$index.'.character_id', 'Charakter ist kein aktiver Kampagnen-Teilnehmer.');
                 }
 
@@ -190,5 +186,13 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
         $this->campaignResolved = true;
 
         return $this->resolvedCampaign;
+    }
+
+    private function campaignParticipantResolver(): CampaignParticipantResolver
+    {
+        /** @var CampaignParticipantResolver $resolver */
+        $resolver = app(CampaignParticipantResolver::class);
+
+        return $resolver;
     }
 }

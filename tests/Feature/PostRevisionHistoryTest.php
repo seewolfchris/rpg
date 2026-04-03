@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -149,8 +150,19 @@ class PostRevisionHistoryTest extends TestCase
             'allow_ooc' => true,
         ]);
 
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
+
         $character = Character::factory()->create([
             'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
         ]);
 
         return [$gm, $player, $campaign, $scene, $character];

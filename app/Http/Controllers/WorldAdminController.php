@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\World\UpdateWorldAction;
 use App\Http\Requests\World\StoreWorldRequest;
 use App\Http\Requests\World\UpdateWorldRequest;
 use App\Models\World;
@@ -12,6 +13,10 @@ use Illuminate\View\View;
 
 class WorldAdminController extends Controller
 {
+    public function __construct(
+        private readonly UpdateWorldAction $updateWorldAction,
+    ) {}
+
     public function index(): View
     {
         $worlds = World::query()
@@ -65,7 +70,7 @@ class WorldAdminController extends Controller
 
     public function update(UpdateWorldRequest $request, World $world): RedirectResponse
     {
-        $world->update($request->validated());
+        $this->updateWorldAction->execute($world, $request->validated());
 
         return redirect()
             ->route('admin.worlds.edit', $world)

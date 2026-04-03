@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain\Post\PostMentionNotificationService;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -37,6 +38,15 @@ class PostUpdateNotificationFailureTest extends TestCase
             'created_by' => $gm->id,
             'status' => 'open',
             'allow_ooc' => true,
+        ]);
+        $campaign->invitations()->create([
+            'user_id' => $player->id,
+            'invited_by' => $gm->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
         ]);
         $character = Character::factory()->create([
             'user_id' => $player->id,

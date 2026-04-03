@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
@@ -139,14 +139,9 @@ class StorePostRequest extends FormRequest
             $probeEnabled = (bool) $this->boolean('probe_enabled');
             $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');
 
-            $campaignParticipantUserIds = collect();
-            if ($probeEnabled || $inventoryAwardEnabled) {
-                $campaignParticipantUserIds = $campaign->invitations()
-                    ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                    ->pluck('user_id')
-                    ->push((int) $campaign->owner_id)
-                    ->unique();
-            }
+            $campaignParticipantUserIds = ($probeEnabled || $inventoryAwardEnabled)
+                ? $this->campaignParticipantResolver()->participantUserIds($campaign)
+                : collect();
 
             if ($probeEnabled) {
                 if (! $canModerate) {
@@ -170,6 +165,11 @@ class StorePostRequest extends FormRequest
                             $validator->errors()->add(
                                 'probe_character_id',
                                 'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'
+                            );
+                        } elseif ((int) $probeCharacter->user_id <= 0) {
+                            $validator->errors()->add(
+                                'probe_character_id',
+                                'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
                             );
                         } elseif (! $campaignParticipantUserIds->contains((int) $probeCharacter->user_id)) {
                             $validator->errors()->add(
@@ -207,6 +207,11 @@ class StorePostRequest extends FormRequest
                                 'inventory_award_character_id',
                                 'Der Ziel-Held gehört nicht zur Welt dieser Kampagne.'
                             );
+                        } elseif ((int) $awardCharacter->user_id <= 0) {
+                            $validator->errors()->add(
+                                'inventory_award_character_id',
+                                'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                            );
                         } elseif (! $campaignParticipantUserIds->contains((int) $awardCharacter->user_id)) {
                             $validator->errors()->add(
                                 'inventory_award_character_id',
@@ -234,5 +239,13 @@ class StorePostRequest extends FormRequest
             'inventory_award_quantity' => 'Menge (Inventar-Fund)',
             'inventory_award_equipped' => 'Ausgerüstet (Inventar-Fund)',
         ];
+    }
+
+    private function campaignParticipantResolver(): CampaignParticipantResolver
+    {
+        /** @var CampaignParticipantResolver $resolver */
+        $resolver = app(CampaignParticipantResolver::class);
+
+        return $resolver;
     }
 }

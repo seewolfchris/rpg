@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Post;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Post;
@@ -63,7 +64,6 @@ class UpdatePostRequest extends FormRequest
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
                 : null;
-
             if ($postType === 'ooc' && ! $scene->allow_ooc && ! $this->user()?->isGmOrAdmin()) {
                 $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
@@ -77,23 +77,34 @@ class UpdatePostRequest extends FormRequest
             }
 
             if ($characterId) {
-                $user = $this->user();
-                $allowedUserIds = [(int) $user?->id];
+                $campaignParticipantUserIds = $this->campaignParticipantResolver()
+                    ->participantUserIds($campaign);
 
-                if ($user && ($user->isGmOrAdmin() || $campaign->isCoGm($user))) {
-                    $allowedUserIds[] = (int) $post->user_id;
-                }
+                /** @var Character|null $character */
+                $character = Character::query()
+                    ->select(['id', 'user_id', 'world_id'])
+                    ->find($characterId);
 
-                $isAllowed = Character::query()
-                    ->whereKey($characterId)
-                    ->where('world_id', (int) $campaign->world_id)
-                    ->whereIn('user_id', array_unique($allowedUserIds))
-                    ->exists();
-
-                if (! $isAllowed) {
-                    $validator->errors()->add('character_id', 'Charakter passt nicht zur Welt oder zu den erlaubten Besitzern.');
+                if (! $character instanceof Character) {
+                    $validator->errors()->add('character_id', 'Charakter konnte nicht gefunden werden.');
+                } elseif ((int) $character->world_id !== (int) $campaign->world_id) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter gehört nicht zur Welt dieser Kampagne.');
+                } elseif ((int) $character->user_id <= 0) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter muss zu einem aktiven Kampagnen-Teilnehmer gehören.');
+                } elseif ((int) $character->user_id !== (int) $post->user_id) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter muss dem ursprünglichen Autor dieses Beitrags gehören.');
+                } elseif (! $campaignParticipantUserIds->contains((int) $character->user_id)) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter muss zu einem aktiven Kampagnen-Teilnehmer gehören.');
                 }
             }
         });
+    }
+
+    private function campaignParticipantResolver(): CampaignParticipantResolver
+    {
+        /** @var CampaignParticipantResolver $resolver */
+        $resolver = app(CampaignParticipantResolver::class);
+
+        return $resolver;
     }
 }

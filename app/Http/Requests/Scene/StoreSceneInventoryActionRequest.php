@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Scene;
 
+use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\Scene;
 use Illuminate\Foundation\Http\FormRequest;
@@ -89,13 +89,15 @@ class StoreSceneInventoryActionRequest extends FormRequest
                 return;
             }
 
-            $campaignParticipantUserIds = $campaign->invitations()
-                ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                ->pluck('user_id')
-                ->push((int) $campaign->owner_id)
-                ->unique();
+            $campaignParticipantUserIds = $this->campaignParticipantResolver()
+                ->participantUserIds($campaign);
 
-            if (! $campaignParticipantUserIds->contains((int) $targetCharacter->user_id)) {
+            if ((int) $targetCharacter->user_id <= 0) {
+                $validator->errors()->add(
+                    'inventory_action_character_id',
+                    'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
+                );
+            } elseif (! $campaignParticipantUserIds->contains((int) $targetCharacter->user_id)) {
                 $validator->errors()->add(
                     'inventory_action_character_id',
                     'Der Ziel-Held muss ein aktiver Teilnehmer dieser Kampagne sein.'
@@ -122,5 +124,13 @@ class StoreSceneInventoryActionRequest extends FormRequest
             'inventory_action_equipped' => 'Ausgerüstet',
             'inventory_action_note' => 'Notiz',
         ];
+    }
+
+    private function campaignParticipantResolver(): CampaignParticipantResolver
+    {
+        /** @var CampaignParticipantResolver $resolver */
+        $resolver = app(CampaignParticipantResolver::class);
+
+        return $resolver;
     }
 }

@@ -56,10 +56,17 @@ class PostPolicy
     public function update(User $user, Post $post): bool
     {
         $campaign = $this->resolveCampaignFromPost($post);
+        if (! $campaign instanceof Campaign) {
+            return $user->isGmOrAdmin();
+        }
+
+        if (! $campaign->isVisibleTo($user)) {
+            return false;
+        }
 
         return $post->user_id === $user->id
             || $user->isGmOrAdmin()
-            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
+            || $campaign->isCoGm($user);
     }
 
     /**
@@ -68,10 +75,17 @@ class PostPolicy
     public function delete(User $user, Post $post): bool
     {
         $campaign = $this->resolveCampaignFromPost($post);
+        if (! $campaign instanceof Campaign) {
+            return $user->isGmOrAdmin();
+        }
+
+        if (! $campaign->isVisibleTo($user)) {
+            return false;
+        }
 
         return $post->user_id === $user->id
             || $user->isGmOrAdmin()
-            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
+            || $campaign->isCoGm($user);
     }
 
     public function moderate(User $user, Post $post): bool
