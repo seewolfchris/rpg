@@ -16,17 +16,14 @@ class UpsertCampaignInvitationAction
     ) {}
 
     public function execute(
-        Campaign $campaign,
-        int $inviteeUserId,
-        int $inviterUserId,
-        string $requestedRole,
+        UpsertCampaignInvitationInput $input,
     ): UpsertCampaignInvitationResult {
         try {
             return $this->runUpsertTransaction(
-                campaign: $campaign,
-                inviteeUserId: $inviteeUserId,
-                inviterUserId: $inviterUserId,
-                requestedRole: $requestedRole,
+                campaign: $input->campaign,
+                inviteeUserId: $input->inviteeUserId,
+                inviterUserId: $input->inviterUserId,
+                requestedRole: $input->requestedRole,
             );
         } catch (QueryException $exception) {
             if (! $this->isDuplicateCampaignInvitationKey($exception)) {
@@ -34,10 +31,10 @@ class UpsertCampaignInvitationAction
             }
 
             return $this->runUpsertTransaction(
-                campaign: $campaign,
-                inviteeUserId: $inviteeUserId,
-                inviterUserId: $inviterUserId,
-                requestedRole: $requestedRole,
+                campaign: $input->campaign,
+                inviteeUserId: $input->inviteeUserId,
+                inviterUserId: $input->inviterUserId,
+                requestedRole: $input->requestedRole,
             );
         }
     }

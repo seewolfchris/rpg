@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
@@ -95,10 +96,12 @@ class CampaignInvitationController extends Controller
         }
 
         $result = $this->upsertCampaignInvitationAction->execute(
-            campaign: $campaign,
-            inviteeUserId: (int) $invitee->id,
-            inviterUserId: (int) $user->id,
-            requestedRole: $requestedRole,
+            new UpsertCampaignInvitationInput(
+                campaign: $campaign,
+                inviteeUserId: (int) $invitee->id,
+                inviterUserId: (int) $user->id,
+                requestedRole: $requestedRole,
+            ),
         );
 
         $invitation = $result->invitation;

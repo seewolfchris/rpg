@@ -3,6 +3,7 @@
 namespace Tests\Unit\Actions\Campaign;
 
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
+use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\User;
@@ -23,12 +24,12 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'is_public' => false,
         ]);
 
-        $result = app(UpsertCampaignInvitationAction::class)->execute(
+        $result = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
-        );
+        ));
 
         $this->assertTrue($result->isNew);
         $this->assertFalse($result->wasAccepted);
@@ -64,12 +65,12 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'created_at' => now()->subDays(2),
         ]);
 
-        $result = app(UpsertCampaignInvitationAction::class)->execute(
+        $result = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_CO_GM,
-        );
+        ));
 
         $existing->refresh();
 
@@ -102,12 +103,12 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'created_at' => now()->subDays(2),
         ]);
 
-        $result = app(UpsertCampaignInvitationAction::class)->execute(
+        $result = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
-        );
+        ));
 
         $invitation = CampaignInvitation::query()
             ->where('campaign_id', $campaign->id)
@@ -131,19 +132,19 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'is_public' => false,
         ]);
 
-        app(UpsertCampaignInvitationAction::class)->execute(
+        app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
-        );
+        ));
 
-        app(UpsertCampaignInvitationAction::class)->execute(
+        app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
-        );
+        ));
 
         $this->assertSame(
             1,
@@ -154,4 +155,3 @@ class UpsertCampaignInvitationActionTest extends TestCase
         );
     }
 }
-
