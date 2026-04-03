@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
 Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt, v0.27-Hardening umgesetzt  
-Stand: 2026-04-02
+Stand: 2026-04-04
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
@@ -9,12 +9,14 @@ Stand: 2026-04-02
 - WIP-Limit bleibt: `1 Feature-Task + 1 Bugfix`.
 
 ## Quality Gates (jede Iteration)
-- `php artisan test --without-tty --do-not-cache-result` ist gruen.
+- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` ist gruen.
+- Produktnahe MySQL-Gates (`--group=mysql-concurrency`, `--group=mysql-critical`) sind im MySQL-Job gruen.
 - `node --test tests/js/*.mjs` ist gruen.
 - `npm run build` ist gruen.
 - `composer analyse` (Larastan/PHPStan) ist gruen.
 - Keine Role/Policy-Regression in GM/Player-Flows.
 - Mobile Basischeck (375px) fuer geaenderte Views.
+- Exakte Befehle fuer Release-/CI-Gates bleiben kanonisch in `docs/RELEASE-CHECKLISTE.md`.
 
 ## Paket 1 - Stabilisierung (12 x 2 Wochen)
 | Sprint | Fokus | Status |
@@ -134,8 +136,8 @@ Stand: 2026-04-02
   - `app/Support/Observability/StructuredLogger.php`
   - `docs/OPERATIONS_RUNBOOK.md`
 
-## Aktueller Verifikationsstand (2026-04-02)
-- `php artisan test --without-tty --do-not-cache-result` -> **323 passed, 1874 assertions**
+## Aktueller Verifikationsstand (2026-04-04)
+- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions**
 - `node --test tests/js/*.mjs` -> **19 passed**
 - `npm run test:e2e` -> **4 passed**
 - `npm run build` -> **gruen**

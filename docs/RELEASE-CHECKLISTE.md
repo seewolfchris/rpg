@@ -23,8 +23,10 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. fuer Sonderfaelle.
 - Statische Analyse:
   - `composer analyse`
 - Tests:
-  - `php artisan test --without-tty --do-not-cache-result`
-  - Optional lokal bei verfuegbarem MySQL: `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency`
+  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
+  - Optional lokal bei verfuegbarem MySQL:
+    - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency`
+    - `php artisan test --without-tty --do-not-cache-result --group=mysql-critical`
 - Frontend-JS Regression:
   - `npm run test:js`
 - Browser-E2E (Offline/Auth-Boundary/Queue-Retry):

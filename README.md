@@ -32,15 +32,13 @@ Wichtige Regeln:
 
 ## Dokumentations-Uebersicht
 
-- Projekt-Quickstart und Betrieb: `README.md`
-- Umsetzungsplan in klaren Sprints: `ROADMAP.md`
-- Immersion-Architektur (Phasen 1-4 + JS-Modulregeln): `docs/IMMERSION-ARCHITEKTUR.md`
-- Master-Handbuch (fachliche Gesamtuebersicht): `docs/PROJEKT-ÜBERSICHT.md`
-- Release-Ablauf (Version + Deploy): `docs/RELEASE-CHECKLISTE.md`
-- Operations-Runbook (Incident + Logs): `docs/OPERATIONS_RUNBOOK.md`
-- Architekturentscheidungen (ADR): `docs/adr/`
-- Plesk Deployment fuer Einsteiger: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
-- GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
+Source of Truth je Thema:
+- Einstieg + Kernkommandos: `README.md`
+- Planung/Statusachsen: `ROADMAP.md`
+- Release-Flow + Gates: `docs/RELEASE-CHECKLISTE.md`
+- Betrieb/Incident + Security-Header-Anbindung: `docs/OPERATIONS_RUNBOOK.md`
+- Architekturentscheidungen: `docs/adr/`
+- Betriebs-/Setup-Ergaenzungen: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`, `docs/GITHUB_PLESK_SETUP.md`
 
 ## Beta-Status
 
@@ -55,10 +53,10 @@ Changelog:
 - v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result` -> **323 passed, 1874 assertions** (Stand: 2026-04-02)
-- `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-02)
-- `composer analyse` -> **keine Fehler** (Stand: 2026-04-02)
-- `npm run test:e2e` -> **4 passed** (Stand: 2026-04-02)
+- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions** (Stand: 2026-04-04)
+- `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-04)
+- `composer analyse` -> **keine Fehler** (Stand: 2026-04-04)
+- `npm run test:e2e` -> **4 passed** (Stand: 2026-04-04)
 - `npm run build` -> **gruen** (Stand: 2026-04-02)
 
 Enthalten:
@@ -183,16 +181,23 @@ CI lokal spiegeln:
 ```bash
 composer validate --strict
 composer analyse
-php artisan test --without-tty --do-not-cache-result
+php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical
 npm run test:js
 npm run test:e2e
 npm run build
 ```
 
+Optional fuer produktnahe DB-Pfade (lokal mit MySQL):
+
+```bash
+php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency
+php artisan test --without-tty --do-not-cache-result --group=mysql-critical
+```
+
 Hinweis zur DB in Tests/CI:
 - Produktion und lokale Standard-Entwicklung laufen auf MySQL/MariaDB.
 - Der Haupt-Testlauf in CI nutzt SQLite in-memory (`phpunit.xml`) fuer schnelle Reproduzierbarkeit.
-- Zusätzlich laeuft ein separater CI-Job gegen MySQL fuer `--group=mysql-concurrency`.
+- Zusätzlich laeuft ein separater CI-Job gegen MySQL fuer `--group=mysql-concurrency` und `--group=mysql-critical`.
 
 Statische Analyse (Larastan/PHPStan):
 

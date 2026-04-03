@@ -1,6 +1,13 @@
 # Docs-Uebersicht
 
-Stand: 2026-04-03
+Stand: 2026-04-04
+
+## Source of Truth je Thema
+- Einstieg + lokale Kernkommandos: `../README.md`
+- Planung/Statusachsen: `../ROADMAP.md`
+- Release-Flow + Qualitaetsgates: `RELEASE-CHECKLISTE.md`
+- Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
+- Architekturentscheidungen: `adr/*`
 
 ## Kern-Dokumente (pflegepflichtig)
 - `PROJEKT-ÜBERSICHT.md`

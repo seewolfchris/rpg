@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-04-03  
+Stand: 2026-04-04  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -27,13 +27,13 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.27-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result` -> **323 passed, 1874 assertions** (2026-04-02)
-  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-02)
-  - `npm run test:e2e` -> **4 passed** (2026-04-02)
-  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-02)
+  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions** (2026-04-04)
+  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-04)
+  - `npm run test:e2e` -> **4 passed** (2026-04-04)
+  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-04)
   - `npm run build` -> **gruen** (2026-04-02)
 - Verifikation CI (letzter Lauf):
-  - GitHub Actions Run `23955451147` -> **test-and-build + mysql-concurrency gruen** (2026-04-03)
+  - GitHub Actions (`main`) -> **test-and-build + mysql-concurrency + mysql-critical gruen** (2026-04-04)
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -187,7 +187,7 @@ Repository-Branch: `main`
   - Feature-Tests pruefen explizit den Fehlerblock (`data-world-admin-error-summary`) inkl. Mehrfachfehlerfall.
 - Concurrency- und Retry-Hardening:
   - Invite-Store nutzt atomaren Upsert mit Duplicate-Key-Fallback (`1062`) in `UpsertCampaignInvitationAction`.
-  - MySQL-Concurrency-Tests sind als eigener CI-Job (`mysql-concurrency`) verankert.
+  - MySQL-Concurrency- und Critical-Tests sind als eigener CI-Job (`mysql-concurrency`, `mysql-critical`) verankert.
 
 ## 5) Delivery, Betrieb und Compliance
 
@@ -195,8 +195,9 @@ Repository-Branch: `main`
 - CI Gates:
   - `composer validate --strict`
   - `composer analyse`
-  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency`
+  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
   - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency` (separater MySQL-Job)
+  - `php artisan test --without-tty --do-not-cache-result --group=mysql-critical` (separater MySQL-Job)
   - `npm run test:js`
   - `npm run build`
 - Wichtiger Test-Hinweis:
@@ -214,7 +215,7 @@ Repository-Branch: `main`
 - DB-Betriebsmodus:
   - Produktion: MySQL/MariaDB
   - CI-Standardjob: SQLite in-memory (`phpunit.xml`)
-  - CI-Concurrency-Job: MySQL 8.4 (`mysql-concurrency` Testgruppe)
+  - CI-Concurrency-Job: MySQL 8.4 (`mysql-concurrency` und `mysql-critical` Testgruppen)
   - WebPush-DB folgt standardmaessig `DB_CONNECTION` (Override nur bei Bedarf via `WEBPUSH_DB_CONNECTION`)
 
 ### 5.2 Observability
