@@ -54,7 +54,7 @@ Changelog:
 - v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions** (Stand: 2026-04-04)
+- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **377 passed, 2170 assertions** (Stand: 2026-04-04)
 - `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-04)
 - `composer analyse` -> **keine Fehler** (Stand: 2026-04-04)
 - `npm run test:e2e` -> **4 passed** (Stand: 2026-04-04)

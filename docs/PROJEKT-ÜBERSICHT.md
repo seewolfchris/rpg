@@ -27,7 +27,7 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.28-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions** (2026-04-04)
+  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **377 passed, 2170 assertions** (2026-04-04)
   - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-04)
   - `npm run test:e2e` -> **4 passed** (2026-04-04)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-04)
