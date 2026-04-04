@@ -131,6 +131,8 @@ $PHP_BIN artisan config:cache
 - Das Skript kann einen Markdown-Report schreiben (`SMOKE_REPORT_OUT=...`).
 - Wenn `SMOKE_WORLD_SLUG` fehlt, wird `WORLD_DEFAULT_SLUG` aus `.env` verwendet.
 - Bei externer `SMOKE_BASE_URL` wird kein lokaler `artisan serve` gestartet.
+- Standardverhalten: `SMOKE_MODE=http` ist ein echtes HTTP-Gate; wenn `/up` nicht erreichbar ist, endet der Lauf non-zero.
+- Optionaler Fallback ist nur explizit aktiv (`SMOKE_ALLOW_ARTISAN_FALLBACK=1`).
 - Login/Logout funktioniert.
 - Dashboard laedt.
 - Weltkatalog und Weltkontext-Routing funktionieren (`/welten`, `/w/{world}/...`).

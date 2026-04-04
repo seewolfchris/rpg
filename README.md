@@ -299,6 +299,8 @@ SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPOR
 Hinweis:
 - `SMOKE_WORLD_SLUG` kann entfallen, wenn `WORLD_DEFAULT_SLUG` in `.env` gesetzt ist.
 - Bei externer `SMOKE_BASE_URL` startet `scripts/release_smoke.sh` keinen lokalen `artisan serve`.
+- Im Standard (`SMOKE_MODE=http`) ist HTTP ein hartes Gate; bei nicht erreichbarem `/up` endet der Lauf non-zero.
+- Ein Artisan-Fallback ist nur explizit aktivierbar (`SMOKE_ALLOW_ARTISAN_FALLBACK=1`).
 
 Optional ohne HTTP-Checks (nur Route-/Environment-Basischeck):
 

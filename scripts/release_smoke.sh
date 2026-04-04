@@ -10,13 +10,20 @@ WORLD_SLUG="${SMOKE_WORLD_SLUG:-${WORLD_DEFAULT_SLUG:-}}"
 START_SERVER="${SMOKE_START_SERVER:-1}"
 SMOKE_MODE="${SMOKE_MODE:-http}"
 SMOKE_EFFECTIVE_MODE="$SMOKE_MODE"
-ALLOW_ARTISAN_FALLBACK="${SMOKE_ALLOW_ARTISAN_FALLBACK:-1}"
+ALLOW_ARTISAN_FALLBACK="${SMOKE_ALLOW_ARTISAN_FALLBACK:-0}"
 TMP_BODY_FILE="${SMOKE_TMP_BODY_FILE:-storage/app/smoke/release_smoke_body.txt}"
 TMP_HEADER_FILE="${SMOKE_TMP_HEADER_FILE:-storage/app/smoke/release_smoke_header.txt}"
 REPORT_OUT="${SMOKE_REPORT_OUT:-}"
 SMOKE_STARTED_AT="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 declare -a SMOKE_RESULTS=()
 SERVER_PID=""
+HTTP_CHECKS_EXECUTED="no"
+FALLBACK_USED="no"
+FALLBACK_ENABLED="no"
+
+if [[ "$ALLOW_ARTISAN_FALLBACK" == "1" ]]; then
+  FALLBACK_ENABLED="yes"
+fi
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
@@ -99,6 +106,9 @@ write_report() {
     echo "- Generated at: \`$SMOKE_STARTED_AT\`"
     echo "- Requested mode: \`$SMOKE_MODE\`"
     echo "- Effective mode: \`$SMOKE_EFFECTIVE_MODE\`"
+    echo "- HTTP checks executed: \`$HTTP_CHECKS_EXECUTED\`"
+    echo "- Fallback enabled: \`$FALLBACK_ENABLED\`"
+    echo "- Fallback used: \`$FALLBACK_USED\`"
     echo "- Base URL: \`$BASE_URL\`"
     echo "- World slug: \`$WORLD_SLUG\`"
     echo
@@ -235,17 +245,25 @@ fi
 
 if ! curl -sS "$BASE_URL/up" >/dev/null 2>&1; then
   if [[ "$ALLOW_ARTISAN_FALLBACK" == "1" ]]; then
+    echo "WARN: HTTP smoke endpoint $BASE_URL/up is not reachable; running explicit artisan fallback (SMOKE_ALLOW_ARTISAN_FALLBACK=1)."
+    record_result "HTTP endpoint \`$BASE_URL/up\` unreachable; switched to explicit artisan fallback"
     SMOKE_EFFECTIVE_MODE="artisan-fallback"
+    FALLBACK_USED="yes"
     run_artisan_fallback
     write_report
     echo "Smoke checks passed (artisan fallback mode)."
     exit 0
   fi
 
-  echo "ERROR: HTTP smoke endpoint not reachable at $BASE_URL/up"
+  echo "ERROR: HTTP smoke endpoint not reachable at $BASE_URL/up (SMOKE_MODE=http)."
+  echo "ERROR: No fallback executed because SMOKE_ALLOW_ARTISAN_FALLBACK=0."
+  echo "Hint: Use SMOKE_MODE=artisan for explicit artisan-only checks, or set SMOKE_ALLOW_ARTISAN_FALLBACK=1 to allow fallback."
+  record_result "HTTP endpoint \`$BASE_URL/up\` unreachable; HTTP smoke failed"
+  write_report
   exit 1
 fi
 
+HTTP_CHECKS_EXECUTED="yes"
 echo "Running release smoke checks against $BASE_URL (world: $WORLD_SLUG)"
 
 check_status "/up" "200"
