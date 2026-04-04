@@ -92,6 +92,7 @@ class StorePostService
 
         $this->logger->info('post.created', [
             'world_slug' => $worldSlug,
+            'actor_user_id' => $user->id,
             'user_id' => $user->id,
             'scene_id' => $scene->id,
             'post_id' => $post->id,

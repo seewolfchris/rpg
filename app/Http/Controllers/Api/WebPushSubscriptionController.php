@@ -37,6 +37,8 @@ class WebPushSubscriptionController extends Controller
         $subscription->save();
 
         $this->logger->info('webpush.subscription_upserted', [
+            'actor_user_id' => $user->id,
+            'subject_user_id' => $user->id,
             'user_id' => $user->id,
             'world_id' => $world->id,
             'world_slug' => $world->slug,
@@ -74,6 +76,8 @@ class WebPushSubscriptionController extends Controller
         }
 
         $this->logger->info('webpush.subscription_deleted', [
+            'actor_user_id' => $user->id,
+            'subject_user_id' => $user->id,
             'user_id' => $user->id,
             'world_id' => $world->id,
             'world_slug' => $world->slug,

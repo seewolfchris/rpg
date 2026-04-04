@@ -108,6 +108,7 @@ class ScenePostNotificationService
             ));
 
             $this->logger->info('webpush.scene_post_sent', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
@@ -118,6 +119,7 @@ class ScenePostNotificationService
             ]);
         } catch (Throwable $exception) {
             $this->logger->info('webpush.scene_post_failed', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,

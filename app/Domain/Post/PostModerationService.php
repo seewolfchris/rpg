@@ -49,6 +49,7 @@ class PostModerationService
                     );
                 } catch (Throwable $throwable) {
                     $this->logger->info('moderation.post_notification_dispatch_failed', [
+                        'moderator_id' => $moderator->id,
                         'user_id' => $moderator->id,
                         'scene_id' => $post->scene_id,
                         'post_id' => $post->id,
@@ -62,6 +63,7 @@ class PostModerationService
 
             $this->logger->info('moderation.post_status_changed', [
                 'world_slug' => (string) data_get($post, 'scene.campaign.world.slug', 'unknown'),
+                'moderator_id' => $moderator?->id,
                 'user_id' => $moderator?->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,

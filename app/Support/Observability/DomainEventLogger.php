@@ -80,7 +80,7 @@ class DomainEventLogger
      */
     private function resolveActorUserId(array $context): int|string
     {
-        foreach (['actor_user_id', 'user_id', 'author_id', 'moderator_id', 'recipient_id'] as $key) {
+        foreach (['actor_user_id', 'author_id', 'moderator_id'] as $key) {
             if (! array_key_exists($key, $context)) {
                 continue;
             }

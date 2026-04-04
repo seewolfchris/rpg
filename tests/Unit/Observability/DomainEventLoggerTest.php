@@ -47,7 +47,7 @@ class DomainEventLoggerTest extends TestCase
         $logger = new DomainEventLogger($structuredLogger);
         $logger->info('webpush.subscription_upserted', [
             'world_slug' => 'chroniken-der-asche',
-            'user_id' => 42,
+            'actor_user_id' => 42,
             'endpoint_hash' => 'abc123',
             'outcome' => 'succeeded',
         ]);
@@ -73,9 +73,103 @@ class DomainEventLoggerTest extends TestCase
 
         $logger = new DomainEventLogger($structuredLogger);
         $logger->info('post.scene_notifications_failed', [
-            'user_id' => 7,
+            'author_id' => 7,
             'post_id' => 88,
             'error' => 'dispatch failed',
+        ]);
+    }
+
+    public function test_it_keeps_actor_unknown_for_system_events_with_only_subject_user(): void
+    {
+        $structuredLogger = $this->createMock(StructuredLogger::class);
+        $structuredLogger->expects($this->once())
+            ->method('info')
+            ->with(
+                'webpush.delivery_failed',
+                $this->callback(function (array $context): bool {
+                    $this->assertSame('unknown', $context['actor_user_id']);
+                    $this->assertSame(44, $context['recipient_user_id']);
+                    $this->assertSame('failed', $context['outcome']);
+
+                    return true;
+                }),
+            );
+
+        $logger = new DomainEventLogger($structuredLogger);
+        $logger->info('webpush.delivery_failed', [
+            'recipient_user_id' => 44,
+            'endpoint_hash' => 'deadbeef',
+            'reason' => 'expired',
+            'outcome' => 'failed',
+        ]);
+    }
+
+    public function test_it_uses_real_actor_and_does_not_promote_recipient_to_actor(): void
+    {
+        $structuredLogger = $this->createMock(StructuredLogger::class);
+        $structuredLogger->expects($this->once())
+            ->method('info')
+            ->with(
+                'moderation.post_notification_sent',
+                $this->callback(function (array $context): bool {
+                    $this->assertSame(17, $context['actor_user_id']);
+                    $this->assertSame(99, $context['recipient_user_id']);
+                    $this->assertSame('succeeded', $context['outcome']);
+
+                    return true;
+                }),
+            );
+
+        $logger = new DomainEventLogger($structuredLogger);
+        $logger->info('moderation.post_notification_sent', [
+            'moderator_id' => 17,
+            'recipient_user_id' => 99,
+            'post_id' => 321,
+            'outcome' => 'succeeded',
+        ]);
+    }
+
+    public function test_it_does_not_use_legacy_user_id_as_actor_fallback(): void
+    {
+        $structuredLogger = $this->createMock(StructuredLogger::class);
+        $structuredLogger->expects($this->once())
+            ->method('info')
+            ->with(
+                'post.created',
+                $this->callback(function (array $context): bool {
+                    $this->assertSame('unknown', $context['actor_user_id']);
+                    $this->assertSame(123, $context['user_id']);
+
+                    return true;
+                }),
+            );
+
+        $logger = new DomainEventLogger($structuredLogger);
+        $logger->info('post.created', [
+            'user_id' => 123,
+            'post_id' => 22,
+        ]);
+    }
+
+    public function test_it_does_not_use_legacy_recipient_id_as_actor_fallback(): void
+    {
+        $structuredLogger = $this->createMock(StructuredLogger::class);
+        $structuredLogger->expects($this->once())
+            ->method('info')
+            ->with(
+                'moderation.post_notification_sent',
+                $this->callback(function (array $context): bool {
+                    $this->assertSame('unknown', $context['actor_user_id']);
+                    $this->assertSame(77, $context['recipient_id']);
+
+                    return true;
+                }),
+            );
+
+        $logger = new DomainEventLogger($structuredLogger);
+        $logger->info('moderation.post_notification_sent', [
+            'recipient_id' => 77,
+            'post_id' => 55,
         ]);
     }
 }

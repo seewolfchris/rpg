@@ -165,6 +165,7 @@ class SceneInventoryQuickActionService
 
         $this->logger->info('inventory.scene_quick_action_applied', [
             'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
+            'actor_user_id' => $actorUserId,
             'user_id' => $actorUserId,
             'scene_id' => $scene->id,
             'character_name' => $result['character_name'],

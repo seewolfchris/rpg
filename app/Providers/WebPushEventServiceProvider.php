@@ -19,7 +19,9 @@ class WebPushEventServiceProvider extends ServiceProvider
             }
 
             app(DomainEventLogger::class)->info('webpush.delivery_failed', [
+                'recipient_user_id' => data_get($event->subscription, 'user_id'),
                 'user_id' => data_get($event->subscription, 'user_id'),
+                'actor_type' => 'system',
                 'world_id' => data_get($event->subscription, 'world_id'),
                 'world_slug' => data_get($event->subscription, 'world.slug', 'unknown'),
                 'endpoint_hash' => sha1((string) $event->subscription->endpoint),

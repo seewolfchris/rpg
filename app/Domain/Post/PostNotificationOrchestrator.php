@@ -28,6 +28,7 @@ class PostNotificationOrchestrator
             return $this->scenePostNotificationService->notifySceneParticipants($post, $author);
         } catch (Throwable $throwable) {
             $this->logger->info('post.scene_notifications_failed', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
@@ -63,6 +64,7 @@ class PostNotificationOrchestrator
             return $this->postMentionNotificationService->notifyMentions($post, $author);
         } catch (Throwable $throwable) {
             $this->logger->info('post.mention_notifications_failed', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
@@ -99,6 +101,7 @@ class PostNotificationOrchestrator
             );
         } catch (Throwable $dispatchThrowable) {
             $this->logger->info('post.scene_notifications_retry_dispatch_failed', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,
@@ -132,6 +135,7 @@ class PostNotificationOrchestrator
             );
         } catch (Throwable $dispatchThrowable) {
             $this->logger->info('post.mention_notifications_retry_dispatch_failed', [
+                'author_id' => $author->id,
                 'user_id' => $author->id,
                 'scene_id' => $post->scene_id,
                 'post_id' => $post->id,

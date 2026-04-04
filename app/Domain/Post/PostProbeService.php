@@ -190,6 +190,7 @@ class PostProbeService
 
         $this->logger->info('probe.post_applied', [
             'world_slug' => (string) data_get($scene, 'campaign.world.slug', 'unknown'),
+            'actor_user_id' => $user->id,
             'user_id' => $user->id,
             'scene_id' => $scene->id,
             'post_id' => $post->id,
