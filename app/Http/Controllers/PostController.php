@@ -58,6 +58,7 @@ class PostController extends Controller
                 data: $data,
                 isModerator: $isModerator,
                 requiresApproval: $requiresApproval,
+                worldSlug: $world->slug,
             );
         } catch (PostProbeInvariantViolationException|PostInventoryAwardInvariantViolationException $exception) {
             report($exception);

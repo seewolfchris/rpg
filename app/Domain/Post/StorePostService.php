@@ -24,7 +24,14 @@ class StorePostService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function store(Scene $scene, User $user, array $data, bool $isModerator, bool $requiresApproval): StorePostResult
+    public function store(
+        Scene $scene,
+        User $user,
+        array $data,
+        bool $isModerator,
+        bool $requiresApproval,
+        ?string $worldSlug = null,
+    ): StorePostResult
     {
         $meta = [];
         $icQuote = trim((string) ($data['ic_quote'] ?? ''));
@@ -88,10 +95,12 @@ class StorePostService
 
         $notificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $user, 'store_post');
         $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $user, 'store_post');
-        $worldSlug = (string) data_get($scene, 'campaign.world.slug', 'unknown');
+        $resolvedWorldSlug = $worldSlug !== null && trim($worldSlug) !== ''
+            ? trim($worldSlug)
+            : 'unknown';
 
         $this->logger->info('post.created', [
-            'world_slug' => $worldSlug,
+            'world_slug' => $resolvedWorldSlug,
             'actor_user_id' => $user->id,
             'user_id' => $user->id,
             'scene_id' => $scene->id,
