@@ -6,6 +6,59 @@ use Tests\TestCase;
 
 class ArchitectureGuardrailsTest extends TestCase
 {
+    public function test_controller_db_guardrail_detects_instance_transaction_calls(): void
+    {
+        $tokens = token_get_all(<<<'PHP'
+<?php
+
+class SampleController
+{
+    public function store(): void
+    {
+        $db = app('db');
+        $db->transaction(function (): void {});
+        $db?->beginTransaction();
+    }
+}
+PHP);
+
+        $violations = $this->findControllerDbViolations($tokens, 'sample.php');
+
+        $this->assertTrue(
+            $this->containsViolation($violations, 'forbidden instance transaction call'),
+            'Expected instance transaction call to be rejected.',
+        );
+        $this->assertTrue(
+            $this->containsViolation($violations, 'forbidden begintransaction call'),
+            'Expected instance beginTransaction call to be rejected.',
+        );
+    }
+
+    public function test_controller_db_guardrail_ignores_transaction_method_declarations(): void
+    {
+        $tokens = token_get_all(<<<'PHP'
+<?php
+
+class SampleController
+{
+    public function transaction(): void {}
+
+    public function beginTransaction(): void {}
+}
+PHP);
+
+        $violations = $this->findControllerDbViolations($tokens, 'sample.php');
+
+        $this->assertFalse(
+            $this->containsViolation($violations, 'transaction call'),
+            'Transaction method declarations must not be flagged as forbidden calls.',
+        );
+        $this->assertFalse(
+            $this->containsViolation($violations, 'begintransaction call'),
+            'beginTransaction method declarations must not be flagged as forbidden calls.',
+        );
+    }
+
     public function test_controllers_do_not_use_transactions_or_row_locks(): void
     {
         $violations = [];
@@ -75,6 +128,28 @@ class ArchitectureGuardrailsTest extends TestCase
             }
 
             if (! in_array($value, ['begintransaction', 'lockforupdate'], true)) {
+                if (! in_array($value, ['transaction', 'begintransaction'], true)) {
+                    continue;
+                }
+
+                $previousIndex = $this->previousMeaningfulTokenIndex($tokens, $index - 1);
+                $previousText = $previousIndex !== null ? strtolower($this->tokenText($tokens[$previousIndex])) : '';
+
+                if ($previousText === 'function') {
+                    continue;
+                }
+
+                if (! in_array($previousText, ['->', '?->'], true)) {
+                    continue;
+                }
+
+                $violations[] = sprintf(
+                    '%s:%d uses forbidden instance %s call in controller layer.',
+                    $file,
+                    $token[2],
+                    $value,
+                );
+
                 continue;
             }
 
@@ -82,6 +157,10 @@ class ArchitectureGuardrailsTest extends TestCase
             $previousText = $previousIndex !== null ? strtolower($this->tokenText($tokens[$previousIndex])) : '';
 
             if ($previousText === 'function') {
+                continue;
+            }
+
+            if (! in_array($previousText, ['->', '?->', '::'], true)) {
                 continue;
             }
 
@@ -264,6 +343,20 @@ class ArchitectureGuardrailsTest extends TestCase
         }
 
         return 0;
+    }
+
+    /**
+     * @param  list<string>  $violations
+     */
+    private function containsViolation(array $violations, string $needle): bool
+    {
+        foreach ($violations as $violation) {
+            if (str_contains($violation, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
