@@ -4,7 +4,7 @@
     $currentCharacter = old('character_id', $post->character_id ?? '');
     $currentFormat = old('content_format', $post->content_format ?? 'markdown');
     $currentIcQuote = (string) old('ic_quote', (string) ($postMeta['ic_quote'] ?? ''));
-    $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
+    $wave3EditorPreviewEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.editor_preview', false);
     $initialPreviewHtml = $wave3EditorPreviewEnabled && $currentFormat === 'markdown'
         ? app(\App\Support\PostContentRenderer::class)->render((string) old('content', $post->content ?? ''), 'markdown')->toHtml()
         : '';

@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\World;
 use App\Support\Gamification\PointService;
 use App\Support\PostContentRenderer;
+use App\Support\SensitiveFeatureGate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -242,7 +243,7 @@ class PostController extends Controller
 
     public function preview(PreviewPostRequest $request, World $world): JsonResponse
     {
-        abort_unless((bool) config('features.wave3.editor_preview', false), 404);
+        abort_unless(SensitiveFeatureGate::enabled('features.wave3.editor_preview', false), 404);
 
         $data = $request->validated();
 

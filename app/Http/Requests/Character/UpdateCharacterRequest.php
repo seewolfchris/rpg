@@ -28,6 +28,15 @@ class UpdateCharacterRequest extends CharacterSheetRequest
                 return;
             }
 
+            $incomingWorldId = (int) $this->input('world_id', (int) $character->world_id);
+
+            if ($incomingWorldId !== (int) $character->world_id) {
+                $validator->errors()->add(
+                    'world_id',
+                    'Die Weltzuordnung kann nach der Erstellung nicht mehr geändert werden.'
+                );
+            }
+
             foreach ($this->attributeKeys() as $attributeKey) {
                 $incomingValue = (int) $this->input($attributeKey);
                 $existingValue = $this->resolveExistingAttributeValue($character, $attributeKey);

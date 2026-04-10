@@ -1,5 +1,9 @@
 <IfModule mod_headers.c>
     Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex, max-snippet:0, max-image-preview:none, max-video-preview:0"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
 </IfModule>
 
 <IfModule mod_rewrite.c>
@@ -8,6 +12,9 @@
     </IfModule>
 
     RewriteEngine On
+
+    # Deny direct access to dotfiles (e.g. .php-version, .php-ini, .env-like files)
+    RewriteRule "(^|/)\." - [F,L]
 
     # Block known search and AI crawler user agents before PHP/Laravel.
     # Best effort only: user agents can be spoofed.

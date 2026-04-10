@@ -43,6 +43,13 @@ class ApplySecurityHeaders
             )
         );
 
+        // Private HTML responses should not be persisted by browser or service worker caches.
+        if ($request->user() && str_contains((string) $response->headers->get('Content-Type', ''), 'text/html')) {
+            $response->headers->set('Cache-Control', 'no-store, private, max-age=0');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
+
         if (! $request->isSecure()) {
             return $response;
         }

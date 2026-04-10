@@ -4,8 +4,8 @@
 
 @section('content')
     @php
-        $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
-        $wave3DraftAutosaveEnabled = (bool) config('features.wave3.draft_autosave', false);
+        $wave3EditorPreviewEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.editor_preview', false);
+        $wave3DraftAutosaveEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.draft_autosave', false);
         $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
     @endphp
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">

@@ -45,6 +45,7 @@ Source of Truth je Thema:
 Stand: **Release-Beta `v0.28-beta`** (funktional, getestet, build-faehig)
 
 Changelog:
+- v0.28-beta (2026-04-10): Security-Hardening fuer Offline-Queue und Preview abgeschlossen (keine sensiblen Keys in Queue-Payload, Same-Origin-POST-Zwang, transientes CSRF-Re-Signing, clientseitig gehaertete Preview-Sanitization), Character-World-Scope gegen Cross-World-Umbuchung abgesichert und Header-/Request-Id-Haertung nachgezogen.
 - v0.28-beta (2026-04-04): Release-Welle A/B/C abgeschlossen mit produktkonformen Composer-Metadaten (`c76/rpg`), zentraler Security-Header-Middleware, modularem Auth-Routing ohne Vertragsdrift, Architektur-Guardrails, MySQL-Critical-Gates, standardisiertem Domain-Event-Logging und Doku-Konsolidierung.
 - v0.27-beta (2026-04-03): Hardening-Nachzug mit konsolidiertem `CampaignParticipantResolver` entlang Requests/Domain-Services, gehaerteten Post-/World-Invarianten (inkl. Default-Welt-Loeschschutz), atomarem Invite-Upsert (`1062`-Fallback) und separatem CI-MySQL-Concurrency-Job.
 - v0.27-beta (2026-04-02): Hardening-Release mit atomarem Post-Update-Flow, PWA-Privacy-Boundary bei Auth-Wechseln, idempotentem Reaction-Upsert, kanonischem Invite-Weltkontext, Redis-Produktionsdefaults, scope-korrektem GM-/Dashboard-Count, paginiertem Notification-Center, gesplitteten Web-Routen, modularisierter Authorization-Matrix und browserbasierten Playwright-E2E-Flows fuer Offline/Auth-Queue-Retry.
@@ -54,8 +55,8 @@ Changelog:
 - v0.24-beta (Stability-Update 2026-03-23): Harte Service-Invarianten fuer Probe/Inventar (Welt + Kampagnen-Teilnahme), robuste Atomic-/Compensation-Semantik in `StorePostService` und `CreateCharacterAction`, Queue-Retry-Jobs fuer fehlgeschlagene Szenen-/Mention-Benachrichtigungen
 
 Letzte lokale Verifikation:
-- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **377 passed, 2170 assertions** (Stand: 2026-04-04)
-- `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-04)
+- `php artisan test` -> **377 passed, 7 skipped, 2170 assertions** (Stand: 2026-04-10)
+- `node --test tests/js/*.mjs` -> **19 passed** (Stand: 2026-04-10)
 - `composer analyse` -> **keine Fehler** (Stand: 2026-04-04)
 - `npm run test:e2e` -> **4 passed** (Stand: 2026-04-04)
 - `npm run build` -> **gruen** (Stand: 2026-04-02)
@@ -322,7 +323,10 @@ SMOKE_MODE=artisan scripts/release_smoke.sh
 - Offline-Seite: `public/offline.html`
 - Install-Button erscheint nur, wenn Browser-Install-Prompt verfügbar ist.
 - Offline-Post-Queue nutzt IndexedDB und Sync/Fallback-Trigger.
+- Queue-Payloads werden vor Persistenz sicherheitsbereinigt: sensible Felder (z. B. `_token`, Passwort-/Token-Felder) werden verworfen und nicht in IndexedDB gespeichert.
+- Queue akzeptiert nur aufgeloeste Same-Origin-`POST`-Ziele; fremde Origins, nicht-HTTP(S)-Schemas oder nicht-`POST` werden verworfen.
 - Bei `419` versucht der Service Worker automatisch ein Re-Signing (neuer CSRF-Token + aktuelle Form-Action) und sendet den Queue-Post erneut.
+- Der CSRF-Token bleibt transient im Re-Sign-Flow und wird nicht in Queue-Eintraegen persisted.
 - Bei `401`/`419`/`429` werden Queue-Eintraege nicht verworfen, sondern mit Backoff (`retry_count`, `next_retry_at`) geplant.
 - Bei `4xx` (ausser `401`/`419`/`429`) wandern Queue-Eintraege in `postDeadLetters` statt verworfen zu werden.
 - Bei `5xx` (oder Netzwerkfehler `status=0`) erfolgen max. `5` Retries; danach wandert der Eintrag in `postDeadLetters`.

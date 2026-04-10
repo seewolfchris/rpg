@@ -50,7 +50,7 @@ async function syncQueuedPosts() {
                     url: resigned.item.url,
                 });
 
-                const secondAttempt = await submitQueuedPost(resigned.item);
+                const secondAttempt = await submitQueuedPost(resigned.item, resigned.csrfToken || null);
 
                 if (secondAttempt.ok) {
                     await deleteQueuedPost(resigned.item.id);
@@ -106,6 +106,34 @@ function normalizeQueuedPost(item) {
     };
 }
 
+const SENSITIVE_QUEUE_KEYS = new Set([
+    '_token',
+    '_method',
+    'password',
+    'password_confirmation',
+    'current_password',
+    'new_password',
+    'remember_token',
+]);
+
+function isSensitiveQueueKey(rawKey) {
+    if (typeof rawKey !== 'string') {
+        return true;
+    }
+
+    const key = rawKey.trim().toLowerCase();
+
+    if (key === '') {
+        return true;
+    }
+
+    if (SENSITIVE_QUEUE_KEYS.has(key)) {
+        return true;
+    }
+
+    return key.includes('csrf') || key.includes('password') || key.endsWith('_token');
+}
+
 function normalizeQueueEntries(entries) {
     if (!Array.isArray(entries)) {
         return [];
@@ -121,6 +149,10 @@ function normalizeQueueEntries(entries) {
         const [key, value] = entry;
 
         if (typeof key !== 'string') {
+            continue;
+        }
+
+        if (isSensitiveQueueKey(key)) {
             continue;
         }
 
@@ -140,21 +172,40 @@ function isRetryDeferred(item, nowMs) {
     return Number.isFinite(nextRetryAt) && nextRetryAt > nowMs;
 }
 
-async function submitQueuedPost(item) {
+async function submitQueuedPost(item, csrfTokenOverride = null) {
+    const targetUrl = resolveSameOriginUrl(item.url, self.location.origin);
+
+    if (!targetUrl) {
+        return {
+            ok: false,
+            status: 0,
+            reason: 'invalid-target-origin',
+        };
+    }
+
+    const method = String(item.method || 'POST').toUpperCase();
+
+    if (method !== 'POST') {
+        return {
+            ok: false,
+            status: 0,
+            reason: 'invalid-method',
+        };
+    }
+
     const formData = buildFormData(item.entries);
-    const csrfToken = findFormEntryValue(item.entries, '_token');
     const headers = {
         'X-Requested-With': 'XMLHttpRequest',
         Accept: 'application/json, text/html, application/xhtml+xml',
     };
 
-    if (csrfToken) {
-        headers['X-CSRF-TOKEN'] = csrfToken;
+    if (typeof csrfTokenOverride === 'string' && csrfTokenOverride.trim() !== '') {
+        headers['X-CSRF-TOKEN'] = csrfTokenOverride.trim();
     }
 
     try {
-        const response = await fetch(item.url, {
-            method: item.method || 'POST',
+        const response = await fetch(targetUrl, {
+            method: 'POST',
             credentials: 'include',
             headers,
             body: formData,
@@ -199,23 +250,6 @@ function buildFormData(entries) {
     }
 
     return formData;
-}
-
-function findFormEntryValue(entries, key) {
-    for (const entry of normalizeQueueEntries(entries)) {
-        if (entry[0] === key) {
-            return entry[1];
-        }
-    }
-
-    return null;
-}
-
-function replaceFormEntry(entries, key, value) {
-    const normalizedEntries = normalizeQueueEntries(entries).filter((entry) => entry[0] !== key);
-    normalizedEntries.push([key, value]);
-
-    return normalizedEntries;
 }
 
 function isSuccessfulPostResponse(response) {
@@ -284,6 +318,7 @@ async function reSignQueuedPost(item) {
                 item: null,
                 reason: 'auth-required',
                 response,
+                csrfToken: null,
             };
         }
 
@@ -299,9 +334,7 @@ async function reSignQueuedPost(item) {
             continue;
         }
 
-        const updatedEntries = csrfToken
-            ? replaceFormEntry(item.entries, '_token', csrfToken)
-            : normalizeQueueEntries(item.entries);
+        const updatedEntries = normalizeQueueEntries(item.entries);
         const resolvedActionUrl = signedAction
             ? resolveSameOriginUrl(signedAction, sourceUrl)
             : resolveSameOriginUrl(item.url, self.location.origin);
@@ -331,6 +364,7 @@ async function reSignQueuedPost(item) {
             item: updatedItem,
             reason: null,
             response,
+            csrfToken: csrfToken || null,
         };
     }
 
@@ -338,6 +372,7 @@ async function reSignQueuedPost(item) {
         item: null,
         reason: 'signing-context-unavailable',
         response: null,
+        csrfToken: null,
     };
 }
 

@@ -152,7 +152,7 @@
         {!! $post->renderedContent() !!}
     </div>
 
-    @if (config('features.wave4.reactions', false))
+    @if (\App\Support\SensitiveFeatureGate::enabled('features.wave4.reactions', false))
         @php($reactionSymbols = ['heart' => '❤️', 'joy' => '😂', 'clap' => '👏', 'fire' => '🔥'])
         @php($reactionCollection = $post->relationLoaded('reactions') ? $post->reactions : collect())
         @php($reactionCounts = $reactionCollection->groupBy('emoji')->map(fn ($items) => $items->count()))

@@ -92,7 +92,6 @@ test('syncQueuedPosts retries a 419 post after re-signing and clears queue', asy
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'stale-token',
             }),
         ],
         fetchImpl: async (input, init) => {
@@ -103,6 +102,7 @@ test('syncQueuedPosts retries a 419 post after re-signing and clears queue', asy
                 submitAttempt += 1;
                 submitRequests.push({
                     url,
+                    method,
                     headers: init?.headers || {},
                     body: formDataToObject(init?.body),
                 });
@@ -152,10 +152,13 @@ test('syncQueuedPosts retries a 419 post after re-signing and clears queue', asy
     assert.equal(harness.queue.length, 0);
     assert.equal(submitRequests.length, 2);
     assert.equal(submitRequests[0].url, POSTS_URL);
-    assert.equal(submitRequests[0].headers['X-CSRF-TOKEN'], 'stale-token');
+    assert.equal(submitRequests[0].method, 'POST');
+    assert.equal(submitRequests[0].headers['X-CSRF-TOKEN'], undefined);
+    assertNoSensitiveFormKeys(submitRequests[0].body);
     assert.equal(submitRequests[1].url, RESIGNED_POSTS_URL);
+    assert.equal(submitRequests[1].method, 'POST');
     assert.equal(submitRequests[1].headers['X-CSRF-TOKEN'], 'fresh-token');
-    assert.equal(submitRequests[1].body._token, 'fresh-token');
+    assertNoSensitiveFormKeys(submitRequests[1].body);
 });
 
 test('syncQueuedPosts schedules retry and requests auth when re-signing requires login', async () => {
@@ -170,7 +173,6 @@ test('syncQueuedPosts schedules retry and requests auth when re-signing requires
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'stale-token',
             }),
         ],
         dateNowMs: nowMs,
@@ -220,6 +222,7 @@ test('syncQueuedPosts schedules retry and requests auth when re-signing requires
     assert.equal(queuedItem.last_error_status, 419);
     assert.equal(queuedItem.last_error_reason, 'auth-required');
     assert.ok(typeof queuedItem.next_retry_at === 'string' && queuedItem.next_retry_at !== '');
+    assertNoSensitiveEntries(queuedItem.entries);
 
     const nextRetryAtMs = Date.parse(queuedItem.next_retry_at);
     assert.ok(Number.isFinite(nextRetryAtMs));
@@ -236,14 +239,12 @@ test('syncQueuedPosts moves 422 responses to dead-letter and continues with next
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'token-11',
             }),
             createQueuedPost({
                 id: 12,
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'token-12',
             }),
         ],
         fetchImpl: async (input, init) => {
@@ -254,6 +255,7 @@ test('syncQueuedPosts moves 422 responses to dead-letter and continues with next
             }
 
             const body = formDataToObject(init?.body);
+            assertNoSensitiveFormKeys(body);
             submitRequests.push(body.content);
 
             if (String(body.content || '').includes('Queued post 11')) {
@@ -292,6 +294,7 @@ test('syncQueuedPosts moves 422 responses to dead-letter and continues with next
     assert.equal(harness.deadLetters.length, 1);
     assert.equal(harness.deadLetters[0].source_queue_id, 11);
     assert.equal(harness.deadLetters[0].error_summary, 'Text zu kurz');
+    assertNoSensitiveEntries(harness.deadLetters[0].entries);
     assert.deepEqual(submitRequests, ['Queued post 11', 'Queued post 12']);
 });
 
@@ -307,14 +310,12 @@ test('syncQueuedPosts retries 500 responses five times, then dead-letters and co
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'token-21',
             }),
             createQueuedPost({
                 id: 22,
                 url: POSTS_URL,
                 source_url: SOURCE_URL,
                 source_path: SCENE_PATH,
-                token: 'token-22',
             }),
         ],
         dateNowMs: nowMs,
@@ -327,6 +328,7 @@ test('syncQueuedPosts retries 500 responses five times, then dead-letters and co
             }
 
             const body = formDataToObject(init?.body);
+            assertNoSensitiveFormKeys(body);
             const content = String(body.content || '');
 
             if (content.includes('Queued post 21')) {
@@ -351,17 +353,20 @@ test('syncQueuedPosts retries 500 responses five times, then dead-letters and co
     assert.equal(harness.deadLetters[0].source_queue_id, 21);
     assert.equal(harness.deadLetters[0].last_error_status, 500);
     assert.equal(harness.deadLetters[0].error_summary, 'Server-Fehler (500)');
+    assertNoSensitiveEntries(harness.deadLetters[0].entries);
     assert.ok(harness.eventTypes().includes('POST_SYNC_DEAD_LETTERED'));
     assert.ok(harness.eventTypes().includes('POST_SYNC_SUCCESS'));
 });
 
-function createQueuedPost({ id, url, source_url, source_path, token }) {
+function createQueuedPost({ id, url, source_url, source_path }) {
     return {
         id,
         url,
         method: 'POST',
         entries: [
-            ['_token', token],
+            ['_token', 'stale-token'],
+            ['password', 'secret-value'],
+            ['remember_token', 'remember-me'],
             ['post_type', 'ooc'],
             ['content_format', 'plain'],
             ['content', `Queued post ${id}`],
@@ -561,6 +566,55 @@ function formDataToObject(formData) {
     }
 
     return values;
+}
+
+function assertNoSensitiveFormKeys(values) {
+    const keys = Object.keys(values);
+
+    for (const key of keys) {
+        assert.equal(isSensitiveKey(key), false, `Sensitive key leaked into form payload: ${key}`);
+    }
+}
+
+function assertNoSensitiveEntries(entries) {
+    if (!Array.isArray(entries)) {
+        return;
+    }
+
+    for (const entry of entries) {
+        if (!Array.isArray(entry) || entry.length !== 2) {
+            continue;
+        }
+
+        const key = String(entry[0] ?? '');
+        assert.equal(isSensitiveKey(key), false, `Sensitive key leaked into queue/dead-letter entries: ${key}`);
+    }
+}
+
+function isSensitiveKey(rawKey) {
+    if (typeof rawKey !== 'string') {
+        return true;
+    }
+
+    const key = rawKey.trim().toLowerCase();
+
+    if (key === '') {
+        return true;
+    }
+
+    if (
+        key === '_token'
+        || key === '_method'
+        || key === 'password'
+        || key === 'password_confirmation'
+        || key === 'current_password'
+        || key === 'new_password'
+        || key === 'remember_token'
+    ) {
+        return true;
+    }
+
+    return key.includes('csrf') || key.includes('password') || key.endsWith('_token');
 }
 
 function deepClone(value) {

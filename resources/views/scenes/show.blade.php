@@ -11,8 +11,8 @@
         $sceneMoodThemeClass = (string) ($sceneMoodMeta['theme_class'] ?? 'scene-mood-neutral');
         $sceneMoodBadgeClass = (string) ($sceneMoodMeta['badge_class'] ?? '');
         $sceneHeaderStyle = null;
-        $wave3EditorPreviewEnabled = (bool) config('features.wave3.editor_preview', false);
-        $wave3DraftAutosaveEnabled = (bool) config('features.wave3.draft_autosave', false);
+        $wave3EditorPreviewEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.editor_preview', false);
+        $wave3DraftAutosaveEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.draft_autosave', false);
         $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
 
         if (! empty($scene->header_image_path)) {

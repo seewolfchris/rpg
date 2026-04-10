@@ -27,6 +27,7 @@ class UpdateCharacterAction
         $character = $input->character;
         $previousInventory = $this->inventoryService->normalize($character->inventory ?? []);
         $data = $this->attributeNormalizer->normalizeForUpdate($input->payload, $character);
+        unset($data['world_id']);
         $stagedAvatar = $this->stageAvatarUpload($input->avatar);
         $replaceAvatar = $stagedAvatar !== null;
         $previousAvatarPath = is_string($character->avatar_path) && $character->avatar_path !== ''

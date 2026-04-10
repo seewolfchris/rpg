@@ -13,6 +13,10 @@
             ?? ($selectedWorld->id ?? $worldOptions->first()?->id ?? \App\Models\World::resolveDefaultId())
     );
 
+    if ($isEdit && $character) {
+        $selectedWorldId = (int) $character->world_id;
+    }
+
     if (! array_key_exists($selectedWorldId, $worldConfigs)) {
         $selectedWorldId = (int) (array_key_first($worldConfigs) ?? 0);
     }
@@ -352,11 +356,15 @@
 
                     <div>
                         <label for="world_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Welt</label>
+                        @if ($isEdit && $character)
+                            <input type="hidden" name="world_id" value="{{ (int) $character->world_id }}">
+                        @endif
                         <select
                             id="world_id"
                             name="world_id"
                             required
                             x-model="worldId"
+                            @disabled($isEdit)
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                         >
                             @foreach ($worldOptions as $worldOption)

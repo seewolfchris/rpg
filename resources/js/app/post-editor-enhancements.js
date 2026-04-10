@@ -10,6 +10,65 @@ import { getCsrfToken } from './csrf';
 const POST_EDITOR_SELECTOR = 'form[data-post-editor]';
 const POST_PREVIEW_DEBOUNCE_MS = 450;
 const POST_DRAFT_DEBOUNCE_MS = 350;
+const PREVIEW_BLOCKED_TAGS = new Set([
+    'script',
+    'iframe',
+    'object',
+    'embed',
+    'template',
+    'link',
+    'meta',
+    'base',
+    'form',
+    'svg',
+    'math',
+]);
+const PREVIEW_URL_ATTRIBUTES = new Set(['href', 'src', 'xlink:href', 'formaction', 'action', 'poster']);
+const PREVIEW_UNSAFE_URL_PATTERN = /^\s*(?:javascript|vbscript|data:text\/html)/i;
+
+function sanitizePreviewHtml(rawHtml) {
+    if (typeof rawHtml !== 'string' || rawHtml.trim() === '') {
+        return '';
+    }
+
+    const template = document.createElement('template');
+    template.innerHTML = rawHtml;
+
+    const blockedSelector = Array.from(PREVIEW_BLOCKED_TAGS).join(',');
+
+    if (blockedSelector !== '') {
+        template.content.querySelectorAll(blockedSelector).forEach((node) => {
+            node.remove();
+        });
+    }
+
+    template.content.querySelectorAll('*').forEach((node) => {
+        if (!(node instanceof Element)) {
+            return;
+        }
+
+        Array.from(node.attributes).forEach((attribute) => {
+            const name = attribute.name.toLowerCase();
+            const value = String(attribute.value || '');
+
+            if (name.startsWith('on')) {
+                node.removeAttribute(attribute.name);
+                return;
+            }
+
+            if (name === 'style') {
+                node.removeAttribute(attribute.name);
+                return;
+            }
+
+            if (PREVIEW_URL_ATTRIBUTES.has(name) && PREVIEW_UNSAFE_URL_PATTERN.test(value)) {
+                node.removeAttribute(attribute.name);
+            }
+        });
+    });
+
+    return template.innerHTML;
+}
 
 export function setupPostEditorEnhancements() {
     document.querySelectorAll(POST_EDITOR_SELECTOR).forEach((formNode) => {
@@ -174,7 +233,7 @@ export function setupPostEditorEnhancements() {
                     ? payload.html
                     : '<p class="text-stone-500">Keine Vorschau verfügbar.</p>';
 
-                previewOutputNode.innerHTML = html;
+                previewOutputNode.innerHTML = sanitizePreviewHtml(html);
                 previewStatusNode.textContent = 'Live-Vorschau aktiv.';
             } catch (error) {
                 if (error instanceof DOMException && error.name === 'AbortError') {

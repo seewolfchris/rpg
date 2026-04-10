@@ -7,6 +7,7 @@ use App\Http\Requests\Post\PostReactionRequest;
 use App\Models\Post;
 use App\Models\PostReaction;
 use App\Models\World;
+use App\Support\SensitiveFeatureGate;
 use Illuminate\Http\RedirectResponse;
 
 class PostReactionController extends Controller
@@ -16,7 +17,7 @@ class PostReactionController extends Controller
     public function store(PostReactionRequest $request, World $world, Post $post): RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-        abort_unless((bool) config('features.wave4.reactions', false), 404);
+        abort_unless(SensitiveFeatureGate::enabled('features.wave4.reactions', false), 404);
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
@@ -46,7 +47,7 @@ class PostReactionController extends Controller
     public function destroy(PostReactionRequest $request, World $world, Post $post): RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-        abort_unless((bool) config('features.wave4.reactions', false), 404);
+        abort_unless(SensitiveFeatureGate::enabled('features.wave4.reactions', false), 404);
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);

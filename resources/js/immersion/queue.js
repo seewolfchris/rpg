@@ -19,6 +19,51 @@ const OFFLINE_POST_FORM_SELECTOR = 'form[data-offline-post-form]';
 const OFFLINE_POST_CONTENT_SELECTOR = `${OFFLINE_POST_FORM_SELECTOR} textarea[name="content"]`;
 const OFFLINE_DEAD_LETTER_PANEL_ID = 'offline-dead-letter-panel';
 const OFFLINE_QUEUE_STATUS_PANEL_ID = 'offline-queue-status-panel';
+const SENSITIVE_QUEUE_KEYS = new Set([
+    '_token',
+    '_method',
+    'password',
+    'password_confirmation',
+    'current_password',
+    'new_password',
+    'remember_token',
+]);
+
+function isSensitiveQueueKey(rawKey) {
+    if (typeof rawKey !== 'string') {
+        return true;
+    }
+
+    const key = rawKey.trim().toLowerCase();
+
+    if (key === '') {
+        return true;
+    }
+
+    if (SENSITIVE_QUEUE_KEYS.has(key)) {
+        return true;
+    }
+
+    return key.includes('csrf') || key.includes('password') || key.endsWith('_token');
+}
+
+function resolveSameOriginQueueUrl(rawUrl) {
+    if (typeof rawUrl !== 'string' || rawUrl.trim() === '') {
+        return null;
+    }
+
+    try {
+        const resolvedUrl = new URL(rawUrl, window.location.origin);
+
+        if (resolvedUrl.origin !== window.location.origin) {
+            return null;
+        }
+
+        return resolvedUrl.toString();
+    } catch {
+        return null;
+    }
+}
 
 export function createQueueModule({ getActiveServiceWorkerRegistration }) {
     const resolveActiveServiceWorkerRegistration = typeof getActiveServiceWorkerRegistration === 'function'
@@ -187,11 +232,27 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
     }
 
     async function queuePostSubmission(form) {
+        const method = String(form.method || 'POST').toUpperCase();
+
+        if (method !== 'POST') {
+            throw new Error('Offline queue only supports POST requests.');
+        }
+
+        const resolvedUrl = resolveSameOriginQueueUrl(form.action);
+
+        if (!resolvedUrl) {
+            throw new Error('Offline queue blocked a non same-origin action URL.');
+        }
+
         const formData = new FormData(form);
         const entries = [];
 
         for (const [key, value] of formData.entries()) {
-            if (typeof value !== 'string') {
+            if (typeof key !== 'string' || typeof value !== 'string') {
+                continue;
+            }
+
+            if (isSensitiveQueueKey(key)) {
                 continue;
             }
 
@@ -199,8 +260,8 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
         }
 
         const payload = {
-            url: form.action,
-            method: (form.method || 'POST').toUpperCase(),
+            url: resolvedUrl,
+            method,
             entries,
             queued_at: new Date().toISOString(),
             source_path: window.location.pathname,

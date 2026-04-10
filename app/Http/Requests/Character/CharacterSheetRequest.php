@@ -55,7 +55,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'name' => ['required', 'string', 'max:120'],
             'epithet' => ['nullable', 'string', 'max:120'],
             'bio' => ['required', 'string', 'min:20', 'max:5000'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:3072'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'mimetypes:image/jpeg,image/png,image/webp,image/avif', 'max:3072'],
             'status' => ['required', 'string', Rule::in($statusKeys)],
 
             'origin' => ['required', 'string', Rule::in($originKeys)],

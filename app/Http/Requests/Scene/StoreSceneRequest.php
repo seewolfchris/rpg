@@ -37,7 +37,7 @@ class StoreSceneRequest extends FormRequest
             'previous_scene_id' => ['nullable', 'integer', 'exists:scenes,id'],
             'summary' => ['nullable', 'string', 'max:1200'],
             'description' => ['nullable', 'string', 'max:15000'],
-            'header_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
+            'header_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'mimetypes:image/jpeg,image/png,image/webp,image/avif', 'max:4096'],
             'status' => ['required', Rule::in(['open', 'closed', 'archived'])],
             'mood' => ['required', Rule::in($this->moodKeys())],
             'position' => ['nullable', 'integer', 'min:0', 'max:100000'],

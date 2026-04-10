@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Uebersicht
 
-Stand: 2026-04-04  
+Stand: 2026-04-10  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -27,8 +27,8 @@ Repository-Branch: `main`
 - Plattformname: **C76-RPG**.
 - Laufende Versionslinie: **`v0.28-beta`**.
 - Verifikation lokal (letzter Lauf):
-  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **377 passed, 2170 assertions** (2026-04-04)
-  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-04)
+  - `php artisan test` -> **377 passed, 7 skipped, 2170 assertions** (2026-04-10)
+  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-10)
   - `npm run test:e2e` -> **4 passed** (2026-04-04)
   - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-04)
   - `npm run build` -> **gruen** (2026-04-02)
@@ -50,7 +50,7 @@ Repository-Branch: `main`
 | Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
 | Wissenszentrum / Enzyklopaedie | Stabil | Oeffentliche Seiten + GM/Admin-Redaktion |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
-| PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. 419-Re-Signing + Retry-Backoff |
+| PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
 | Domänen-Invarianten + Retry-Resilienz | Stabil | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry fuer Notification-Fehler |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 

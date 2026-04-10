@@ -536,7 +536,19 @@ async function networkOnlyWithOfflineFallback(request) {
 }
 
 function shouldCache(response) {
-    return Boolean(response) && response.status === 200;
+    // 2026 best practice: never persist authenticated/private responses in SW cache.
+    // Respect explicit no-store/private directives to reduce offline data exposure.
+    if (!response || response.status !== 200) {
+        return false;
+    }
+
+    const cacheControl = String(response.headers.get('Cache-Control') || '').toLowerCase();
+
+    if (cacheControl.includes('no-store') || cacheControl.includes('private')) {
+        return false;
+    }
+
+    return true;
 }
 
 async function cacheProvidedUrls(urls) {

@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AttachRequestId
 {
+    private const REQUEST_ID_PATTERN = '/\A[A-Za-z0-9][A-Za-z0-9._-]{7,79}\z/';
+
     /**
      * Handle an incoming request.
      *
@@ -18,8 +20,9 @@ class AttachRequestId
     public function handle(Request $request, Closure $next): Response
     {
         $incoming = trim((string) $request->headers->get('X-Request-Id', ''));
-        $requestId = $incoming !== ''
-            ? Str::limit($incoming, 80, '')
+        $candidate = Str::limit($incoming, 80, '');
+        $requestId = preg_match(self::REQUEST_ID_PATTERN, $candidate) === 1
+            ? $candidate
             : (string) Str::uuid();
 
         $request->attributes->set('request_id', $requestId);
