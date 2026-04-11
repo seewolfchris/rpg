@@ -41,7 +41,7 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Regelwerk')
             ->assertSeeText('Prozentproben (d100)')
             ->assertSeeText('Glossar')
-            ->assertSeeText('Abkuerzungen');
+            ->assertSeeText('Abkürzungen');
 
         $this->get(route('knowledge.global.encyclopedia'))
             ->assertOk()
@@ -68,7 +68,7 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Regelwerk')
             ->assertSeeText('Prozentproben (d100)')
             ->assertSeeText('Glossar')
-            ->assertSeeText('Abkuerzungen');
+            ->assertSeeText('Abkürzungen');
 
         $this->get(route('knowledge.encyclopedia', ['world' => $world]))
             ->assertOk()
@@ -81,7 +81,7 @@ class HelpPageTest extends TestCase
         $response = $this->get(route('knowledge.global.rules'));
 
         $response->assertOk()
-            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgeloest.')
+            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgelöst.')
             ->assertSeeText('Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator')
             ->assertSeeText('Die Rechnung bleibt klar')
             ->assertDontSeeText('d20');
@@ -106,7 +106,7 @@ class HelpPageTest extends TestCase
 
         $this->get(route('knowledge.world-overview', ['world' => $world]))
             ->assertOk()
-            ->assertSeeText('Weltueberblick (Markdown)')
+            ->assertSeeText('Weltüberblick (Markdown)')
             ->assertSeeText('Chroniken der Asche');
 
         $this->get(route('knowledge.lore', ['world' => $world]))

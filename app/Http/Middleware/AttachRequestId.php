@@ -20,9 +20,8 @@ class AttachRequestId
     public function handle(Request $request, Closure $next): Response
     {
         $incoming = trim((string) $request->headers->get('X-Request-Id', ''));
-        $candidate = Str::limit($incoming, 80, '');
-        $requestId = preg_match(self::REQUEST_ID_PATTERN, $candidate) === 1
-            ? $candidate
+        $requestId = preg_match(self::REQUEST_ID_PATTERN, $incoming) === 1
+            ? $incoming
             : (string) Str::uuid();
 
         $request->attributes->set('request_id', $requestId);
