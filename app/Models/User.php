@@ -55,6 +55,7 @@ class User extends Authenticatable
         'email',
         'password',
         'can_post_without_moderation',
+        'offline_queue_enabled',
     ];
 
     /**
@@ -81,6 +82,7 @@ class User extends Authenticatable
             'points' => 'integer',
             'notification_preferences' => 'array',
             'can_post_without_moderation' => 'boolean',
+            'offline_queue_enabled' => 'boolean',
         ];
     }
 
@@ -260,6 +262,17 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    public function offlineQueueEnabled(): bool
+    {
+        $value = $this->offline_queue_enabled;
+
+        if ($value === null) {
+            return true;
+        }
+
+        return (bool) $value;
     }
 
     public function isGmOrAdmin(): bool

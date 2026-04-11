@@ -5,6 +5,7 @@ export function createServiceWorkerRuntime({
     resolveActiveWorldSlug,
     resolveStoredWorldSlugContext,
     defaultWorldSlug,
+    resolveOfflineQueueEnabled,
 } = {}) {
     const resolveActiveWorldSlugFn = typeof resolveActiveWorldSlug === 'function'
         ? resolveActiveWorldSlug
@@ -15,6 +16,9 @@ export function createServiceWorkerRuntime({
     const fallbackWorldSlug = typeof defaultWorldSlug === 'string' && defaultWorldSlug.trim() !== ''
         ? defaultWorldSlug.trim()
         : 'default';
+    const resolveOfflineQueueEnabledFn = typeof resolveOfflineQueueEnabled === 'function'
+        ? resolveOfflineQueueEnabled
+        : () => true;
 
     let swRegistration = null;
 
@@ -30,15 +34,18 @@ export function createServiceWorkerRuntime({
                 || resolveStoredWorldSlugContextFn()
                 || fallbackWorldSlug
             );
-            const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}&world=${worldSlug}`);
+            const offlineQueue = resolveOfflineQueueEnabledFn() ? '1' : '0';
+            const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}&world=${worldSlug}&offline_queue=${offlineQueue}`);
             const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
 
             if (readyRegistration) {
                 swRegistration = readyRegistration;
+                await syncOfflineQueuePreference(resolveOfflineQueueEnabledFn());
                 return readyRegistration;
             }
 
             swRegistration = registration;
+            await syncOfflineQueuePreference(resolveOfflineQueueEnabledFn());
             return registration;
         } catch (error) {
             console.error('Service worker registration failed:', error);
@@ -49,6 +56,10 @@ export function createServiceWorkerRuntime({
 
     async function warmOfflineReadingCache() {
         if (!('serviceWorker' in navigator)) {
+            return;
+        }
+
+        if (!resolveOfflineQueueEnabledFn()) {
             return;
         }
 
@@ -108,6 +119,23 @@ export function createServiceWorkerRuntime({
         activeWorker.postMessage(message);
     }
 
+    async function syncOfflineQueuePreference(enabledOverride = null) {
+        const enabled = typeof enabledOverride === 'boolean'
+            ? enabledOverride
+            : resolveOfflineQueueEnabledFn();
+
+        await postMessageToActiveServiceWorker({
+            type: 'SET_OFFLINE_QUEUE_PREFERENCE',
+            enabled,
+        });
+
+        if (!enabled) {
+            await postMessageToActiveServiceWorker({
+                type: 'CLEAR_PRIVATE_DATA',
+            });
+        }
+    }
+
     function setupServiceWorkerLogoutCleanup() {
         document.querySelectorAll(LOGOUT_FORM_SELECTOR).forEach((form) => {
             if (!(form instanceof HTMLFormElement) || form.dataset.swLogoutCleanupBound === '1') {
@@ -129,6 +157,7 @@ export function createServiceWorkerRuntime({
         warmOfflineReadingCache,
         getActiveServiceWorkerRegistration,
         postMessageToActiveServiceWorker,
+        syncOfflineQueuePreference,
         setupServiceWorkerLogoutCleanup,
     };
 }

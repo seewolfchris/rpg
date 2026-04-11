@@ -321,6 +321,8 @@ SMOKE_MODE=artisan scripts/release_smoke.sh
 - Manifest: `public/manifest.webmanifest`
 - Service Worker: `public/sw.js`
 - Offline-Seite: `public/offline.html`
+- Datenschutz & Offline-Funktion:
+  - Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
 - Install-Button erscheint nur, wenn Browser-Install-Prompt verfügbar ist.
 - Offline-Post-Queue nutzt IndexedDB und Sync/Fallback-Trigger.
 - Queue-Payloads werden vor Persistenz sicherheitsbereinigt: sensible Felder (z. B. `_token`, Passwort-/Token-Felder) werden verworfen und nicht in IndexedDB gespeichert.

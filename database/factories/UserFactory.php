@@ -31,6 +31,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::PLAYER->value,
             'can_post_without_moderation' => false,
+            'offline_queue_enabled' => true,
             'remember_token' => Str::random(10),
         ];
     }

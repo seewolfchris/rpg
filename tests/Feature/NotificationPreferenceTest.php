@@ -32,6 +32,7 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_browser' => '0',
             'character_mention_database' => '1',
             'character_mention_mail' => '1',
+            'offline_queue_opt_out' => '0',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -48,6 +49,7 @@ class NotificationPreferenceTest extends TestCase
         $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.browser'));
         $this->assertTrue((bool) data_get($preferences, 'character_mention.database'));
         $this->assertTrue((bool) data_get($preferences, 'character_mention.mail'));
+        $this->assertTrue($user->fresh()->offlineQueueEnabled());
     }
 
     public function test_enabling_browser_channel_keeps_database_channel_enabled_for_storage(): void
@@ -66,6 +68,7 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_browser' => '0',
             'character_mention_database' => '0',
             'character_mention_mail' => '0',
+            'offline_queue_opt_out' => '0',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -75,6 +78,32 @@ class NotificationPreferenceTest extends TestCase
         $this->assertTrue((bool) data_get($preferences, 'post_moderation.database'));
         $this->assertTrue((bool) data_get($preferences, 'post_moderation.browser'));
         $this->assertFalse((bool) data_get($preferences, 'post_moderation.mail'));
+        $this->assertTrue($user->fresh()->offlineQueueEnabled());
+    }
+
+    public function test_user_can_disable_offline_queue_via_preferences(): void
+    {
+        $user = User::factory()->create([
+            'offline_queue_enabled' => true,
+        ]);
+
+        $response = $this->actingAs($user)->patch(route('notifications.preferences.update'), [
+            'post_moderation_database' => '1',
+            'post_moderation_mail' => '0',
+            'post_moderation_browser' => '0',
+            'scene_new_post_database' => '1',
+            'scene_new_post_mail' => '0',
+            'scene_new_post_browser' => '0',
+            'campaign_invitation_database' => '1',
+            'campaign_invitation_mail' => '0',
+            'campaign_invitation_browser' => '0',
+            'character_mention_database' => '1',
+            'character_mention_mail' => '0',
+            'offline_queue_opt_out' => '1',
+        ]);
+
+        $response->assertRedirect(route('notifications.preferences'));
+        $this->assertFalse($user->fresh()->offlineQueueEnabled());
     }
 
     public function test_disabled_in_app_preference_prevents_database_notification(): void

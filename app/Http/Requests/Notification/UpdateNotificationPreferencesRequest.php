@@ -34,6 +34,7 @@ class UpdateNotificationPreferencesRequest extends FormRequest
             'campaign_invitation_browser' => ['required', 'boolean'],
             'character_mention_database' => ['required', 'boolean'],
             'character_mention_mail' => ['required', 'boolean'],
+            'offline_queue_opt_out' => ['required', 'boolean'],
         ];
     }
 
@@ -51,7 +52,13 @@ class UpdateNotificationPreferencesRequest extends FormRequest
             'campaign_invitation_browser' => $this->boolean('campaign_invitation_browser'),
             'character_mention_database' => $this->boolean('character_mention_database'),
             'character_mention_mail' => $this->boolean('character_mention_mail'),
+            'offline_queue_opt_out' => $this->boolean('offline_queue_opt_out'),
         ]);
+    }
+
+    public function offlineQueueEnabled(): bool
+    {
+        return ! (bool) $this->validated('offline_queue_opt_out', false);
     }
 
     /**

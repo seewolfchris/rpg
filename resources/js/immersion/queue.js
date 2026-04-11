@@ -9,6 +9,7 @@ import {
     hasEditorContent,
     mergeDeadLetterContent,
 } from '../offline-dead-letter.mjs';
+import { getCsrfToken } from '../app/csrf';
 import { showSyncNotice, trapFocusInElements } from './utils';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
@@ -19,6 +20,9 @@ const OFFLINE_POST_FORM_SELECTOR = 'form[data-offline-post-form]';
 const OFFLINE_POST_CONTENT_SELECTOR = `${OFFLINE_POST_FORM_SELECTOR} textarea[name="content"]`;
 const OFFLINE_DEAD_LETTER_PANEL_ID = 'offline-dead-letter-panel';
 const OFFLINE_QUEUE_STATUS_PANEL_ID = 'offline-queue-status-panel';
+const OFFLINE_QUEUE_PREFERENCE_FORM_SELECTOR = 'form[data-notification-preferences-form]';
+const OFFLINE_QUEUE_PREFERENCE_TOGGLE_SELECTOR = 'input[data-offline-queue-toggle]';
+const OFFLINE_QUEUE_ENABLED_META_SELECTOR = 'meta[name="offline-queue-enabled"]';
 const SENSITIVE_QUEUE_KEYS = new Set([
     '_token',
     '_method',
@@ -65,12 +69,77 @@ function resolveSameOriginQueueUrl(rawUrl) {
     }
 }
 
-export function createQueueModule({ getActiveServiceWorkerRegistration }) {
+function resolveOfflineQueueEnabledFromDocument() {
+    const preferenceNode = document.querySelector(OFFLINE_QUEUE_ENABLED_META_SELECTOR);
+
+    if (!(preferenceNode instanceof HTMLMetaElement)) {
+        return true;
+    }
+
+    const rawValue = String(preferenceNode.content || '').trim().toLowerCase();
+
+    if (rawValue === '0' || rawValue === 'false' || rawValue === 'off' || rawValue === 'no') {
+        return false;
+    }
+
+    return true;
+}
+
+function setOfflineQueueEnabledMetaContent(enabled) {
+    const preferenceNode = document.querySelector(OFFLINE_QUEUE_ENABLED_META_SELECTOR);
+
+    if (!(preferenceNode instanceof HTMLMetaElement)) {
+        return;
+    }
+
+    preferenceNode.content = enabled ? '1' : '0';
+}
+
+export function createQueueModule({
+    getActiveServiceWorkerRegistration,
+    postMessageToActiveServiceWorker,
+    resolveOfflineQueueEnabled,
+}) {
     const resolveActiveServiceWorkerRegistration = typeof getActiveServiceWorkerRegistration === 'function'
         ? getActiveServiceWorkerRegistration
         : async () => null;
+    const postMessageToServiceWorker = typeof postMessageToActiveServiceWorker === 'function'
+        ? postMessageToActiveServiceWorker
+        : async () => undefined;
+    const resolveOfflineQueueEnabledFn = typeof resolveOfflineQueueEnabled === 'function'
+        ? resolveOfflineQueueEnabled
+        : resolveOfflineQueueEnabledFromDocument;
+    let offlineQueueEnabled = resolveOfflineQueueEnabledFn();
+
+    function isOfflineQueueEnabled() {
+        return offlineQueueEnabled;
+    }
+
+    async function setOfflineQueueEnabled(enabled, { clearPrivateData = false } = {}) {
+        const normalizedEnabled = Boolean(enabled);
+        offlineQueueEnabled = normalizedEnabled;
+        setOfflineQueueEnabledMetaContent(normalizedEnabled);
+
+        await postMessageToServiceWorker({
+            type: 'SET_OFFLINE_QUEUE_PREFERENCE',
+            enabled: normalizedEnabled,
+        });
+
+        if (!normalizedEnabled || clearPrivateData) {
+            await Promise.all([
+                clearOfflineQueueStorage(),
+                postMessageToServiceWorker({
+                    type: 'CLEAR_PRIVATE_DATA',
+                }),
+            ]);
+        }
+    }
 
     async function triggerQueuedPostSync() {
+        if (!isOfflineQueueEnabled()) {
+            return false;
+        }
+
         if (!('serviceWorker' in navigator)) {
             return false;
         }
@@ -103,6 +172,8 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
     }
 
     function setupOfflinePostQueue() {
+        offlineQueueEnabled = resolveOfflineQueueEnabledFn();
+
         const postForms = document.querySelectorAll(OFFLINE_POST_FORM_SELECTOR);
 
         if (!postForms.length) {
@@ -121,6 +192,10 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
             form.dataset.offlineQueueBound = '1';
 
             form.addEventListener('submit', async (event) => {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 if (navigator.onLine) {
                     return;
                 }
@@ -149,6 +224,11 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
 
     function setupOnlineSyncTrigger() {
         window.addEventListener('online', async () => {
+            if (!isOfflineQueueEnabled()) {
+                await renderOfflineQueueStatusPanel();
+                return;
+            }
+
             const syncTriggered = await triggerQueuedPostSync();
 
             if (syncTriggered) {
@@ -156,6 +236,77 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
             }
 
             await renderOfflineQueueStatusPanel();
+        });
+    }
+
+    function setupOfflineQueuePreferenceToggle() {
+        const preferencesForm = document.querySelector(OFFLINE_QUEUE_PREFERENCE_FORM_SELECTOR);
+        const optOutToggle = document.querySelector(OFFLINE_QUEUE_PREFERENCE_TOGGLE_SELECTOR);
+
+        if (!(preferencesForm instanceof HTMLFormElement) || !(optOutToggle instanceof HTMLInputElement)) {
+            return;
+        }
+
+        if (optOutToggle.dataset.offlineQueuePreferenceBound === '1') {
+            return;
+        }
+
+        optOutToggle.dataset.offlineQueuePreferenceBound = '1';
+
+        optOutToggle.addEventListener('change', async () => {
+            const previousEnabled = isOfflineQueueEnabled();
+            const shouldDisableQueue = optOutToggle.checked;
+            const desiredEnabled = !shouldDisableQueue;
+
+            optOutToggle.disabled = true;
+
+            try {
+                const formData = new FormData(preferencesForm);
+                const response = await fetch(preferencesForm.action, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to persist offline queue preference (${response.status}).`);
+                }
+
+                let persistedEnabled = desiredEnabled;
+
+                try {
+                    const payload = await response.clone().json();
+                    persistedEnabled = Boolean(payload?.offline_queue_enabled ?? desiredEnabled);
+                } catch {
+                    persistedEnabled = desiredEnabled;
+                }
+
+                await setOfflineQueueEnabled(persistedEnabled, {
+                    clearPrivateData: !persistedEnabled,
+                });
+                await renderDeadLetterPanel();
+                await renderOfflineQueueStatusPanel();
+
+                if (persistedEnabled) {
+                    showSyncNotice('Offline-Queue ist aktiv. Ungesendete Briefe koennen lokal zwischengespeichert werden.', 'success');
+                    return;
+                }
+
+                showSyncNotice('Offline-Queue deaktiviert. Lokale Queue-Daten wurden geloescht.', 'warning');
+            } catch (error) {
+                console.error('Offline queue preference update failed:', error);
+                optOutToggle.checked = !previousEnabled;
+                setOfflineQueueEnabledMetaContent(previousEnabled);
+                showSyncNotice('Offline-Queue-Einstellung konnte nicht gespeichert werden.', 'error');
+            } finally {
+                offlineQueueEnabled = resolveOfflineQueueEnabledFn();
+                optOutToggle.disabled = false;
+            }
         });
     }
 
@@ -171,12 +322,26 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
                 return;
             }
 
+            if (data.type === 'PRIVATE_DATA_CLEARED') {
+                void renderDeadLetterPanel();
+                void renderOfflineQueueStatusPanel();
+                return;
+            }
+
             if (data.type === 'POST_SYNC_STARTED' || data.type === 'POST_SYNC_SUCCESS') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 void renderOfflineQueueStatusPanel();
                 return;
             }
 
             if (data.type === 'POST_SYNC_DEAD_LETTERED') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 const summary = String(data.payload?.errorSummary || 'Synchronisierung fehlgeschlagen.');
                 showSyncNotice(`Brief mit Zustellfehler im Entwurfsfach abgelegt: ${summary}`, 'warning');
                 void renderDeadLetterPanel();
@@ -185,11 +350,19 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
             }
 
             if (data.type === 'POST_SYNC_AUTH_RETRY') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 showSyncNotice('Siegel erneuert. Der Brief wird erneut auf den Weg gebracht.', 'warning');
                 return;
             }
 
             if (data.type === 'POST_SYNC_AUTH_REQUIRED') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 const retryHint = formatRetryHint(data.payload?.nextRetryAt);
                 showSyncNotice(`Briefzustellung pausiert (Anmeldung/CSRF). Naechster Versuch ${retryHint}.`, 'warning');
                 void renderOfflineQueueStatusPanel();
@@ -197,6 +370,10 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
             }
 
             if (data.type === 'POST_SYNC_RETRY_SCHEDULED') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 const status = Number(data.payload?.status || 0);
 
                 if (status === 401 || status === 419) {
@@ -216,6 +393,10 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
             }
 
             if (data.type === 'POST_SYNC_FINISHED') {
+                if (!isOfflineQueueEnabled()) {
+                    return;
+                }
+
                 const remaining = Number(data.payload?.remaining || 0);
 
                 if (remaining > 0) {
@@ -288,6 +469,12 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
         const panel = document.getElementById(OFFLINE_QUEUE_STATUS_PANEL_ID);
 
         if (!(panel instanceof HTMLElement)) {
+            return;
+        }
+
+        if (!isOfflineQueueEnabled()) {
+            panel.classList.add('hidden');
+            panel.innerHTML = '';
             return;
         }
 
@@ -368,6 +555,12 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
         const panel = document.getElementById(OFFLINE_DEAD_LETTER_PANEL_ID);
 
         if (!(panel instanceof HTMLElement)) {
+            return;
+        }
+
+        if (!isOfflineQueueEnabled()) {
+            panel.classList.add('hidden');
+            panel.innerHTML = '';
             return;
         }
 
@@ -701,6 +894,27 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
         });
     }
 
+    async function clearOfflineQueueStorage() {
+        if (!('indexedDB' in window) || typeof indexedDB.deleteDatabase !== 'function') {
+            return;
+        }
+
+        await new Promise((resolve) => {
+            let request;
+
+            try {
+                request = indexedDB.deleteDatabase(QUEUE_DB_NAME);
+            } catch {
+                resolve(undefined);
+                return;
+            }
+
+            request.onsuccess = () => resolve(undefined);
+            request.onerror = () => resolve(undefined);
+            request.onblocked = () => resolve(undefined);
+        });
+    }
+
     function formatRetryHint(nextRetryAt) {
         const retryTimestampMs = Date.parse(typeof nextRetryAt === 'string' ? nextRetryAt : '');
 
@@ -722,8 +936,10 @@ export function createQueueModule({ getActiveServiceWorkerRegistration }) {
         setupOfflinePostQueue,
         setupOnlineSyncTrigger,
         setupServiceWorkerMessageHandling,
+        setupOfflineQueuePreferenceToggle,
         renderDeadLetterPanel,
         renderOfflineQueueStatusPanel,
         triggerQueuedPostSync,
+        setOfflineQueueEnabled,
     };
 }

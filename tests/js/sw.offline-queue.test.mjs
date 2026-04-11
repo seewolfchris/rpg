@@ -161,6 +161,33 @@ test('syncQueuedPosts retries a 419 post after re-signing and clears queue', asy
     assertNoSensitiveFormKeys(submitRequests[1].body);
 });
 
+test('syncQueuedPosts is skipped when offline queue preference is disabled', async () => {
+    let fetchCalls = 0;
+
+    const harness = await createServiceWorkerHarness({
+        queueItems: [
+            createQueuedPost({
+                id: 6,
+                url: POSTS_URL,
+                source_url: SOURCE_URL,
+                source_path: SCENE_PATH,
+            }),
+        ],
+        fetchImpl: async () => {
+            fetchCalls += 1;
+            return new Response('ok', { status: 200 });
+        },
+    });
+
+    harness.context.isOfflineQueueEnabled = () => false;
+
+    await harness.context.syncQueuedPosts();
+
+    assert.equal(fetchCalls, 0);
+    assert.equal(harness.queue.length, 1);
+    assert.deepEqual(harness.eventTypes(), []);
+});
+
 test('syncQueuedPosts schedules retry and requests auth when re-signing requires login', async () => {
     const nowMs = Date.parse('2026-03-12T00:00:00.000Z');
     let submitAttempt = 0;

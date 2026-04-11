@@ -16,6 +16,22 @@ import {
     resolveStoredWorldSlugContext,
 } from './app/world-context';
 
+function resolveOfflineQueueEnabledFromDocument() {
+    const preferenceNode = document.querySelector('meta[name="offline-queue-enabled"]');
+
+    if (!(preferenceNode instanceof HTMLMetaElement)) {
+        return true;
+    }
+
+    const rawValue = String(preferenceNode.content || '').trim().toLowerCase();
+
+    if (rawValue === '0' || rawValue === 'false' || rawValue === 'off' || rawValue === 'no') {
+        return false;
+    }
+
+    return true;
+}
+
 window.characterSheetForm = characterSheetForm;
 
 if (window.Alpine) {
@@ -27,17 +43,21 @@ const serviceWorkerRuntime = createServiceWorkerRuntime({
     resolveActiveWorldSlug,
     resolveStoredWorldSlugContext,
     defaultWorldSlug: DEFAULT_WORLD_SLUG,
+    resolveOfflineQueueEnabled: resolveOfflineQueueEnabledFromDocument,
 });
 
 const {
     setupOfflinePostQueue,
     setupOnlineSyncTrigger,
     setupServiceWorkerMessageHandling,
+    setupOfflineQueuePreferenceToggle,
     renderDeadLetterPanel,
     renderOfflineQueueStatusPanel,
     triggerQueuedPostSync,
 } = createQueueModule({
     getActiveServiceWorkerRegistration: serviceWorkerRuntime.getActiveServiceWorkerRegistration,
+    postMessageToActiveServiceWorker: serviceWorkerRuntime.postMessageToActiveServiceWorker,
+    resolveOfflineQueueEnabled: resolveOfflineQueueEnabledFromDocument,
 });
 
 document.addEventListener('htmx:afterSwap', (event) => {
@@ -52,6 +72,7 @@ document.addEventListener('htmx:afterSwap', (event) => {
     setupAtmosphericParallax();
     setupPostEditorEnhancements();
     setupOfflinePostQueue();
+    setupOfflineQueuePreferenceToggle();
     void renderDeadLetterPanel();
     void renderOfflineQueueStatusPanel();
 });
@@ -65,6 +86,7 @@ const bootApplication = async () => {
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();
     setupServiceWorkerMessageHandling();
+    setupOfflineQueuePreferenceToggle();
     serviceWorkerRuntime.setupServiceWorkerLogoutCleanup();
     await enforcePrivateDataBoundaryOnAuthChange({
         postMessageToActiveServiceWorker: serviceWorkerRuntime.postMessageToActiveServiceWorker,
@@ -73,6 +95,7 @@ const bootApplication = async () => {
     await renderOfflineQueueStatusPanel();
 
     await serviceWorkerRuntime.registerServiceWorker();
+    await serviceWorkerRuntime.syncOfflineQueuePreference();
     await serviceWorkerRuntime.warmOfflineReadingCache();
     setupBrowserNotifications({
         getActiveServiceWorkerRegistration: serviceWorkerRuntime.getActiveServiceWorkerRegistration,
@@ -82,7 +105,7 @@ const bootApplication = async () => {
         getCsrfToken,
     });
 
-    if (navigator.onLine) {
+    if (navigator.onLine && resolveOfflineQueueEnabledFromDocument()) {
         await triggerQueuedPostSync();
     }
 };

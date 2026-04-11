@@ -71,6 +71,8 @@ Log-Hinweise:
 ## Offline-Post-Queue Schnellcheck
 Wenn Offline-Posts nicht synchronisiert werden:
 
+Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
+
 1. Browser-Konsole auf Service-Worker-Events prüfen (`POST_SYNC_*`).
 2. IndexedDB `chroniken-pbp` / Store `postQueue` prüfen (`retry_count`, `next_retry_at`, `last_error_status`).
 3. Sicherstellen, dass Queue-Eintraege keine sensiblen Keys enthalten (`_token`, `password`, `*_token`, `csrf*`).
@@ -110,6 +112,9 @@ php artisan test --without-tty --do-not-cache-result
 3. In Server-Logs nach `request_id` suchen und zusammenhängende Events prüfen.
 4. Prüfen, ob Moderation/Probe/Inventar-Ereignisse vollständig vorhanden sind.
 5. Falls Dateninkonsistenz: betroffene `post_id`, `scene_id`, `character_id` dokumentieren.
+
+## Browser-Kompromittierung / Geräte-Teilung
+Bei Incident ‚Browser-Kompromittierung‘ oder Verdacht auf Geräte-Teilung: User anweisen, im Browser ‚IndexedDB löschen‘ (Entwicklertools → Application → IndexedDB → chroniken-pbp) oder die Seite im Inkognito-Modus neu zu laden. Danach Logout erzwingen.
 
 ## Release Smoke
 Verwende das Skript:

@@ -1,4 +1,8 @@
 function runQueuedPostsSync() {
+    if (typeof isOfflineQueueEnabled === 'function' && !isOfflineQueueEnabled()) {
+        return Promise.resolve();
+    }
+
     if (activePostSyncPromise) {
         return activePostSyncPromise;
     }
@@ -11,6 +15,10 @@ function runQueuedPostsSync() {
 }
 
 async function syncQueuedPosts() {
+    if (typeof isOfflineQueueEnabled === 'function' && !isOfflineQueueEnabled()) {
+        return;
+    }
+
     const queuedPosts = (await getQueuedPosts()).sort((left, right) => Number(left.id || 0) - Number(right.id || 0));
 
     if (!queuedPosts.length) {

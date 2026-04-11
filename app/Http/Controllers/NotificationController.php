@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\SceneSubscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,17 +19,29 @@ class NotificationController extends Controller
     {
         $user = $this->authenticatedUser($request);
         $preferences = $user->resolvedNotificationPreferences();
+        $offlineQueueEnabled = $user->offlineQueueEnabled();
 
-        return view('notifications.preferences', compact('preferences'));
+        return view('notifications.preferences', compact('preferences', 'offlineQueueEnabled'));
     }
 
-    public function updatePreferences(UpdateNotificationPreferencesRequest $request): RedirectResponse
+    public function updatePreferences(UpdateNotificationPreferencesRequest $request): RedirectResponse|JsonResponse
     {
         $user = $this->authenticatedUser($request);
+        $offlineQueueEnabled = $request->offlineQueueEnabled();
+
         $user->forceFill([
             'notification_preferences' => $request->preferences(),
+            'offline_queue_enabled' => $offlineQueueEnabled,
         ]);
         $user->save();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Benachrichtigungspräferenzen gespeichert.',
+                'offline_queue_enabled' => $offlineQueueEnabled,
+            ]);
+        }
 
         return redirect()
             ->route('notifications.preferences')

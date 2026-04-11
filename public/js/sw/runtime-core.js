@@ -13,6 +13,7 @@ var RETRY_BASE_DELAY_MS = 30 * 1000;
 var RETRY_MAX_DELAY_MS = 15 * 60 * 1000;
 var RETRY_JITTER_RATIO = 0.2;
 var MAX_SERVER_RETRIES = 5;
+var OFFLINE_QUEUE_ENABLED = resolveOfflineQueuePreferenceFromQuery();
 
 var activePostSyncPromise = null;
 
@@ -68,6 +69,57 @@ function resolveDefaultWorldSlug() {
     }
 }
 
+function resolveOfflineQueuePreferenceFromQuery() {
+    try {
+        const parsed = new URL(self.location.href);
+        const rawPreference = parsed.searchParams.get('offline_queue');
+
+        if (rawPreference === null) {
+            return true;
+        }
+
+        return normalizeOfflineQueuePreference(rawPreference, true);
+    } catch {
+        return true;
+    }
+}
+
+function normalizeOfflineQueuePreference(value, fallbackValue = true) {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'number') {
+        return value !== 0;
+    }
+
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+
+        if (normalized === '1' || normalized === 'true' || normalized === 'on' || normalized === 'yes') {
+            return true;
+        }
+
+        if (normalized === '0' || normalized === 'false' || normalized === 'off' || normalized === 'no') {
+            return false;
+        }
+    }
+
+    return Boolean(fallbackValue);
+}
+
+function isOfflineQueueEnabled() {
+    return OFFLINE_QUEUE_ENABLED;
+}
+
+async function setOfflineQueuePreference(value) {
+    OFFLINE_QUEUE_ENABLED = normalizeOfflineQueuePreference(value, true);
+
+    if (!OFFLINE_QUEUE_ENABLED) {
+        await clearPrivateSessionData();
+    }
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
@@ -97,6 +149,11 @@ self.addEventListener('activate', (event) => {
                     .filter((key) => isManagedCacheKey(key) && !allowedCaches.includes(key))
                     .map((key) => caches.delete(key))
             ))
+            .then(async () => {
+                if (!isOfflineQueueEnabled()) {
+                    await clearPrivateSessionData();
+                }
+            })
             .then(() => self.clients.claim()),
     );
 });
@@ -177,6 +234,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (!isOfflineQueueEnabled() && isOfflineReadablePath(requestUrl.pathname)) {
+        event.respondWith(networkOnlyWithOfflineFallback(event.request));
+        return;
+    }
+
     if (event.request.mode === 'navigate') {
         if (isOfflineReadablePath(requestUrl.pathname)) {
             event.respondWith(networkFirst(event.request, PAGE_CACHE, true));
@@ -210,6 +272,10 @@ self.addEventListener('message', (event) => {
     }
 
     if (data.type === 'CACHE_URLS' && Array.isArray(data.urls)) {
+        if (!isOfflineQueueEnabled()) {
+            return;
+        }
+
         event.waitUntil(cacheProvidedUrls(data.urls));
         return;
     }
@@ -221,6 +287,11 @@ self.addEventListener('message', (event) => {
 
     if (data.type === 'CLEAR_PRIVATE_DATA') {
         event.waitUntil(clearPrivateSessionData());
+        return;
+    }
+
+    if (data.type === 'SET_OFFLINE_QUEUE_PREFERENCE') {
+        event.waitUntil(setOfflineQueuePreference(data.enabled));
     }
 });
 

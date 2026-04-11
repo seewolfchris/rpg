@@ -15,11 +15,46 @@
             </p>
         </div>
 
-        <form method="POST" action="{{ route('notifications.preferences.update') }}" class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <section class="rounded-2xl border border-amber-700/50 bg-amber-950/25 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-300/90">Datenschutz & Offline-Funktion</p>
+            <p class="text-sm leading-relaxed text-amber-100/95">
+                Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
+            </p>
+        </section>
+
+        <form
+            method="POST"
+            action="{{ route('notifications.preferences.update') }}"
+            class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8"
+            data-notification-preferences-form
+        >
             @csrf
             @method('PATCH')
 
             <div class="space-y-5">
+                <article class="rounded-xl border border-amber-700/50 bg-amber-950/20 p-4">
+                    <h2 class="font-heading text-lg text-stone-100">Offline-Queue</h2>
+                    <p class="mt-1 text-sm text-stone-300">
+                        Aktiviere diesen Schalter, wenn du auf diesem Geraet keine lokalen Offline-Entwuerfe speichern willst.
+                    </p>
+                    <div class="mt-3">
+                        <label class="inline-flex items-center gap-2 text-sm text-stone-100">
+                            <input
+                                type="checkbox"
+                                name="offline_queue_opt_out"
+                                value="1"
+                                @checked(! $offlineQueueEnabled)
+                                class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-400 focus:ring-amber-500/60"
+                                data-offline-queue-toggle
+                            >
+                            Offline-Queue deaktivieren
+                        </label>
+                    </div>
+                    <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-400">
+                        Schalter wird sofort gespeichert. Beim Deaktivieren werden lokale Queue-Daten sofort geloescht.
+                    </p>
+                </article>
+
                 <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                     <h2 class="font-heading text-lg text-stone-100">Moderationsstatus für eigene Posts</h2>
                     <p class="mt-1 text-sm text-stone-300">
