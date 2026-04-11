@@ -96,14 +96,26 @@ class WorldContextActivationGuardTest extends TestCase
 
     public function test_home_request_fails_fast_when_worlds_table_is_missing(): void
     {
-        Schema::shouldReceive('hasTable')
-            ->with('worlds')
-            ->andReturn(false);
+        $originalSchema = Schema::getFacadeRoot();
+
+        Schema::swap(new class
+        {
+            public function hasTable(string $table): bool
+            {
+                return false;
+            }
+        });
 
         $this->withoutExceptionHandling();
         $this->expectException(DefaultWorldConfigurationException::class);
         $this->expectExceptionMessage("the 'worlds' table is missing");
 
-        $this->get(route('home'));
+        try {
+            $this->get(route('home'));
+        } finally {
+            if ($originalSchema !== null) {
+                Schema::swap($originalSchema);
+            }
+        }
     }
 }

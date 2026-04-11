@@ -139,6 +139,18 @@ Optional ohne HTTP-Checks (z. B. CI/offline):
 SMOKE_MODE=artisan SMOKE_REPORT_OUT="docs/SMOKE-PASS-LOCAL.md" scripts/release_smoke.sh
 ```
 
+## Testflight-Seed für manuelle QA
+- Zweck: reproduzierbare QA-Kampagne mit definierter Rollen-/Einladungsmatrix.
+- Command:
+
+```bash
+php artisan dev:testflight:seed --world=<world-slug> --password='<starkes-passwort>'
+```
+
+- Ohne `--password` wird pro Lauf ein zufälliges Passwort generiert und im Output ausgegeben.
+- Der Command ist in `production` hart blockiert (kein Bypass).
+- Default-Campaign-Slug: `testflight-<world-slug>-qa` (Testflight-kennzeichnete Daten).
+
 ## Nach Deployment
 1. `scripts/release_smoke.sh` ausführen.
 2. Dashboard, Szene und GM-Moderation manuell öffnen.
