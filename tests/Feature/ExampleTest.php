@@ -17,6 +17,8 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200)
-            ->assertSeeText('C76-RPG');
+            ->assertSeeText('C76-RPG')
+            ->assertSeeText('Kriminalfälle')
+            ->assertDontSeeText('Kriminalfaelle');
     }
 }
