@@ -18,7 +18,7 @@
 - p95 delta vs baseline: `+17.57%`
 - Median latency: `0.244 ms`
 - P99 latency: `0.348 ms`
-- Reason: Regression ueber Fail-Schwelle.
+- Reason: Regression über Fail-Schwelle.
 
 ## Hint-Entscheidung
 - Hint-Entscheidung: `FORCE_INDEX=0`
@@ -29,6 +29,6 @@
 - P99-Proxy (p95): n/a ms (n/a% vom Vor) → Schwellen angepasst: <=105%
 
 ## Interpretation
-- `GRUEN`: Release kann ohne Performance-Sondermassnahmen weiterlaufen.
-- `GELB`: Release moeglich, aber Delta beobachten und bei Bedarf erneut messen.
+- `GRUEN`: Release kann ohne Performance-Sondermaßnahmen weiterlaufen.
+- `GELB`: Release möglich, aber Delta beobachten und bei Bedarf erneut messen.
 - `ROT`: Report-only Signal; Skript endet nur bei technischen Fehlern mit non-zero.

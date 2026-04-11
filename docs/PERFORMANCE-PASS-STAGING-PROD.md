@@ -10,7 +10,7 @@ Generated at (report): `2026-03-09T18:20:30+00:00`
 - Welt: `chroniken-der-asche` (`world_id=1`)
 - Samples: `scene_id=1`, `campaign_id=1`, `user_id=1`
 
-## Ausgefuehrter Command
+## Ausgeführter Command
 
 ```bash
 cd /var/www/vhosts/c76.org/rpg.c76.org
@@ -23,11 +23,11 @@ $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERF
   - nutzt `posts_scene_id_created_at_index` (`type=ref`)
 - `posts.latest_by_id`
   - nutzt `PRIMARY` (`type=index`, `Using where`)
-  - `posts_scene_id_id_idx` ist vorhanden, wurde im Sample-Plan aber nicht gewaehlt
+  - `posts_scene_id_id_idx` ist vorhanden, wurde im Sample-Plan aber nicht gewählt
 - `scene_subscriptions.dashboard`
   - nutzt `scene_sub_user_updated_idx` (`type=ref`, `Using index`)
 - `scene_subscriptions.unread_count`
-  - laeuft jetzt mit `EXISTS`-Strategie
+  - läuft jetzt mit `EXISTS`-Strategie
   - `posts`-Teil nutzt Indexzugriff (`FirstMatch(c)`)
   - kein `Using temporary; Using filesort` im Plan sichtbar
 - `campaign_invitations.inbox_status_specific`
@@ -41,12 +41,12 @@ $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERF
 
 ## Fazit
 - Hotpath-Indexabdeckung auf Prod ist insgesamt gut.
-- Kein kritischer Full-Scan in den geprueften Hauptpfaden sichtbar.
+- Kein kritischer Full-Scan in den geprüften Hauptpfaden sichtbar.
 - Die zuvor offene `unread_count`-Optimierung ist erfolgreich abgeschlossen.
 
-## Naechste technische Optimierung (optional)
-1. `posts.latest_by_id` bei steigender Datenmenge erneut beobachten (MySQL waehlt aktuell `PRIMARY` statt `posts_scene_id_id_idx`).
-2. Bei Lastanstieg optional Query-Varianten fuer `latest_by_id` benchmarken und dokumentieren.
+## Nächste technische Optimierung (optional)
+1. `posts.latest_by_id` bei steigender Datenmenge erneut beobachten (MySQL wählt aktuell `PRIMARY` statt `posts_scene_id_id_idx`).
+2. Bei Lastanstieg optional Query-Varianten für `latest_by_id` benchmarken und dokumentieren.
 
 ## Zusatzlauf: `posts.latest_by_id` Benchmark (Prod, 2026-03-09)
 - Separater Benchmark-Report:

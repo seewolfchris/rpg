@@ -1,16 +1,16 @@
 # Grundregeln
 
 Ich komme in die Szene, atme sie ein, und setze einen klaren Impuls.  
-Nicht die Textmenge traegt das Spiel, sondern der Moment, an dem jemand reagieren will.
+Nicht die Textmenge trägt das Spiel, sondern der Moment, an dem jemand reagieren will.
 
 ## 1. Spielfluss
 
 Wir spielen asynchron. Das ist kein Warten, das ist Takt.  
-Ich lese sauber nach, hoere den Unterton, und schreibe so, dass der naechste Zug moeglich wird.
+Ich lese sauber nach, höre den Unterton, und schreibe so, dass der nächste Zug möglich wird.
 
 Wenn ich poste, passiert etwas Konkretes.  
-Ich lasse Raum fuer Antwort.  
-Ich schiebe die Szene vorwaerts.
+Ich lasse Raum für Antwort.  
+Ich schiebe die Szene vorwärts.
 
 ## 2. IC und OOC
 
@@ -23,33 +23,33 @@ Ich schreibe zum Beispiel:
 
 Und wenn ich kurz raus muss:
 
-> OOC: Ich antworte spaet. Springt bitte nicht ueber meine Figur.
+> OOC: Ich antworte spät. Springt bitte nicht über meine Figur.
 
-Ich entscheide nie fuer fremde Figuren.  
-Ich zerreisse IC nicht mit Meta-Saetzen mitten im Absatz.
+Ich entscheide nie für fremde Figuren.  
+Ich zerreisse IC nicht mit Meta-Sätzen mitten im Absatz.
 
 ## 3. Prozentproben (d100)
 
 Proben sind Scharniere. Kein Dauerrauschen.
 
-Proben werden nur durch GM oder Co-GM ausgeloest.  
+Proben werden nur durch GM oder Co-GM ausgelöst.  
 Wenn eine Probe startet, nennt die Spielleitung Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator im selben Impuls.  
-Ich schreibe keine eigenen Wuerfelergebnisse als Fakten in die Szene.
+Ich schreibe keine eigenen Würfelergebnisse als Fakten in die Szene.
 
 Die Rechnung bleibt klar: `(Wurf + Modifikator) <= Zielwert`.  
-Dann zaehlt nicht nur, ob es klappt. Dann zaehlt, was es mit uns macht.
+Dann zählt nicht nur, ob es klappt. Dann zählt, was es mit uns macht.
 
 ## 4. Moderation
 
-Moderation schuetzt Ton und Tempo, nicht Eitelkeit.  
+Moderation schützt Ton und Tempo, nicht Eitelkeit.  
 Ein Beitrag steht kurz auf `pending`, dann auf `approved` oder `rejected`.
 
 `rejected` ist kein Ende.  
-Es ist der zweite Anlauf, diesmal mit mehr Praezision.
+Es ist der zweite Anlauf, diesmal mit mehr Präzision.
 
 ## 5. Safety und Fair Play
 
 Ich spiele hart in der Szene und sauber im Umgang.  
 Ich markiere Trigger sichtbar.  
 Ich respektiere Grenzen ohne Diskussion im Feuer.  
-OOC-Konflikte klaeren wir OOC, ruhig und direkt.
+OOC-Konflikte klären wir OOC, ruhig und direkt.

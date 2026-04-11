@@ -2,7 +2,7 @@
 
 ## Scope
 - Fokus-Tabellen: `posts`, `scene_subscriptions`, `campaign_invitations`
-- Ziel: Index-Nutzung fuer Kernabfragen sichtbar validieren (`EXPLAIN QUERY PLAN`)
+- Ziel: Index-Nutzung für Kernabfragen sichtbar validieren (`EXPLAIN QUERY PLAN`)
 - Umgebung: lokale SQLite-DB (`database/database.sqlite`) nach allen aktuellen Migrationen
 
 ## Umgesetzte Optimierungen
@@ -29,16 +29,16 @@
   - weiterhin Temp-Sort erwartbar (fachlogisch bedingt durch Priorisierung)
 
 ## Bewertung
-- Hotpaths sind indexseitig fuer die wichtigsten Standardabfragen abgedeckt.
-- Kein offensichtlicher Full-Scan auf den geprueften Kernabfragen.
+- Hotpaths sind indexseitig für die wichtigsten Standardabfragen abgedeckt.
+- Kein offensichtlicher Full-Scan auf den geprüften Kernabfragen.
 - Restthema: `status=all`-Inbox-Sortierung bleibt bewusst sortierintensiv.
 
 ## Offene Nacharbeit (Staging/Prod)
-- Staging/Prod-Lauf ueber neuen Artisan-Command ausfuehren und Report speichern:
+- Staging/Prod-Lauf über neuen Artisan-Command ausführen und Report speichern:
   - `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
-- Bei Bedarf separates Materialized-/Denormalized-Sortfeld fuer `status=all` pruefen.
+- Bei Bedarf separates Materialized-/Denormalized-Sortfeld für `status=all` prüfen.
 
-## Umsetzungshilfe fuer Plesk (MariaDB/MySQL)
+## Umsetzungshilfe für Plesk (MariaDB/MySQL)
 Auf dem Server im Projektverzeichnis:
 
 ```bash
@@ -47,7 +47,7 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php
 $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md
 ```
 
-Danach Report pruefen:
+Danach Report prüfen:
 
 ```bash
 cat docs/PERFORMANCE-PASS-STAGING-PROD.md

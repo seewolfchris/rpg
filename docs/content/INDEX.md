@@ -2,7 +2,7 @@
 
 Stand: 2026-04-02
 
-Dieses Verzeichnis ist die Quelle fuer spielbaren Inhalt.  
+Dieses Verzeichnis ist die Quelle für spielbaren Inhalt.  
 Nicht in Blade-Strings pflegen. Hier pflegen.
 
 ## Global

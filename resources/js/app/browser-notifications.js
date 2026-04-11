@@ -120,7 +120,7 @@ function updateBrowserNotificationStatus() {
         statusMessage = 'Web-Push ist serverseitig nicht konfiguriert (VAPID-Key fehlt).';
         disableEnableButton = true;
     } else if (Notification.permission === 'granted') {
-        statusMessage = 'Browser-Push ist aktiv und mit diesem Geraet verknuepft.';
+        statusMessage = 'Browser-Push ist aktiv und mit diesem Gerät verknüpft.';
         disableEnableButton = true;
         enableButtonLabel = 'Browser-Push aktiv';
     } else if (Notification.permission === 'denied') {
@@ -155,7 +155,7 @@ async function requestBrowserNotificationPermission() {
     }
 
     if (!supportsWebPush()) {
-        showSyncNotice('Browser-Benachrichtigungen werden auf diesem Geraet nicht unterstuetzt.', 'warning');
+        showSyncNotice('Browser-Benachrichtigungen werden auf diesem Gerät nicht unterstützt.', 'warning');
         updateBrowserNotificationStatus();
         return;
     }

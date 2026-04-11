@@ -10,7 +10,7 @@
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Enzyklopädie je Welt</h1>
             <p class="mt-4 max-w-4xl text-base leading-relaxed text-[#cccccc] sm:text-lg">
-                Weltwissen ist strikt getrennt. Waehle zuerst eine Welt, um ihre Enzyklopädie zu öffnen.
+                Weltwissen ist strikt getrennt. Wähle zuerst eine Welt, um ihre Enzyklopädie zu öffnen.
             </p>
         </header>
 

@@ -1,14 +1,14 @@
 # Bildstruktur Chroniken der Asche
 
-Diese Ordner sind Platzhalter fuer Weltbilder und Lore-Illustrationen.
+Diese Ordner sind Platzhalter für Weltbilder und Lore-Illustrationen.
 
 ## Ordner
 
-- `overview/` fuer Weltstimmung und Leitmotiv
-- `zeitalter/` fuer Epochenbilder
-- `machtbloecke/` fuer Fraktionen und Zeichen
-- `regionen/` fuer Ortsstimmung
-- `kernausdruecke/` fuer Symbol- und Konzeptbilder
+- `overview/` für Weltstimmung und Leitmotiv
+- `zeitalter/` für Epochenbilder
+- `machtbloecke/` für Fraktionen und Zeichen
+- `regionen/` für Ortsstimmung
+- `kernausdruecke/` für Symbol- und Konzeptbilder
 
 ## Alt-Text-Regel (hart)
 
@@ -16,7 +16,7 @@ Jedes Bild bekommt einen Alt-Text, der Motiv und Stimmung nennt.
 Nicht nur "Bild" oder Dateiname wiederholen.
 
 Beispiel gut:  
-"Nachtwache auf einer verbrannten Salzstrasse, roter Himmel, drei erschopfte Grenzreiter."
+"Nachtwache auf einer verbrannten Salzstraße, roter Himmel, drei erschöpfte Grenzreiter."
 
 Beispiel schlecht:  
 "Aschelande Bild 1"

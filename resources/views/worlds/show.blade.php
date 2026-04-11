@@ -12,7 +12,7 @@
             <p class="mt-3 break-words text-base leading-relaxed text-amber-200 sm:text-lg">{{ $world->tagline }}</p>
         @endif
         <p class="mt-3 max-w-4xl break-words text-sm leading-relaxed text-stone-300 sm:text-base">
-            {{ $world->description ?: 'Fuer diese Welt ist noch keine Detailbeschreibung hinterlegt.' }}
+            {{ $world->description ?: 'Für diese Welt ist noch keine Detailbeschreibung hinterlegt.' }}
         </p>
 
         <div class="mt-6 flex flex-wrap gap-2 sm:gap-3">

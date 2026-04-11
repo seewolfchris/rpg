@@ -35,8 +35,8 @@ class WorldFactory extends Factory
         return $this->state(fn (): array => [
             'name' => 'Chroniken der Asche',
             'slug' => 'chroniken-der-asche',
-            'tagline' => 'Duestere Fantasy in den Aschelanden.',
-            'description' => 'Die Standardwelt fuer bestehende Kampagnen und Inhalte.',
+            'tagline' => 'Düstere Fantasy in den Aschelanden.',
+            'description' => 'Die Standardwelt für bestehende Kampagnen und Inhalte.',
             'is_active' => true,
             'position' => 10,
         ]);

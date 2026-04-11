@@ -8,7 +8,7 @@
             <p class="text-xs uppercase tracking-[0.14em] text-amber-300">E2E Harness</p>
             <h1 class="mt-2 font-heading text-2xl text-stone-100">Offline Queue & Retry</h1>
             <p class="mt-2 text-sm text-stone-300">
-                Diese Seite existiert nur fuer lokale/testing E2E-Flows (Offline-Queue, Re-Signing, Privacy-Boundary).
+                Diese Seite existiert nur für lokale/testing E2E-Flows (Offline-Queue, Re-Signing, Privacy-Boundary).
             </p>
         </header>
 
@@ -43,7 +43,7 @@
                         name="content"
                         rows="6"
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100"
-                        placeholder="Nachricht fuer Offline-Queue schreiben"
+                        placeholder="Nachricht für Offline-Queue schreiben"
                         required
                     ></textarea>
                 </label>

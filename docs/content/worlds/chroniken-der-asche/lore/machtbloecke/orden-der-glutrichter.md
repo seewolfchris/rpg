@@ -11,16 +11,16 @@ Wenn Glutrichter kommen, wird es still.
 Nicht weil man sie liebt.  
 Weil man ihre Protokolle und ihre Bleizungen kennt.
 
-Der Orden behauptet, er schuetzt die Welt vor dem zweiten Aschenfall.  
-Er meint damit Kontrolle: ueber Rituale, ueber Schwuere, ueber Abweichung.
+Der Orden behauptet, er schützt die Welt vor dem zweiten Aschenfall.  
+Er meint damit Kontrolle: über Rituale, über Schwüre, über Abweichung.
 
 ## Wie sie handeln
 
 Sie schreiben alles auf.  
-Sie naehen Aussagen in die Schwurnahtprotokolle.  
-Sie faellen Urteile oft im Drei-Funken-Ritus: drei Fragen, drei Antworten, ein Urteil.
+Sie nähen Aussagen in die Schwurnahtprotokolle.  
+Sie fällen Urteile oft im Drei-Funken-Ritus: drei Fragen, drei Antworten, ein Urteil.
 
-Im Feld riechen sie nach Wachsoel und bitterem Weihrauch.  
+Im Feld riechen sie nach Wachsöl und bitterem Weihrauch.  
 Im Gericht sprechen zuerst die Bleizungen, dann der Richter.  
 Im Zweifel verhalten sie sich wie ein Staat im Staat.
 
@@ -30,5 +30,5 @@ Wenn eine Blutpforte flackert, rufst du nicht den Dichter.
 Du rufst jemanden mit kalten Haenden und klarer Kette.
 
 Selbst ihre Gegner wissen:  
-Ohne Glutrichter waere manches Tal laengst verloren.  
+Ohne Glutrichter wäre manches Tal längst verloren.  
 Mit Glutrichtern geht manches Menschliche schneller verloren.

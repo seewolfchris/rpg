@@ -31,15 +31,15 @@ return new class extends Migration
             [
                 'name' => 'Chroniken der Asche',
                 'slug' => 'chroniken-der-asche',
-                'tagline' => 'Duestere Fantasy in den Aschelanden.',
-                'description' => 'Die etablierte Dark-Fantasy-Welt mit Fokus auf Intrige und Ueberleben.',
+                'tagline' => 'Düstere Fantasy in den Aschelanden.',
+                'description' => 'Die etablierte Dark-Fantasy-Welt mit Fokus auf Intrige und Überleben.',
                 'is_active' => true,
                 'position' => 10,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
-                'name' => 'Kriminalfaelle',
+                'name' => 'Kriminalfälle',
                 'slug' => 'kriminalfaelle',
                 'tagline' => 'Ermittlungen, Spuren und graue Wahrheiten.',
                 'description' => 'Moderne oder historische Krimi-Settings mit Ermittlungsfokus.',

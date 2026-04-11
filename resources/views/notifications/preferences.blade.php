@@ -11,7 +11,7 @@
                 Lege fest, welche Ereignisse in der App und per E-Mail gemeldet werden.
             </p>
             <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
-                Browser-Push nutzt Web Push (VAPID) und benoetigt eine erlaubte Notification-Permission.
+                Browser-Push nutzt Web Push (VAPID) und benötigt eine erlaubte Notification-Permission.
             </p>
         </div>
 
@@ -35,7 +35,7 @@
                 <article class="rounded-xl border border-amber-700/50 bg-amber-950/20 p-4">
                     <h2 class="font-heading text-lg text-stone-100">Offline-Queue</h2>
                     <p class="mt-1 text-sm text-stone-300">
-                        Aktiviere diesen Schalter, wenn du auf diesem Geraet keine lokalen Offline-Entwuerfe speichern willst.
+                        Aktiviere diesen Schalter, wenn du auf diesem Gerät keine lokalen Offline-Entwürfe speichern willst.
                     </p>
                     <div class="mt-3">
                         <label class="inline-flex items-center gap-2 text-sm text-stone-100">
@@ -51,7 +51,7 @@
                         </label>
                     </div>
                     <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-400">
-                        Schalter wird sofort gespeichert. Beim Deaktivieren werden lokale Queue-Daten sofort geloescht.
+                        Schalter wird sofort gespeichert. Beim Deaktivieren werden lokale Queue-Daten sofort gelöscht.
                     </p>
                 </article>
 

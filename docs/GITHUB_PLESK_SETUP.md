@@ -43,7 +43,7 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 
 Dieses Script liegt im Repo und macht:
 - `composer install --no-dev`
-- prüft `APP_KEY` (fail-fast bei fehlendem/ungueltigem Key)
+- prüft `APP_KEY` (fail-fast bei fehlendem/ungültigem Key)
 - prüft `QUEUE_CONNECTION` (fail-fast bei `sync`)
 - `php artisan migrate --force`
 - `php artisan storage:link`
@@ -69,7 +69,7 @@ DB_USERNAME=DEIN_DB_USER
 DB_PASSWORD=DEIN_DB_PASS
 ```
 
-Zusatzwerte fuer Web Push (aktiv seit `v0.20-beta`):
+Zusatzwerte für Web Push (aktiv seit `v0.20-beta`):
 
 ```env
 VAPID_SUBJECT=mailto:noreply@deine-domain.tld
@@ -77,7 +77,7 @@ VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 ```
 
-Wichtig fuer Retry-Jobs in Produktion:
+Wichtig für Retry-Jobs in Produktion:
 
 ```env
 QUEUE_CONNECTION=redis
@@ -134,7 +134,7 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php artisan queue:work --queue=default --tries=4 
 
 ## 9) Wichtiger PHP-Hinweis (Plesk)
 
-- Das Projekt-Lockfile benoetigt PHP-CLI `>= 8.5`.
+- Das Projekt-Lockfile benötigt PHP-CLI `>= 8.5`.
 - Wenn der Server default `php` noch 8.3 ist, nutze in der Deploy Action:
 
 ```bash

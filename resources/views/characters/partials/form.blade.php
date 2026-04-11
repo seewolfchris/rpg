@@ -32,7 +32,7 @@
         if ($legacySpeciesKey !== '' && ! array_key_exists($legacySpeciesKey, (array) data_get($sheet, 'species', []))) {
             $sheet['species'][$legacySpeciesKey] = [
                 'label' => 'Legacy: '.str_replace('_', ' ', ucfirst($legacySpeciesKey)),
-                'description' => 'Diese Spezies ist in der Welt nicht mehr aktiv, bleibt fuer diesen bestehenden Charakter aber gueltig.',
+                'description' => 'Diese Spezies ist in der Welt nicht mehr aktiv, bleibt für diesen bestehenden Charakter aber gültig.',
                 'modifiers' => [],
                 'le_bonus' => 0,
                 'ae_bonus' => 0,
@@ -42,7 +42,7 @@
         if ($legacyCallingKey !== '' && ! array_key_exists($legacyCallingKey, (array) data_get($sheet, 'callings', []))) {
             $sheet['callings'][$legacyCallingKey] = [
                 'label' => 'Legacy: '.str_replace('_', ' ', ucfirst($legacyCallingKey)),
-                'description' => 'Diese Berufung ist in der Welt nicht mehr aktiv, bleibt fuer diesen bestehenden Charakter aber gueltig.',
+                'description' => 'Diese Berufung ist in der Welt nicht mehr aktiv, bleibt für diesen bestehenden Charakter aber gültig.',
                 'minimums' => [],
                 'bonuses' => ['attributes' => []],
                 'custom' => false,

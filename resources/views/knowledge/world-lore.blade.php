@@ -6,9 +6,9 @@
     @php
         $loreCategories = [
             'zeitalter' => 'Zeitalter',
-            'machtbloecke' => 'Machtbloecke',
+            'machtbloecke' => 'Machtblöcke',
             'regionen' => 'Regionen',
-            'kernausdruecke' => 'Kernausdruecke',
+            'kernausdruecke' => 'Kernausdrücke',
         ];
     @endphp
 

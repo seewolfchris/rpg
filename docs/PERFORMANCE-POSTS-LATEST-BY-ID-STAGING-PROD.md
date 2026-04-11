@@ -11,7 +11,7 @@ Generated at (report): `2026-03-09T22:05:27+00:00`
 - Iterationen je Szenario: `400`
 - Sample-Scene: `scene_id=1`
 
-## Ausgefuehrter Command
+## Ausgeführter Command
 
 ```bash
 cd /var/www/vhosts/c76.org/rpg.c76.org
@@ -53,12 +53,11 @@ SELECT id FROM posts FORCE INDEX (posts_scene_id_id_idx) WHERE scene_id = ? ORDE
 - `FORCE INDEX` ist im Sample messbar schneller:
   - avg: ca. `12%` besser (`0.179` -> `0.157` ms)
   - p95: ca. `19%` besser (`0.241` -> `0.195` ms)
-- Kein akuter Handlungsdruck, aber klarer Hinweis, dass `posts_scene_id_id_idx` fuer diesen Hotpath effizienter ist.
+- Kein akuter Handlungsdruck, aber klarer Hinweis, dass `posts_scene_id_id_idx` für diesen Hotpath effizienter ist.
 
 ## Empfehlung
-1. Zunaechst ohne Query-Hint produktiv lassen (Stabilitaet).
+1. Zunächst ohne Query-Hint produktiv lassen (Stabilität).
 2. Bei wachsender Datenmenge oder Lastspitzen:
    - A/B-Messung mit realem Traffic wiederholen.
-   - Optional MySQL-spezifischen Query-Hint fuer diesen einen Hotpath pruefen.
-3. Benchmark bei groesseren Datenupdates erneut laufen lassen und Delta dokumentieren.
-
+   - Optional MySQL-spezifischen Query-Hint für diesen einen Hotpath prüfen.
+3. Benchmark bei größeren Datenupdates erneut laufen lassen und Delta dokumentieren.

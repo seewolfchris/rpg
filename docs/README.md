@@ -1,11 +1,11 @@
-# Docs-Uebersicht
+# Docs-Übersicht
 
 Stand: 2026-04-10
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
 - Planung/Statusachsen: `../ROADMAP.md`
-- Release-Flow + Qualitaetsgates: `RELEASE-CHECKLISTE.md`
+- Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
 - Architekturentscheidungen: `adr/*`
 
@@ -18,18 +18,18 @@ Stand: 2026-04-10
 - `GITHUB_PLESK_SETUP.md`
 - `adr/*`
 
-## Generierte Reports (regelmaessig aufraeumen)
+## Generierte Reports (regelmäßig aufräumen)
 - Perf latest/delta: `PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md`
 - Perf gate latest: `PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`
 - Perf staging/prod snapshot: `PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
-- Datierte Perf-Laeufe: `PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`
+- Datierte Perf-Läufe: `PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`
 - Smoke snapshots: `SMOKE-PASS-*.md`
 
-## Aufraeumregel (praktisch)
+## Aufräumregel (praktisch)
 1. `LATEST` und `GATE-LATEST` immer behalten.
-2. Bei datierten Perf-Laeufen mindestens behalten:
+2. Bei datierten Perf-Läufen mindestens behalten:
    - den letzten Lauf
    - die Baseline, auf die `LATEST` aktuell verweist.
-3. Aeltere datierte Reports entweder loeschen oder in einen Archivpfad verschieben.
-4. Bei inhaltlichen Aenderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
-5. Bei CI-Workflow-Aenderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `PLESK_DEPLOYMENT_FUER_ANFAENGER.md` synchronisieren.
+3. Ältere datierte Reports entweder löschen oder in einen Archivpfad verschieben.
+4. Bei inhaltlichen Änderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
+5. Bei CI-Workflow-Änderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `PLESK_DEPLOYMENT_FUER_ANFAENGER.md` synchronisieren.

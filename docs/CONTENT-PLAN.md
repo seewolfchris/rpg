@@ -5,35 +5,35 @@ Stand: 2026-04-04 (v0.28-beta)
 ## 1. Projekt-Definition (kurz, spielbar)
 
 C76-RPG ist ein asynchrones Play-by-Post-RPG mit Multi-World-Struktur und klarem Immersions-Fokus.  
-Das Kernsystem ist ein d100-Light-Ansatz: Proben sind seltene, gezielte Scharniere und werden durch GM/Co-GM ausgeloest.  
+Das Kernsystem ist ein d100-Light-Ansatz: Proben sind seltene, gezielte Scharniere und werden durch GM/Co-GM ausgelöst.  
 Der Spielfluss lebt von Szene, Reaktion, Konsequenz statt von Zahlenverwaltung.
 
 ## 2. Zielgruppen & Inhalts-Bedarf
 
-### 2.1 Anfaenger
+### 2.1 Anfänger
 
 Brauchen einen klaren Einstieg ohne Regelwand:
 
 - Charakter erstellen (minimal spielbar).
 - Erste Szene posten (IC/OOC sauber trennen).
 - Verstehen, wie Proben und Moderation wirklich laufen.
-- Kurz wissen, was Abkuerzungen bedeuten.
+- Kurz wissen, was Abkürzungen bedeuten.
 
 ### 2.2 Fortgeschrittene / GM
 
 Brauchen operative Tiefe:
 
-- Kampagnenfuehrung im asynchronen Tempo.
+- Kampagnenführung im asynchronen Tempo.
 - Probe-Trigger, Modifikatoren, Konsequenzspiel.
 - Moderations-Workflows (`pending`, `approved`, `rejected`).
-- Strukturierte Pflege von Enzyklopaedie-Inhalten je Welt.
+- Strukturierte Pflege von Enzyklopädie-Inhalten je Welt.
 
 ### 2.3 Allgemein
 
-Pflicht-Content fuer Nutzbarkeit:
+Pflicht-Content für Nutzbarkeit:
 
 - Globales Regelwerk (spielbar, knapp, eindeutig).
-- Glossar + Abkuerzungen.
+- Glossar + Abkürzungen.
 - Weltbeschreibungen und Lore-Bloecke.
 - Ein Beginner-Guide, der wirklich in die erste Szene bringt.
 
@@ -53,12 +53,12 @@ Phase 1 bleibt bewusst schlank:
   - `grundregeln.md`
   - `glossar.md`
   - `abkuerzungen.md`
-- `KnowledgeController::rules()` laedt diese Dateien direkt.
+- `KnowledgeController::rules()` lädt diese Dateien direkt.
 - `rules.blade.php` rendert nur noch HTML aus Markdown.
 
-### 3.3 Enzyklopaedie fuer Lore
+### 3.3 Enzyklopädie für Lore
 
-Die Enzyklopaedie bleibt in Phase 1 unveraendert als bestehender Lore-Kanal.  
+Die Enzyklopädie bleibt in Phase 1 unverändert als bestehender Lore-Kanal.  
 Markdown->DB-Sync kommt erst in Phase 2, wenn Lore-Dateien stabil und testbar strukturiert sind.
 
 ### 3.4 Tracking
@@ -66,11 +66,11 @@ Markdown->DB-Sync kommt erst in Phase 2, wenn Lore-Dateien stabil und testbar st
 - `docs/CONTENT-PLAN.md` bleibt die verbindliche Leitdatei.
 - `docs/CONTENT-STATUS.md` (folgt) trackt Status pro Artefakt (todo/in progress/done/review).
 
-## 4. Priorisierter Umsetzungs-Plan (Phasen mit Aufwand & Abhaengigkeiten)
+## 4. Priorisierter Umsetzungs-Plan (Phasen mit Aufwand & Abhängigkeiten)
 
 ### Phase 1 (2-3 PT, strikt schlank)
 
-Glossar + Grundregeln + Abkuerzungen (DE-first), aus genau drei festen Markdown-Dateien
+Glossar + Grundregeln + Abkürzungen (DE-first), aus genau drei festen Markdown-Dateien
 in `/wissen/regelwerk` rendern.
 
 Harte Grenzen in Phase 1:
@@ -79,7 +79,7 @@ Harte Grenzen in Phase 1:
 - kein Frontmatter-Parsing im Runtime-Read
 - keine neue Repository-Klasse
 
-Abhaengigkeiten:
+Abhängigkeiten:
 
 - keine
 
@@ -87,19 +87,19 @@ Abnahme:
 
 - `/wissen/regelwerk` zeigt Markdown-Inhalte.
 - Keine harten Regeltexte mehr in `rules.blade.php`.
-- Bestehende Knowledge-Tests bleiben gruen (oder kontrolliert angepasst).
+- Bestehende Knowledge-Tests bleiben grün (oder kontrolliert angepasst).
 
 ### Phase 2 (4-6 PT)
 
-Weltlore fuer `chroniken-der-asche` konsolidieren, Markdown-Quelle definieren und erst dann Sync bauen.
+Weltlore für `chroniken-der-asche` konsolidieren, Markdown-Quelle definieren und erst dann Sync bauen.
 
 Abnahme:
 
 - Lore-Dateien strukturiert unter `docs/content/worlds/chroniken-der-asche/lore/`.
-- `content:sync` v1 einsatzfaehig.
-- Enzyklopaedie-Tests laufen fixture-basiert statt seed-implizit.
+- `content:sync` v1 einsatzfähig.
+- Enzyklopädie-Tests laufen fixture-basiert statt seed-implizit.
 
-### Pflicht-Schritt vor echter Lore-Sync-Einfuehrung (Seed-Migrations-Bereinigung)
+### Pflicht-Schritt vor echter Lore-Sync-Einführung (Seed-Migrations-Bereinigung)
 
 Hart:
 
@@ -110,7 +110,7 @@ Konkrete Schritte:
 1. Seed-Lore-Migrations inventarisieren (Dateiliste + Slugliste).
 2. Test-Fixture von Seed-Inhalten entkoppeln (eigene Testdaten statt impliziter Migrationstexte).
 3. Legacy-Lore per gezielter Cleanup-Migration oder One-Off-Skript aus DB entfernen/deaktivieren.
-4. Danach erst Markdown->DB-Sync fuer Lore aktivieren.
+4. Danach erst Markdown->DB-Sync für Lore aktivieren.
 
 Inventar (aktuell):
 
@@ -123,9 +123,9 @@ Inventar (aktuell):
 - `2026_03_06_123000_add_weapons_armor_relics_lore_entries.php`
 - `2026_03_06_133000_add_hero_archetypes_lore_entries.php`
 
-Brutale Realitaet:
+Brutale Realität:
 
-- Wenn du Seed-Lore jetzt sofort hart entfernst, brechen Enzyklopaedie-Feature-Tests ohne Ersatz-Fixture.
+- Wenn du Seed-Lore jetzt sofort hart entfernst, brechen Enzyklopädie-Feature-Tests ohne Ersatz-Fixture.
 
 ### Phase 3 (2-3 PT)
 
@@ -147,15 +147,15 @@ Integration ins Wissenszentrum mit besserer visueller Aufbereitung (Cards, Bilde
 1. Inhalte in Markdown pflegen, nicht in Blade-Strings.
 2. Globales Wissen und Weltlore klar trennen.
 3. Keine versteckten Content-Quellen in Migrations.
-4. Jede groessere Inhaltsaenderung bekommt Release-Bezug (z. B. `v0.26`).
-5. DE-first, konsistente Begriffe ueber alle Seiten.
+4. Jede größere Inhaltsänderung bekommt Release-Bezug (z. B. `v0.26`).
+5. DE-first, konsistente Begriffe über alle Seiten.
 6. Bilder nur mit Alt-Text.
-7. Keine neuen content-lastigen DB-Migrations fuer laufende Redaktion.
+7. Keine neuen content-lastigen DB-Migrations für laufende Redaktion.
 
 ### 5.2 Immersions-Stil-Guide (hart)
 
-1. Kurze, atmosphaerische Saetze.
-2. Ich-Perspektive, wo sie den Lesefluss staerkt.
+1. Kurze, atmosphärische Saetze.
+2. Ich-Perspektive, wo sie den Lesefluss stärkt.
 3. Keine trockene Verwaltungssprache.
 4. Keine Formulierungen wie "Der Spieler wuerfelt ...".
 5. Stattdessen handlungsnah: "Du setzt an ...", "Der GM loest die Probe aus ...".
@@ -164,7 +164,7 @@ Integration ins Wissenszentrum mit besserer visueller Aufbereitung (Cards, Bilde
 
 ### 5.3 Markdown->DB-Sync Spezifikation (erst Phase 2)
 
-Datei-Kontrakt fuer Weltlore:
+Datei-Kontrakt für Weltlore:
 
 - Pfad: `docs/content/worlds/{world-slug}/lore/**.md`
 - Frontmatter-Mindestfelder:
@@ -185,7 +185,7 @@ Geplante Verarbeitung (Phase 2):
 
 1. Markdown-Dateien einlesen.
 2. Frontmatter validieren.
-3. Markdown via `Str::markdown()` in rendertes Content-HTML ueberfuehren.
-4. In Kategorien/Eintraege upserten.
+3. Markdown via `Str::markdown()` in rendertes Content-HTML überführen.
+4. In Kategorien/Einträge upserten.
 5. Bei `--dry-run` nur Diff/Statistik ausgeben.
 6. Bei `--force` Konfliktchecks lockern (trotzdem loggen).

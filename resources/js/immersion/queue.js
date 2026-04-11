@@ -207,12 +207,12 @@ export function createQueueModule({
                     form.reset();
                     await renderOfflineQueueStatusPanel();
 
-                    showSyncNotice('Brief in Vorbereitung: Der Beitrag wartet auf den naechsten Online-Moment.', 'success');
+                    showSyncNotice('Brief in Vorbereitung: Der Beitrag wartet auf den nächsten Online-Moment.', 'success');
 
                     const syncTriggered = await triggerQueuedPostSync();
 
                     if (!syncTriggered) {
-                        showSyncNotice('Kein Background Sync verfuegbar. Der Brief wird beim naechsten Besuch versendet.', 'warning');
+                        showSyncNotice('Kein Background Sync verfügbar. Der Brief wird beim nächsten Besuch versendet.', 'warning');
                     }
                 } catch (error) {
                     console.error('Offline post queue failed:', error);
@@ -293,11 +293,11 @@ export function createQueueModule({
                 await renderOfflineQueueStatusPanel();
 
                 if (persistedEnabled) {
-                    showSyncNotice('Offline-Queue ist aktiv. Ungesendete Briefe koennen lokal zwischengespeichert werden.', 'success');
+                    showSyncNotice('Offline-Queue ist aktiv. Ungesendete Briefe können lokal zwischengespeichert werden.', 'success');
                     return;
                 }
 
-                showSyncNotice('Offline-Queue deaktiviert. Lokale Queue-Daten wurden geloescht.', 'warning');
+                showSyncNotice('Offline-Queue deaktiviert. Lokale Queue-Daten wurden gelöscht.', 'warning');
             } catch (error) {
                 console.error('Offline queue preference update failed:', error);
                 optOutToggle.checked = !previousEnabled;
@@ -364,7 +364,7 @@ export function createQueueModule({
                 }
 
                 const retryHint = formatRetryHint(data.payload?.nextRetryAt);
-                showSyncNotice(`Briefzustellung pausiert (Anmeldung/CSRF). Naechster Versuch ${retryHint}.`, 'warning');
+                showSyncNotice(`Briefzustellung pausiert (Anmeldung/CSRF). Nächster Versuch ${retryHint}.`, 'warning');
                 void renderOfflineQueueStatusPanel();
                 return;
             }
@@ -383,11 +383,11 @@ export function createQueueModule({
                 const retryHint = formatRetryHint(data.payload?.nextRetryAt);
 
                 if (status === 429) {
-                    showSyncNotice(`Botengrenze erreicht. Naechster Zustellversuch ${retryHint}.`, 'warning');
+                    showSyncNotice(`Botengrenze erreicht. Nächster Zustellversuch ${retryHint}.`, 'warning');
                     return;
                 }
 
-                showSyncNotice(`Briefzustellung pausiert. Naechster Versuch ${retryHint}.`, 'warning');
+                showSyncNotice(`Briefzustellung pausiert. Nächster Versuch ${retryHint}.`, 'warning');
                 void renderOfflineQueueStatusPanel();
                 return;
             }
@@ -508,7 +508,7 @@ export function createQueueModule({
         const detail = document.createElement('p');
         detail.className = 'mt-2 text-sm text-stone-300';
         detail.textContent = navigator.onLine
-            ? 'Die Verbindung steht. Der naechste Sync bringt die Briefe auf den Weg.'
+            ? 'Die Verbindung steht. Der nächste Sync bringt die Briefe auf den Weg.'
             : 'Keine Verbindung. Die Briefe bleiben sicher im Reisebeutel.';
         panel.appendChild(detail);
 
@@ -646,14 +646,14 @@ export function createQueueModule({
         const editor = document.querySelector(OFFLINE_POST_CONTENT_SELECTOR);
 
         if (!(editor instanceof HTMLTextAreaElement)) {
-            showSyncNotice('Kein Schreibfeld gefunden. Oeffne zuerst den Editor.', 'warning');
+            showSyncNotice('Kein Schreibfeld gefunden. Öffne zuerst den Editor.', 'warning');
             return;
         }
 
         const incomingContent = extractQueuedPostContent(deadLetter.entries);
 
         if (!hasEditorContent(incomingContent)) {
-            showSyncNotice('Dieser Brief enthaelt keinen Textinhalt.', 'warning');
+            showSyncNotice('Dieser Brief enthält keinen Textinhalt.', 'warning');
             return;
         }
 
@@ -676,11 +676,11 @@ export function createQueueModule({
         await renderOfflineQueueStatusPanel();
 
         if (mergeMode === DEAD_LETTER_MERGE_APPEND) {
-            showSyncNotice('Brief wurde an den bestehenden Entwurf angehaengt.', 'success');
+            showSyncNotice('Brief wurde an den bestehenden Entwurf angehängt.', 'success');
             return;
         }
 
-        showSyncNotice('Brief wurde in das Schreibfeld uebernommen.', 'success');
+        showSyncNotice('Brief wurde in das Schreibfeld übernommen.', 'success');
     }
 
     function promptDeadLetterMergeMode() {
@@ -708,13 +708,13 @@ export function createQueueModule({
             const title = document.createElement('p');
             title.id = 'dead-letter-merge-title';
             title.className = 'font-semibold text-stone-100';
-            title.textContent = 'Schreibfeld enthaelt bereits Text';
+            title.textContent = 'Schreibfeld enthält bereits Text';
             dialog.appendChild(title);
 
             const description = document.createElement('p');
             description.id = 'dead-letter-merge-description';
             description.className = 'mt-2 text-sm text-stone-300';
-            description.textContent = 'Wie soll der Brief uebernommen werden?';
+            description.textContent = 'Wie soll der Brief übernommen werden?';
             dialog.appendChild(description);
 
             const actions = document.createElement('div');
@@ -724,7 +724,7 @@ export function createQueueModule({
             const appendButton = document.createElement('button');
             appendButton.type = 'button';
             appendButton.className = 'rounded-md border border-emerald-600/70 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-100';
-            appendButton.textContent = 'Anhaengen (Empfohlen)';
+            appendButton.textContent = 'Anhängen (Empfohlen)';
             actions.appendChild(appendButton);
 
             const replaceButton = document.createElement('button');

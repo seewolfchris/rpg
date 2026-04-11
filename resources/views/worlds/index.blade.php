@@ -2,7 +2,7 @@
 
 @section('title', 'Welten | C76-RPG')
 
-@section('meta_description', 'Waehle eine Spielwelt fuer Kampagnen, Szenen und Wissen in C76-RPG.')
+@section('meta_description', 'Wähle eine Spielwelt für Kampagnen, Szenen und Wissen in C76-RPG.')
 
 @section('content')
     <section class="ui-card p-6 sm:p-8">
