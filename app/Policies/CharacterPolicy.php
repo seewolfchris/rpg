@@ -93,7 +93,7 @@ class CharacterPolicy
                 return (int) $routeWorldId;
             }
 
-            $worldSlug = trim((string) $request->session()?->get('world_slug', ''));
+            $worldSlug = trim((string) $request->session()->get('world_slug', ''));
 
             if ($worldSlug !== '') {
                 $resolvedWorldId = (int) World::query()
