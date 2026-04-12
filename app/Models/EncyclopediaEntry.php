@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EncyclopediaEntry extends Model
 {
@@ -14,7 +15,11 @@ class EncyclopediaEntry extends Model
 
     public const STATUS_DRAFT = 'draft';
 
+    public const STATUS_PENDING = 'pending';
+
     public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_REJECTED = 'rejected';
 
     public const STATUS_ARCHIVED = 'archived';
 
@@ -33,6 +38,8 @@ class EncyclopediaEntry extends Model
         'published_at',
         'created_by',
         'updated_by',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     /**
@@ -44,6 +51,7 @@ class EncyclopediaEntry extends Model
             'position' => 'integer',
             'published_at' => 'datetime',
             'game_relevance' => 'array',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -69,6 +77,22 @@ class EncyclopediaEntry extends Model
     public function editor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * @return HasMany<EncyclopediaEntryRevision, $this>
+     */
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(EncyclopediaEntryRevision::class)->orderByDesc('created_at');
     }
 
     /**

@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Übersicht
 
-Stand: 2026-04-10  
+Stand: 2026-04-12  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -25,7 +25,7 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-fähig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.28-beta`**.
+- Laufende Versionslinie: **`v0.29-beta`**.
 - Verifikation lokal (letzter Lauf):
   - `php artisan test` -> **377 passed, 7 skipped, 2170 assertions** (2026-04-10)
   - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-10)
@@ -48,7 +48,7 @@ Repository-Branch: `main`
 | GM-Proben + Persistenz | Stabil | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
 | Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation |
 | Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
-| Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + GM/Admin-Redaktion |
+| Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + GM/Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
 | PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
 | Domänen-Invarianten + Retry-Resilienz | Stabil | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry für Notification-Fehler |

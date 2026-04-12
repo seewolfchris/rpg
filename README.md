@@ -42,9 +42,10 @@ Source of Truth je Thema:
 
 ## Beta-Status
 
-Stand: **Release-Beta `v0.28-beta`** (funktional, getestet, build-fähig)
+Stand: **Release-Beta `v0.29-beta`** (funktional, getestet, build-fähig)
 
 Changelog:
+- v0.29-beta (2026-04-12): Enzyklopädie-Workflow PR-1 umgesetzt: Community-Vorschläge als `pending`, Review für `gm/admin` und weltbezogene `co_gm`, schlanke Entry-Revision-Snapshots bei Proposal-Updates, neue Vorschlag-/Moderationsrouten und minimale Workflow-Views; öffentlicher Enzyklopädiepfad bleibt strikt `published`-only.
 - v0.28-beta (2026-04-10): Security-Hardening für Offline-Queue und Preview abgeschlossen (keine sensiblen Keys in Queue-Payload, Same-Origin-POST-Zwang, transientes CSRF-Re-Signing, clientseitig gehärtete Preview-Sanitization), Character-World-Scope gegen Cross-World-Umbuchung abgesichert und Header-/Request-Id-Härtung nachgezogen.
 - v0.28-beta (2026-04-04): Release-Welle A/B/C abgeschlossen mit produktkonformen Composer-Metadaten (`c76/rpg`), zentraler Security-Header-Middleware, modularem Auth-Routing ohne Vertragsdrift, Architektur-Guardrails, MySQL-Critical-Gates, standardisiertem Domain-Event-Logging und Doku-Konsolidierung.
 - v0.27-beta (2026-04-03): Hardening-Nachzug mit konsolidiertem `CampaignParticipantResolver` entlang Requests/Domain-Services, gehärteten Post-/World-Invarianten (inkl. Default-Welt-Löschschutz), atomarem Invite-Upsert (`1062`-Fallback) und separatem CI-MySQL-Concurrency-Job.

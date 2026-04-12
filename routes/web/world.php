@@ -4,6 +4,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
+use App\Http\Controllers\EncyclopediaWorkflowController;
 use App\Http\Controllers\GmModerationController;
 use App\Http\Controllers\GmProgressionController;
 use App\Http\Controllers\KnowledgeEncyclopediaController;
@@ -163,6 +164,35 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
             ->withoutScopedBindings()
             ->middleware('throttle:writes')
             ->name('posts.reactions.destroy');
+
+        Route::get('/wissen/enzyklopaedie/vorschlagen', [EncyclopediaWorkflowController::class, 'createProposal'])
+            ->name('knowledge.encyclopedia.proposals.create');
+
+        Route::post('/wissen/enzyklopaedie/vorschlagen', [EncyclopediaWorkflowController::class, 'storeProposal'])
+            ->middleware('throttle:writes')
+            ->name('knowledge.encyclopedia.proposals.store');
+
+        Route::get('/wissen/enzyklopaedie/vorschlagen/{encyclopediaEntry}/bearbeiten', [EncyclopediaWorkflowController::class, 'editProposal'])
+            ->withoutScopedBindings()
+            ->name('knowledge.encyclopedia.proposals.edit');
+
+        Route::put('/wissen/enzyklopaedie/vorschlagen/{encyclopediaEntry}/bearbeiten', [EncyclopediaWorkflowController::class, 'updateProposal'])
+            ->withoutScopedBindings()
+            ->middleware('throttle:writes')
+            ->name('knowledge.encyclopedia.proposals.update');
+
+        Route::get('/wissen/enzyklopaedie/moderation', [EncyclopediaWorkflowController::class, 'moderationIndex'])
+            ->name('knowledge.encyclopedia.moderation.index');
+
+        Route::patch('/wissen/enzyklopaedie/moderation/{encyclopediaEntry}/freigeben', [EncyclopediaWorkflowController::class, 'approve'])
+            ->withoutScopedBindings()
+            ->middleware('throttle:moderation')
+            ->name('knowledge.encyclopedia.moderation.approve');
+
+        Route::patch('/wissen/enzyklopaedie/moderation/{encyclopediaEntry}/ablehnen', [EncyclopediaWorkflowController::class, 'reject'])
+            ->withoutScopedBindings()
+            ->middleware('throttle:moderation')
+            ->name('knowledge.encyclopedia.moderation.reject');
 
         Route::get('/gm/moderation', [GmModerationController::class, 'index'])
             ->name('gm.moderation.index');
