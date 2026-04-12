@@ -2,6 +2,13 @@
 
 use Illuminate\Support\Str;
 
+$sessionSecureCookie = env('SESSION_SECURE_COOKIE');
+$defaultSecureCookie = in_array(
+    strtolower((string) env('APP_ENV', 'production')),
+    ['prod', 'production'],
+    true
+);
+
 return [
 
     /*
@@ -169,7 +176,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => $sessionSecureCookie !== null
+        ? $sessionSecureCookie
+        : ($defaultSecureCookie ? true : null),
 
     /*
     |--------------------------------------------------------------------------

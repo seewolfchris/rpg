@@ -16,6 +16,16 @@ class ApplyWorldContext
 {
     private ?bool $hasWorldsTable = null;
 
+    /**
+     * @var array<string, bool>
+     */
+    private array $activeWorldSlugExistsCache = [];
+
+    /**
+     * @var array<string, bool>
+     */
+    private array $worldSlugExistsCache = [];
+
     public function handle(Request $request, Closure $next): Response
     {
         $this->ensureWorldsTableConfigured();
@@ -27,6 +37,7 @@ class ApplyWorldContext
         $routeHasWorldParameter = $route?->hasParameter('world') ?? false;
 
         $slug = null;
+        $resolvedSlug = null;
 
         if ($routeWorld instanceof World) {
             if (! $allowsInactiveWorld && ! (bool) $routeWorld->is_active) {
@@ -34,6 +45,7 @@ class ApplyWorldContext
             }
 
             $slug = $routeWorld->slug;
+            $resolvedSlug = $slug;
         } elseif (is_string($routeWorld) && $routeWorld !== '') {
             $slug = $routeWorld;
         } elseif ($request->hasSession()) {
@@ -43,13 +55,25 @@ class ApplyWorldContext
                 : null;
         }
 
-        if (! $allowsInactiveWorld && $routeHasWorldParameter && $slug !== null && ! $this->activeWorldSlugExists($slug)) {
-            abort(404);
+        if (
+            $resolvedSlug === null
+            && ! $allowsInactiveWorld
+            && $routeHasWorldParameter
+            && is_string($slug)
+            && $slug !== ''
+        ) {
+            if (! $this->activeWorldSlugExists($slug)) {
+                abort(404);
+            }
+
+            $resolvedSlug = $slug;
         }
 
-        $resolvedSlug = $allowsInactiveWorld
-            ? $this->resolveAnyWorldSlug($slug)
-            : $this->resolveActiveWorldSlug($slug);
+        if (! is_string($resolvedSlug) || $resolvedSlug === '') {
+            $resolvedSlug = $allowsInactiveWorld
+                ? $this->resolveAnyWorldSlug($slug)
+                : $this->resolveActiveWorldSlug($slug);
+        }
 
         if ($request->hasSession()) {
             $request->session()->put('world_slug', $resolvedSlug);
@@ -100,17 +124,33 @@ class ApplyWorldContext
 
     private function activeWorldSlugExists(string $slug): bool
     {
-        return World::query()
+        if (array_key_exists($slug, $this->activeWorldSlugExistsCache)) {
+            return $this->activeWorldSlugExistsCache[$slug];
+        }
+
+        $exists = World::query()
             ->where('slug', $slug)
             ->where('is_active', true)
             ->exists();
+
+        $this->activeWorldSlugExistsCache[$slug] = $exists;
+
+        return $exists;
     }
 
     private function worldSlugExists(string $slug): bool
     {
-        return World::query()
+        if (array_key_exists($slug, $this->worldSlugExistsCache)) {
+            return $this->worldSlugExistsCache[$slug];
+        }
+
+        $exists = World::query()
             ->where('slug', $slug)
             ->exists();
+
+        $this->worldSlugExistsCache[$slug] = $exists;
+
+        return $exists;
     }
 
     private function ensureWorldsTableConfigured(): void

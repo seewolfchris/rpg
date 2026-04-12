@@ -1,6 +1,7 @@
 import { readLocalStorageValue, writeLocalStorageValue } from '../immersion/utils';
 
 const AUTH_USER_BOUNDARY_META_SELECTOR = 'meta[name="auth-user-id"]';
+const AUTH_SESSION_BOUNDARY_META_SELECTOR = 'meta[name="auth-session-boundary"]';
 const AUTH_USER_BOUNDARY_STORAGE_KEY = 'c76:auth-user-boundary';
 const PRIVATE_PAGE_CACHE_PREFIX = 'chroniken-pages-';
 const PRIVATE_CONTENT_CACHE_PREFIX = 'chroniken-content-';
@@ -22,15 +23,22 @@ export async function enforcePrivateDataBoundaryOnAuthChange({ postMessageToActi
 }
 
 function resolveCurrentAuthBoundary() {
-    const boundaryMeta = document.querySelector(AUTH_USER_BOUNDARY_META_SELECTOR);
+    const userBoundary = resolveBoundaryMetaContent(AUTH_USER_BOUNDARY_META_SELECTOR, 'guest');
+    const sessionBoundary = resolveBoundaryMetaContent(AUTH_SESSION_BOUNDARY_META_SELECTOR, 'session-unknown');
+
+    return `${userBoundary}|${sessionBoundary}`;
+}
+
+function resolveBoundaryMetaContent(selector, fallbackValue) {
+    const boundaryMeta = document.querySelector(selector);
 
     if (!(boundaryMeta instanceof HTMLMetaElement)) {
-        return 'guest';
+        return fallbackValue;
     }
 
     const value = String(boundaryMeta.content || '').trim();
 
-    return value !== '' ? value : 'guest';
+    return value !== '' ? value : fallbackValue;
 }
 
 async function clearPrivateOfflineData({ postMessageToActiveServiceWorker } = {}) {

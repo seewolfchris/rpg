@@ -108,8 +108,11 @@ class StorePostRequest extends FormRequest
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
                 : null;
+            $user = $this->user();
+            $canModerate = $user
+                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
 
-            if ($postType === 'ooc' && ! $scene->allow_ooc) {
+            if ($postType === 'ooc' && ! $scene->allow_ooc && ! $canModerate) {
                 $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
 
@@ -131,10 +134,6 @@ class StorePostRequest extends FormRequest
                     $validator->errors()->add('character_id', 'Der gewählte Charakter gehört nicht zur Welt dieser Kampagne.');
                 }
             }
-
-            $user = $this->user();
-            $canModerate = $user
-                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
 
             $probeEnabled = (bool) $this->boolean('probe_enabled');
             $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');

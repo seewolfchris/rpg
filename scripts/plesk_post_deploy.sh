@@ -26,6 +26,13 @@ read_env_var_from_dotenv() {
   printf '%s\n' "$value"
 }
 
+is_falsy_env() {
+  local value
+  value="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+
+  [[ "$value" == "0" || "$value" == "false" || "$value" == "no" || "$value" == "off" ]]
+}
+
 # Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
 PHP_BIN="${PHP_BIN:-}"
 if [[ -z "$PHP_BIN" ]]; then
@@ -101,7 +108,7 @@ if [[ -z "$app_key" || "$app_key" != base64:* ]]; then
   exit 1
 fi
 
-echo "[6/10] Queue-Preflight prüfen..."
+echo "[6/10] Queue- und Security-Preflight prüfen..."
 queue_connection="$(read_env_var_from_dotenv "QUEUE_CONNECTION")"
 if [[ -z "$queue_connection" ]]; then
   echo "ERROR: QUEUE_CONNECTION fehlt in .env."
@@ -112,6 +119,37 @@ if [[ "$queue_connection" == "sync" ]]; then
   echo "ERROR: QUEUE_CONNECTION=sync ist fuer Produktion nicht zulaessig."
   echo "Setze QUEUE_CONNECTION=database und betreibe queue:work."
   exit 1
+fi
+
+queue_after_commit="$(read_env_var_from_dotenv "QUEUE_AFTER_COMMIT")"
+if is_falsy_env "$queue_after_commit"; then
+  echo "ERROR: QUEUE_AFTER_COMMIT ist explizit deaktiviert."
+  echo "Setze QUEUE_AFTER_COMMIT=true (commit-sicheres Queue-Dispatching)."
+  exit 1
+fi
+
+app_env="$(read_env_var_from_dotenv "APP_ENV")"
+if [[ "${app_env,,}" == "production" ]]; then
+  session_secure_cookie="$(read_env_var_from_dotenv "SESSION_SECURE_COOKIE")"
+  if is_falsy_env "$session_secure_cookie"; then
+    echo "ERROR: SESSION_SECURE_COOKIE ist in Produktion deaktiviert."
+    echo "Setze SESSION_SECURE_COOKIE=true (oder entferne den Key fuer sicheren Fallback)."
+    exit 1
+  fi
+
+  trusted_proxies="$(read_env_var_from_dotenv "TRUSTED_PROXIES")"
+  if [[ -z "$trusted_proxies" ]]; then
+    echo "ERROR: TRUSTED_PROXIES fehlt in Produktion."
+    echo "Setze TRUSTED_PROXIES auf Proxy-IP(s)/CIDR (oder '*' nur bei voll vertrauenswuerdiger Proxy-Kette)."
+    exit 1
+  fi
+
+  hsts_max_age="$(read_env_var_from_dotenv "SECURITY_HSTS_MAX_AGE")"
+  if [[ -n "$hsts_max_age" && "$hsts_max_age" =~ ^[0-9]+$ && "$hsts_max_age" -le 0 ]]; then
+    echo "ERROR: SECURITY_HSTS_MAX_AGE ist in Produktion <= 0."
+    echo "Setze SECURITY_HSTS_MAX_AGE auf einen positiven Wert (z. B. 31536000)."
+    exit 1
+  fi
 fi
 
 echo "[7/10] Datenbank migrieren..."

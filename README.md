@@ -18,6 +18,7 @@ Wichtige Regeln:
 - Version muss dem Format `vX.Y`, `vX.Y-beta` oder `vX.Y-rcN` entsprechen.
 - `--world <slug>` ist Pflicht für echte Perf-Läufe (wenn weder `--dry-run` noch `--skip-perf` gesetzt ist).
 - Perf-Enforce ist standardmäßig aktiv für stabile Tags (`vX.Y`) und aus für `-beta`/`-rcN`; überschreibbar per `--enforce-perf` bzw. `--no-enforce-perf`.
+- Produktions-Defaults vor Deploy hart pruefen: `SESSION_SECURE_COOKIE`, `QUEUE_AFTER_COMMIT`, `TRUSTED_PROXIES`, `SECURITY_HSTS_MAX_AGE`.
 - Perf-Gate schreibt immer `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 - Mit `--archive` wird zusätzlich ein UTC-Archiv geschrieben:
   - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-YYYYMMDDTHHMMSSZ.md`

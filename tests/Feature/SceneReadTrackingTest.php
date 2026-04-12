@@ -241,6 +241,54 @@ class SceneReadTrackingTest extends TestCase
         $response->assertSee('page=2#post-'.$readCheckpointPost->id, false);
     }
 
+    public function test_author_post_updates_existing_subscription_read_pointer_without_changing_mute_state(): void
+    {
+        [$campaign, $scene, $owner] = $this->seedCampaignAndScene();
+
+        $existingPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $owner->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'Bereits vorhandener OOC-Post.',
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $owner->id,
+            'is_muted' => true,
+            'last_read_post_id' => $existingPost->id,
+            'last_read_at' => now()->subHour(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ooc',
+                'character_id' => null,
+                'content_format' => 'plain',
+                'content' => 'Neuer eigener OOC-Post aktualisiert den Lesestand.',
+            ])
+            ->assertRedirect();
+
+        $newestPostId = (int) Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $owner->id)
+            ->max('id');
+
+        $subscription = SceneSubscription::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $owner->id)
+            ->firstOrFail();
+
+        $this->assertSame($newestPostId, (int) $subscription->last_read_post_id);
+        $this->assertTrue((bool) $subscription->is_muted);
+        $this->assertNotNull($subscription->last_read_at);
+    }
+
     /**
      * @return array{0: Campaign, 1: Scene, 2: User}
      */

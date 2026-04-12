@@ -42,8 +42,9 @@ class SceneSubscriptionController extends Controller
             ? (string) $request->query('status', 'all')
             : 'all';
         $search = trim((string) $request->query('q', ''));
+        $visibleCampaignIds = $this->visibleCampaignIdsForUserInWorld($user, $world);
 
-        $baseQuery = $this->visibleSubscriptionsQuery($user, $world);
+        $baseQuery = $this->visibleSubscriptionsQuery($user, $visibleCampaignIds);
 
         $subscriptionsQuery = (clone $baseQuery)
             ->with([
@@ -60,9 +61,14 @@ class SceneSubscriptionController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $totalCount = (clone $baseQuery)->count();
-        $activeCount = (clone $baseQuery)->where('is_muted', false)->count();
-        $mutedCount = (clone $baseQuery)->where('is_muted', true)->count();
+        $counts = (clone $baseQuery)
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw('SUM(CASE WHEN is_muted = 0 THEN 1 ELSE 0 END) as active_count')
+            ->selectRaw('SUM(CASE WHEN is_muted = 1 THEN 1 ELSE 0 END) as muted_count')
+            ->first();
+        $totalCount = (int) ($counts?->total_count ?? 0);
+        $activeCount = (int) ($counts?->active_count ?? 0);
+        $mutedCount = (int) ($counts?->muted_count ?? 0);
         $unreadCount = $this->unreadCountForUser((int) $user->id, $world);
 
         return view('scene-subscriptions.index', compact(
@@ -200,16 +206,29 @@ class SceneSubscriptionController extends Controller
     /**
      * @return Builder<SceneSubscription>
      */
-    private function visibleSubscriptionsQuery(User $user, World $world): Builder
+    private function visibleSubscriptionsQuery(User $user, array $visibleCampaignIds): Builder
     {
         return SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
-                $campaignQuery->whereIn('id', Campaign::query()
-                    ->visibleTo($user)
-                    ->where('world_id', (int) $world->id)
-                    ->select('id'));
+            ->whereHas('scene', function (Builder $sceneQuery) use ($visibleCampaignIds): void {
+                $sceneQuery->whereIn('campaign_id', $visibleCampaignIds);
             });
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function visibleCampaignIdsForUserInWorld(User $user, World $world): array
+    {
+        /** @var list<int> $campaignIds */
+        $campaignIds = Campaign::query()
+            ->visibleTo($user)
+            ->where('world_id', (int) $world->id)
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        return $campaignIds;
     }
 
     private function threadFeedFragment(

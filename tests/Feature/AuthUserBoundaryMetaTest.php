@@ -16,6 +16,7 @@ class AuthUserBoundaryMetaTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<meta name="auth-user-id" content="guest">', false);
+        $response->assertSee('<meta name="auth-session-boundary" content="', false);
     }
 
     public function test_authenticated_pages_expose_user_specific_auth_boundary_meta(): void
@@ -26,6 +27,6 @@ class AuthUserBoundaryMetaTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<meta name="auth-user-id" content="'.$user->id.'">', false);
+        $response->assertSee('<meta name="auth-session-boundary" content="', false);
     }
 }
-

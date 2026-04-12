@@ -4,6 +4,19 @@
 Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden Betrieb.
 Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 
+## Verbindliche Produktions-Defaults (Security/Betrieb)
+- `SESSION_SECURE_COOKIE=true` (alternativ Key entfernen, dann greift produktiver Secure-Fallback).
+- `QUEUE_AFTER_COMMIT=true` fuer commit-sicheres Dispatching asynchroner Jobs.
+- `TRUSTED_PROXIES=<proxy-ip/cidr,...>` (oder `*` nur bei voll vertrauenswuerdiger Proxy-Kette).
+- `SECURITY_HSTS_MAX_AGE > 0` (empfohlen `31536000`).
+
+Schnellcheck auf dem Zielhost:
+
+```bash
+cd /var/www/vhosts/c76.org/rpg.c76.org
+grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
+```
+
 ## Korrelation und Logs
 - Jede Web-Response enthält `X-Request-Id`.
 - Strukturierte Domänen-Logs schreiben Ereignisse mit `request_id`.
@@ -53,6 +66,7 @@ Wenn Szenen-/Mention-Benachrichtigungen ausfallen:
 
 0. `.env` prüfen:
    - `QUEUE_CONNECTION=redis` (nicht `sync`)
+   - `QUEUE_AFTER_COMMIT=true`
    - `CACHE_STORE=redis`
    - `SESSION_DRIVER=database` (optional `redis`, falls Session-Layer dafür stabil betrieben wird)
 1. Queue-Worker prüfen (redis-queue):

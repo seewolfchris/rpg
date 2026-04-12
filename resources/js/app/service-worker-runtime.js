@@ -6,6 +6,7 @@ export function createServiceWorkerRuntime({
     resolveStoredWorldSlugContext,
     defaultWorldSlug,
     resolveOfflineQueueEnabled,
+    resolveAuthBoundaryKey,
 } = {}) {
     const resolveActiveWorldSlugFn = typeof resolveActiveWorldSlug === 'function'
         ? resolveActiveWorldSlug
@@ -19,6 +20,9 @@ export function createServiceWorkerRuntime({
     const resolveOfflineQueueEnabledFn = typeof resolveOfflineQueueEnabled === 'function'
         ? resolveOfflineQueueEnabled
         : () => true;
+    const resolveAuthBoundaryKeyFn = typeof resolveAuthBoundaryKey === 'function'
+        ? resolveAuthBoundaryKey
+        : () => 'guest|session-unknown';
 
     let swRegistration = null;
 
@@ -35,7 +39,10 @@ export function createServiceWorkerRuntime({
                 || fallbackWorldSlug
             );
             const offlineQueue = resolveOfflineQueueEnabledFn() ? '1' : '0';
-            const registration = await navigator.serviceWorker.register(`/sw.js?v=${versionTag}&world=${worldSlug}&offline_queue=${offlineQueue}`);
+            const authBoundary = encodeURIComponent(resolveAuthBoundaryKeyFn());
+            const registration = await navigator.serviceWorker.register(
+                `/sw.js?v=${versionTag}&world=${worldSlug}&offline_queue=${offlineQueue}&boundary=${authBoundary}`
+            );
             const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
 
             if (readyRegistration) {

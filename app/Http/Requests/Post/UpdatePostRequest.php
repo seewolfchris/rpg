@@ -64,7 +64,11 @@ class UpdatePostRequest extends FormRequest
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
                 : null;
-            if ($postType === 'ooc' && ! $scene->allow_ooc && ! $this->user()?->isGmOrAdmin()) {
+            $user = $this->user();
+            $canModerate = $user
+                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
+
+            if ($postType === 'ooc' && ! $scene->allow_ooc && ! $canModerate) {
                 $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
 

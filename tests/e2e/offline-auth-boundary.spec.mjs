@@ -10,9 +10,10 @@ test('offline fallback page resolves world and source path context', async ({ pa
 test('auth boundary change clears private caches and offline queue database', async ({ page }) => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
+    await expect(page.locator('meta[name="auth-session-boundary"]')).toHaveAttribute('content', /.+/);
 
     await page.evaluate(async () => {
-        localStorage.setItem('c76:auth-user-boundary', 'user-42');
+        localStorage.setItem('c76:auth-user-boundary', 'guest|stale-session-boundary');
 
         const pageCache = await caches.open('chroniken-pages-e2e-private');
         await pageCache.put('/_e2e/private-page-probe', new Response('private-page'));

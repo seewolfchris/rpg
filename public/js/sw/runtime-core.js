@@ -1,7 +1,8 @@
 var CACHE_VERSION_TAG = resolveCacheVersionTag();
+var AUTH_BOUNDARY_TAG = resolveAuthBoundaryTag();
 var STATIC_CACHE = `chroniken-static-${CACHE_VERSION_TAG}`;
-var PAGE_CACHE = `chroniken-pages-${CACHE_VERSION_TAG}`;
-var CONTENT_CACHE = `chroniken-content-${CACHE_VERSION_TAG}`;
+var PAGE_CACHE = `chroniken-pages-${CACHE_VERSION_TAG}-${AUTH_BOUNDARY_TAG}`;
+var CONTENT_CACHE = `chroniken-content-${CACHE_VERSION_TAG}-${AUTH_BOUNDARY_TAG}`;
 var QUEUE_DB_NAME = 'chroniken-pbp';
 var QUEUE_STORE_NAME = 'postQueue';
 var DEAD_LETTER_STORE_NAME = 'postDeadLetters';
@@ -50,6 +51,26 @@ function resolveCacheVersionTag() {
         return normalizedVersion !== '' ? normalizedVersion : 'dev';
     } catch {
         return 'dev';
+    }
+}
+
+function resolveAuthBoundaryTag() {
+    try {
+        const parsed = new URL(self.location.href);
+        const rawBoundary = parsed.searchParams.get('boundary') || 'guest-session-unknown';
+        const normalizedBoundary = rawBoundary
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        if (normalizedBoundary === '') {
+            return 'guest-session-unknown';
+        }
+
+        return normalizedBoundary.slice(0, 96);
+    } catch {
+        return 'guest-session-unknown';
     }
 }
 

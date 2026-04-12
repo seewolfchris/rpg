@@ -43,6 +43,26 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
 
+    public function test_forwarded_https_requests_receive_hsts_header_when_proxy_is_trusted(): void
+    {
+        config([
+            'trustedproxy.proxies' => '*',
+        ]);
+
+        $response = $this
+            ->withServerVariables([
+                'REMOTE_ADDR' => '127.0.0.1',
+                'HTTP_X_FORWARDED_FOR' => '127.0.0.1',
+                'HTTP_X_FORWARDED_PROTO' => 'https',
+                'HTTP_X_FORWARDED_HOST' => 'example.test',
+                'HTTP_X_FORWARDED_PORT' => '443',
+            ])
+            ->get('http://example.test/');
+
+        $response->assertOk();
+        $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+
     public function test_health_endpoint_contains_security_headers(): void
     {
         $response = $this->get('/up');

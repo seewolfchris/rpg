@@ -58,10 +58,14 @@ class NotificationController extends Controller
             ->withQueryString();
 
         $unreadCount = $user->unreadNotifications()->count();
+        $visibleCampaignIds = Campaign::query()
+            ->visibleTo($user)
+            ->pluck('id');
+
         $subscriptionsBaseQuery = SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
-                $campaignQuery->whereIn('id', Campaign::query()->visibleTo($user)->select('id'));
+            ->whereHas('scene', function (Builder $sceneQuery) use ($visibleCampaignIds): void {
+                $sceneQuery->whereIn('campaign_id', $visibleCampaignIds);
             });
 
         $subscriptions = (clone $subscriptionsBaseQuery)
@@ -70,12 +74,13 @@ class NotificationController extends Controller
             ->paginate(20, ['*'], 'subscriptions_page')
             ->withQueryString();
 
-        $activeSubscriptionCount = (clone $subscriptionsBaseQuery)
-            ->where('is_muted', false)
-            ->count();
-        $mutedSubscriptionCount = (clone $subscriptionsBaseQuery)
-            ->where('is_muted', true)
-            ->count();
+        $subscriptionCounts = (clone $subscriptionsBaseQuery)
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw('SUM(CASE WHEN is_muted = 0 THEN 1 ELSE 0 END) as active_count')
+            ->selectRaw('SUM(CASE WHEN is_muted = 1 THEN 1 ELSE 0 END) as muted_count')
+            ->first();
+        $activeSubscriptionCount = (int) ($subscriptionCounts?->active_count ?? 0);
+        $mutedSubscriptionCount = (int) ($subscriptionCounts?->muted_count ?? 0);
 
         return view('notifications.index', compact(
             'notifications',

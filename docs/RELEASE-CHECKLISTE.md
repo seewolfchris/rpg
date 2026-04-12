@@ -105,14 +105,24 @@ Queue-Retry in Produktion sicherstellen:
 ```bash
 # .env
 QUEUE_CONNECTION=redis
+QUEUE_AFTER_COMMIT=true
 CACHE_STORE=redis
 SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true
+TRUSTED_PROXIES=<proxy-ip/cidr,...>
+SECURITY_HSTS_MAX_AGE=31536000
 # Optional bei stabiler Redis-Session-Infrastruktur:
 # SESSION_DRIVER=redis
 
 # Worker (Scheduled Task/Prozess)
 PHP_BIN=/opt/plesk/php/8.5/bin/php
 $PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
+```
+
+Preflight-Werte vor Deploy gegenpruefen:
+
+```bash
+grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
 ```
 
 Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:

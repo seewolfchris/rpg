@@ -148,6 +148,41 @@ class CampaignAccessInvitationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_second_response_on_same_invitation_keeps_first_decision(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+            'email' => $player->email,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ])->assertRedirect();
+
+        $invitation = CampaignInvitation::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('user_id', $player->id)
+            ->firstOrFail();
+
+        $this->actingAs($player)
+            ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $invitation]))
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->actingAs($player)
+            ->patch(route('campaign-invitations.decline', ['world' => $campaign->world, 'invitation' => $invitation]))
+            ->assertRedirect(route('campaign-invitations.index'))
+            ->assertSessionHas('status', 'Einladung ist nicht mehr offen.');
+
+        $invitation->refresh();
+        $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $invitation->status);
+        $this->assertNotNull($invitation->accepted_at);
+    }
+
     public function test_legacy_invitation_accept_endpoint_remains_compatible_during_transition(): void
     {
         $owner = User::factory()->gm()->create();

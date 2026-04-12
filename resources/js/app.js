@@ -33,6 +33,20 @@ function resolveOfflineQueueEnabledFromDocument() {
     return true;
 }
 
+function resolveAuthBoundaryKeyFromDocument() {
+    const userBoundaryNode = document.querySelector('meta[name="auth-user-id"]');
+    const sessionBoundaryNode = document.querySelector('meta[name="auth-session-boundary"]');
+
+    const userBoundary = userBoundaryNode instanceof HTMLMetaElement
+        ? String(userBoundaryNode.content || '').trim() || 'guest'
+        : 'guest';
+    const sessionBoundary = sessionBoundaryNode instanceof HTMLMetaElement
+        ? String(sessionBoundaryNode.content || '').trim() || 'session-unknown'
+        : 'session-unknown';
+
+    return `${userBoundary}|${sessionBoundary}`;
+}
+
 window.characterSheetForm = characterSheetForm;
 
 if (window.Alpine) {
@@ -45,6 +59,7 @@ const serviceWorkerRuntime = createServiceWorkerRuntime({
     resolveStoredWorldSlugContext,
     defaultWorldSlug: DEFAULT_WORLD_SLUG,
     resolveOfflineQueueEnabled: resolveOfflineQueueEnabledFromDocument,
+    resolveAuthBoundaryKey: resolveAuthBoundaryKeyFromDocument,
 });
 
 const {

@@ -22,6 +22,21 @@ class ViewContextServiceProvider extends ServiceProvider
             $request = request();
             $activeWorldSlug = (string) $request->attributes->get('active_world_slug', World::defaultSlug());
             $activeWorldTheme = $request->attributes->get('active_world_theme');
+            $authSessionBoundary = 'guest';
+
+            if ($request->hasSession()) {
+                $sessionId = (string) $request->session()->getId();
+                $boundaryUserId = Auth::check()
+                    ? (string) Auth::id()
+                    : 'guest';
+                $boundarySecret = (string) config('app.key', '');
+
+                if ($sessionId !== '' && $boundarySecret !== '') {
+                    $authSessionBoundary = hash_hmac('sha256', $sessionId.'|'.$boundaryUserId, $boundarySecret);
+                } elseif ($sessionId !== '') {
+                    $authSessionBoundary = sha1($sessionId.'|'.$boundaryUserId);
+                }
+            }
 
             if (! is_array($activeWorldTheme)) {
                 $activeWorldTheme = app(WorldThemeResolver::class)->resolve($activeWorldSlug);
@@ -32,6 +47,7 @@ class ViewContextServiceProvider extends ServiceProvider
                 [
                     'activeWorldSlug' => $activeWorldSlug,
                     'activeWorldTheme' => $activeWorldTheme,
+                    'authSessionBoundary' => $authSessionBoundary,
                 ],
             ));
         });

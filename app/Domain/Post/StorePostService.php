@@ -125,7 +125,7 @@ class StorePostService
 
     private function ensureAuthorSubscription(Post $post, User $author): void
     {
-        SceneSubscription::query()->firstOrCreate([
+        $subscription = SceneSubscription::query()->firstOrCreate([
             'scene_id' => $post->scene_id,
             'user_id' => $author->id,
         ], [
@@ -133,5 +133,15 @@ class StorePostService
             'last_read_post_id' => $post->id,
             'last_read_at' => now(),
         ]);
+
+        if ($subscription->wasRecentlyCreated) {
+            return;
+        }
+
+        $nextLastReadPostId = max((int) ($subscription->last_read_post_id ?? 0), (int) $post->id);
+
+        $subscription->last_read_post_id = $nextLastReadPostId;
+        $subscription->last_read_at = now();
+        $subscription->save();
     }
 }
