@@ -48,7 +48,7 @@
                 @endcan
 
                 @can('delete', $campaign)
-                    <form method="POST" action="{{ route('campaigns.destroy', ['world' => $campaign->world, 'campaign' => $campaign]) }}" onsubmit="return confirm('Kampagne wirklich löschen?');">
+                    <form method="POST" action="{{ route('campaigns.destroy', ['world' => $campaign->world, 'campaign' => $campaign]) }}" data-confirm="Kampagne wirklich löschen?">
                         @csrf
                         @method('DELETE')
                         <button

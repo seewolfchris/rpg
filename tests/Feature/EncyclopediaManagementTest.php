@@ -229,7 +229,39 @@ class EncyclopediaManagementTest extends TestCase
 
         $this->actingAs($player)
             ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
-            ->assertNotFound();
+            ->assertForbidden();
+    }
+
+    public function test_gm_can_open_encyclopedia_admin_index_route(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $world = $this->defaultWorld();
+
+        $this->actingAs($gm)
+            ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Enzyklopädie-Kategorien');
+    }
+
+    public function test_admin_index_uses_csp_safe_confirm_attribute(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $world = $this->defaultWorld();
+
+        EncyclopediaCategory::query()->create([
+            'world_id' => $world->id,
+            'name' => 'Temp Kategorie',
+            'slug' => 'temp-kategorie',
+            'summary' => 'Kurzbeschreibung',
+            'position' => 10,
+            'is_public' => true,
+        ]);
+
+        $this->actingAs($gm)
+            ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
+            ->assertOk()
+            ->assertSee('data-confirm="Kategorie wirklich löschen? Alle Einträge werden entfernt."', false)
+            ->assertDontSee('onsubmit="return confirm(', false);
     }
 
     public function test_gm_can_create_category_and_entry_with_game_relevance(): void

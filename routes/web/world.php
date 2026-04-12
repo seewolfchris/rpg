@@ -41,7 +41,7 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
 
     Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', [KnowledgeEncyclopediaController::class, 'encyclopediaEntry'])
         ->where([
-            'categorySlug' => '(?!admin$)[a-z0-9\\-]+',
+            'categorySlug' => '(?!admin(?:/|$))[a-z0-9\\-]+',
             'entrySlug' => '[a-z0-9\\-]+',
         ])
         ->name('knowledge.encyclopedia.entry');

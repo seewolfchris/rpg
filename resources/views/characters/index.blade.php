@@ -163,7 +163,7 @@
                                     Details
                                 </a>
                                 @if ((int) $character->user_id === (int) auth()->id() || $isGmView)
-                                    <form method="POST" action="{{ route('characters.destroy', $character) }}" onsubmit="return confirm('Diesen Charakter wirklich löschen?');">
+                                    <form method="POST" action="{{ route('characters.destroy', $character) }}" data-confirm="Diesen Charakter wirklich löschen?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="ui-btn ui-btn-danger inline-flex">Löschen</button>

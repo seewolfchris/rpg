@@ -75,7 +75,7 @@
                                             >
                                                 Bearbeiten
                                             </a>
-                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', ['world' => $world, 'encyclopediaCategory' => $category]) }}" onsubmit="return confirm('Kategorie wirklich löschen? Alle Einträge werden entfernt.');">
+                                            <form method="POST" action="{{ route('knowledge.admin.kategorien.destroy', ['world' => $world, 'encyclopediaCategory' => $category]) }}" data-confirm="Kategorie wirklich löschen? Alle Einträge werden entfernt.">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button

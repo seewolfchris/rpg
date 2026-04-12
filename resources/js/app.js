@@ -3,6 +3,7 @@ import { characterSheetForm, registerCharacterSheetComponent } from './character
 import { createQueueModule } from './immersion/queue';
 import { setupSceneThreadReadingMode } from './immersion/reading-mode';
 import { setupBrowserNotifications } from './app/browser-notifications';
+import { setupFormSubmitConfirmDialogs } from './app/confirm-dialogs';
 import { getCsrfToken } from './app/csrf';
 import { setupAtmosphericParallax } from './app/parallax';
 import { setupPostEditorEnhancements } from './app/post-editor-enhancements';
@@ -78,6 +79,7 @@ document.addEventListener('htmx:afterSwap', (event) => {
 });
 
 const bootApplication = async () => {
+    setupFormSubmitConfirmDialogs();
     persistActiveWorldSlugContext();
     setupSceneThreadReadingMode();
     setupAtmosphericParallax();

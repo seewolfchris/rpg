@@ -66,7 +66,7 @@
                                         <button type="submit" class="ui-btn inline-flex">{{ $world->is_active ? 'Deaktivieren' : 'Aktivieren' }}</button>
                                     </form>
                                     <a href="{{ route('admin.worlds.edit', $world) }}" class="ui-btn inline-flex">Bearbeiten</a>
-                                    <form method="POST" action="{{ route('admin.worlds.destroy', $world) }}" onsubmit="return confirm('Welt wirklich löschen?');">
+                                    <form method="POST" action="{{ route('admin.worlds.destroy', $world) }}" data-confirm="Welt wirklich löschen?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="ui-btn ui-btn-danger inline-flex">Löschen</button>

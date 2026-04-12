@@ -102,7 +102,7 @@
                 >
                     Bearbeiten
                 </a>
-                <form method="POST" action="{{ route('characters.destroy', $character) }}" onsubmit="return confirm('Diesen Charakter wirklich löschen?');">
+                <form method="POST" action="{{ route('characters.destroy', $character) }}" data-confirm="Diesen Charakter wirklich löschen?">
                     @csrf
                     @method('DELETE')
                     <button
