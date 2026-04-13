@@ -101,12 +101,6 @@ class EncyclopediaEntry extends Model
      */
     public function scopePublished(Builder $query): Builder
     {
-        return $query
-            ->where('status', self::STATUS_PUBLISHED)
-            ->where(function (Builder $builder): void {
-                $builder
-                    ->whereNull('published_at')
-                    ->orWhere('published_at', '<=', now());
-            });
+        return $query->where('status', self::STATUS_PUBLISHED);
     }
 }

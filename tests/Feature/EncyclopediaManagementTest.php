@@ -387,6 +387,36 @@ class EncyclopediaManagementTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_published_entries_with_future_published_at_are_visible_on_public_index_and_detail(): void
+    {
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['chroniken'];
+
+        $scheduled = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Kanonischer Vorausblick',
+            'slug' => 'kanonischer-vorausblick',
+            'excerpt' => 'Darf trotz zukünftigem Datum sichtbar bleiben.',
+            'content' => 'Der Eintrag ist als published markiert und bleibt sichtbar.',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 321,
+            'published_at' => now()->addDay(),
+        ]);
+
+        $this->get(route('knowledge.encyclopedia', ['world' => $category->world]))
+            ->assertOk()
+            ->assertSeeText($scheduled->title);
+
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $category->world,
+            'categorySlug' => $category->slug,
+            'entrySlug' => $scheduled->slug,
+        ]))
+            ->assertOk()
+            ->assertSeeText($scheduled->title);
+    }
+
     public function test_game_relevance_box_is_only_visible_when_data_exists(): void
     {
         $world = $this->defaultWorld();
