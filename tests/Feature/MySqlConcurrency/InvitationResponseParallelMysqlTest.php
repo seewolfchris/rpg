@@ -70,6 +70,13 @@ class InvitationResponseParallelMysqlTest extends TestCase
         $acceptResult = $this->decodeWorkerOutput($acceptProcess->getOutput(), $acceptProcess->getErrorOutput());
         $declineResult = $this->decodeWorkerOutput($declineProcess->getOutput(), $declineProcess->getErrorOutput());
 
+        $this->assertSame(302, (int) ($acceptResult['http_status'] ?? 0), 'Accept worker did not traverse HTTP redirect flow.');
+        $this->assertSame(302, (int) ($declineResult['http_status'] ?? 0), 'Decline worker did not traverse HTTP redirect flow.');
+        $this->assertNotSame('', (string) ($acceptResult['location'] ?? ''), 'Accept worker missing redirect location.');
+        $this->assertNotSame('', (string) ($declineResult['location'] ?? ''), 'Decline worker missing redirect location.');
+        $this->assertStringNotContainsString('/login', (string) ($acceptResult['location'] ?? ''), 'Accept worker was redirected to login instead of invitation flow.');
+        $this->assertStringNotContainsString('/login', (string) ($declineResult['location'] ?? ''), 'Decline worker was redirected to login instead of invitation flow.');
+
         $updatedCount = (
             (($acceptResult['status'] ?? '') === 'updated' ? 1 : 0)
             + (($declineResult['status'] ?? '') === 'updated' ? 1 : 0)
