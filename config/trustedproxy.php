@@ -3,13 +3,16 @@
 use Illuminate\Http\Request;
 
 $trustedProxies = env('TRUSTED_PROXIES');
+$normalizedAppEnv = strtolower((string) env('APP_ENV', 'production'));
 $isProduction = in_array(
-    strtolower((string) env('APP_ENV', 'production')),
+    $normalizedAppEnv,
     ['prod', 'production'],
     true
 );
 
-if ($trustedProxies === null && ! $isProduction) {
+if ($normalizedAppEnv === 'testing') {
+    $trustedProxies = '*';
+} elseif ($trustedProxies === null && ! $isProduction) {
     $trustedProxies = '*';
 }
 
