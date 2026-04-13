@@ -48,8 +48,8 @@ return new class extends Migration
                 $table->string('status_before', 20);
                 $table->timestamp('created_at')->useCurrent();
 
-                $table->index(['encyclopedia_entry_id', 'created_at']);
-                $table->index(['editor_id', 'created_at']);
+                $table->index(['encyclopedia_entry_id', 'created_at'], 'eer_entry_created_idx');
+                $table->index(['editor_id', 'created_at'], 'eer_editor_created_idx');
             });
         }
     }

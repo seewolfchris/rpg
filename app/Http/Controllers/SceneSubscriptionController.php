@@ -61,14 +61,15 @@ class SceneSubscriptionController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $counts = (clone $baseQuery)
+        $counts = (array) ((clone $baseQuery)
+            ->toBase()
             ->selectRaw('COUNT(*) as total_count')
             ->selectRaw('SUM(CASE WHEN is_muted = 0 THEN 1 ELSE 0 END) as active_count')
             ->selectRaw('SUM(CASE WHEN is_muted = 1 THEN 1 ELSE 0 END) as muted_count')
-            ->first();
-        $totalCount = (int) ($counts?->total_count ?? 0);
-        $activeCount = (int) ($counts?->active_count ?? 0);
-        $mutedCount = (int) ($counts?->muted_count ?? 0);
+            ->first() ?? []);
+        $totalCount = (int) ($counts['total_count'] ?? 0);
+        $activeCount = (int) ($counts['active_count'] ?? 0);
+        $mutedCount = (int) ($counts['muted_count'] ?? 0);
         $unreadCount = $this->unreadCountForUser((int) $user->id, $world);
 
         return view('scene-subscriptions.index', compact(
@@ -204,6 +205,7 @@ class SceneSubscriptionController extends Controller
     }
 
     /**
+     * @param  list<int>  $visibleCampaignIds
      * @return Builder<SceneSubscription>
      */
     private function visibleSubscriptionsQuery(User $user, array $visibleCampaignIds): Builder

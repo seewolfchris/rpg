@@ -11,7 +11,7 @@ class EncyclopediaEntryPolicy
 {
     public function propose(User $user): bool
     {
-        return $user instanceof User;
+        return true;
     }
 
     public function updateProposal(User $user, EncyclopediaEntry $entry): bool

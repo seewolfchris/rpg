@@ -74,13 +74,14 @@ class NotificationController extends Controller
             ->paginate(20, ['*'], 'subscriptions_page')
             ->withQueryString();
 
-        $subscriptionCounts = (clone $subscriptionsBaseQuery)
+        $subscriptionCounts = (array) ((clone $subscriptionsBaseQuery)
+            ->toBase()
             ->selectRaw('COUNT(*) as total_count')
             ->selectRaw('SUM(CASE WHEN is_muted = 0 THEN 1 ELSE 0 END) as active_count')
             ->selectRaw('SUM(CASE WHEN is_muted = 1 THEN 1 ELSE 0 END) as muted_count')
-            ->first();
-        $activeSubscriptionCount = (int) ($subscriptionCounts?->active_count ?? 0);
-        $mutedSubscriptionCount = (int) ($subscriptionCounts?->muted_count ?? 0);
+            ->first() ?? []);
+        $activeSubscriptionCount = (int) ($subscriptionCounts['active_count'] ?? 0);
+        $mutedSubscriptionCount = (int) ($subscriptionCounts['muted_count'] ?? 0);
 
         return view('notifications.index', compact(
             'notifications',
