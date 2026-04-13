@@ -138,6 +138,57 @@ class EncyclopediaManagementTest extends TestCase
             ->assertSeeText('Mehr lesen');
     }
 
+    public function test_public_encyclopedia_shows_visible_category_even_without_entries(): void
+    {
+        $world = $this->defaultWorld();
+        $this->encyclopediaFixture($world);
+
+        EncyclopediaCategory::query()->create([
+            'world_id' => $world->id,
+            'name' => 'Kriminalfälle',
+            'slug' => 'kriminalfaelle',
+            'summary' => 'Offene Ermittlungen, Tatorte und Spuren.',
+            'position' => 70,
+            'is_public' => true,
+        ]);
+
+        $this->get(route('knowledge.encyclopedia', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Kriminalfälle')
+            ->assertSeeText('Noch keine veröffentlichten Einträge in dieser Kategorie.');
+    }
+
+    public function test_public_encyclopedia_category_visibility_is_scoped_per_world(): void
+    {
+        $defaultWorld = $this->defaultWorld();
+        $this->encyclopediaFixture($defaultWorld);
+
+        $otherWorld = World::factory()->create([
+            'slug' => 'nebelreich',
+            'name' => 'Nebelreich',
+            'position' => 200,
+            'is_active' => true,
+        ]);
+
+        EncyclopediaCategory::query()->create([
+            'world_id' => $otherWorld->id,
+            'name' => 'Kriminalfälle',
+            'slug' => 'kriminalfaelle',
+            'summary' => 'Spuren im Nebelreich.',
+            'position' => 10,
+            'is_public' => true,
+        ]);
+
+        $this->get(route('knowledge.encyclopedia', ['world' => $defaultWorld]))
+            ->assertOk()
+            ->assertDontSeeText('Spuren im Nebelreich.');
+
+        $this->get(route('knowledge.encyclopedia', ['world' => $otherWorld]))
+            ->assertOk()
+            ->assertSeeText('Kriminalfälle')
+            ->assertSeeText('Spuren im Nebelreich.');
+    }
+
     public function test_public_encyclopedia_filters_by_query_and_category(): void
     {
         $world = $this->defaultWorld();

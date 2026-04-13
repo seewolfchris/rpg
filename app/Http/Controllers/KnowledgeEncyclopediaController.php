@@ -74,9 +74,13 @@ class KnowledgeEncyclopediaController extends Controller
             ])
             ->orderBy('position')
             ->orderBy('name')
-            ->get()
-            ->filter(fn (EncyclopediaCategory $category): bool => $category->entries->isNotEmpty())
-            ->values();
+            ->get();
+
+        if ($search !== '') {
+            $categories = $categories
+                ->filter(fn (EncyclopediaCategory $category): bool => $category->entries->isNotEmpty())
+                ->values();
+        }
 
         $canManage = $request->user()?->isGmOrAdmin() ?? false;
         $initialFilters = [

@@ -135,7 +135,7 @@
                                 </header>
 
                                 <div class="grid gap-4 md:grid-cols-2">
-                                    @foreach ($category->entries as $entry)
+                                    @forelse ($category->entries as $entry)
                                         <section class="ui-card-soft group border-amber-950 bg-zinc-900 p-5 shadow-2xl transition-all hover:scale-[1.02] hover:shadow-red-950/50">
                                             <div class="flex flex-wrap items-start justify-between gap-3">
                                                 <h3 class="font-heading text-xl text-stone-100">{{ $entry->title }}</h3>
@@ -163,7 +163,11 @@
                                                 </a>
                                             </div>
                                         </section>
-                                    @endforeach
+                                    @empty
+                                        <article class="ui-card-soft border-stone-700/80 bg-black/35 p-5 text-sm text-stone-300 md:col-span-2">
+                                            Noch keine veröffentlichten Einträge in dieser Kategorie.
+                                        </article>
+                                    @endforelse
                                 </div>
                             </article>
                         @endforeach
