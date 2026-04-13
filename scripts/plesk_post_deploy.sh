@@ -33,6 +33,17 @@ is_falsy_env() {
   [[ "$value" == "0" || "$value" == "false" || "$value" == "no" || "$value" == "off" ]]
 }
 
+is_empty_or_falsy_env() {
+  local value
+  value="$(printf '%s' "${1:-}" | xargs)"
+
+  if [[ -z "$value" ]]; then
+    return 0
+  fi
+
+  is_falsy_env "$value"
+}
+
 # Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
 PHP_BIN="${PHP_BIN:-}"
 if [[ -z "$PHP_BIN" ]]; then
@@ -122,17 +133,18 @@ if [[ "$queue_connection" == "sync" ]]; then
 fi
 
 queue_after_commit="$(read_env_var_from_dotenv "QUEUE_AFTER_COMMIT")"
-if is_falsy_env "$queue_after_commit"; then
-  echo "ERROR: QUEUE_AFTER_COMMIT ist explizit deaktiviert."
+if is_empty_or_falsy_env "$queue_after_commit"; then
+  echo "ERROR: QUEUE_AFTER_COMMIT fehlt, ist leer oder deaktiviert."
   echo "Setze QUEUE_AFTER_COMMIT=true (commit-sicheres Queue-Dispatching)."
   exit 1
 fi
 
 app_env="$(read_env_var_from_dotenv "APP_ENV")"
-if [[ "${app_env,,}" == "production" ]]; then
+normalized_app_env="$(printf '%s' "${app_env:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [[ "$normalized_app_env" == "production" || "$normalized_app_env" == "prod" ]]; then
   session_secure_cookie="$(read_env_var_from_dotenv "SESSION_SECURE_COOKIE")"
-  if is_falsy_env "$session_secure_cookie"; then
-    echo "ERROR: SESSION_SECURE_COOKIE ist in Produktion deaktiviert."
+  if is_empty_or_falsy_env "$session_secure_cookie"; then
+    echo "ERROR: SESSION_SECURE_COOKIE fehlt, ist leer oder in Produktion deaktiviert."
     echo "Setze SESSION_SECURE_COOKIE=true (oder entferne den Key fuer sicheren Fallback)."
     exit 1
   fi

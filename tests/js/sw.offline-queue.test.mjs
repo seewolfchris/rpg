@@ -81,6 +81,33 @@ test('clearPrivateSessionData removes private caches and queue database state', 
     assert.ok(harness.eventTypes().includes('PRIVATE_DATA_CLEARED'));
 });
 
+test('clearPrivateSessionData reports incomplete cleanup when IndexedDB deletion is blocked', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+
+    harness.context.caches.keys = async () => [
+        'chroniken-pages-v2',
+        'chroniken-content-v2',
+    ];
+    harness.context.caches.delete = async () => true;
+    harness.context.indexedDB.deleteDatabase = () => {
+        const request = {};
+        queueMicrotask(() => {
+            request.onblocked?.();
+        });
+
+        return request;
+    };
+
+    const cleanupCompleted = await harness.context.clearPrivateSessionData();
+
+    assert.equal(cleanupCompleted, false);
+    assert.ok(harness.eventTypes().includes('PRIVATE_DATA_CLEAR_INCOMPLETE'));
+    assert.equal(harness.eventTypes().includes('PRIVATE_DATA_CLEARED'), false);
+});
+
 test('syncQueuedPosts retries a 419 post after re-signing and clears queue', async () => {
     let submitAttempt = 0;
     const submitRequests = [];

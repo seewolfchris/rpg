@@ -201,46 +201,73 @@ function isPrivateManagedCacheKey(key) {
 }
 
 async function clearPrivateSessionData() {
-    await Promise.all([
+    const [cachesCleared, queueDatabaseCleared] = await Promise.all([
         clearPrivateCaches(),
         clearQueueDatabase(),
     ]);
 
+    const cleanupCompleted = cachesCleared && queueDatabaseCleared;
+
+    if (!cleanupCompleted) {
+        await notifyClients('PRIVATE_DATA_CLEAR_INCOMPLETE', {
+            cachesCleared,
+            queueDatabaseCleared,
+        });
+        return false;
+    }
+
     activePostSyncPromise = null;
 
     await notifyClients('PRIVATE_DATA_CLEARED');
+
+    return true;
 }
 
 async function clearPrivateCaches() {
-    const cacheKeys = await caches.keys();
+    let cacheKeys = [];
+
+    try {
+        cacheKeys = await caches.keys();
+    } catch {
+        return false;
+    }
+
     const privateCacheKeys = cacheKeys.filter((cacheKey) => isPrivateManagedCacheKey(cacheKey));
 
     if (privateCacheKeys.length === 0) {
-        return;
+        return true;
     }
 
-    await Promise.all(privateCacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+    const deletionResults = await Promise.all(privateCacheKeys.map(async (cacheKey) => {
+        try {
+            return await caches.delete(cacheKey);
+        } catch {
+            return false;
+        }
+    }));
+
+    return deletionResults.every((result) => result === true);
 }
 
 async function clearQueueDatabase() {
     if (typeof indexedDB === 'undefined' || typeof indexedDB.deleteDatabase !== 'function') {
-        return;
+        return true;
     }
 
-    await new Promise((resolve) => {
+    return new Promise((resolve) => {
         let request;
 
         try {
             request = indexedDB.deleteDatabase(QUEUE_DB_NAME);
         } catch {
-            resolve(undefined);
+            resolve(false);
 
             return;
         }
 
-        request.onsuccess = () => resolve(undefined);
-        request.onerror = () => resolve(undefined);
-        request.onblocked = () => resolve(undefined);
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => resolve(false);
+        request.onblocked = () => resolve(false);
     });
 }
 
