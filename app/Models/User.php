@@ -27,7 +27,7 @@ class User extends Authenticatable
         'post_moderation' => [
             'database' => true,
             'mail' => false,
-            'browser' => false,
+            'browser' => true,
         ],
         'scene_new_post' => [
             'database' => true,
@@ -37,7 +37,7 @@ class User extends Authenticatable
         'campaign_invitation' => [
             'database' => true,
             'mail' => false,
-            'browser' => false,
+            'browser' => true,
         ],
         'character_mention' => [
             'database' => true,

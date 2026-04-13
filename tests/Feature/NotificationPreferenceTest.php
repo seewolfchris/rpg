@@ -16,6 +16,30 @@ class NotificationPreferenceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_default_notification_preferences_enable_browser_push_for_moderation_and_invitations(): void
+    {
+        $user = User::factory()->create([
+            'notification_preferences' => null,
+        ]);
+
+        $preferences = $user->fresh()->resolvedNotificationPreferences();
+
+        $this->assertTrue((bool) data_get($preferences, 'post_moderation.database'));
+        $this->assertFalse((bool) data_get($preferences, 'post_moderation.mail'));
+        $this->assertTrue((bool) data_get($preferences, 'post_moderation.browser'));
+
+        $this->assertTrue((bool) data_get($preferences, 'scene_new_post.database'));
+        $this->assertFalse((bool) data_get($preferences, 'scene_new_post.mail'));
+        $this->assertFalse((bool) data_get($preferences, 'scene_new_post.browser'));
+
+        $this->assertTrue((bool) data_get($preferences, 'campaign_invitation.database'));
+        $this->assertFalse((bool) data_get($preferences, 'campaign_invitation.mail'));
+        $this->assertTrue((bool) data_get($preferences, 'campaign_invitation.browser'));
+
+        $this->assertTrue((bool) data_get($preferences, 'character_mention.database'));
+        $this->assertFalse((bool) data_get($preferences, 'character_mention.mail'));
+    }
+
     public function test_user_can_update_notification_preferences(): void
     {
         $user = User::factory()->create();
@@ -114,10 +138,12 @@ class NotificationPreferenceTest extends TestCase
             'post_moderation' => [
                 'database' => false,
                 'mail' => false,
+                'browser' => false,
             ],
             'scene_new_post' => [
                 'database' => true,
                 'mail' => false,
+                'browser' => false,
             ],
         ];
         $player->save();
@@ -147,10 +173,12 @@ class NotificationPreferenceTest extends TestCase
             'post_moderation' => [
                 'database' => false,
                 'mail' => true,
+                'browser' => false,
             ],
             'scene_new_post' => [
                 'database' => true,
                 'mail' => false,
+                'browser' => false,
             ],
         ];
         $player->save();
