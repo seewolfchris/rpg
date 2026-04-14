@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'debug' => \App\Support\ConfigEnv::boolean(env('APP_DEBUG', false), false),
+    'debug' => envBool('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
