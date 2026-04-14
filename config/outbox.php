@@ -1,5 +1,7 @@
 <?php
 
+$envBool = require __DIR__.'/_env_bool.php';
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -11,7 +13,7 @@ return [
     | um reale Last-/Fehlerdaten fuer eine spaetere ADR-Entscheidung zu sammeln.
     |
     */
-    'spike_log_candidates' => (bool) env('OUTBOX_SPIKE_LOG_CANDIDATES', false),
+    'spike_log_candidates' => $envBool('OUTBOX_SPIKE_LOG_CANDIDATES', false),
 
     /*
     |--------------------------------------------------------------------------

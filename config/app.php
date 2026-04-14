@@ -1,5 +1,7 @@
 <?php
 
+$envBool = require __DIR__.'/_env_bool.php';
+
 return [
 
     /*
@@ -39,7 +41,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => $envBool('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
