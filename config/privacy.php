@@ -1,7 +1,5 @@
 <?php
 
-$envBool = require __DIR__.'/_env_bool.php';
-
 return [
     /*
     |--------------------------------------------------------------------------
@@ -13,14 +11,14 @@ return [
     | Schutz sollte zusaetzlich auf Webserver-/Firewall-Ebene gefiltert werden.
     |
     */
-    'send_noindex_headers' => $envBool('PRIVACY_NOINDEX_HEADERS', true),
+    'send_noindex_headers' => \App\Support\ConfigEnv::boolean(env('PRIVACY_NOINDEX_HEADERS', true), true),
 
     'x_robots_tag' => env(
         'PRIVACY_X_ROBOTS_TAG',
         'noindex, nofollow, noarchive, nosnippet, noimageindex, max-snippet:0, max-image-preview:none, max-video-preview:0'
     ),
 
-    'block_known_bots' => $envBool('PRIVACY_BLOCK_KNOWN_BOTS', true),
+    'block_known_bots' => \App\Support\ConfigEnv::boolean(env('PRIVACY_BLOCK_KNOWN_BOTS', true), true),
 
     /*
     |--------------------------------------------------------------------------
@@ -32,7 +30,7 @@ return [
     | weiterhin geblockt bleiben.
     |
     */
-    'allow_link_preview_bots' => $envBool('PRIVACY_ALLOW_LINK_PREVIEW_BOTS', true),
+    'allow_link_preview_bots' => \App\Support\ConfigEnv::boolean(env('PRIVACY_ALLOW_LINK_PREVIEW_BOTS', true), true),
     'allowed_user_agents' => [
         'facebookexternalhit',
         'facebot',
