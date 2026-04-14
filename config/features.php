@@ -2,7 +2,8 @@
 
 return [
     'wave3' => [
-        // Off-by-default fuer Phase A; Aktivierung erst in Phase B.
+        // Off-by-default fuer Phase A.
+        // Aktivierung erfolgt erst in Phase B.
         'editor_preview' => envBool('FEATURE_WAVE3_EDITOR_PREVIEW', false),
         'draft_autosave' => envBool('FEATURE_WAVE3_DRAFT_AUTOSAVE', false),
     ],
