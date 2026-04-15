@@ -48,6 +48,10 @@ class ApplySecurityHeaders
             $response->headers->set('Cache-Control', 'no-store, private, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
             $response->headers->set('Expires', '0');
+
+            if ($this->allowsPrivateOfflineReadCache($request)) {
+                $response->headers->set('X-C76-Offline-Cache', 'allow-private-html');
+            }
         }
 
         if (! $request->isSecure()) {
@@ -61,5 +65,14 @@ class ApplySecurityHeaders
         }
 
         return $response;
+    }
+
+    private function allowsPrivateOfflineReadCache(Request $request): bool
+    {
+        if (! $request->isMethod('GET')) {
+            return false;
+        }
+
+        return $request->routeIs('campaigns.scenes.show', 'characters.show');
     }
 }

@@ -594,7 +594,7 @@ async function networkFirst(request, cacheName, fallbackToOffline) {
     try {
         const networkResponse = await fetch(request);
 
-        if (shouldCache(networkResponse)) {
+        if (shouldCache(request, networkResponse)) {
             await cache.put(request, networkResponse.clone());
         }
 
@@ -620,7 +620,7 @@ async function staleWhileRevalidate(request, cacheName, fallbackToOffline) {
 
     const networkPromise = fetch(request)
         .then(async (response) => {
-            if (shouldCache(response)) {
+            if (shouldCache(request, response)) {
                 await cache.put(request, response.clone());
             }
 
@@ -654,20 +654,34 @@ async function networkOnlyWithOfflineFallback(request) {
     }
 }
 
-function shouldCache(response) {
-    // 2026 best practice: never persist authenticated/private responses in SW cache.
-    // Respect explicit no-store/private directives to reduce offline data exposure.
+function shouldCache(request, response) {
     if (!response || response.status !== 200) {
         return false;
     }
 
     const cacheControl = String(response.headers.get('Cache-Control') || '').toLowerCase();
 
-    if (cacheControl.includes('no-store') || cacheControl.includes('private')) {
+    if (!cacheControl.includes('no-store') && !cacheControl.includes('private')) {
+        return true;
+    }
+
+    return isExplicitlyAllowedPrivateOfflineResponse(request, response);
+}
+
+function isExplicitlyAllowedPrivateOfflineResponse(request, response) {
+    const offlineCacheSignal = String(response.headers.get('X-C76-Offline-Cache') || '').trim().toLowerCase();
+
+    if (offlineCacheSignal !== 'allow-private-html') {
         return false;
     }
 
-    return true;
+    const contentType = String(response.headers.get('Content-Type') || '').toLowerCase();
+
+    if (!contentType.includes('text/html')) {
+        return false;
+    }
+
+    return isOfflineReadablePath(resolveRequestPathname(request));
 }
 
 async function cacheProvidedUrls(urls) {
@@ -699,7 +713,7 @@ async function cacheProvidedUrls(urls) {
             try {
                 const response = await fetch(target);
 
-                if (shouldCache(response)) {
+                if (shouldCache(target, response)) {
                     await cache.put(target, response.clone());
                 }
             } catch {

@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Character;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class SecurityHeadersTest extends TestCase
@@ -91,5 +94,41 @@ class SecurityHeadersTest extends TestCase
 
         $this->assertStringContainsString("default-src 'self'; script-src 'self'", $policy);
         $this->assertStringContainsString("frame-ancestors 'self'", $policy);
+    }
+
+    public function test_authenticated_html_responses_stay_no_store_private_by_default(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+        $cacheControl = Str::lower((string) $response->headers->get('Cache-Control', ''));
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
+        $this->assertStringContainsString('max-age=0', $cacheControl);
+        $response->assertHeader('Pragma', 'no-cache');
+        $response->assertHeader('Expires', '0');
+        $response->assertHeaderMissing('X-C76-Offline-Cache');
+    }
+
+    public function test_offline_private_cache_opt_in_header_is_limited_to_explicit_read_routes(): void
+    {
+        $user = User::factory()->create();
+        $character = Character::factory()
+            ->for($user)
+            ->create();
+
+        $dashboardResponse = $this->actingAs($user)->get(route('dashboard'));
+        $dashboardResponse->assertOk();
+        $dashboardResponse->assertHeaderMissing('X-C76-Offline-Cache');
+
+        $characterResponse = $this->actingAs($user)->get(route('characters.show', $character));
+        $characterResponse->assertOk();
+        $characterCacheControl = Str::lower((string) $characterResponse->headers->get('Cache-Control', ''));
+        $this->assertStringContainsString('no-store', $characterCacheControl);
+        $this->assertStringContainsString('private', $characterCacheControl);
+        $this->assertStringContainsString('max-age=0', $characterCacheControl);
+        $characterResponse->assertHeader('X-C76-Offline-Cache', 'allow-private-html');
     }
 }

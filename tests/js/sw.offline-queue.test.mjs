@@ -42,6 +42,59 @@ test('resolveOfflineFallbackUrl keeps default world context for non-world routes
     );
 });
 
+test('shouldCache keeps private no-store HTML blocked without explicit offline opt-in', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+    const request = new Request(`${APP_ORIGIN}${SCENE_PATH}`);
+    const response = new Response('<html>scene</html>', {
+        status: 200,
+        headers: {
+            'Content-Type': 'text/html; charset=UTF-8',
+            'Cache-Control': 'no-store, private, max-age=0',
+        },
+    });
+
+    assert.equal(harness.context.shouldCache(request, response), false);
+});
+
+test('shouldCache allows private no-store HTML only with explicit opt-in on offline-readable paths', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+    const request = new Request(`${APP_ORIGIN}${SCENE_PATH}`);
+    const response = new Response('<html>scene</html>', {
+        status: 200,
+        headers: {
+            'Content-Type': 'text/html; charset=UTF-8',
+            'Cache-Control': 'no-store, private, max-age=0',
+            'X-C76-Offline-Cache': 'allow-private-html',
+        },
+    });
+
+    assert.equal(harness.context.shouldCache(request, response), true);
+});
+
+test('shouldCache rejects private no-store HTML opt-in outside offline-readable paths', async () => {
+    const harness = await createServiceWorkerHarness({
+        queueItems: [],
+        fetchImpl: async () => new Response('ok', { status: 200 }),
+    });
+    const request = new Request(`${APP_ORIGIN}/dashboard`);
+    const response = new Response('<html>dashboard</html>', {
+        status: 200,
+        headers: {
+            'Content-Type': 'text/html; charset=UTF-8',
+            'Cache-Control': 'no-store, private, max-age=0',
+            'X-C76-Offline-Cache': 'allow-private-html',
+        },
+    });
+
+    assert.equal(harness.context.shouldCache(request, response), false);
+});
+
 test('clearPrivateSessionData removes private caches and queue database state', async () => {
     const deletedCacheKeys = [];
     let deletedDatabaseName = null;
