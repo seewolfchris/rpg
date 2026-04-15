@@ -7,6 +7,9 @@ Stand: 2026-04-10
 - Planung/Statusachsen: `../ROADMAP.md`
 - Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
+- Security-Hardening (technisch): `SECURITY.md`
+- PWA/Offline-Details: `PWA_OFFLINE.md`
+- Release-Historie: `../CHANGELOG.md`
 - Architekturentscheidungen: `adr/*`
 
 ## Kern-Dokumente (pflegepflichtig)

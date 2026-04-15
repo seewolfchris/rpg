@@ -4,7 +4,7 @@ Ziel: Jeder Release läuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
 ## 0. Empfohlener One-Command-Flow
 
-Siehe README.md ## Releases für aktuellen Standard-Flow.
+Siehe `README.md` (Dokumentationssektion) fuer den aktuellen Einstieg und die verlinkte Release-Doku.
 
 Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
 

@@ -171,7 +171,7 @@ php artisan dev:testflight:seed --world=<world-slug> --password='<starkes-passwo
 3. Bei Fehlern `request_id` notieren und Incident-Ablauf starten.
 
 ## Release-Vorbereitung
-1. Siehe `README.md` unter `## Releases` für den aktuellen Standard-Flow.
+1. Siehe `README.md` (Dokumentationssektion) fuer den aktuellen Standard-Flow-Link.
 2. Standard-Aufruf:
    - `scripts/release_flow.sh vX.Y-beta --world <slug> --archive`
 3. Varianten:
