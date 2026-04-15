@@ -1,7 +1,7 @@
 # C76-RPG
 
-C76-RPG ist eine deutschsprachige, privacy-first Play-by-Post-Plattform fuer story-fokussierte Multi-World-Kampagnen mit moderierter Posting-Logik, PWA-Unterbau und bewusst ohne SPA-Overhead.
-Die Startwelt `Chroniken der Asche` bleibt erhalten und ist Teil eines mehrweltfaehigen Produktmodells.
+C76-RPG ist eine deutschsprachige, privacy-first Play-by-Post-Plattform fuer story-fokussierte Multi-World-Kampagnen.
+Der Fokus liegt auf asynchronem Storytelling, klaren Weltkontexten und einem schlanken Laravel-/Blade-/HTMX-Stack statt auf SPA-Overhead.
 
 ## Fuer Wen / Fuer Wen Nicht
 
@@ -22,6 +22,11 @@ Die Startwelt `Chroniken der Asche` bleibt erhalten und ist Teil eines mehrweltf
 - Moderierte Posting-Workflows fuer private und oeffentliche Kampagnen
 - Privacy-Boundary fuer Auth-Wechsel, Logout und Offline-Daten
 - Schlanker Blade/HTMX/Alpine-Stack mit wenig Laufzeitkomplexitaet
+
+## Warum nicht Forum-Software oder SPA?
+
+C76-RPG ist auf PbP-Storyflows mit Rollen, Moderation und Weltkontext ausgelegt, nicht auf generische Forenstrukturen.
+Der Stack priorisiert einfache, robuste Server-Rendering-Pfade statt hoher SPA-Laufzeitkomplexitaet.
 
 ## Kernfeatures
 
@@ -79,6 +84,8 @@ App aufrufen: `http://127.0.0.1:8000`
 
 ## Qualitaet (Kurz)
 
+Schneller Standardlauf fuer lokale Verifikation:
+
 ```bash
 php artisan optimize:clear
 php artisan test
@@ -91,6 +98,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 ## Produktion (Kurz)
 
 - Produktionsziel: MySQL/MariaDB + Redis
+- SQLite ist kein vorgesehener Produktionspfad
 - Webroot muss auf `public/` zeigen
 - Deploy-Basis: `php artisan migrate --force` und `npm run build`
 - Queue-Worker in Produktion aktiv betreiben
@@ -99,7 +107,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 ## Aktueller Status
 
 - Status: Beta (`v0.29-beta`), aktiv entwickelt
-- Kernfunktionen: stabil im laufenden Ausbau
+- Kernpfade (Auth, Kampagnen/Szenen, Posts/Moderation, PWA-Boundary): stabil
 - Test-/Analyse-Gates: `php artisan test`, `composer analyse`, `npm run test:js`, `npm run test:e2e`, `npm run build`
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)
 
