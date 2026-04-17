@@ -202,4 +202,13 @@ class Post extends Model
     {
         return app(PostContentRenderer::class)->render($this->content, $this->content_format);
     }
+
+    public function isGmNarration(): bool
+    {
+        $meta = is_array($this->meta) ? $this->meta : [];
+
+        return $this->post_type === 'ic'
+            && $this->character_id === null
+            && (($meta['author_role'] ?? null) === 'gm');
+    }
 }

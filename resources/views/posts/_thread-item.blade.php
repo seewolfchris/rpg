@@ -1,12 +1,16 @@
 @php
     $isIcPost = $post->post_type === 'ic';
     $isOocPost = $post->post_type === 'ooc';
+    $isGmNarration = $post->isGmNarration();
+    $postStyleClass = $isOocPost
+        ? 'thread-post-ooc'
+        : ($isGmNarration ? 'thread-post-gm' : 'thread-post-ic');
     $postContentClass = $isIcPost
         ? 'mx-auto max-w-[78ch] text-[1.03rem] leading-8 text-stone-100 sm:text-[1.08rem] [&_blockquote]:my-6 [&_blockquote]:rounded-xl [&_blockquote]:border-amber-700/45 [&_blockquote]:bg-amber-900/10 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:italic [&_blockquote]:text-amber-100 [&_p]:my-0 [&_p+p]:mt-5'
         : 'max-w-[84ch] text-[0.96rem] leading-7 text-stone-200 [&_blockquote]:my-4 [&_blockquote]:rounded-lg [&_blockquote]:border-stone-600/70 [&_blockquote]:bg-black/30 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-stone-200 [&_p]:my-0 [&_p+p]:mt-4';
 @endphp
 
-<article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" data-reading-post-anchor tabindex="-1" class="thread-post {{ $isIcPost ? 'thread-post-ic' : 'thread-post-ooc' }} rounded-xl border p-5 sm:p-6">
+<article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" data-post-author-role="{{ $isGmNarration ? 'gm' : 'default' }}" data-reading-post-anchor tabindex="-1" class="thread-post {{ $postStyleClass }} rounded-xl border p-5 sm:p-6">
     <div class="thread-post-meta flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0 flex-1">
             <p class="{{ $isIcPost ? 'text-base text-stone-100 sm:text-lg' : 'text-sm text-stone-200' }}">
@@ -14,7 +18,7 @@
                 <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
             </p>
 
-            @if ($post->character)
+            @if ($post->character && ! $isGmNarration)
                 <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300/95">
                     Charakter: {{ $post->character->name }}
                 </p>
@@ -38,6 +42,11 @@
                         default => 'Klartext',
                     } }}
                 </span>
+                @if ($isGmNarration)
+                    <span class="rounded border border-cyan-700/70 bg-cyan-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-cyan-200">
+                        Spielleitung
+                    </span>
+                @endif
                 @if ($post->is_edited)
                     <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">Bearbeitet</span>
                 @endif

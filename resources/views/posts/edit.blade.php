@@ -31,6 +31,7 @@
             @include('posts._form', [
                 'post' => $post,
                 'characters' => $characters,
+                'canUseGmPostMode' => auth()->user()->can('moderate', $post),
                 'showProbeControls' => false,
                 'submitLabel' => 'Speichern',
                 'showModerationControls' => auth()->user()->can('moderate', $post),

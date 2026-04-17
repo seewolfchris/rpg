@@ -2,6 +2,12 @@
     $postMeta = is_array($post->meta ?? null) ? $post->meta : [];
     $currentType = old('post_type', $post->post_type ?? 'ic');
     $currentCharacter = old('character_id', $post->character_id ?? '');
+    $canUseGmPostMode = (bool) ($canUseGmPostMode ?? false);
+    $isEditingGmNarration = $post instanceof \App\Models\Post && $post->isGmNarration();
+    $currentPostMode = (string) old('post_mode', $isEditingGmNarration ? 'gm' : 'character');
+    if (! $canUseGmPostMode || $currentType !== 'ic') {
+        $currentPostMode = 'character';
+    }
     $currentFormat = old('content_format', $post->content_format ?? 'markdown');
     $currentIcQuote = (string) old('ic_quote', (string) ($postMeta['ic_quote'] ?? ''));
     $wave3EditorPreviewEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.editor_preview', false);
@@ -32,8 +38,21 @@
     class="space-y-5"
     x-data="{
         postType: '{{ $currentType }}',
+        postMode: '{{ $currentPostMode }}',
         contentFormat: '{{ $currentFormat }}',
         probeEnabled: {{ $currentProbeEnabled ? 'true' : 'false' }},
+        isGmMode() {
+            return this.postType === 'ic' && this.postMode === 'gm';
+        },
+        syncPostModeState() {
+            if (this.postType !== 'ic') {
+                this.postMode = 'character';
+            }
+
+            if (this.isGmMode() && this.$refs.characterIdField) {
+                this.$refs.characterIdField.value = '';
+            }
+        },
         formatHint() {
             if (this.contentFormat === 'markdown') {
                 return 'Markdown aktiv: Vorschau und Format-Hotkeys sind freigeschaltet.';
@@ -46,6 +65,7 @@
             return 'Klartext aktiv: roher Text ohne Markdown/BBCode-Rendering.';
         }
     }"
+    x-init="$watch('postType', () => syncPostModeState()); $watch('postMode', () => syncPostModeState()); syncPostModeState()"
 >
     <div class="grid gap-4 sm:grid-cols-3">
         <div>
@@ -71,13 +91,38 @@
             @enderror
         </div>
 
+        @if ($canUseGmPostMode)
+            <div x-show="postType === 'ic'" x-cloak>
+                <label for="post_mode" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">IC-Modus</label>
+                <select
+                    id="post_mode"
+                    name="post_mode"
+                    x-model="postMode"
+                    :disabled="postType !== 'ic'"
+                    class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                >
+                    <option value="character" @selected($currentPostMode === 'character')>Als Charakter posten</option>
+                    <option value="gm" @selected($currentPostMode === 'gm')>Als Spielleitung posten</option>
+                </select>
+                <p class="mt-2 text-xs text-stone-500" x-text="postMode === 'gm'
+                    ? 'Spielleitungsmodus: Beitrag wird als Erzählerstimme ohne Charakter gespeichert.'
+                    : 'Charaktermodus: Beitrag wird mit ausgewähltem Charakter gespeichert.'"></p>
+                @error('post_mode')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+        @else
+            <input type="hidden" name="post_mode" value="character">
+        @endif
+
         <div>
             <label for="character_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Charakter (für IC)</label>
             <select
                 id="character_id"
                 name="character_id"
-                :disabled="postType !== 'ic'"
-                x-bind:class="postType !== 'ic' ? 'opacity-60' : ''"
+                x-ref="characterIdField"
+                :disabled="postType !== 'ic' || isGmMode()"
+                x-bind:class="postType !== 'ic' || isGmMode() ? 'opacity-60' : ''"
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
                 <option value="">Kein Charakter</option>
@@ -87,6 +132,11 @@
                     </option>
                 @endforeach
             </select>
+            @if ($canUseGmPostMode)
+                <p class="mt-2 text-xs text-stone-500" x-show="isGmMode()" x-cloak>
+                    Im Spielleitungsmodus wird kein Charakter für den Beitrag gesetzt.
+                </p>
+            @endif
             @error('character_id')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
             @enderror

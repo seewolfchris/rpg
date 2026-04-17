@@ -24,6 +24,7 @@ class UpdatePostAction
     /**
      * @param  array{
      *   post_type: string,
+     *   post_mode?: string,
      *   character_id?: mixed,
      *   content_format: string,
      *   content: string,
@@ -36,9 +37,17 @@ class UpdatePostAction
     {
         $postId = (int) $post->getKey();
         $postType = (string) $data['post_type'];
-        $nextCharacterId = $postType === 'ic'
-            ? (int) ($data['character_id'] ?? 0)
-            : null;
+        $postMode = $postType === 'ic'
+            ? (string) ($data['post_mode'] ?? 'character')
+            : 'character';
+        $nextCharacterId = null;
+
+        if ($postType === 'ic' && $postMode === 'character') {
+            $rawCharacterId = $data['character_id'] ?? null;
+            $nextCharacterId = $rawCharacterId !== null
+                ? (int) $rawCharacterId
+                : null;
+        }
         $contentFormat = (string) $data['content_format'];
         $content = (string) $data['content'];
         $icQuote = (string) ($data['ic_quote'] ?? '');
@@ -57,6 +66,7 @@ class UpdatePostAction
             $postId,
             $editor,
             $postType,
+            $postMode,
             $nextCharacterId,
             $contentFormat,
             $content,
@@ -101,7 +111,7 @@ class UpdatePostAction
                 }
             }
 
-            $normalizedNextMeta = $this->normalizedNextMeta($lockedPost, $postType, $icQuote);
+            $normalizedNextMeta = $this->normalizedNextMeta($lockedPost, $postType, $postMode, $icQuote);
             $hasContentChange = $this->hasTrackedChanges($lockedPost, [
                 'character_id' => $nextCharacterId,
                 'post_type' => $postType,
@@ -180,11 +190,17 @@ class UpdatePostAction
     /**
      * @return array<string, mixed>|null
      */
-    private function normalizedNextMeta(Post $post, string $postType, string $icQuote): ?array
+    private function normalizedNextMeta(Post $post, string $postType, string $postMode, string $icQuote): ?array
     {
         /** @var array<string, mixed> $nextMeta */
         $nextMeta = (array) ($post->meta ?? []);
         $nextIcQuote = trim($icQuote);
+
+        if ($postType === 'ic' && $postMode === 'gm') {
+            $nextMeta['author_role'] = 'gm';
+        } else {
+            unset($nextMeta['author_role']);
+        }
 
         if ($postType === 'ic' && $nextIcQuote !== '') {
             $nextMeta['ic_quote'] = $nextIcQuote;

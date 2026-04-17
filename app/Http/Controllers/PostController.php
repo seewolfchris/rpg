@@ -135,6 +135,7 @@ class PostController extends Controller
         $user = $this->authenticatedUser($request);
         /** @var array{
          *   post_type: string,
+         *   post_mode?: mixed,
          *   character_id?: mixed,
          *   content_format: string,
          *   content: string,

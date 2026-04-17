@@ -125,7 +125,9 @@
                                     </p>
                                     <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
                                         Autor: {{ $post->user->name }}
-                                        @if ($post->character)
+                                        @if ($post->isGmNarration())
+                                            • Spielleitung
+                                        @elseif ($post->character)
                                             • Charakter: {{ $post->character->name }}
                                         @endif
                                         • Audit: {{ $post->moderation_logs_count }}

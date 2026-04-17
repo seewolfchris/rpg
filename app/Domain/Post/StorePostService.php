@@ -33,11 +33,28 @@ class StorePostService
         ?string $worldSlug = null,
     ): StorePostResult
     {
+        $postType = (string) ($data['post_type'] ?? 'ooc');
+        $postMode = $postType === 'ic'
+            ? (string) ($data['post_mode'] ?? 'character')
+            : 'character';
+        $characterId = null;
+
+        if ($postType === 'ic' && $postMode === 'character') {
+            $rawCharacterId = $data['character_id'] ?? null;
+            $characterId = $rawCharacterId !== null
+                ? (int) $rawCharacterId
+                : null;
+        }
+
         $meta = [];
         $icQuote = trim((string) ($data['ic_quote'] ?? ''));
 
-        if (($data['post_type'] ?? 'ooc') === 'ic' && $icQuote !== '') {
+        if ($postType === 'ic' && $icQuote !== '') {
             $meta['ic_quote'] = $icQuote;
+        }
+
+        if ($postType === 'ic' && $postMode === 'gm') {
+            $meta['author_role'] = 'gm';
         }
 
         $isApproved = ! $requiresApproval;
@@ -55,12 +72,14 @@ class StorePostService
             &$post,
             &$probeCreated,
             &$inventoryAwardApplied,
+            $postType,
+            $characterId,
         ): void {
             $post = Post::query()->create([
                 'scene_id' => $scene->id,
                 'user_id' => $user->id,
-                'character_id' => $data['post_type'] === 'ic' ? $data['character_id'] : null,
-                'post_type' => $data['post_type'],
+                'character_id' => $characterId,
+                'post_type' => $postType,
                 'content_format' => $data['content_format'],
                 'content' => $data['content'],
                 'meta' => $meta !== [] ? $meta : null,

@@ -25,6 +25,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'post_type' => ['required', Rule::in(['ic', 'ooc'])],
+            'post_mode' => ['nullable', Rule::in(['character', 'gm'])],
             'character_id' => ['nullable', 'integer', 'exists:characters,id'],
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
@@ -49,8 +50,19 @@ class StorePostRequest extends FormRequest
     {
         $probeEnabled = $this->boolean('probe_enabled');
         $inventoryAwardEnabled = $this->boolean('inventory_award_enabled');
+        $postType = (string) $this->input('post_type', 'ic');
+        $postMode = strtolower(trim((string) $this->input('post_mode', '')));
+
+        if ($postMode === '') {
+            $postMode = 'character';
+        }
+
+        if ($postType !== 'ic') {
+            $postMode = 'character';
+        }
 
         $normalized = [
+            'post_mode' => $postMode,
             'probe_enabled' => $probeEnabled,
             'inventory_award_enabled' => $inventoryAwardEnabled,
             'ic_quote' => ($quote = trim((string) $this->input('ic_quote', ''))) !== '' ? $quote : null,
@@ -105,6 +117,9 @@ class StorePostRequest extends FormRequest
             $campaign = $scene->campaign;
 
             $postType = (string) $this->input('post_type');
+            $postMode = $postType === 'ic'
+                ? (string) $this->input('post_mode', 'character')
+                : 'character';
             $characterId = $this->filled('character_id')
                 ? (int) $this->input('character_id')
                 : null;
@@ -116,15 +131,25 @@ class StorePostRequest extends FormRequest
                 $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');
             }
 
-            if ($postType === 'ic' && ! $characterId) {
-                $validator->errors()->add('character_id', 'Für IC-Beiträge ist ein Charakter erforderlich.');
+            if ($postType === 'ic' && $postMode === 'character' && ! $characterId) {
+                $validator->errors()->add('character_id', 'Für IC-Beiträge als Charakter ist ein Charakter erforderlich.');
+            }
+
+            if ($postType === 'ic' && $postMode === 'gm') {
+                if (! $canModerate) {
+                    $validator->errors()->add('post_mode', 'Nur GM oder Co-GM dürfen als Spielleitung posten.');
+                }
+
+                if ($characterId !== null) {
+                    $validator->errors()->add('character_id', 'Für Spielleitungsbeiträge darf kein Charakter gesetzt sein.');
+                }
             }
 
             if ($postType !== 'ic' && trim((string) ($this->input('ic_quote') ?? '')) !== '') {
                 $validator->errors()->add('ic_quote', 'Ein IC-Zitat ist nur für IC-Beiträge erlaubt.');
             }
 
-            if ($characterId) {
+            if ($postType === 'ic' && $postMode === 'character' && $characterId) {
                 /** @var Character|null $character */
                 $character = Character::query()->find($characterId);
 
@@ -232,6 +257,7 @@ class StorePostRequest extends FormRequest
             'probe_attribute_key' => 'Probe-Eigenschaft',
             'probe_character_id' => 'Ziel-Held',
             'probe_explanation' => 'Erklärung / Anlass',
+            'post_mode' => 'Beitragsmodus',
             'ic_quote' => 'IC-Zitat',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',
             'inventory_award_item' => 'Inventar-Fund',

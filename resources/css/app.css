@@ -583,6 +583,18 @@
         transform: translateY(-1px);
     }
 
+    .thread-post-gm {
+        border-color: rgb(14 116 144 / 52%);
+        background: linear-gradient(180deg, rgb(10 20 24 / 88%), rgb(8 10 12 / 84%));
+        box-shadow: 0 20px 42px rgb(0 0 0 / 30%);
+    }
+
+    .thread-post-gm:hover {
+        border-color: rgb(6 182 212 / 60%);
+        box-shadow: 0 24px 48px rgb(0 0 0 / 36%);
+        transform: translateY(-1px);
+    }
+
     .thread-post-ooc {
         border-color: rgb(63 63 70 / 82%);
         background: linear-gradient(180deg, rgb(20 20 24 / 76%), rgb(10 10 12 / 82%));

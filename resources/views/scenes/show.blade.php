@@ -103,7 +103,9 @@
                             <li class="ui-card-soft flex flex-wrap items-center justify-between gap-2 border-amber-800/40 bg-black/30 px-3 py-2">
                                 <p class="text-xs uppercase tracking-[0.08em] text-amber-200">
                                     #{{ $pinnedPost->id }} • {{ $pinnedPost->user->name }}
-                                    @if ($pinnedPost->character)
+                                    @if ($pinnedPost->isGmNarration())
+                                        • Spielleitung
+                                    @elseif ($pinnedPost->character)
                                         • {{ $pinnedPost->character->name }}
                                     @endif
                                     @if ($pinnedPost->pinned_at)
@@ -506,6 +508,7 @@
                     @include('posts._form', [
                         'post' => null,
                         'characters' => $characters,
+                        'canUseGmPostMode' => $canModerateScene,
                         'probeCharacters' => $probeCharacters,
                         'showProbeControls' => $canModerateScene,
                         'submitLabel' => 'Beitrag posten',

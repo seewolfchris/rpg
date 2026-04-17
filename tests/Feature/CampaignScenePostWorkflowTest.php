@@ -137,6 +137,270 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_gm_can_create_ic_post_as_gm_narration_without_character(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Die Spielleitung zeichnet die Szene im Nebel nach. ', 2),
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'post_type' => 'ic',
+            'character_id' => null,
+        ]);
+        $this->assertSame('gm', data_get($post->meta, 'author_role'));
+        $this->assertTrue($post->isGmNarration());
+    }
+
+    public function test_player_cannot_create_gm_narration_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $response = $this->actingAs($player)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Ich versuche unberechtigt als Spielleitung zu posten. ', 2),
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $response->assertSessionHasErrors('post_mode');
+        $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_gm_narration_post_renders_as_spielleitung_without_character_line(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'character_id' => null,
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'content' => 'Der Nebel folgt keinem sterblichen Namen.',
+            'meta' => [
+                'author_role' => 'gm',
+            ],
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk()
+            ->assertSeeText($post->content)
+            ->assertSeeText('Spielleitung')
+            ->assertDontSeeText('Charakter:');
+    }
+
+    public function test_update_can_switch_character_post_to_gm_narration(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $gmCharacter = Character::factory()->create([
+            'user_id' => $gm->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'character_id' => $gmCharacter->id,
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'content' => 'Alter Abschnitt mit Charakterbindung.',
+            'meta' => [
+                'ic_quote' => 'Altes IC-Zitat',
+                'probe_damage' => [
+                    'requested_damage' => 10,
+                    'armor_rs' => 4,
+                    'effective_damage' => 6,
+                ],
+            ],
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $response = $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Aktualisiert als Erzaehlerstimme. ', 2),
+            'ic_quote' => 'Altes IC-Zitat',
+        ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $post->refresh();
+        $this->assertNull($post->character_id);
+        $this->assertTrue($post->isGmNarration());
+        $this->assertSame('gm', data_get($post->meta, 'author_role'));
+        $this->assertSame('Altes IC-Zitat', data_get($post->meta, 'ic_quote'));
+        $this->assertSame(6, (int) data_get($post->meta, 'probe_damage.effective_damage'));
+    }
+
+    public function test_update_can_switch_gm_narration_back_to_character_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $gmCharacter = Character::factory()->create([
+            'user_id' => $gm->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'character_id' => null,
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'content' => 'Alter Spielleitungsbeitrag.',
+            'meta' => [
+                'author_role' => 'gm',
+                'ic_quote' => 'Der Wind schweigt.',
+                'inventory_award' => [
+                    'character_id' => $gmCharacter->id,
+                    'character_name' => 'Probe-Ziel',
+                    'item' => 'Seil',
+                    'quantity' => 1,
+                    'equipped' => false,
+                ],
+            ],
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $response = $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'character',
+            'character_id' => $gmCharacter->id,
+            'content_format' => 'markdown',
+            'content' => str_repeat('Zurueck zur Charakterperspektive. ', 2),
+            'ic_quote' => 'Der Wind schweigt.',
+        ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $post->refresh();
+        $this->assertSame((int) $gmCharacter->id, (int) $post->character_id);
+        $this->assertFalse($post->isGmNarration());
+        $this->assertSame('Seil', (string) data_get($post->meta, 'inventory_award.item'));
+        $this->assertArrayNotHasKey('author_role', is_array($post->meta) ? $post->meta : []);
+    }
+
     public function test_gm_can_create_post_with_integrated_probe_result(): void
     {
         $gm = User::factory()->gm()->create();
@@ -165,7 +429,6 @@ class CampaignScenePostWorkflowTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $playerCharacter = Character::factory()->create([
             'user_id' => $player->id,
             'species' => 'mensch',
@@ -178,8 +441,8 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
+            'post_mode' => 'gm',
             'content_format' => 'markdown',
-            'character_id' => $gmCharacter->id,
             'content' => str_repeat('Der Spielleiter setzt die Szene unter Druck. ', 2),
             'probe_enabled' => '1',
             'probe_character_id' => $playerCharacter->id,
@@ -199,6 +462,12 @@ class CampaignScenePostWorkflowTest extends TestCase
 
         $this->assertNotNull($post);
         $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id);
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'character_id' => null,
+            'post_type' => 'ic',
+        ]);
+        $this->assertSame('gm', data_get(Post::query()->findOrFail((int) $post->id)->meta, 'author_role'));
 
         $this->assertDatabaseHas('dice_rolls', [
             'scene_id' => $scene->id,
