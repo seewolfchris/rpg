@@ -205,10 +205,16 @@ class Post extends Model
 
     public function isGmNarration(): bool
     {
-        $meta = is_array($this->meta) ? $this->meta : [];
+        $meta = $this->getAttribute('meta');
+        $authorRole = null;
 
-        return $this->post_type === 'ic'
-            && $this->character_id === null
-            && (($meta['author_role'] ?? null) === 'gm');
+        if (is_array($meta) && array_key_exists('author_role', $meta)) {
+            $authorRole = $meta['author_role'];
+        }
+
+        return $this->getAttribute('post_type') === 'ic'
+            && $this->getAttribute('character_id') === null
+            && is_string($authorRole)
+            && $authorRole === 'gm';
     }
 }
