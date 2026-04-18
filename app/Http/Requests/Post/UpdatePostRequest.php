@@ -26,7 +26,7 @@ class UpdatePostRequest extends FormRequest
         return [
             'post_type' => ['required', Rule::in(['ic', 'ooc'])],
             'post_mode' => ['nullable', Rule::in(['character', 'gm'])],
-            'character_id' => ['nullable', 'integer', 'exists:characters,id'],
+            'character_id' => ['nullable', 'integer'],
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
             'ic_quote' => ['nullable', 'string', 'max:180'],
@@ -49,11 +49,17 @@ class UpdatePostRequest extends FormRequest
             $postMode = 'character';
         }
 
-        $this->merge([
+        $normalized = [
             'post_mode' => $postMode,
             'ic_quote' => $quote !== '' ? $quote : null,
             'moderation_note' => trim((string) $this->input('moderation_note', '')),
-        ]);
+        ];
+
+        if ($postType !== 'ic') {
+            $normalized['character_id'] = null;
+        }
+
+        $this->merge($normalized);
     }
 
     public function withValidator(Validator $validator): void

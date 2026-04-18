@@ -401,6 +401,120 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertArrayNotHasKey('author_role', is_array($post->meta) ? $post->meta : []);
     }
 
+    public function test_ooc_store_normalizes_post_mode_and_character_without_author_role_residue(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ooc',
+            'post_mode' => 'gm',
+            'character_id' => 999999,
+            'content_format' => 'markdown',
+            'content' => str_repeat('OOC-Beitrag mit serverseitiger Normalisierung. ', 2),
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $post->refresh();
+        $this->assertSame('ooc', $post->post_type);
+        $this->assertNull($post->character_id);
+        $this->assertFalse($post->isGmNarration());
+        $this->assertArrayNotHasKey('author_role', is_array($post->meta) ? $post->meta : []);
+    }
+
+    public function test_ooc_update_removes_author_role_and_character_id_residue(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $gmCharacter = Character::factory()->create([
+            'user_id' => $gm->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'character_id' => $gmCharacter->id,
+            'post_type' => 'ooc',
+            'content_format' => 'markdown',
+            'content' => 'Alter OOC-Beitrag mit semantischem Rest.',
+            'meta' => [
+                'author_role' => 'gm',
+                'inventory_award' => [
+                    'item' => 'Seil',
+                    'quantity' => 1,
+                ],
+            ],
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $response = $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'post_type' => 'ooc',
+            'post_mode' => 'gm',
+            'character_id' => 999999,
+            'content_format' => 'markdown',
+            'content' => str_repeat('Bereinigter OOC-Beitrag ohne Spielleitungs-Semantik. ', 2),
+        ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $post->refresh();
+        $this->assertSame('ooc', $post->post_type);
+        $this->assertNull($post->character_id);
+        $this->assertFalse($post->isGmNarration());
+        $this->assertSame('Seil', (string) data_get($post->meta, 'inventory_award.item'));
+        $this->assertArrayNotHasKey('author_role', is_array($post->meta) ? $post->meta : []);
+    }
+
     public function test_gm_can_create_post_with_integrated_probe_result(): void
     {
         $gm = User::factory()->gm()->create();

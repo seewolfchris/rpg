@@ -26,7 +26,7 @@ class StorePostRequest extends FormRequest
         return [
             'post_type' => ['required', Rule::in(['ic', 'ooc'])],
             'post_mode' => ['nullable', Rule::in(['character', 'gm'])],
-            'character_id' => ['nullable', 'integer', 'exists:characters,id'],
+            'character_id' => ['nullable', 'integer'],
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
             'ic_quote' => ['nullable', 'string', 'max:180'],
@@ -70,6 +70,10 @@ class StorePostRequest extends FormRequest
             'inventory_award_quantity' => (int) $this->input('inventory_award_quantity', 1),
             'inventory_award_equipped' => $this->boolean('inventory_award_equipped'),
         ];
+
+        if ($postType !== 'ic') {
+            $normalized['character_id'] = null;
+        }
 
         if ($probeEnabled && ! $this->filled('probe_modifier')) {
             $normalized['probe_modifier'] = 0;
@@ -153,9 +157,11 @@ class StorePostRequest extends FormRequest
                 /** @var Character|null $character */
                 $character = Character::query()->find($characterId);
 
-                if ($character instanceof Character && $character->user_id !== (int) $this->user()?->id) {
+                if (! $character instanceof Character) {
+                    $validator->errors()->add('character_id', 'Charakter konnte nicht gefunden werden.');
+                } elseif ($character->user_id !== (int) $this->user()?->id) {
                     $validator->errors()->add('character_id', 'Du kannst nur eigene Charaktere verwenden.');
-                } elseif ($character instanceof Character && (int) $character->world_id !== (int) $campaign->world_id) {
+                } elseif ((int) $character->world_id !== (int) $campaign->world_id) {
                     $validator->errors()->add('character_id', 'Der gewählte Charakter gehört nicht zur Welt dieser Kampagne.');
                 }
             }
