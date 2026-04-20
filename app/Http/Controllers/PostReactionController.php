@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Post\CreatePostReactionAction;
+use App\Actions\Post\DeletePostReactionAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\PostReactionRequest;
 use App\Models\Post;
-use App\Models\PostReaction;
 use App\Models\World;
 use App\Support\SensitiveFeatureGate;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,11 @@ use Illuminate\Http\RedirectResponse;
 class PostReactionController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly CreatePostReactionAction $createPostReactionAction,
+        private readonly DeletePostReactionAction $deletePostReactionAction,
+    ) {}
 
     public function store(PostReactionRequest $request, World $world, Post $post): RedirectResponse
     {
@@ -25,21 +31,12 @@ class PostReactionController extends Controller
 
         $data = $request->validated();
 
-        PostReaction::query()->upsert([
-            [
-                'post_id' => $post->id,
-                'user_id' => $user->id,
-                'emoji' => (string) $data['emoji'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ], [
-            'post_id',
-            'user_id',
-            'emoji',
-        ], [
-            'updated_at',
-        ]);
+        $this->createPostReactionAction->execute(
+            world: $world,
+            post: $post,
+            reactor: $user,
+            emoji: (string) $data['emoji'],
+        );
 
         return back();
     }
@@ -55,11 +52,12 @@ class PostReactionController extends Controller
 
         $data = $request->validated();
 
-        PostReaction::query()
-            ->where('post_id', $post->id)
-            ->where('user_id', $user->id)
-            ->where('emoji', (string) $data['emoji'])
-            ->delete();
+        $this->deletePostReactionAction->execute(
+            world: $world,
+            post: $post,
+            reactor: $user,
+            emoji: (string) $data['emoji'],
+        );
 
         return back();
     }

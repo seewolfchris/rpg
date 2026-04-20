@@ -9,6 +9,7 @@ use App\Actions\SceneSubscription\MarkSceneSubscriptionUnreadAction;
 use App\Actions\SceneSubscription\SubscribeSceneSubscriptionAction;
 use App\Actions\SceneSubscription\ToggleSceneSubscriptionMuteAction;
 use App\Actions\SceneSubscription\UnsubscribeSceneSubscriptionAction;
+use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\SceneSubscription\BulkUpdateSceneSubscriptionRequest;
 use App\Models\Campaign;
@@ -23,6 +24,7 @@ use Illuminate\View\View;
 
 class SceneSubscriptionController extends Controller
 {
+    use BuildsVisibleCampaignSubquery;
     use EnsuresWorldContext;
 
     public function __construct(
@@ -42,9 +44,7 @@ class SceneSubscriptionController extends Controller
             ? (string) $request->query('status', 'all')
             : 'all';
         $search = trim((string) $request->query('q', ''));
-        $visibleCampaignIds = $this->visibleCampaignIdsForUserInWorld($user, $world);
-
-        $baseQuery = $this->visibleSubscriptionsQuery($user, $visibleCampaignIds);
+        $baseQuery = $this->visibleSubscriptionsQuery($user, $world);
 
         $subscriptionsQuery = (clone $baseQuery)
             ->with([
@@ -205,32 +205,15 @@ class SceneSubscriptionController extends Controller
     }
 
     /**
-     * @param  list<int>  $visibleCampaignIds
      * @return Builder<SceneSubscription>
      */
-    private function visibleSubscriptionsQuery(User $user, array $visibleCampaignIds): Builder
+    private function visibleSubscriptionsQuery(User $user, World $world): Builder
     {
         return SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene', function (Builder $sceneQuery) use ($visibleCampaignIds): void {
-                $sceneQuery->whereIn('campaign_id', $visibleCampaignIds);
+            ->whereHas('scene', function (Builder $sceneQuery) use ($user, $world): void {
+                $sceneQuery->whereIn('campaign_id', $this->visibleCampaignIdsSubqueryForWorld($user, $world));
             });
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function visibleCampaignIdsForUserInWorld(User $user, World $world): array
-    {
-        /** @var list<int> $campaignIds */
-        $campaignIds = Campaign::query()
-            ->visibleTo($user)
-            ->where('world_id', (int) $world->id)
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-
-        return $campaignIds;
     }
 
     private function threadFeedFragment(

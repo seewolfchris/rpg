@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Campaign\DeleteCampaignInvitationAction;
 use App\Actions\Campaign\RespondToCampaignInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
@@ -10,8 +11,6 @@ use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
-use App\Models\SceneBookmark;
-use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Models\World;
 use App\Notifications\CampaignInvitationNotification;
@@ -26,6 +25,7 @@ class CampaignInvitationController extends Controller
     public function __construct(
         private readonly UpsertCampaignInvitationAction $upsertCampaignInvitationAction,
         private readonly RespondToCampaignInvitationAction $respondToCampaignInvitationAction,
+        private readonly DeleteCampaignInvitationAction $deleteCampaignInvitationAction,
     ) {}
 
     public function index(Request $request): View
@@ -214,43 +214,20 @@ class CampaignInvitationController extends Controller
     public function destroy(Request $request, World $world, Campaign $campaign, CampaignInvitation $invitation): RedirectResponse
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
+        $this->ensureInvitationBelongsToCampaign($campaign, $invitation);
         $user = $this->authenticatedUser($request);
 
         if (! $this->canManageInvitations($user, $campaign)) {
             abort(403);
         }
 
-        $this->ensureInvitationBelongsToCampaign($campaign, $invitation);
-
-        $shouldCleanupAccessData = $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
-        $targetUserId = (int) $invitation->user_id;
-
-        $invitation->delete();
-
-        if ($shouldCleanupAccessData) {
-            $sceneIds = $campaign->scenes()->pluck('id');
-
-            if ($sceneIds->isNotEmpty()) {
-                SceneSubscription::query()
-                    ->where('user_id', $targetUserId)
-                    ->whereIn('scene_id', $sceneIds)
-                    ->delete();
-
-                SceneBookmark::query()
-                    ->where('user_id', $targetUserId)
-                    ->whereIn('scene_id', $sceneIds)
-                    ->delete();
-            }
-        }
+        $this->deleteCampaignInvitationAction->execute(
+            $invitation,
+        );
 
         return redirect()
             ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
             ->with('status', 'Einladung entfernt.');
-    }
-
-    private function ensureInvitationBelongsToCampaign(Campaign $campaign, CampaignInvitation $invitation): void
-    {
-        abort_unless($invitation->campaign_id === $campaign->id, 404);
     }
 
     private function ensureUserOwnsInvitation(User $user, CampaignInvitation $invitation): void
@@ -276,5 +253,10 @@ class CampaignInvitationController extends Controller
     private function canManageInvitations(User $user, Campaign $campaign): bool
     {
         return $campaign->owner_id === $user->id || $user->isGmOrAdmin();
+    }
+
+    private function ensureInvitationBelongsToCampaign(Campaign $campaign, CampaignInvitation $invitation): void
+    {
+        abort_unless((int) $invitation->campaign_id === (int) $campaign->id, 404);
     }
 }

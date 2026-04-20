@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Post\BuildPostThreadItemFragmentAction;
+use App\Actions\Post\DeletePostAction;
+use App\Actions\Post\StorePostAction;
 use App\Actions\Post\UpdatePostAction;
 use App\Actions\Post\ModeratePostAction;
 use App\Actions\Post\SetPostPinStateAction;
 use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
-use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
 use App\Http\Requests\Post\PreviewPostRequest;
@@ -19,7 +20,6 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
-use App\Support\Gamification\PointService;
 use App\Support\PostContentRenderer;
 use App\Support\SensitiveFeatureGate;
 use Illuminate\Http\JsonResponse;
@@ -32,9 +32,9 @@ class PostController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
-        private readonly PointService $pointService,
-        private readonly StorePostService $storePostService,
+        private readonly StorePostAction $storePostAction,
         private readonly UpdatePostAction $updatePostAction,
+        private readonly DeletePostAction $deletePostAction,
         private readonly ModeratePostAction $moderatePostAction,
         private readonly SetPostPinStateAction $setPostPinStateAction,
         private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
@@ -47,19 +47,12 @@ class PostController extends Controller
 
         $data = $request->validated();
         $user = $this->authenticatedUser($request);
-        $isModerator = $this->canModerateScene($user, $scene);
-        $requiresApproval = $campaign->requiresPostModeration()
-            && ! $campaign->userCanPostWithoutModeration($user)
-            && ! $isModerator;
 
         try {
-            $storedPost = $this->storePostService->store(
+            $storedPost = $this->storePostAction->execute(
                 scene: $scene,
-                user: $user,
+                author: $user,
                 data: $data,
-                isModerator: $isModerator,
-                requiresApproval: $requiresApproval,
-                worldSlug: $world->slug,
             );
         } catch (PostProbeInvariantViolationException|PostInventoryAwardInvariantViolationException $exception) {
             report($exception);
@@ -168,8 +161,9 @@ class PostController extends Controller
         $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
-        $this->pointService->revokeApprovedPostPoints($post);
-        $post->delete();
+        $this->deletePostAction->execute(
+            $post,
+        );
 
         return redirect()
             ->route('campaigns.scenes.show', [
@@ -256,24 +250,6 @@ class PostController extends Controller
             'status' => 'ok',
             'html' => $html,
         ]);
-    }
-
-    private function canModerateScene(User $user, Scene $scene): bool
-    {
-        if ($user->isGmOrAdmin()) {
-            return true;
-        }
-
-        $campaign = $this->resolveCampaignFromScene($scene);
-
-        return $campaign?->isCoGm($user) ?? false;
-    }
-
-    private function resolveCampaignFromScene(Scene $scene): ?Campaign
-    {
-        $campaign = $scene->campaign;
-
-        return $campaign instanceof Campaign ? $campaign : null;
     }
 
     /**

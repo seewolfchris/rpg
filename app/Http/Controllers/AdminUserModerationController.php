@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
+use App\Actions\Admin\UpdateUserModerationPermissionAction;
 use App\Http\Requests\Admin\UpdateUserModerationRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AdminUserModerationController extends Controller
 {
+    public function __construct(
+        private readonly UpdateUserModerationPermissionAction $updateUserModerationPermissionAction,
+    ) {}
+
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('q', ''));
@@ -34,21 +39,31 @@ class AdminUserModerationController extends Controller
     public function update(UpdateUserModerationRequest $request, User $user): RedirectResponse
     {
         $validated = $request->validated();
-
         $isEnabled = (bool) $validated['can_post_without_moderation'];
-        $isTargetPlayer = $user->hasRole(UserRole::PLAYER);
 
-        if (! $isTargetPlayer && $isEnabled) {
+        try {
+            $this->updateUserModerationPermissionAction->execute($user, $isEnabled);
+        } catch (ValidationException $exception) {
             return back()->withErrors([
-                'user' => 'Das Recht kann nur für Spieler aktiviert werden.',
+                'user' => $this->firstValidationMessage($exception),
             ]);
         }
-
-        $user->can_post_without_moderation = $isTargetPlayer ? $isEnabled : false;
-        $user->save();
 
         return redirect()
             ->route('admin.users.moderation.index', ['q' => $request->query('q')])
             ->with('status', 'Moderationsrecht für '.$user->name.' aktualisiert.');
+    }
+
+    private function firstValidationMessage(ValidationException $exception): string
+    {
+        foreach ($exception->errors() as $messages) {
+            $firstMessage = $messages[0] ?? null;
+
+            if (is_string($firstMessage) && $firstMessage !== '') {
+                return $firstMessage;
+            }
+        }
+
+        return 'Moderationsrecht konnte nicht aktualisiert werden.';
     }
 }

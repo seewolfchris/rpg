@@ -2,6 +2,9 @@ includes:
     - vendor/larastan/larastan/extension.neon
     - phpstan-baseline.neon
 
+parametersSchema:
+    controllerGuardrailWhitelist: listOf(string())
+
 parameters:
     level: 8
     paths:
@@ -11,3 +14,37 @@ parameters:
     tmpDir: storage/phpstan
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
+    # temporary technical debt, reduce slice-by-slice
+    # migrated in this batch (Slice 1 + Slice 2 model-first consolidation):
+    # - %currentWorkingDirectory%/app/Http/Controllers/CampaignInvitationController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/PostController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/EncyclopediaWorkflowController.php
+    # migrated in this batch (Legacy-Controller Cleanup Slice):
+    # - %currentWorkingDirectory%/app/Http/Controllers/CampaignController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/EncyclopediaCategoryController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/EncyclopediaEntryController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/PostReactionController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/AdminUserModerationController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/Api/WebPushSubscriptionController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/WorldAdminController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/WorldSpeciesOptionAdminController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/WorldCallingOptionAdminController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/Auth/RegisteredUserController.php
+    # - %currentWorkingDirectory%/app/Http/Controllers/Auth/NewPasswordController.php
+    controllerGuardrailWhitelist: []
+
+services:
+    -
+        class: App\StaticAnalysis\PHPStan\Rules\NoDirectPersistenceInControllersRule
+        arguments:
+            - %currentWorkingDirectory%
+            - %controllerGuardrailWhitelist%
+        tags:
+            - phpstan.rules.rule
+    -
+        class: App\StaticAnalysis\PHPStan\Rules\NoTransactionInControllersRule
+        arguments:
+            - %currentWorkingDirectory%
+            - %controllerGuardrailWhitelist%
+        tags:
+            - phpstan.rules.rule

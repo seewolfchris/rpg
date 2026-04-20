@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\World\CreateWorldAction;
+use App\Actions\World\DeleteWorldAction;
 use App\Actions\World\ReorderWorldsAction;
 use App\Actions\World\UpdateWorldAction;
 use App\Http\Requests\World\StoreWorldRequest;
@@ -15,6 +17,8 @@ use Illuminate\View\View;
 class WorldAdminController extends Controller
 {
     public function __construct(
+        private readonly CreateWorldAction $createWorldAction,
+        private readonly DeleteWorldAction $deleteWorldAction,
         private readonly UpdateWorldAction $updateWorldAction,
         private readonly ReorderWorldsAction $reorderWorldsAction,
     ) {}
@@ -38,7 +42,9 @@ class WorldAdminController extends Controller
 
     public function store(StoreWorldRequest $request): RedirectResponse
     {
-        $world = World::query()->create($request->validated());
+        $world = $this->createWorldAction->execute(
+            $request->validated(),
+        );
 
         return redirect()
             ->route('admin.worlds.edit', $world)
@@ -100,36 +106,15 @@ class WorldAdminController extends Controller
             abort(404);
         }
 
-        $orderedIds = World::query()
-            ->ordered()
-            ->orderBy('id')
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->values()
-            ->all();
+        $moved = $this->reorderWorldsAction->execute($world, $direction);
 
-        $currentIndex = array_search((int) $world->id, $orderedIds, true);
-        if ($currentIndex === false) {
-            return back()->withErrors([
-                'world' => 'Welt konnte in der Sortierung nicht gefunden werden.',
-            ]);
-        }
-
-        $targetIndex = $direction === 'up'
-            ? $currentIndex - 1
-            : $currentIndex + 1;
-
-        if (! isset($orderedIds[$targetIndex])) {
+        if (! $moved) {
             return redirect()
                 ->route('admin.worlds.index')
                 ->with('status', $direction === 'up'
                     ? 'Welt ist bereits ganz oben.'
                     : 'Welt ist bereits ganz unten.');
         }
-
-        [$orderedIds[$currentIndex], $orderedIds[$targetIndex]] = [$orderedIds[$targetIndex], $orderedIds[$currentIndex]];
-
-        $this->reorderWorldsAction->execute($orderedIds);
 
         return redirect()
             ->route('admin.worlds.index')
@@ -138,23 +123,13 @@ class WorldAdminController extends Controller
 
     public function destroy(World $world): RedirectResponse
     {
-        if ($world->slug === World::defaultSlug()) {
+        try {
+            $this->deleteWorldAction->execute($world);
+        } catch (ValidationException $exception) {
             return back()->withErrors([
-                'world' => 'Die Standardwelt kann nicht gelöscht werden.',
+                'world' => $this->firstValidationMessage($exception),
             ]);
         }
-
-        $hasDependencies = $world->campaigns()->exists()
-            || $world->characters()->exists()
-            || $world->encyclopediaCategories()->exists();
-
-        if ($hasDependencies) {
-            return back()->withErrors([
-                'world' => 'Diese Welt kann nicht gelöscht werden, solange noch Kampagnen, Charaktere oder Wissen daran hängen.',
-            ]);
-        }
-
-        $world->delete();
 
         return redirect()
             ->route('admin.worlds.index')

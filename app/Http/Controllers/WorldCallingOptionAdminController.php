@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\WorldCharacterOptions\ReorderWorldCharacterOptionAction;
-use App\Http\Controllers\Concerns\NormalizesWorldCharacterOptionInput;
+use App\Actions\WorldCharacterOptions\CreateWorldCallingOptionAction;
+use App\Actions\WorldCharacterOptions\MoveWorldCallingOptionAction;
+use App\Actions\WorldCharacterOptions\ToggleWorldCallingOptionAction;
+use App\Actions\WorldCharacterOptions\UpdateWorldCallingOptionAction;
 use App\Http\Requests\WorldCharacterOptions\MoveWorldCharacterOptionRequest;
 use App\Http\Requests\WorldCharacterOptions\StoreWorldCallingOptionRequest;
 use App\Http\Requests\WorldCharacterOptions\UpdateWorldCallingOptionRequest;
@@ -15,29 +17,19 @@ use Illuminate\Http\RedirectResponse;
 
 class WorldCallingOptionAdminController extends Controller
 {
-    use NormalizesWorldCharacterOptionInput;
-
     public function __construct(
-        private readonly ReorderWorldCharacterOptionAction $reorderWorldCharacterOptionAction,
+        private readonly CreateWorldCallingOptionAction $createWorldCallingOptionAction,
+        private readonly UpdateWorldCallingOptionAction $updateWorldCallingOptionAction,
+        private readonly ToggleWorldCallingOptionAction $toggleWorldCallingOptionAction,
+        private readonly MoveWorldCallingOptionAction $moveWorldCallingOptionAction,
     ) {}
 
     public function store(StoreWorldCallingOptionRequest $request, World $world): RedirectResponse
     {
-        $validated = $request->validated();
-
-        WorldCalling::query()->create([
-            'world_id' => (int) $world->id,
-            'key' => (string) $validated['key'],
-            'label' => (string) $validated['label'],
-            'description' => $this->trimNullable($validated['description'] ?? null),
-            'minimums_json' => $this->decodeJsonArray($validated['minimums_json'] ?? null),
-            'bonuses_json' => $this->decodeJsonArray($validated['bonuses_json'] ?? null),
-            'position' => (int) ($validated['position'] ?? 0),
-            'is_magic_capable' => $request->boolean('is_magic_capable'),
-            'is_custom' => $request->boolean('is_custom'),
-            'is_template' => $request->boolean('is_template'),
-            'is_active' => $request->boolean('is_active', true),
-        ]);
+        $this->createWorldCallingOptionAction->execute(
+            world: $world,
+            data: $this->normalizedPayload($request, true),
+        );
 
         return redirect()
             ->route('admin.worlds.edit', $world)
@@ -49,22 +41,11 @@ class WorldCallingOptionAdminController extends Controller
         World $world,
         WorldCalling $callingOption
     ): RedirectResponse {
-        $this->ensureCallingBelongsToWorld($world, $callingOption);
-
-        $validated = $request->validated();
-
-        $callingOption->update([
-            'key' => (string) $validated['key'],
-            'label' => (string) $validated['label'],
-            'description' => $this->trimNullable($validated['description'] ?? null),
-            'minimums_json' => $this->decodeJsonArray($validated['minimums_json'] ?? null),
-            'bonuses_json' => $this->decodeJsonArray($validated['bonuses_json'] ?? null),
-            'position' => (int) ($validated['position'] ?? 0),
-            'is_magic_capable' => $request->boolean('is_magic_capable'),
-            'is_custom' => $request->boolean('is_custom'),
-            'is_template' => $request->boolean('is_template'),
-            'is_active' => $request->boolean('is_active'),
-        ]);
+        $this->updateWorldCallingOptionAction->execute(
+            world: $world,
+            callingOption: $callingOption,
+            data: $this->normalizedPayload($request, false),
+        );
 
         return redirect()
             ->route('admin.worlds.edit', $world)
@@ -73,14 +54,11 @@ class WorldCallingOptionAdminController extends Controller
 
     public function toggle(World $world, WorldCalling $callingOption): RedirectResponse
     {
-        $this->ensureCallingBelongsToWorld($world, $callingOption);
-
-        $callingOption->is_active = ! $callingOption->is_active;
-        $callingOption->save();
+        $nextIsActive = $this->toggleWorldCallingOptionAction->execute($world, $callingOption);
 
         return redirect()
             ->route('admin.worlds.edit', $world)
-            ->with('status', $callingOption->is_active ? 'Berufung aktiviert.' : 'Berufung deaktiviert.');
+            ->with('status', $nextIsActive ? 'Berufung aktiviert.' : 'Berufung deaktiviert.');
     }
 
     public function move(
@@ -88,12 +66,9 @@ class WorldCallingOptionAdminController extends Controller
         World $world,
         WorldCalling $callingOption
     ): RedirectResponse {
-        $this->ensureCallingBelongsToWorld($world, $callingOption);
-
-        $this->reorderWorldCharacterOptionAction->execute(
-            worldId: (int) $world->id,
-            optionId: (int) $callingOption->id,
-            table: 'world_callings',
+        $this->moveWorldCallingOptionAction->execute(
+            world: $world,
+            callingOption: $callingOption,
             direction: $request->direction(),
         );
 
@@ -102,8 +77,19 @@ class WorldCallingOptionAdminController extends Controller
             ->with('status', 'Berufungs-Sortierung aktualisiert.');
     }
 
-    private function ensureCallingBelongsToWorld(World $world, WorldCalling $callingOption): void
-    {
-        abort_unless((int) $callingOption->world_id === (int) $world->id, 404);
+    /**
+     * @param  StoreWorldCallingOptionRequest|UpdateWorldCallingOptionRequest  $request
+     * @return array<string, mixed>
+     */
+    private function normalizedPayload(
+        StoreWorldCallingOptionRequest|UpdateWorldCallingOptionRequest $request,
+        bool $defaultIsActive,
+    ): array {
+        return array_merge($request->validated(), [
+            'is_magic_capable' => $request->boolean('is_magic_capable'),
+            'is_custom' => $request->boolean('is_custom'),
+            'is_template' => $request->boolean('is_template'),
+            'is_active' => $request->boolean('is_active', $defaultIsActive),
+        ]);
     }
 }

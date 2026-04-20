@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\Auth\ResetUserPasswordAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
+    public function __construct(
+        private readonly ResetUserPasswordAction $resetUserPasswordAction,
+    ) {}
+
     public function create(string $token): View
     {
         return view('auth.reset-password', [
@@ -26,11 +29,7 @@ class NewPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password): void {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                ])->setRememberToken(Str::random(60));
-
-                $user->save();
+                $this->resetUserPasswordAction->execute($user, $password);
 
                 event(new PasswordReset($user));
             },

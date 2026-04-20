@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Post\BuildPostThreadItemFragmentAction;
-use App\Http\Controllers\Concerns\EnsuresWorldContext;
+use App\Actions\Scene\ToggleSceneBookmarkAction;
+use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Requests\SceneBookmark\StoreSceneBookmarkRequest;
 use App\Models\Campaign;
 use App\Models\Post;
@@ -14,15 +15,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SceneBookmarkController extends Controller
 {
-    use EnsuresWorldContext;
+    use BuildsVisibleCampaignSubquery;
 
     public function __construct(
         private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
+        private readonly ToggleSceneBookmarkAction $toggleSceneBookmarkAction,
     ) {}
 
     public function index(Request $request, World $world): View
@@ -33,10 +34,7 @@ class SceneBookmarkController extends Controller
         $bookmarksQuery = SceneBookmark::query()
             ->where('user_id', $user->id)
             ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
-                $campaignQuery->whereIn('id', Campaign::query()
-                    ->visibleTo($user)
-                    ->forWorld($world)
-                    ->select('id'));
+                $campaignQuery->whereIn('id', $this->visibleCampaignIdsSubqueryForWorld($user, $world));
             })
             ->with('scene.campaign.world')
             ->latest('updated_at');
@@ -64,10 +62,7 @@ class SceneBookmarkController extends Controller
         $totalCount = SceneBookmark::query()
             ->where('user_id', $user->id)
             ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user, $world): void {
-                $campaignQuery->whereIn('id', Campaign::query()
-                    ->visibleTo($user)
-                    ->forWorld($world)
-                    ->select('id'));
+                $campaignQuery->whereIn('id', $this->visibleCampaignIdsSubqueryForWorld($user, $world));
             })
             ->count();
 
@@ -80,39 +75,18 @@ class SceneBookmarkController extends Controller
         Campaign $campaign,
         Scene $scene,
     ): View|RedirectResponse {
-        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
-
         $data = $request->validated();
-
-        $postId = isset($data['post_id']) ? (int) $data['post_id'] : 0;
-
-        if ($postId > 0) {
-            $postBelongsToScene = Post::query()
-                ->where('scene_id', $scene->id)
-                ->whereKey($postId)
-                ->exists();
-
-            if (! $postBelongsToScene) {
-                throw ValidationException::withMessages([
-                    'post_id' => 'Der gewählte Post gehört nicht zu dieser Szene.',
-                ]);
-            }
-        } else {
-            $latestPostId = (int) Post::query()
-                ->where('scene_id', $scene->id)
-                ->max('id');
-            $postId = $latestPostId > 0 ? $latestPostId : 0;
-        }
-
-        SceneBookmark::query()->updateOrCreate([
-            'user_id' => $user->id,
-            'scene_id' => $scene->id,
-        ], [
-            'post_id' => $postId > 0 ? $postId : null,
-            'label' => $this->normalizeLabel((string) ($data['label'] ?? '')),
-        ]);
+        $bookmark = $this->toggleSceneBookmarkAction->create(
+            world: $world,
+            campaign: $campaign,
+            scene: $scene,
+            user: $user,
+            requestedPostId: isset($data['post_id']) ? (int) $data['post_id'] : null,
+            label: (string) ($data['label'] ?? ''),
+        );
+        $postId = (int) ($bookmark->post_id ?? 0);
 
         if ($request->header('HX-Request') === 'true' && $postId > 0) {
             $post = Post::query()
@@ -130,23 +104,16 @@ class SceneBookmarkController extends Controller
 
     public function destroy(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
     {
-        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('view', $scene);
         $user = $this->authenticatedUser($request);
-
-        SceneBookmark::query()
-            ->where('user_id', $user->id)
-            ->where('scene_id', $scene->id)
-            ->delete();
+        $this->toggleSceneBookmarkAction->delete(
+            world: $world,
+            campaign: $campaign,
+            scene: $scene,
+            user: $user,
+        );
 
         return back()->with('status', 'Bookmark entfernt.');
-    }
-
-    private function normalizeLabel(string $label): ?string
-    {
-        $normalized = trim($label);
-
-        return $normalized !== '' ? $normalized : null;
     }
 
     /**

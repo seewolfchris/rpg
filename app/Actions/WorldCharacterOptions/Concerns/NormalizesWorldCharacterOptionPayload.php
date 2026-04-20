@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Concerns;
+namespace App\Actions\WorldCharacterOptions\Concerns;
 
-trait NormalizesWorldCharacterOptionInput
+trait NormalizesWorldCharacterOptionPayload
 {
     /**
      * @return array<string, mixed>
      */
     private function decodeJsonArray(mixed $raw): array
     {
+        if (is_array($raw)) {
+            return $raw;
+        }
+
         if (! is_string($raw)) {
             return [];
         }

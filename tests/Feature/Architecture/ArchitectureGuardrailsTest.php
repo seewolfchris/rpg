@@ -1,77 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Architecture;
 
 use Tests\TestCase;
 
 class ArchitectureGuardrailsTest extends TestCase
 {
-    public function test_controller_db_guardrail_detects_instance_transaction_calls(): void
+    public function test_mutating_route_closure_detector_flags_mutating_route_closure(): void
     {
         $tokens = token_get_all(<<<'PHP'
 <?php
 
-class SampleController
-{
-    public function store(): void
-    {
-        $db = app('db');
-        $db->transaction(function (): void {});
-        $db?->beginTransaction();
-    }
-}
+Route::post('/example', function (): void {
+    // violation
+});
 PHP);
 
-        $violations = $this->findControllerDbViolations($tokens, 'sample.php');
+        $violations = $this->findMutatingRouteClosureViolations($tokens, 'sample.php');
 
-        $this->assertTrue(
-            $this->containsViolation($violations, 'forbidden instance transaction call'),
-            'Expected instance transaction call to be rejected.',
-        );
-        $this->assertTrue(
-            $this->containsViolation($violations, 'forbidden begintransaction call'),
-            'Expected instance beginTransaction call to be rejected.',
-        );
+        $this->assertCount(1, $violations);
+        $this->assertStringContainsString('Route::post', $violations[0]);
     }
 
-    public function test_controller_db_guardrail_ignores_transaction_method_declarations(): void
+    public function test_mutating_route_closure_detector_ignores_controller_handler(): void
     {
         $tokens = token_get_all(<<<'PHP'
 <?php
 
-class SampleController
-{
-    public function transaction(): void {}
-
-    public function beginTransaction(): void {}
-}
+Route::post('/example', [SampleController::class, 'store']);
 PHP);
 
-        $violations = $this->findControllerDbViolations($tokens, 'sample.php');
+        $violations = $this->findMutatingRouteClosureViolations($tokens, 'sample.php');
 
-        $this->assertFalse(
-            $this->containsViolation($violations, 'transaction call'),
-            'Transaction method declarations must not be flagged as forbidden calls.',
-        );
-        $this->assertFalse(
-            $this->containsViolation($violations, 'begintransaction call'),
-            'beginTransaction method declarations must not be flagged as forbidden calls.',
-        );
-    }
-
-    public function test_controllers_do_not_use_transactions_or_row_locks(): void
-    {
-        $violations = [];
-
-        foreach ($this->phpFiles(app_path('Http/Controllers')) as $file) {
-            $tokens = token_get_all((string) file_get_contents($file));
-
-            foreach ($this->findControllerDbViolations($tokens, $file) as $violation) {
-                $violations[] = $violation;
-            }
-        }
-
-        $this->assertSame([], $violations, implode(PHP_EOL, $violations));
+        $this->assertSame([], $violations);
     }
 
     public function test_authenticated_routes_do_not_define_mutating_closure_routes(): void
@@ -91,88 +54,6 @@ PHP);
         }
 
         $this->assertSame([], $violations, implode(PHP_EOL, $violations));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function findControllerDbViolations(array $tokens, string $file): array
-    {
-        $violations = [];
-
-        for ($index = 0; $index < count($tokens); $index++) {
-            $token = $tokens[$index];
-
-            if (! is_array($token) || $token[0] !== T_STRING) {
-                continue;
-            }
-
-            $value = strtolower($token[1]);
-
-            if ($value === 'db') {
-                $doubleColonIndex = $this->nextMeaningfulTokenIndex($tokens, $index + 1);
-                $callIndex = $doubleColonIndex !== null
-                    ? $this->nextMeaningfulTokenIndex($tokens, $doubleColonIndex + 1)
-                    : null;
-                $doubleColon = $doubleColonIndex !== null ? $this->tokenText($tokens[$doubleColonIndex]) : '';
-                $callName = $callIndex !== null ? strtolower($this->tokenText($tokens[$callIndex])) : '';
-
-                if ($doubleColon === '::' && in_array($callName, ['transaction', 'begintransaction'], true)) {
-                    $violations[] = sprintf(
-                        '%s:%d uses forbidden DB::%s call in controller layer.',
-                        $file,
-                        $token[2],
-                        $callName,
-                    );
-                }
-            }
-
-            if (! in_array($value, ['begintransaction', 'lockforupdate'], true)) {
-                if (! in_array($value, ['transaction', 'begintransaction'], true)) {
-                    continue;
-                }
-
-                $previousIndex = $this->previousMeaningfulTokenIndex($tokens, $index - 1);
-                $previousText = $previousIndex !== null ? strtolower($this->tokenText($tokens[$previousIndex])) : '';
-
-                if ($previousText === 'function') {
-                    continue;
-                }
-
-                if (! in_array($previousText, ['->', '?->'], true)) {
-                    continue;
-                }
-
-                $violations[] = sprintf(
-                    '%s:%d uses forbidden instance %s call in controller layer.',
-                    $file,
-                    $token[2],
-                    $value,
-                );
-
-                continue;
-            }
-
-            $previousIndex = $this->previousMeaningfulTokenIndex($tokens, $index - 1);
-            $previousText = $previousIndex !== null ? strtolower($this->tokenText($tokens[$previousIndex])) : '';
-
-            if ($previousText === 'function') {
-                continue;
-            }
-
-            if (! in_array($previousText, ['->', '?->', '::'], true)) {
-                continue;
-            }
-
-            $violations[] = sprintf(
-                '%s:%d uses forbidden %s call in controller layer.',
-                $file,
-                $token[2],
-                $value,
-            );
-        }
-
-        return $violations;
     }
 
     /**
@@ -310,23 +191,6 @@ PHP);
         return null;
     }
 
-    private function previousMeaningfulTokenIndex(array $tokens, int $startIndex): ?int
-    {
-        for ($index = $startIndex; $index >= 0; $index--) {
-            $token = $tokens[$index];
-
-            if (! is_array($token)) {
-                return $index;
-            }
-
-            if (! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
-
     private function tokenText(mixed $token): string
     {
         if (is_array($token)) {
@@ -343,44 +207,5 @@ PHP);
         }
 
         return 0;
-    }
-
-    /**
-     * @param  list<string>  $violations
-     */
-    private function containsViolation(array $violations, string $needle): bool
-    {
-        foreach ($violations as $violation) {
-            if (str_contains($violation, $needle)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function phpFiles(string $directory): array
-    {
-        $files = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
-
-        foreach ($iterator as $file) {
-            if (! $file instanceof \SplFileInfo) {
-                continue;
-            }
-
-            if (! $file->isFile() || $file->getExtension() !== 'php') {
-                continue;
-            }
-
-            $files[] = $file->getPathname();
-        }
-
-        sort($files);
-
-        return $files;
     }
 }

@@ -9,7 +9,7 @@ use App\Models\World;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Validation\ValidationException;
 
-class UpdateWorldAction
+final class UpdateWorldAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

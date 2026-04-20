@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Encyclopedia\CreateEncyclopediaCategoryAction;
+use App\Actions\Encyclopedia\DeleteEncyclopediaCategoryAction;
+use App\Actions\Encyclopedia\UpdateEncyclopediaCategoryAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Encyclopedia\StoreEncyclopediaCategoryRequest;
 use App\Http\Requests\Encyclopedia\UpdateEncyclopediaCategoryRequest;
@@ -14,6 +17,12 @@ use Illuminate\View\View;
 class EncyclopediaCategoryController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly CreateEncyclopediaCategoryAction $createEncyclopediaCategoryAction,
+        private readonly UpdateEncyclopediaCategoryAction $updateEncyclopediaCategoryAction,
+        private readonly DeleteEncyclopediaCategoryAction $deleteEncyclopediaCategoryAction,
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -49,10 +58,10 @@ class EncyclopediaCategoryController extends Controller
      */
     public function store(StoreEncyclopediaCategoryRequest $request, World $world): RedirectResponse
     {
-        $payload = $request->validated();
-        $payload['world_id'] = $world->id;
-
-        EncyclopediaCategory::query()->create($payload);
+        $this->createEncyclopediaCategoryAction->execute(
+            world: $world,
+            data: $request->validated(),
+        );
 
         return redirect()
             ->route('knowledge.admin.kategorien.index', ['world' => $world])
@@ -83,9 +92,11 @@ class EncyclopediaCategoryController extends Controller
         World $world,
         EncyclopediaCategory $encyclopediaCategory
     ): RedirectResponse {
-        $this->ensureCategoryBelongsToWorld($world, $encyclopediaCategory);
-
-        $encyclopediaCategory->update($request->validated());
+        $this->updateEncyclopediaCategoryAction->execute(
+            world: $world,
+            category: $encyclopediaCategory,
+            data: $request->validated(),
+        );
 
         return redirect()
             ->route('knowledge.admin.kategorien.edit', [
@@ -100,9 +111,10 @@ class EncyclopediaCategoryController extends Controller
      */
     public function destroy(World $world, EncyclopediaCategory $encyclopediaCategory): RedirectResponse
     {
-        $this->ensureCategoryBelongsToWorld($world, $encyclopediaCategory);
-
-        $encyclopediaCategory->delete();
+        $this->deleteEncyclopediaCategoryAction->execute(
+            world: $world,
+            category: $encyclopediaCategory,
+        );
 
         return redirect()
             ->route('knowledge.admin.kategorien.index', ['world' => $world])

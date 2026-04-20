@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Campaign\CreateCampaignAction;
+use App\Actions\Campaign\DeleteCampaignAction;
+use App\Actions\Campaign\UpdateCampaignAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Campaign\StoreCampaignRequest;
 use App\Http\Requests\Campaign\UpdateCampaignRequest;
@@ -16,8 +19,11 @@ class CampaignController extends Controller
 {
     use EnsuresWorldContext;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly CreateCampaignAction $createCampaignAction,
+        private readonly UpdateCampaignAction $updateCampaignAction,
+        private readonly DeleteCampaignAction $deleteCampaignAction,
+    ) {
         $this->authorizeResource(Campaign::class, 'campaign');
     }
 
@@ -49,11 +55,11 @@ class CampaignController extends Controller
     public function store(StoreCampaignRequest $request, World $world): RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-        $data = $request->validated();
-        $data['owner_id'] = $user->id;
-        $data['world_id'] = $world->id;
-
-        $campaign = Campaign::query()->create($data);
+        $campaign = $this->createCampaignAction->execute(
+            world: $world,
+            owner: $user,
+            data: $request->validated(),
+        );
 
         return redirect()
             ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
@@ -142,8 +148,11 @@ class CampaignController extends Controller
 
     public function update(UpdateCampaignRequest $request, World $world, Campaign $campaign): RedirectResponse
     {
-        $this->ensureCampaignBelongsToWorld($world, $campaign);
-        $campaign->update($request->validated());
+        $this->updateCampaignAction->execute(
+            world: $world,
+            campaign: $campaign,
+            data: $request->validated(),
+        );
 
         return redirect()
             ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
@@ -152,8 +161,10 @@ class CampaignController extends Controller
 
     public function destroy(World $world, Campaign $campaign): RedirectResponse
     {
-        $this->ensureCampaignBelongsToWorld($world, $campaign);
-        $campaign->delete();
+        $this->deleteCampaignAction->execute(
+            world: $world,
+            campaign: $campaign,
+        );
 
         return redirect()
             ->route('campaigns.index', ['world' => $world])

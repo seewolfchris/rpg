@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Notification\MarkAllNotificationsReadAction;
+use App\Actions\Notification\MarkNotificationReadAction;
+use App\Actions\Notification\UpdateNotificationPreferencesAction;
+use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
-use App\Models\Campaign;
 use App\Models\SceneSubscription;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,6 +18,14 @@ use Illuminate\View\View;
 
 class NotificationController extends Controller
 {
+    use BuildsVisibleCampaignSubquery;
+
+    public function __construct(
+        private readonly UpdateNotificationPreferencesAction $updateNotificationPreferencesAction,
+        private readonly MarkNotificationReadAction $markNotificationReadAction,
+        private readonly MarkAllNotificationsReadAction $markAllNotificationsReadAction,
+    ) {}
+
     public function preferences(Request $request): View
     {
         $user = $this->authenticatedUser($request);
@@ -29,11 +40,11 @@ class NotificationController extends Controller
         $user = $this->authenticatedUser($request);
         $offlineQueueEnabled = $request->offlineQueueEnabled();
 
-        $user->forceFill([
-            'notification_preferences' => $request->preferences(),
-            'offline_queue_enabled' => $offlineQueueEnabled,
-        ]);
-        $user->save();
+        $this->updateNotificationPreferencesAction->execute(
+            $user,
+            $request->preferences(),
+            $offlineQueueEnabled,
+        );
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -58,14 +69,10 @@ class NotificationController extends Controller
             ->withQueryString();
 
         $unreadCount = $user->unreadNotifications()->count();
-        $visibleCampaignIds = Campaign::query()
-            ->visibleTo($user)
-            ->pluck('id');
-
         $subscriptionsBaseQuery = SceneSubscription::query()
             ->where('user_id', $user->id)
-            ->whereHas('scene', function (Builder $sceneQuery) use ($visibleCampaignIds): void {
-                $sceneQuery->whereIn('campaign_id', $visibleCampaignIds);
+            ->whereHas('scene', function (Builder $sceneQuery) use ($user): void {
+                $sceneQuery->whereIn('campaign_id', $this->visibleCampaignIdsSubquery($user));
             });
 
         $subscriptions = (clone $subscriptionsBaseQuery)
@@ -95,14 +102,7 @@ class NotificationController extends Controller
     public function read(Request $request, string $notificationId): View|RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-        $notification = $user
-            ->notifications()
-            ->whereKey($notificationId)
-            ->firstOrFail();
-
-        if (! $notification->read_at) {
-            $notification->markAsRead();
-        }
+        $notification = $this->markNotificationReadAction->execute($user, $notificationId);
 
         if ($request->header('HX-Request') === 'true') {
             return $this->renderInboxPanel($request, $user);
@@ -162,10 +162,7 @@ class NotificationController extends Controller
     public function readAll(Request $request): View|RedirectResponse
     {
         $user = $this->authenticatedUser($request);
-
-        $user
-            ->unreadNotifications()
-            ->update(['read_at' => now()]);
+        $this->markAllNotificationsReadAction->execute($user);
 
         if ($request->header('HX-Request') === 'true') {
             return $this->renderInboxPanel($request, $user);

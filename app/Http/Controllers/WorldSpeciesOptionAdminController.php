@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\WorldCharacterOptions\ReorderWorldCharacterOptionAction;
-use App\Http\Controllers\Concerns\NormalizesWorldCharacterOptionInput;
+use App\Actions\WorldCharacterOptions\CreateWorldSpeciesOptionAction;
+use App\Actions\WorldCharacterOptions\MoveWorldSpeciesOptionAction;
+use App\Actions\WorldCharacterOptions\ToggleWorldSpeciesOptionAction;
+use App\Actions\WorldCharacterOptions\UpdateWorldSpeciesOptionAction;
 use App\Http\Requests\WorldCharacterOptions\MoveWorldCharacterOptionRequest;
 use App\Http\Requests\WorldCharacterOptions\StoreWorldSpeciesOptionRequest;
 use App\Http\Requests\WorldCharacterOptions\UpdateWorldSpeciesOptionRequest;
@@ -15,29 +17,19 @@ use Illuminate\Http\RedirectResponse;
 
 class WorldSpeciesOptionAdminController extends Controller
 {
-    use NormalizesWorldCharacterOptionInput;
-
     public function __construct(
-        private readonly ReorderWorldCharacterOptionAction $reorderWorldCharacterOptionAction,
+        private readonly CreateWorldSpeciesOptionAction $createWorldSpeciesOptionAction,
+        private readonly UpdateWorldSpeciesOptionAction $updateWorldSpeciesOptionAction,
+        private readonly ToggleWorldSpeciesOptionAction $toggleWorldSpeciesOptionAction,
+        private readonly MoveWorldSpeciesOptionAction $moveWorldSpeciesOptionAction,
     ) {}
 
     public function store(StoreWorldSpeciesOptionRequest $request, World $world): RedirectResponse
     {
-        $validated = $request->validated();
-
-        WorldSpecies::query()->create([
-            'world_id' => (int) $world->id,
-            'key' => (string) $validated['key'],
-            'label' => (string) $validated['label'],
-            'description' => $this->trimNullable($validated['description'] ?? null),
-            'modifiers_json' => $this->decodeJsonArray($validated['modifiers_json'] ?? null),
-            'le_bonus' => (int) ($validated['le_bonus'] ?? 0),
-            'ae_bonus' => (int) ($validated['ae_bonus'] ?? 0),
-            'position' => (int) ($validated['position'] ?? 0),
-            'is_magic_capable' => $request->boolean('is_magic_capable'),
-            'is_template' => $request->boolean('is_template'),
-            'is_active' => $request->boolean('is_active', true),
-        ]);
+        $this->createWorldSpeciesOptionAction->execute(
+            world: $world,
+            data: $this->normalizedPayload($request, true),
+        );
 
         return redirect()
             ->route('admin.worlds.edit', $world)
@@ -49,22 +41,11 @@ class WorldSpeciesOptionAdminController extends Controller
         World $world,
         WorldSpecies $speciesOption
     ): RedirectResponse {
-        $this->ensureSpeciesBelongsToWorld($world, $speciesOption);
-
-        $validated = $request->validated();
-
-        $speciesOption->update([
-            'key' => (string) $validated['key'],
-            'label' => (string) $validated['label'],
-            'description' => $this->trimNullable($validated['description'] ?? null),
-            'modifiers_json' => $this->decodeJsonArray($validated['modifiers_json'] ?? null),
-            'le_bonus' => (int) ($validated['le_bonus'] ?? 0),
-            'ae_bonus' => (int) ($validated['ae_bonus'] ?? 0),
-            'position' => (int) ($validated['position'] ?? 0),
-            'is_magic_capable' => $request->boolean('is_magic_capable'),
-            'is_template' => $request->boolean('is_template'),
-            'is_active' => $request->boolean('is_active'),
-        ]);
+        $this->updateWorldSpeciesOptionAction->execute(
+            world: $world,
+            speciesOption: $speciesOption,
+            data: $this->normalizedPayload($request, false),
+        );
 
         return redirect()
             ->route('admin.worlds.edit', $world)
@@ -73,14 +54,11 @@ class WorldSpeciesOptionAdminController extends Controller
 
     public function toggle(World $world, WorldSpecies $speciesOption): RedirectResponse
     {
-        $this->ensureSpeciesBelongsToWorld($world, $speciesOption);
-
-        $speciesOption->is_active = ! $speciesOption->is_active;
-        $speciesOption->save();
+        $nextIsActive = $this->toggleWorldSpeciesOptionAction->execute($world, $speciesOption);
 
         return redirect()
             ->route('admin.worlds.edit', $world)
-            ->with('status', $speciesOption->is_active ? 'Spezies aktiviert.' : 'Spezies deaktiviert.');
+            ->with('status', $nextIsActive ? 'Spezies aktiviert.' : 'Spezies deaktiviert.');
     }
 
     public function move(
@@ -88,12 +66,9 @@ class WorldSpeciesOptionAdminController extends Controller
         World $world,
         WorldSpecies $speciesOption
     ): RedirectResponse {
-        $this->ensureSpeciesBelongsToWorld($world, $speciesOption);
-
-        $this->reorderWorldCharacterOptionAction->execute(
-            worldId: (int) $world->id,
-            optionId: (int) $speciesOption->id,
-            table: 'world_species',
+        $this->moveWorldSpeciesOptionAction->execute(
+            world: $world,
+            speciesOption: $speciesOption,
             direction: $request->direction(),
         );
 
@@ -102,8 +77,18 @@ class WorldSpeciesOptionAdminController extends Controller
             ->with('status', 'Spezies-Sortierung aktualisiert.');
     }
 
-    private function ensureSpeciesBelongsToWorld(World $world, WorldSpecies $speciesOption): void
-    {
-        abort_unless((int) $speciesOption->world_id === (int) $world->id, 404);
+    /**
+     * @param  StoreWorldSpeciesOptionRequest|UpdateWorldSpeciesOptionRequest  $request
+     * @return array<string, mixed>
+     */
+    private function normalizedPayload(
+        StoreWorldSpeciesOptionRequest|UpdateWorldSpeciesOptionRequest $request,
+        bool $defaultIsActive,
+    ): array {
+        return array_merge($request->validated(), [
+            'is_magic_capable' => $request->boolean('is_magic_capable'),
+            'is_template' => $request->boolean('is_template'),
+            'is_active' => $request->boolean('is_active', $defaultIsActive),
+        ]);
     }
 }

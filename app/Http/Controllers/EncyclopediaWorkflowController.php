@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Encyclopedia\ApproveEncyclopediaEntryAction;
+use App\Actions\Encyclopedia\RejectEncyclopediaEntryAction;
+use App\Actions\Encyclopedia\StoreEncyclopediaProposalAction;
+use App\Actions\Encyclopedia\UpdateEncyclopediaProposalAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Encyclopedia\StoreProposalRequest;
 use App\Http\Requests\Encyclopedia\UpdateProposalRequest;
@@ -9,11 +13,19 @@ use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EncyclopediaWorkflowController extends Controller
 {
     use EnsuresWorldContext;
+
+    public function __construct(
+        private readonly StoreEncyclopediaProposalAction $storeEncyclopediaProposalAction,
+        private readonly UpdateEncyclopediaProposalAction $updateEncyclopediaProposalAction,
+        private readonly ApproveEncyclopediaEntryAction $approveEncyclopediaEntryAction,
+        private readonly RejectEncyclopediaEntryAction $rejectEncyclopediaEntryAction,
+    ) {}
 
     public function createProposal(World $world): View
     {
@@ -34,23 +46,25 @@ class EncyclopediaWorkflowController extends Controller
     {
         $this->authorize('propose', EncyclopediaEntry::class);
 
-        $data = $request->validated();
-        $category = $this->resolvePublicCategoryForWorld($world, (int) $data['encyclopedia_category_id']);
-
-        $entry = EncyclopediaEntry::query()->create([
-            'encyclopedia_category_id' => (int) $category->id,
-            'title' => $data['title'],
-            'slug' => $data['slug'],
-            'excerpt' => $data['excerpt'] ?? null,
-            'content' => $data['content'],
-            'status' => EncyclopediaEntry::STATUS_PENDING,
-            'position' => 0,
-            'published_at' => null,
-            'created_by' => auth()->id(),
-            'updated_by' => auth()->id(),
-            'reviewed_by' => null,
-            'reviewed_at' => null,
-        ]);
+        $actor = $this->authenticatedUser($request);
+        /** @var array{
+         *   encyclopedia_category_id: int|string,
+         *   title: string,
+         *   slug: string,
+         *   excerpt?: string|null,
+         *   content: string
+         * } $storeData
+         */
+        $storeData = $request->validated();
+        $category = EncyclopediaCategory::query()
+            ->forWorld($world)
+            ->whereKey((int) $storeData['encyclopedia_category_id'])
+            ->firstOrFail();
+        $entry = $this->storeEncyclopediaProposalAction->execute(
+            category: $category,
+            actor: $actor,
+            data: $storeData,
+        );
 
         return redirect()
             ->route('knowledge.encyclopedia.proposals.edit', [
@@ -84,31 +98,21 @@ class EncyclopediaWorkflowController extends Controller
         $this->resolveCategoryFromEntry($world, $encyclopediaEntry);
         $this->authorize('updateProposal', $encyclopediaEntry);
 
-        $data = $request->validated();
-        $category = $this->resolvePublicCategoryForWorld($world, (int) $data['encyclopedia_category_id']);
-
-        $encyclopediaEntry->revisions()->create([
-            'editor_id' => auth()->id(),
-            'title_before' => $encyclopediaEntry->title,
-            'excerpt_before' => $encyclopediaEntry->excerpt,
-            'content_before' => $encyclopediaEntry->content,
-            'status_before' => $encyclopediaEntry->status,
-            'created_at' => now(),
-        ]);
-
-        $encyclopediaEntry->update([
-            'encyclopedia_category_id' => (int) $category->id,
-            'title' => $data['title'],
-            'slug' => $data['slug'],
-            'excerpt' => $data['excerpt'] ?? null,
-            'content' => $data['content'],
-            'status' => EncyclopediaEntry::STATUS_PENDING,
-            'position' => 0,
-            'published_at' => null,
-            'updated_by' => auth()->id(),
-            'reviewed_by' => null,
-            'reviewed_at' => null,
-        ]);
+        $actor = $this->authenticatedUser($request);
+        /** @var array{
+         *   encyclopedia_category_id: int|string,
+         *   title: string,
+         *   slug: string,
+         *   excerpt?: string|null,
+         *   content: string
+         * } $updateData
+         */
+        $updateData = $request->validated();
+        $this->updateEncyclopediaProposalAction->execute(
+            entry: $encyclopediaEntry,
+            actor: $actor,
+            data: $updateData,
+        );
 
         return redirect()
             ->route('knowledge.encyclopedia.proposals.edit', [
@@ -138,43 +142,30 @@ class EncyclopediaWorkflowController extends Controller
         return view('knowledge.proposals.moderation', compact('world', 'entries'));
     }
 
-    public function approve(World $world, EncyclopediaEntry $encyclopediaEntry): RedirectResponse
+    public function approve(Request $request, World $world, EncyclopediaEntry $encyclopediaEntry): RedirectResponse
     {
         $this->resolveCategoryFromEntry($world, $encyclopediaEntry);
         $this->authorize('review', [EncyclopediaEntry::class, $world]);
-        abort_unless($encyclopediaEntry->status === EncyclopediaEntry::STATUS_PENDING, 404);
-
-        $updatePayload = [
-            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
-            'updated_by' => auth()->id(),
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ];
-
-        if (! $encyclopediaEntry->published_at) {
-            $updatePayload['published_at'] = now();
-        }
-
-        $encyclopediaEntry->update($updatePayload);
+        $reviewer = $this->authenticatedUser($request);
+        $this->approveEncyclopediaEntryAction->execute(
+            entry: $encyclopediaEntry,
+            reviewer: $reviewer,
+        );
 
         return redirect()
             ->route('knowledge.encyclopedia.moderation.index', ['world' => $world])
             ->with('status', 'Vorschlag freigegeben.');
     }
 
-    public function reject(World $world, EncyclopediaEntry $encyclopediaEntry): RedirectResponse
+    public function reject(Request $request, World $world, EncyclopediaEntry $encyclopediaEntry): RedirectResponse
     {
         $this->resolveCategoryFromEntry($world, $encyclopediaEntry);
         $this->authorize('review', [EncyclopediaEntry::class, $world]);
-        abort_unless($encyclopediaEntry->status === EncyclopediaEntry::STATUS_PENDING, 404);
-
-        $encyclopediaEntry->update([
-            'status' => EncyclopediaEntry::STATUS_REJECTED,
-            'updated_by' => auth()->id(),
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-            'published_at' => null,
-        ]);
+        $reviewer = $this->authenticatedUser($request);
+        $this->rejectEncyclopediaEntryAction->execute(
+            entry: $encyclopediaEntry,
+            reviewer: $reviewer,
+        );
 
         return redirect()
             ->route('knowledge.encyclopedia.moderation.index', ['world' => $world])
@@ -192,14 +183,4 @@ class EncyclopediaWorkflowController extends Controller
         return $category;
     }
 
-    private function resolvePublicCategoryForWorld(World $world, int $categoryId): EncyclopediaCategory
-    {
-        $category = EncyclopediaCategory::query()
-            ->forWorld($world)
-            ->visible()
-            ->findOrFail($categoryId);
-        $this->ensureCategoryBelongsToWorld($world, $category);
-
-        return $category;
-    }
 }

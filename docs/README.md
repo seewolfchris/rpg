@@ -1,6 +1,6 @@
 # Docs-Übersicht
 
-Stand: 2026-04-10
+Stand: 2026-04-20
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
@@ -9,6 +9,7 @@ Stand: 2026-04-10
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
 - Security-Hardening (technisch): `SECURITY.md`
 - PWA/Offline-Details: `PWA_OFFLINE.md`
+- Architekturstandard (Actions-first + Guardrails): `ARCHITECTURE.md`
 - Release-Historie: `../CHANGELOG.md`
 - Architekturentscheidungen: `adr/*`
 
@@ -17,6 +18,7 @@ Stand: 2026-04-10
 - `RELEASE-CHECKLISTE.md`
 - `OPERATIONS_RUNBOOK.md`
 - `IMMERSION-ARCHITEKTUR.md`
+- `ARCHITECTURE.md`
 - `PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
 - `GITHUB_PLESK_SETUP.md`
 - `adr/*`

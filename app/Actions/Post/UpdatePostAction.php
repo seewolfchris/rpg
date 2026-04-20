@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Actions\Post;
 
+use App\Actions\Post\Support\PostUpdateModerationContext;
+use App\Actions\Post\Support\PostUpdateMutationInput;
+use App\Actions\Post\Support\PostUpdateTransactionResult;
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\PostNotificationOrchestrator;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
-class UpdatePostAction
+final class UpdatePostAction
 {
     public function __construct(
+        private readonly DatabaseManager $db,
         private readonly PostModerationService $postModerationService,
         private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
     ) {}
@@ -35,149 +39,145 @@ class UpdatePostAction
      */
     public function execute(Post $post, User $editor, array $data): void
     {
-        $postId = (int) $post->getKey();
-        $postType = (string) $data['post_type'];
-        $postMode = $postType === 'ic'
-            ? (string) ($data['post_mode'] ?? 'character')
-            : 'character';
-        $nextCharacterId = null;
-
-        if ($postType === 'ic' && $postMode === 'character') {
-            $rawCharacterId = $data['character_id'] ?? null;
-            $nextCharacterId = $rawCharacterId !== null
-                ? (int) $rawCharacterId
-                : null;
-        }
-        $contentFormat = (string) $data['content_format'];
-        $content = (string) $data['content'];
-        $icQuote = (string) ($data['ic_quote'] ?? '');
-        $providedModerationStatus = isset($data['moderation_status'])
-            ? (string) $data['moderation_status']
-            : null;
-        $providedModerationNote = (string) ($data['moderation_note'] ?? '');
-
-        $updatedPost = null;
-        $isModerator = false;
-        $previousModerationStatus = '';
-        $moderationNote = null;
-        $hasContentChange = false;
-
-        DB::transaction(function () use (
-            $postId,
-            $editor,
-            $postType,
-            $postMode,
-            $nextCharacterId,
-            $contentFormat,
-            $content,
-            $icQuote,
-            $providedModerationStatus,
-            $providedModerationNote,
-            &$updatedPost,
-            &$isModerator,
-            &$previousModerationStatus,
-            &$moderationNote,
-            &$hasContentChange,
-        ): void {
-            $lockedPost = Post::query()
-                ->whereKey($postId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $lockedPost->loadMissing('scene.campaign');
-
-            $scene = $this->resolveScene($lockedPost);
-            $campaign = $this->resolveCampaign($scene);
-
-            $isModerator = $editor->can('moderate', $lockedPost);
-            $requiresApproval = $campaign->requiresPostModeration()
-                && ! $campaign->userCanPostWithoutModeration($editor)
-                && ! $isModerator;
-            $previousModerationStatus = (string) $lockedPost->moderation_status;
-            $moderationNote = $isModerator
-                ? $this->normalizeModerationNote($providedModerationNote)
-                : null;
-
-            $moderationStatus = $requiresApproval ? 'pending' : 'approved';
-            $approvedAt = $requiresApproval ? null : Carbon::now();
-            $approvedBy = null;
-
-            if ($isModerator && $providedModerationStatus !== null) {
-                $moderationStatus = $providedModerationStatus;
-
-                if ($moderationStatus === 'approved') {
-                    $approvedAt = Carbon::now();
-                    $approvedBy = (int) $editor->id;
-                }
-            }
-
-            $normalizedNextMeta = $this->normalizedNextMeta($lockedPost, $postType, $postMode, $icQuote);
-            $hasContentChange = $this->hasTrackedChanges($lockedPost, [
-                'character_id' => $nextCharacterId,
-                'post_type' => $postType,
-                'content_format' => $contentFormat,
-                'content' => $content,
-                'meta' => $normalizedNextMeta,
-            ]);
-
-            if ($hasContentChange) {
-                $this->createRevisionSnapshot($lockedPost, $editor);
-            }
-
-            $lockedPost->update([
-                'character_id' => $nextCharacterId,
-                'post_type' => $postType,
-                'content_format' => $contentFormat,
-                'content' => $content,
-                'meta' => $normalizedNextMeta,
-                'moderation_status' => $moderationStatus,
-                'approved_at' => $approvedAt,
-                'approved_by' => $approvedBy,
-                'is_edited' => $hasContentChange ? true : $lockedPost->is_edited,
-                'edited_at' => $hasContentChange ? now() : $lockedPost->edited_at,
-            ]);
-
-            $updatedPost = $lockedPost;
-        }, 3);
-
-        if (! $updatedPost instanceof Post) {
-            throw new RuntimeException('Post update failed unexpectedly.');
-        }
-
-        $this->postModerationService->synchronize(
-            post: $updatedPost,
-            moderator: $isModerator ? $editor : null,
-            previousStatus: $previousModerationStatus,
-            moderationNote: $moderationNote,
+        $mutation = PostUpdateMutationInput::fromArray($data);
+        $result = $this->db->transaction(
+            fn (): PostUpdateTransactionResult => $this->applyMutation($post, $editor, $mutation),
+            3,
         );
-
-        if ($hasContentChange) {
-            $this->postNotificationOrchestrator->notifyMentionsWithRetry($updatedPost, $editor, 'update_post');
-        }
+        $this->orchestrateSideEffects($result, $editor);
 
         $post->refresh();
     }
 
-    private function resolveScene(Post $post): Scene
+    private function applyMutation(Post $post, User $editor, PostUpdateMutationInput $mutation): PostUpdateTransactionResult
+    {
+        $lockedPost = $this->lockAndVerifyContext($post);
+        $lockedPost->loadMissing('scene.campaign');
+
+        $campaign = $this->resolveCampaignFromPost($lockedPost);
+        $moderationContext = $this->resolveModerationContext($campaign, $lockedPost, $editor, $mutation);
+        $normalizedMeta = $this->normalizedNextMeta($lockedPost, $mutation);
+
+        $hasContentChange = $this->hasTrackedChanges($lockedPost, [
+            'character_id' => $mutation->characterId,
+            'post_type' => $mutation->postType,
+            'content_format' => $mutation->contentFormat,
+            'content' => $mutation->content,
+            'meta' => $normalizedMeta,
+        ]);
+
+        if ($hasContentChange) {
+            $this->createRevisionSnapshot($lockedPost, $editor);
+        }
+
+        $this->persistPostMutation($lockedPost, $mutation, $normalizedMeta, $hasContentChange, $moderationContext);
+
+        return new PostUpdateTransactionResult($lockedPost, $moderationContext, $hasContentChange);
+    }
+
+    private function orchestrateSideEffects(PostUpdateTransactionResult $result, User $editor): void
+    {
+        $this->postModerationService->synchronize(
+            post: $result->post,
+            moderator: $result->moderationContext->isModerator ? $editor : null,
+            previousStatus: $result->moderationContext->previousStatus,
+            moderationNote: $result->moderationContext->moderationNote,
+        );
+
+        if ($result->hasContentChange) {
+            $this->postNotificationOrchestrator->notifyMentionsWithRetry($result->post, $editor, 'update_post');
+        }
+    }
+
+    private function lockAndVerifyContext(Post $post): Post
+    {
+        /** @var Post $lockedPost */
+        $lockedPost = Post::query()
+            ->whereKey((int) $post->id)
+            ->where('scene_id', (int) $post->scene_id)
+            ->whereHas('scene.campaign.world')
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        return $lockedPost;
+    }
+
+    private function resolveCampaignFromPost(Post $post): Campaign
     {
         $scene = $post->scene;
-
         if (! $scene instanceof Scene) {
             throw new RuntimeException('Post without valid scene relation cannot be updated.');
         }
 
-        return $scene;
-    }
-
-    private function resolveCampaign(Scene $scene): Campaign
-    {
         $campaign = $scene->campaign;
-
         if (! $campaign instanceof Campaign) {
             throw new RuntimeException('Scene without valid campaign relation cannot be updated.');
         }
 
         return $campaign;
+    }
+
+    private function resolveModerationContext(
+        Campaign $campaign,
+        Post $post,
+        User $editor,
+        PostUpdateMutationInput $mutation,
+    ): PostUpdateModerationContext
+    {
+        $isModerator = $editor->can('moderate', $post);
+        $requiresApproval = $campaign->requiresPostModeration()
+            && ! $campaign->userCanPostWithoutModeration($editor)
+            && ! $isModerator;
+        $previousStatus = (string) $post->moderation_status;
+        $normalizedNote = $isModerator
+            ? $this->normalizeModerationNote($mutation->moderationNote)
+            : null;
+
+        $moderationStatus = $requiresApproval ? 'pending' : 'approved';
+        $approvedAt = $requiresApproval ? null : Carbon::now();
+        $approvedBy = null;
+
+        if ($isModerator && $mutation->moderationStatus !== null) {
+            $moderationStatus = $mutation->moderationStatus;
+
+            if ($moderationStatus === 'approved') {
+                $approvedAt = Carbon::now();
+                $approvedBy = (int) $editor->id;
+            }
+        }
+
+        return new PostUpdateModerationContext(
+            isModerator: $isModerator,
+            previousStatus: $previousStatus,
+            moderationNote: $normalizedNote,
+            moderationStatus: $moderationStatus,
+            approvedAt: $approvedAt,
+            approvedBy: $approvedBy,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $normalizedMeta
+     */
+    private function persistPostMutation(
+        Post $post,
+        PostUpdateMutationInput $mutation,
+        ?array $normalizedMeta,
+        bool $hasContentChange,
+        PostUpdateModerationContext $moderationContext,
+    ): void {
+        $post->update([
+            'character_id' => $mutation->characterId,
+            'post_type' => $mutation->postType,
+            'content_format' => $mutation->contentFormat,
+            'content' => $mutation->content,
+            'meta' => $normalizedMeta,
+            'moderation_status' => $moderationContext->moderationStatus,
+            'approved_at' => $moderationContext->approvedAt,
+            'approved_by' => $moderationContext->approvedBy,
+            'is_edited' => $hasContentChange ? true : $post->is_edited,
+            'edited_at' => $hasContentChange ? now() : $post->edited_at,
+        ]);
     }
 
     private function normalizeModerationNote(string $note): ?string
@@ -190,19 +190,19 @@ class UpdatePostAction
     /**
      * @return array<string, mixed>|null
      */
-    private function normalizedNextMeta(Post $post, string $postType, string $postMode, string $icQuote): ?array
+    private function normalizedNextMeta(Post $post, PostUpdateMutationInput $mutation): ?array
     {
         /** @var array<string, mixed> $nextMeta */
         $nextMeta = (array) ($post->meta ?? []);
-        $nextIcQuote = trim($icQuote);
+        $nextIcQuote = trim($mutation->icQuote);
 
-        if ($postType === 'ic' && $postMode === 'gm') {
+        if ($mutation->postType === 'ic' && $mutation->postMode === 'gm') {
             $nextMeta['author_role'] = 'gm';
         } else {
             unset($nextMeta['author_role']);
         }
 
-        if ($postType === 'ic' && $nextIcQuote !== '') {
+        if ($mutation->postType === 'ic' && $nextIcQuote !== '') {
             $nextMeta['ic_quote'] = $nextIcQuote;
         } else {
             unset($nextMeta['ic_quote']);
