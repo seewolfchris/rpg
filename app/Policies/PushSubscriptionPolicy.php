@@ -10,7 +10,7 @@ class PushSubscriptionPolicy
 {
     public function create(User $user, World $world): bool
     {
-        return $world->is_active;
+        return true;
     }
 
     public function delete(User $user, PushSubscription $subscription): bool
