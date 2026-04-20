@@ -18,13 +18,19 @@ use Throwable;
 
 class ScenePostNotificationService
 {
+    private const DELIVERY_SENT = 'sent';
+
+    private const DELIVERY_SKIPPED = 'skipped';
+
+    private const DELIVERY_FAILED = 'failed';
+
     public function __construct(
         private readonly DomainEventLogger $logger,
         private readonly ScenePostNotificationDeliveryLedger $deliveryLedger,
     ) {}
 
     /**
-     * @return array{in_app_recipients: int, webpush_recipients: int}
+     * @return array{in_app_recipients: int, webpush_recipients: int, has_failures: bool}
      */
     public function notifySceneParticipants(Post $post, User $author): array
     {
@@ -51,6 +57,7 @@ class ScenePostNotificationService
             return [
                 'in_app_recipients' => 0,
                 'webpush_recipients' => 0,
+                'has_failures' => false,
             ];
         }
 
@@ -65,6 +72,7 @@ class ScenePostNotificationService
             return [
                 'in_app_recipients' => 0,
                 'webpush_recipients' => 0,
+                'has_failures' => false,
             ];
         }
 
@@ -72,20 +80,35 @@ class ScenePostNotificationService
         $webPushRecipientIdLookup = $this->resolveWebPushRecipientIdLookup($recipients, $worldId);
         $inAppRecipientCount = 0;
         $webPushRecipientCount = 0;
+        $hasFailures = false;
 
         foreach ($recipients as $recipient) {
             if ($this->sendInAppNotification($post, $author, $recipient)) {
                 $inAppRecipientCount++;
             }
 
-            if ($this->sendWebPushNotification($post, $author, $recipient, $campaign, $worldId, $webPushRecipientIdLookup)) {
+            $webPushDeliveryStatus = $this->sendWebPushNotification(
+                $post,
+                $author,
+                $recipient,
+                $campaign,
+                $worldId,
+                $webPushRecipientIdLookup,
+            );
+
+            if ($webPushDeliveryStatus === self::DELIVERY_SENT) {
                 $webPushRecipientCount++;
+            }
+
+            if ($webPushDeliveryStatus === self::DELIVERY_FAILED) {
+                $hasFailures = true;
             }
         }
 
         return [
             'in_app_recipients' => $inAppRecipientCount,
             'webpush_recipients' => $webPushRecipientCount,
+            'has_failures' => $hasFailures,
         ];
     }
 
@@ -163,13 +186,13 @@ class ScenePostNotificationService
         Campaign $campaign,
         int $worldId,
         array $webPushRecipientIdLookup,
-    ): bool {
+    ): string {
         if (! $recipient->wantsNotificationChannel('scene_new_post', 'browser')) {
-            return false;
+            return self::DELIVERY_SKIPPED;
         }
 
         if (! isset($webPushRecipientIdLookup[(int) $recipient->id])) {
-            return false;
+            return self::DELIVERY_SKIPPED;
         }
 
         $delivery = $this->deliveryLedger->claim(
@@ -179,7 +202,7 @@ class ScenePostNotificationService
         );
 
         if (! $delivery instanceof PostSceneNotificationDelivery) {
-            return false;
+            return self::DELIVERY_SKIPPED;
         }
 
         try {
@@ -200,7 +223,7 @@ class ScenePostNotificationService
                 'outcome' => 'succeeded',
             ]);
 
-            return true;
+            return self::DELIVERY_SENT;
         } catch (Throwable $exception) {
             $this->deliveryLedger->markFailed($delivery, $exception->getMessage());
             $this->logger->info('webpush.scene_post_failed', [
@@ -216,7 +239,7 @@ class ScenePostNotificationService
                 'outcome' => 'failed',
             ]);
 
-            return false;
+            return self::DELIVERY_FAILED;
         }
     }
 }

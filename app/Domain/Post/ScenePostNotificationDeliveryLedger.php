@@ -8,6 +8,8 @@ use App\Models\Post;
 use App\Models\PostSceneNotificationDelivery;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
+use RuntimeException;
 
 final class ScenePostNotificationDeliveryLedger
 {
@@ -15,52 +17,37 @@ final class ScenePostNotificationDeliveryLedger
 
     public function claim(Post $post, User $recipient, string $channel): ?PostSceneNotificationDelivery
     {
-        $delivery = PostSceneNotificationDelivery::query()->firstOrCreate([
-            'post_id' => (int) $post->id,
-            'recipient_user_id' => (int) $recipient->id,
-            'channel' => $channel,
-        ], [
-            'status' => PostSceneNotificationDelivery::STATUS_PENDING,
-            'attempt_count' => 0,
-        ]);
+        /** @var PostSceneNotificationDelivery|null $claimedDelivery */
+        $claimedDelivery = DB::transaction(function () use ($post, $recipient, $channel): ?PostSceneNotificationDelivery {
+            $delivery = $this->lockExistingDelivery($post, $recipient, $channel);
 
-        if ((string) $delivery->status === PostSceneNotificationDelivery::STATUS_SENT) {
-            return null;
-        }
+            if (! $delivery instanceof PostSceneNotificationDelivery) {
+                $delivery = $this->createPendingDeliveryWithDuplicateRecovery($post, $recipient, $channel);
+            }
 
-        $now = now();
-        $staleSendingThreshold = $now->copy()->subSeconds(self::SENDING_RECLAIM_SECONDS);
+            if ((string) $delivery->status === PostSceneNotificationDelivery::STATUS_SENT) {
+                return null;
+            }
 
-        $claimed = PostSceneNotificationDelivery::query()
-            ->whereKey((int) $delivery->id)
-            ->where(function ($query) use ($staleSendingThreshold): void {
-                $query->whereIn('status', [
-                    PostSceneNotificationDelivery::STATUS_PENDING,
-                    PostSceneNotificationDelivery::STATUS_FAILED,
-                ])->orWhere(function ($staleQuery) use ($staleSendingThreshold): void {
-                    $staleQuery->where('status', PostSceneNotificationDelivery::STATUS_SENDING)
-                        ->where('updated_at', '<', $staleSendingThreshold);
-                });
-            })
-            ->update([
-                'status' => PostSceneNotificationDelivery::STATUS_SENDING,
-                'attempt_count' => DB::raw('attempt_count + 1'),
-                'last_attempted_at' => $now,
-            ]);
+            if (! $this->canClaimDelivery($delivery)) {
+                return null;
+            }
 
-        if ($claimed !== 1) {
-            return null;
-        }
+            $now = now();
+            $nowTimestamp = $now->toDateTimeString();
 
-        PostSceneNotificationDelivery::query()
-            ->whereKey((int) $delivery->id)
-            ->whereNull('first_attempted_at')
-            ->update([
-                'first_attempted_at' => $now,
-            ]);
+            $delivery->status = PostSceneNotificationDelivery::STATUS_SENDING;
+            $delivery->attempt_count = max(0, (int) $delivery->attempt_count) + 1;
+            $delivery->last_attempted_at = $nowTimestamp;
 
-        /** @var PostSceneNotificationDelivery $claimedDelivery */
-        $claimedDelivery = PostSceneNotificationDelivery::query()->findOrFail((int) $delivery->id);
+            if ($delivery->first_attempted_at === null) {
+                $delivery->first_attempted_at = $nowTimestamp;
+            }
+
+            $delivery->save();
+
+            return $delivery->fresh();
+        }, 3);
 
         return $claimedDelivery;
     }
@@ -84,5 +71,86 @@ final class ScenePostNotificationDeliveryLedger
                 'status' => PostSceneNotificationDelivery::STATUS_FAILED,
                 'last_error' => mb_substr(trim($error), 0, 1000),
             ]);
+    }
+
+    private function lockExistingDelivery(Post $post, User $recipient, string $channel): ?PostSceneNotificationDelivery
+    {
+        /** @var PostSceneNotificationDelivery|null $delivery */
+        $delivery = PostSceneNotificationDelivery::query()
+            ->where('post_id', (int) $post->id)
+            ->where('recipient_user_id', (int) $recipient->id)
+            ->where('channel', $channel)
+            ->lockForUpdate()
+            ->first();
+
+        return $delivery;
+    }
+
+    private function createPendingDeliveryWithDuplicateRecovery(Post $post, User $recipient, string $channel): PostSceneNotificationDelivery
+    {
+        try {
+            /** @var PostSceneNotificationDelivery $delivery */
+            $delivery = PostSceneNotificationDelivery::query()->create([
+                'post_id' => (int) $post->id,
+                'recipient_user_id' => (int) $recipient->id,
+                'channel' => $channel,
+                'status' => PostSceneNotificationDelivery::STATUS_PENDING,
+                'attempt_count' => 0,
+            ]);
+
+            return $delivery;
+        } catch (QueryException $exception) {
+            if (! $this->isDuplicateDeliveryKey($exception)) {
+                throw $exception;
+            }
+        }
+
+        $existingDelivery = $this->lockExistingDelivery($post, $recipient, $channel);
+
+        if ($existingDelivery instanceof PostSceneNotificationDelivery) {
+            return $existingDelivery;
+        }
+
+        throw new RuntimeException('Post scene notification delivery claim failed after duplicate key recovery.');
+    }
+
+    private function canClaimDelivery(PostSceneNotificationDelivery $delivery): bool
+    {
+        $status = (string) $delivery->status;
+
+        if ($status === PostSceneNotificationDelivery::STATUS_PENDING || $status === PostSceneNotificationDelivery::STATUS_FAILED) {
+            return true;
+        }
+
+        if ($status !== PostSceneNotificationDelivery::STATUS_SENDING) {
+            return false;
+        }
+
+        $updatedAt = $delivery->updated_at;
+
+        if ($updatedAt === null) {
+            return true;
+        }
+
+        return $updatedAt->lt(now()->subSeconds(self::SENDING_RECLAIM_SECONDS));
+    }
+
+    private function isDuplicateDeliveryKey(QueryException $exception): bool
+    {
+        $errorInfo = $exception->errorInfo;
+        $driverCode = is_array($errorInfo) && isset($errorInfo[1])
+            ? (int) $errorInfo[1]
+            : 0;
+        $message = strtolower($exception->getMessage());
+
+        if ($driverCode === 1062) {
+            return true;
+        }
+
+        if (str_contains($message, 'duplicate entry')) {
+            return true;
+        }
+
+        return str_contains($message, 'unique constraint failed');
     }
 }

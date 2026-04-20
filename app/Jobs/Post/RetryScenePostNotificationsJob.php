@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use RuntimeException;
 use Throwable;
 
 class RetryScenePostNotificationsJob implements ShouldQueue
@@ -62,8 +63,15 @@ class RetryScenePostNotificationsJob implements ShouldQueue
             return;
         }
 
+        /** @var array{in_app_recipients?: int, webpush_recipients?: int, has_failures?: bool}|null $result */
+        $result = null;
+
         try {
             $result = $scenePostNotificationService->notifySceneParticipants($post, $author);
+
+            if (($result['has_failures'] ?? false) === true) {
+                throw new RuntimeException('Scene notification delivery incomplete.');
+            }
 
             $logger->info('post.scene_notifications_retry_succeeded', [
                 'post_id' => $post->id,
@@ -76,6 +84,13 @@ class RetryScenePostNotificationsJob implements ShouldQueue
                 'outcome' => 'succeeded',
             ]);
         } catch (Throwable $throwable) {
+            $inAppRecipients = is_array($result)
+                ? (int) ($result['in_app_recipients'] ?? 0)
+                : 0;
+            $webPushRecipients = is_array($result)
+                ? (int) ($result['webpush_recipients'] ?? 0)
+                : 0;
+
             $logger->info('post.scene_notifications_retry_failed', [
                 'post_id' => $post->id,
                 'author_id' => $author->id,
@@ -83,6 +98,8 @@ class RetryScenePostNotificationsJob implements ShouldQueue
                 'source' => $this->source,
                 'attempt' => $this->attempts(),
                 'error' => $throwable->getMessage(),
+                'in_app_recipients' => $inAppRecipients,
+                'webpush_recipients' => $webPushRecipients,
                 'outcome' => 'failed',
             ]);
 

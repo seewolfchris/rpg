@@ -71,6 +71,66 @@ class PostNotificationOrchestratorTest extends TestCase
         Queue::assertPushed(RetryScenePostNotificationsJob::class, 1);
     }
 
+    public function test_scene_notification_partial_failure_dispatches_retry_and_preserves_counts(): void
+    {
+        Queue::fake();
+
+        $post = new Post;
+        $post->id = 101;
+        $post->scene_id = 12;
+
+        $author = new User;
+        $author->id = 14;
+
+        $sceneService = $this->createMock(ScenePostNotificationService::class);
+        $sceneService->expects($this->once())
+            ->method('notifySceneParticipants')
+            ->with($post, $author)
+            ->willReturn([
+                'in_app_recipients' => 2,
+                'webpush_recipients' => 1,
+                'has_failures' => true,
+            ]);
+
+        $mentionService = $this->createMock(PostMentionNotificationService::class);
+        $logger = $this->createMock(DomainEventLogger::class);
+        $logger->expects($this->once())
+            ->method('info')
+            ->with(
+                'post.scene_notifications_failed',
+                $this->callback(static fn (array $context): bool => (int) ($context['post_id'] ?? 0) === 101
+                    && (int) ($context['in_app_recipients'] ?? 0) === 2
+                    && (int) ($context['webpush_recipients'] ?? 0) === 1),
+            );
+
+        $recorder = $this->createMock(OutboxCandidateRecorder::class);
+        $recorder->expects($this->once())
+            ->method('record')
+            ->with(
+                'post.notifications',
+                'scene_notifications_failed',
+                $this->callback(static fn (array $payload): bool => (int) ($payload['post_id'] ?? 0) === 101
+                    && (int) ($payload['in_app_recipients'] ?? 0) === 2
+                    && (int) ($payload['webpush_recipients'] ?? 0) === 1),
+                $this->isInstanceOf(RuntimeException::class),
+            );
+
+        $orchestrator = new PostNotificationOrchestrator(
+            $sceneService,
+            $mentionService,
+            $logger,
+            $recorder,
+        );
+
+        $result = $orchestrator->notifySceneParticipantsWithRetry($post, $author, 'unit-test');
+
+        $this->assertSame([
+            'in_app_recipients' => 2,
+            'webpush_recipients' => 1,
+        ], $result);
+        Queue::assertPushed(RetryScenePostNotificationsJob::class, 1);
+    }
+
     public function test_mention_failure_dispatches_retry_and_records_outbox_candidate(): void
     {
         Queue::fake();
