@@ -33,6 +33,52 @@ class StorePostService
         ?string $worldSlug = null,
     ): StorePostResult
     {
+        $normalizedPayload = $this->normalizePostPayload($data);
+        $transactionResult = $this->executeStoreTransaction(
+            scene: $scene,
+            user: $user,
+            data: $data,
+            isModerator: $isModerator,
+            requiresApproval: $requiresApproval,
+            normalizedPayload: $normalizedPayload,
+        );
+
+        $notificationMetrics = $this->dispatchPostCreatedNotifications(
+            post: $transactionResult['post'],
+            author: $user,
+        );
+
+        $this->logPostCreated(
+            post: $transactionResult['post'],
+            user: $user,
+            scene: $scene,
+            isModerator: $isModerator,
+            requiresApproval: $requiresApproval,
+            worldSlug: $worldSlug,
+            probeCreated: $transactionResult['probeCreated'],
+            inventoryAwardApplied: $transactionResult['inventoryAwardApplied'],
+            notificationInAppRecipients: $notificationMetrics['in_app_recipients'],
+            notificationWebpushRecipients: $notificationMetrics['webpush_recipients'],
+            mentionRecipients: $notificationMetrics['mention_recipients'],
+        );
+
+        return new StorePostResult(
+            post: $transactionResult['post'],
+            probeCreated: $transactionResult['probeCreated'],
+            inventoryAwardApplied: $transactionResult['inventoryAwardApplied'],
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{
+     *   postType: string,
+     *   characterId: int|null,
+     *   meta: array<string, mixed>|null
+     * }
+     */
+    private function normalizePostPayload(array $data): array
+    {
         $postType = (string) ($data['post_type'] ?? 'ooc');
         $postMode = $postType === 'ic'
             ? (string) ($data['post_mode'] ?? 'character')
@@ -57,37 +103,44 @@ class StorePostService
             $meta['author_role'] = 'gm';
         }
 
-        $isApproved = ! $requiresApproval;
-        $post = null;
-        $probeCreated = false;
-        $inventoryAwardApplied = false;
+        return [
+            'postType' => $postType,
+            'characterId' => $characterId,
+            'meta' => $meta !== [] ? $meta : null,
+        ];
+    }
 
-        $this->db->transaction(function () use (
-            $scene,
-            $user,
-            $data,
-            $isModerator,
-            $isApproved,
-            $meta,
-            &$post,
-            &$probeCreated,
-            &$inventoryAwardApplied,
-            $postType,
-            $characterId,
-        ): void {
-            $post = Post::query()->create([
-                'scene_id' => $scene->id,
-                'user_id' => $user->id,
-                'character_id' => $characterId,
-                'post_type' => $postType,
-                'content_format' => $data['content_format'],
-                'content' => $data['content'],
-                'meta' => $meta !== [] ? $meta : null,
-                'moderation_status' => $isApproved ? 'approved' : 'pending',
-                'approved_at' => $isApproved ? now() : null,
-                'approved_by' => $isModerator && $isApproved ? $user->id : null,
-            ]);
-
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array{
+     *   postType: string,
+     *   characterId: int|null,
+     *   meta: array<string, mixed>|null
+     * }  $normalizedPayload
+     * @return array{
+     *   post: Post,
+     *   probeCreated: bool,
+     *   inventoryAwardApplied: bool
+     * }
+     */
+    private function executeStoreTransaction(
+        Scene $scene,
+        User $user,
+        array $data,
+        bool $isModerator,
+        bool $requiresApproval,
+        array $normalizedPayload,
+    ): array {
+        /** @var array{post: Post, probeCreated: bool, inventoryAwardApplied: bool} $result */
+        $result = $this->db->transaction(function () use ($scene, $user, $data, $isModerator, $requiresApproval, $normalizedPayload): array {
+            $post = $this->persistPost(
+                scene: $scene,
+                user: $user,
+                data: $data,
+                isModerator: $isModerator,
+                requiresApproval: $requiresApproval,
+                normalizedPayload: $normalizedPayload,
+            );
             $probeCreated = $this->postProbeService->createForPost(
                 post: $post,
                 data: $data,
@@ -95,7 +148,6 @@ class StorePostService
                 scene: $scene,
                 isModerator: $isModerator,
             );
-
             $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
                 post: $post,
                 data: $data,
@@ -104,16 +156,91 @@ class StorePostService
                 user: $user,
             ) !== null;
 
-            $this->ensureAuthorSubscription($post, $user);
-            $this->pointService->syncApprovedPost($post);
+            $this->applyInTransactionPostSideEffects($post, $user);
+
+            return [
+                'post' => $post,
+                'probeCreated' => $probeCreated,
+                'inventoryAwardApplied' => $inventoryAwardApplied,
+            ];
         });
 
-        if (! $post instanceof Post) {
-            throw new \RuntimeException('Post creation failed unexpectedly.');
-        }
+        return $result;
+    }
 
-        $notificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $user, 'store_post');
-        $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $user, 'store_post');
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array{
+     *   postType: string,
+     *   characterId: int|null,
+     *   meta: array<string, mixed>|null
+     * }  $normalizedPayload
+     */
+    private function persistPost(
+        Scene $scene,
+        User $user,
+        array $data,
+        bool $isModerator,
+        bool $requiresApproval,
+        array $normalizedPayload,
+    ): Post {
+        $isApproved = ! $requiresApproval;
+
+        /** @var Post $post */
+        $post = Post::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'character_id' => $normalizedPayload['characterId'],
+            'post_type' => $normalizedPayload['postType'],
+            'content_format' => $data['content_format'],
+            'content' => $data['content'],
+            'meta' => $normalizedPayload['meta'],
+            'moderation_status' => $isApproved ? 'approved' : 'pending',
+            'approved_at' => $isApproved ? now() : null,
+            'approved_by' => $isModerator && $isApproved ? $user->id : null,
+        ]);
+
+        return $post;
+    }
+
+    private function applyInTransactionPostSideEffects(Post $post, User $user): void
+    {
+        $this->ensureAuthorSubscription($post, $user);
+        $this->pointService->syncApprovedPost($post);
+    }
+
+    /**
+     * @return array{
+     *   in_app_recipients: int,
+     *   webpush_recipients: int,
+     *   mention_recipients: int
+     * }
+     */
+    private function dispatchPostCreatedNotifications(Post $post, User $author): array
+    {
+        $sceneNotificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $author, 'store_post');
+        $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $author, 'store_post');
+
+        return [
+            'in_app_recipients' => (int) $sceneNotificationResult['in_app_recipients'],
+            'webpush_recipients' => (int) $sceneNotificationResult['webpush_recipients'],
+            'mention_recipients' => $mentionRecipientCount,
+        ];
+    }
+
+    private function logPostCreated(
+        Post $post,
+        User $user,
+        Scene $scene,
+        bool $isModerator,
+        bool $requiresApproval,
+        ?string $worldSlug,
+        bool $probeCreated,
+        bool $inventoryAwardApplied,
+        int $notificationInAppRecipients,
+        int $notificationWebpushRecipients,
+        int $mentionRecipients,
+    ): void {
         $resolvedWorldSlug = $worldSlug !== null && trim($worldSlug) !== ''
             ? trim($worldSlug)
             : 'unknown';
@@ -129,17 +256,11 @@ class StorePostService
             'moderation_status' => $post->moderation_status,
             'probe_created' => $probeCreated,
             'inventory_award_applied' => $inventoryAwardApplied,
-            'notification_recipients' => $notificationResult['in_app_recipients'],
-            'webpush_recipients' => $notificationResult['webpush_recipients'],
-            'mention_recipients' => $mentionRecipientCount,
+            'notification_recipients' => $notificationInAppRecipients,
+            'webpush_recipients' => $notificationWebpushRecipients,
+            'mention_recipients' => $mentionRecipients,
             'outcome' => 'succeeded',
         ]);
-
-        return new StorePostResult(
-            post: $post,
-            probeCreated: $probeCreated,
-            inventoryAwardApplied: $inventoryAwardApplied,
-        );
     }
 
     private function ensureAuthorSubscription(Post $post, User $author): void

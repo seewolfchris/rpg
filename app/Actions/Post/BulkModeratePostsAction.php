@@ -9,6 +9,9 @@ use App\Domain\Post\PostModerationService;
 use App\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 
 class BulkModeratePostsAction
 {
@@ -27,14 +30,48 @@ class BulkModeratePostsAction
         /** @var int<0, max> $moderatorId */
         $moderatorId = max(0, (int) $input->moderator->id);
 
+        $this->assertWorldQueueAccess($input);
+
+        $posts = $this->resolveModerationCandidates($input);
+        $this->assertSelectedPostsResolved($posts, $input->postIds);
+
+        $affected = $this->applyBulkModeration($posts, $input, $moderatorId);
+
+        return new BulkModeratePostsResult(affected: $affected);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function assertWorldQueueAccess(BulkModeratePostsInput $input): void
+    {
         if (! $this->postModerationScope->canAccessWorldQueue($input->moderator, $input->world)) {
             throw new AuthorizationException('Du darfst in dieser Welt keine Bulk-Moderation ausführen.');
         }
+    }
 
+    /**
+     * @return EloquentCollection<int, Post>
+     */
+    private function resolveModerationCandidates(BulkModeratePostsInput $input): EloquentCollection
+    {
         $postsQuery = $this->postModerationScope
             ->baseQuery($input->moderator, $input->world)
             ->with(['scene.campaign', 'user']);
 
+        $this->applyCandidateSelection($postsQuery, $input);
+
+        /** @var EloquentCollection<int, Post> $posts */
+        $posts = $postsQuery->get();
+
+        return $posts;
+    }
+
+    /**
+     * @param  Builder<Post>  $postsQuery
+     */
+    private function applyCandidateSelection(Builder $postsQuery, BulkModeratePostsInput $input): void
+    {
         if ($input->postIds->isNotEmpty()) {
             $postsQuery->whereKey($input->postIds->all());
         } elseif ($input->isHtmxRequest && $input->sceneId > 0) {
@@ -46,62 +83,91 @@ class BulkModeratePostsAction
         if ($input->sceneId > 0) {
             $postsQuery->where('scene_id', $input->sceneId);
         }
+    }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Post> $posts */
-        $posts = $postsQuery->get();
-        if ($input->postIds->isNotEmpty()) {
-            /** @var \Illuminate\Support\Collection<int, int<1, max>> $resolvedPostIds */
-            $resolvedPostIds = $posts
-                ->pluck('id')
-                ->map(static fn ($postId): int => (int) $postId)
-                ->filter(static fn (int $postId): bool => $postId > 0)
-                ->values();
-            $unresolvedPostIds = $input->postIds->diff($resolvedPostIds);
-
-            if ($unresolvedPostIds->isNotEmpty()) {
-                throw new AuthorizationException('Mindestens ein angefragter Beitrag liegt außerhalb deiner Moderationsrechte.');
-            }
+    /**
+     * @param  EloquentCollection<int, Post>  $posts
+     * @param  Collection<int, int<1, max>>  $requestedPostIds
+     *
+     * @throws AuthorizationException
+     */
+    private function assertSelectedPostsResolved(EloquentCollection $posts, Collection $requestedPostIds): void
+    {
+        if ($requestedPostIds->isEmpty()) {
+            return;
         }
 
-        $affected = $this->db->transaction(function () use ($posts, $input, $moderatorId): int {
+        /** @var Collection<int, int<1, max>> $resolvedPostIds */
+        $resolvedPostIds = $posts
+            ->pluck('id')
+            ->map(static fn ($postId): int => (int) $postId)
+            ->filter(static fn (int $postId): bool => $postId > 0)
+            ->values();
+        $unresolvedPostIds = $requestedPostIds->diff($resolvedPostIds);
+
+        if ($unresolvedPostIds->isNotEmpty()) {
+            throw new AuthorizationException('Mindestens ein angefragter Beitrag liegt außerhalb deiner Moderationsrechte.');
+        }
+    }
+
+    /**
+     * @param  EloquentCollection<int, Post>  $posts
+     *
+     * @throws AuthorizationException
+     */
+    private function applyBulkModeration(EloquentCollection $posts, BulkModeratePostsInput $input, int $moderatorId): int
+    {
+        return $this->db->transaction(function () use ($posts, $input, $moderatorId): int {
             $affected = 0;
 
             foreach ($posts as $post) {
-                if (! $input->moderator->can('moderate', $post)) {
-                    throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
-                }
-
-                $previousStatus = (string) $post->moderation_status;
-
-                if ($previousStatus === $input->targetStatus && $input->moderationNote === null) {
-                    continue;
-                }
-
-                $post->moderation_status = $input->targetStatus;
-
-                if ($input->targetStatus === 'approved') {
-                    $post->approved_at = now()->toDateTimeString();
-                    $post->approved_by = $moderatorId;
-                } else {
-                    $post->approved_at = null;
-                    $post->approved_by = null;
-                }
-
-                $post->save();
-
-                $this->postModerationService->synchronize(
-                    post: $post,
-                    moderator: $input->moderator,
-                    previousStatus: $previousStatus,
-                    moderationNote: $input->moderationNote,
-                );
-
-                $affected++;
+                $affected += $this->moderateSinglePost($post, $input, $moderatorId);
             }
 
             return $affected;
         });
+    }
 
-        return new BulkModeratePostsResult(affected: $affected);
+    /**
+     * @throws AuthorizationException
+     */
+    private function moderateSinglePost(Post $post, BulkModeratePostsInput $input, int $moderatorId): int
+    {
+        if (! $input->moderator->can('moderate', $post)) {
+            throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
+        }
+
+        $previousStatus = (string) $post->moderation_status;
+
+        if ($previousStatus === $input->targetStatus && $input->moderationNote === null) {
+            return 0;
+        }
+
+        $this->applyTargetStatus($post, $input->targetStatus, $moderatorId);
+        $post->save();
+
+        $this->postModerationService->synchronize(
+            post: $post,
+            moderator: $input->moderator,
+            previousStatus: $previousStatus,
+            moderationNote: $input->moderationNote,
+        );
+
+        return 1;
+    }
+
+    private function applyTargetStatus(Post $post, string $targetStatus, int $moderatorId): void
+    {
+        $post->moderation_status = $targetStatus;
+
+        if ($targetStatus === 'approved') {
+            $post->approved_at = now()->toDateTimeString();
+            $post->approved_by = max(0, $moderatorId);
+
+            return;
+        }
+
+        $post->approved_at = null;
+        $post->approved_by = null;
     }
 }
