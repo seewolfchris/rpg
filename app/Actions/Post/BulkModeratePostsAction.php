@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Post;
 
 use App\Domain\Post\PostModerationScope;
-use App\Domain\Post\PostModerationService;
 use App\Models\Post;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
@@ -17,7 +16,7 @@ class BulkModeratePostsAction
 {
     public function __construct(
         private readonly ApplyPostModerationFiltersAction $applyPostModerationFiltersAction,
-        private readonly PostModerationService $postModerationService,
+        private readonly ApplyPostModerationTransitionAction $applyPostModerationTransitionAction,
         private readonly PostModerationScope $postModerationScope,
         private readonly DatabaseManager $db,
     ) {}
@@ -27,15 +26,12 @@ class BulkModeratePostsAction
      */
     public function execute(BulkModeratePostsInput $input): BulkModeratePostsResult
     {
-        /** @var int<0, max> $moderatorId */
-        $moderatorId = max(0, (int) $input->moderator->id);
-
         $this->assertWorldQueueAccess($input);
 
         $posts = $this->resolveModerationCandidates($input);
         $this->assertSelectedPostsResolved($posts, $input->postIds);
 
-        $affected = $this->applyBulkModeration($posts, $input, $moderatorId);
+        $affected = $this->applyBulkModeration($posts, $input);
 
         return new BulkModeratePostsResult(affected: $affected);
     }
@@ -115,13 +111,13 @@ class BulkModeratePostsAction
      *
      * @throws AuthorizationException
      */
-    private function applyBulkModeration(EloquentCollection $posts, BulkModeratePostsInput $input, int $moderatorId): int
+    private function applyBulkModeration(EloquentCollection $posts, BulkModeratePostsInput $input): int
     {
-        return $this->db->transaction(function () use ($posts, $input, $moderatorId): int {
+        return $this->db->transaction(function () use ($posts, $input): int {
             $affected = 0;
 
             foreach ($posts as $post) {
-                $affected += $this->moderateSinglePost($post, $input, $moderatorId);
+                $affected += $this->moderateSinglePost($post, $input);
             }
 
             return $affected;
@@ -131,7 +127,7 @@ class BulkModeratePostsAction
     /**
      * @throws AuthorizationException
      */
-    private function moderateSinglePost(Post $post, BulkModeratePostsInput $input, int $moderatorId): int
+    private function moderateSinglePost(Post $post, BulkModeratePostsInput $input): int
     {
         if (! $input->moderator->can('moderate', $post)) {
             throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
@@ -143,31 +139,13 @@ class BulkModeratePostsAction
             return 0;
         }
 
-        $this->applyTargetStatus($post, $input->targetStatus, $moderatorId);
-        $post->save();
-
-        $this->postModerationService->synchronize(
+        $this->applyPostModerationTransitionAction->execute(
             post: $post,
             moderator: $input->moderator,
-            previousStatus: $previousStatus,
+            targetStatus: $input->targetStatus,
             moderationNote: $input->moderationNote,
         );
 
         return 1;
-    }
-
-    private function applyTargetStatus(Post $post, string $targetStatus, int $moderatorId): void
-    {
-        $post->moderation_status = $targetStatus;
-
-        if ($targetStatus === 'approved') {
-            $post->approved_at = now()->toDateTimeString();
-            $post->approved_by = max(0, $moderatorId);
-
-            return;
-        }
-
-        $post->approved_at = null;
-        $post->approved_by = null;
     }
 }

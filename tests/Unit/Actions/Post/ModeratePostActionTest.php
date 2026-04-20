@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Actions\Post;
 
+use App\Actions\Post\ApplyPostModerationTransitionAction;
 use App\Actions\Post\ModeratePostAction;
 use App\Domain\Post\PostModerationService;
 use App\Models\Campaign;
@@ -49,7 +50,7 @@ class ModeratePostActionTest extends TestCase
                 'Freigabe',
             );
 
-        $action = new ModeratePostAction($moderationService);
+        $action = new ModeratePostAction(new ApplyPostModerationTransitionAction($moderationService));
         $action->execute($post, $gm, 'approved', '  Freigabe  ');
 
         $post->refresh();
@@ -91,7 +92,7 @@ class ModeratePostActionTest extends TestCase
                 null,
             );
 
-        $action = new ModeratePostAction($moderationService);
+        $action = new ModeratePostAction(new ApplyPostModerationTransitionAction($moderationService));
         $action->execute($post, $gm, 'rejected', '   ');
 
         $post->refresh();
