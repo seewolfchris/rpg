@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Scene\BuildSceneThreadPageDataAction;
+use App\Domain\Scene\SceneThreadReadStateService;
 use App\Actions\SceneSubscription\BulkUpdateSceneSubscriptionsAction;
 use App\Actions\SceneSubscription\MarkSceneSubscriptionReadAction;
 use App\Actions\SceneSubscription\MarkSceneSubscriptionUnreadAction;
@@ -35,6 +36,7 @@ class SceneSubscriptionController extends Controller
         private readonly ToggleSceneSubscriptionMuteAction $toggleSceneSubscriptionMuteAction,
         private readonly MarkSceneSubscriptionReadAction $markSceneSubscriptionReadAction,
         private readonly MarkSceneSubscriptionUnreadAction $markSceneSubscriptionUnreadAction,
+        private readonly SceneThreadReadStateService $sceneThreadReadStateService,
     ) {}
 
     public function index(Request $request, World $world): View
@@ -70,7 +72,7 @@ class SceneSubscriptionController extends Controller
         $totalCount = (int) ($counts['total_count'] ?? 0);
         $activeCount = (int) ($counts['active_count'] ?? 0);
         $mutedCount = (int) ($counts['muted_count'] ?? 0);
-        $unreadCount = $this->unreadCountForUser((int) $user->id, $world);
+        $unreadCount = $this->unreadCountForUser($user, $world);
 
         return view('scene-subscriptions.index', compact(
             'world',
@@ -188,20 +190,9 @@ class SceneSubscriptionController extends Controller
         }
     }
 
-    private function unreadCountForUser(int $userId, World $world): int
+    private function unreadCountForUser(User $user, World $world): int
     {
-        return (int) SceneSubscription::query()
-            ->join('scenes', 'scenes.id', '=', 'scene_subscriptions.scene_id')
-            ->join('campaigns', 'campaigns.id', '=', 'scenes.campaign_id')
-            ->where('scene_subscriptions.user_id', $userId)
-            ->where('campaigns.world_id', (int) $world->id)
-            ->whereExists(function ($query): void {
-                $query->selectRaw('1')
-                    ->from('posts')
-                    ->whereColumn('posts.scene_id', 'scene_subscriptions.scene_id')
-                    ->whereRaw('posts.id > COALESCE(scene_subscriptions.last_read_post_id, 0)');
-            })
-            ->count();
+        return $this->sceneThreadReadStateService->unreadSceneCountForWorld($user, $world);
     }
 
     /**

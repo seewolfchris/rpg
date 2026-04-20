@@ -12,7 +12,6 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
-use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -62,16 +61,10 @@ class StorePostActionTest extends TestCase
                 $this->callback(static fn (Scene $resolvedScene): bool => (int) $resolvedScene->id === (int) $scene->id),
                 $this->callback(static fn (User $resolvedAuthor): bool => (int) $resolvedAuthor->id === (int) $author->id),
                 $payload,
-                false,
-                true,
-                'post-store-world',
             )
             ->willReturn(new StorePostResult($resultPost, false, false));
 
-        $action = new StorePostAction(
-            app(DatabaseManager::class),
-            $storePostService,
-        );
+        $action = new StorePostAction($storePostService);
 
         $result = $action->execute(
             scene: $scene,
@@ -122,16 +115,10 @@ class StorePostActionTest extends TestCase
                 $this->isInstanceOf(Scene::class),
                 $this->isInstanceOf(User::class),
                 $payload,
-                true,
-                false,
-                'post-store-moderator',
             )
             ->willReturn(new StorePostResult($resultPost, false, false));
 
-        $action = new StorePostAction(
-            app(DatabaseManager::class),
-            $storePostService,
-        );
+        $action = new StorePostAction($storePostService);
 
         $action->execute(
             scene: $scene,
@@ -140,41 +127,29 @@ class StorePostActionTest extends TestCase
         );
     }
 
-    public function test_it_throws_when_scene_context_is_tampered(): void
+    public function test_it_propagates_store_service_exceptions(): void
     {
-        $world = World::factory()->create([
-            'slug' => 'post-store-primary',
-            'is_active' => true,
-        ]);
-        $owner = User::factory()->gm()->create();
+        $world = World::factory()->create();
         $author = User::factory()->create();
         $campaign = Campaign::factory()->create([
             'world_id' => $world->id,
-            'owner_id' => $owner->id,
-            'status' => 'active',
-            'is_public' => false,
-        ]);
-        $foreignCampaign = Campaign::factory()->create([
-            'owner_id' => $owner->id,
+            'owner_id' => User::factory()->gm()->create()->id,
             'status' => 'active',
             'is_public' => false,
         ]);
         $scene = Scene::factory()->create([
             'campaign_id' => $campaign->id,
-            'created_by' => $owner->id,
+            'created_by' => $campaign->owner_id,
             'status' => 'open',
             'allow_ooc' => true,
         ]);
 
         $storePostService = $this->createMock(StorePostService::class);
-        $storePostService->expects($this->never())->method('store');
+        $storePostService->expects($this->once())
+            ->method('store')
+            ->willThrowException(new ModelNotFoundException);
 
-        $action = new StorePostAction(
-            app(DatabaseManager::class),
-            $storePostService,
-        );
-
-        $scene->setAttribute('campaign_id', (int) $foreignCampaign->id);
+        $action = new StorePostAction($storePostService);
 
         $this->expectException(ModelNotFoundException::class);
 

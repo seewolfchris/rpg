@@ -6,12 +6,11 @@ namespace App\Actions\Scene;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Domain\Scene\ScenePostAnchorUrlService;
-use App\Domain\Scene\SceneReadTrackingService;
+use App\Domain\Scene\SceneThreadReadStateService;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
-use App\Models\SceneSubscription;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -19,7 +18,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 class BuildSceneShowDataAction
 {
     public function __construct(
-        private readonly SceneReadTrackingService $sceneReadTrackingService,
+        private readonly SceneThreadReadStateService $sceneThreadReadStateService,
         private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
     ) {}
@@ -29,26 +28,18 @@ class BuildSceneShowDataAction
         $scene->load(['campaign.owner', 'creator', 'previousScene']);
         $scene->loadCount('subscriptions');
 
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        $lastReadPostIdBeforeOpen = $subscription instanceof SceneSubscription
-            ? (int) $subscription->last_read_post_id
-            : 0;
-
-        $readTracking = $this->sceneReadTrackingService->synchronize(
+        $threadReadState = $this->sceneThreadReadStateService->resolveForShowAndMarkRead(
             scene: $scene,
-            subscription: $subscription,
-            lastReadPostIdBeforeOpen: $lastReadPostIdBeforeOpen,
+            user: $user,
         );
 
-        $latestPostId = $readTracking->latestPostId;
-        $newPostsSinceLastRead = $readTracking->newPostsSinceLastRead;
-        $hasUnreadPosts = $readTracking->hasUnreadPosts;
-        $firstUnreadPostId = $readTracking->firstUnreadPostId;
-        $unreadPostsCount = 0;
+        $subscription = $threadReadState->subscription;
+        $latestPostId = $threadReadState->latestPostId;
+        $unreadPostsCount = $threadReadState->unreadPostsCount;
+        $newPostsSinceLastRead = $threadReadState->newPostsSinceLastRead;
+        $hasUnreadPosts = $threadReadState->hasUnreadPosts;
+        $firstUnreadPostId = $threadReadState->firstUnreadPostId;
+        $lastReadPostIdBeforeOpen = $threadReadState->lastReadPostIdBeforeOpen;
 
         $posts = $this->threadPostsPaginator($scene);
 

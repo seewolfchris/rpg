@@ -2,6 +2,7 @@
 
 namespace App\Domain\Post;
 
+use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
@@ -28,9 +29,6 @@ class StorePostService
         Scene $scene,
         User $user,
         array $data,
-        bool $isModerator,
-        bool $requiresApproval,
-        ?string $worldSlug = null,
     ): StorePostResult
     {
         $normalizedPayload = $this->normalizePostPayload($data);
@@ -38,8 +36,6 @@ class StorePostService
             scene: $scene,
             user: $user,
             data: $data,
-            isModerator: $isModerator,
-            requiresApproval: $requiresApproval,
             normalizedPayload: $normalizedPayload,
         );
 
@@ -51,10 +47,10 @@ class StorePostService
         $this->logPostCreated(
             post: $transactionResult['post'],
             user: $user,
-            scene: $scene,
-            isModerator: $isModerator,
-            requiresApproval: $requiresApproval,
-            worldSlug: $worldSlug,
+            scene: $transactionResult['scene'],
+            isModerator: $transactionResult['isModerator'],
+            requiresApproval: $transactionResult['requiresApproval'],
+            worldSlug: $transactionResult['worldSlug'],
             probeCreated: $transactionResult['probeCreated'],
             inventoryAwardApplied: $transactionResult['inventoryAwardApplied'],
             notificationInAppRecipients: $notificationMetrics['in_app_recipients'],
@@ -119,40 +115,53 @@ class StorePostService
      * }  $normalizedPayload
      * @return array{
      *   post: Post,
+     *   scene: Scene,
      *   probeCreated: bool,
-     *   inventoryAwardApplied: bool
+     *   inventoryAwardApplied: bool,
+     *   isModerator: bool,
+     *   requiresApproval: bool,
+     *   worldSlug: string|null
      * }
      */
     private function executeStoreTransaction(
         Scene $scene,
         User $user,
         array $data,
-        bool $isModerator,
-        bool $requiresApproval,
         array $normalizedPayload,
     ): array {
-        /** @var array{post: Post, probeCreated: bool, inventoryAwardApplied: bool} $result */
-        $result = $this->db->transaction(function () use ($scene, $user, $data, $isModerator, $requiresApproval, $normalizedPayload): array {
+        /** @var array{
+         *   post: Post,
+         *   scene: Scene,
+         *   probeCreated: bool,
+         *   inventoryAwardApplied: bool,
+         *   isModerator: bool,
+         *   requiresApproval: bool,
+         *   worldSlug: string|null
+         * } $result */
+        $result = $this->db->transaction(function () use ($scene, $user, $data, $normalizedPayload): array {
+            [$lockedScene, $lockedCampaign] = $this->lockAndVerifyContext($scene);
+            $moderationContext = $this->resolveModerationContext($lockedCampaign, $user);
+
             $post = $this->persistPost(
-                scene: $scene,
+                scene: $lockedScene,
                 user: $user,
                 data: $data,
-                isModerator: $isModerator,
-                requiresApproval: $requiresApproval,
+                isModerator: $moderationContext['isModerator'],
+                requiresApproval: $moderationContext['requiresApproval'],
                 normalizedPayload: $normalizedPayload,
             );
             $probeCreated = $this->postProbeService->createForPost(
                 post: $post,
                 data: $data,
                 user: $user,
-                scene: $scene,
-                isModerator: $isModerator,
+                scene: $lockedScene,
+                isModerator: $moderationContext['isModerator'],
             );
             $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
                 post: $post,
                 data: $data,
-                scene: $scene,
-                isModerator: $isModerator,
+                scene: $lockedScene,
+                isModerator: $moderationContext['isModerator'],
                 user: $user,
             ) !== null;
 
@@ -160,12 +169,58 @@ class StorePostService
 
             return [
                 'post' => $post,
+                'scene' => $lockedScene,
                 'probeCreated' => $probeCreated,
                 'inventoryAwardApplied' => $inventoryAwardApplied,
+                'isModerator' => $moderationContext['isModerator'],
+                'requiresApproval' => $moderationContext['requiresApproval'],
+                'worldSlug' => $moderationContext['worldSlug'],
             ];
-        });
+        }, 3);
 
         return $result;
+    }
+
+    /**
+     * @return array{0: Scene, 1: Campaign}
+     */
+    private function lockAndVerifyContext(Scene $scene): array
+    {
+        /** @var Campaign $lockedCampaign */
+        $lockedCampaign = Campaign::query()
+            ->whereKey((int) $scene->campaign_id)
+            ->whereHas('world')
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        /** @var Scene $lockedScene */
+        $lockedScene = Scene::query()
+            ->whereKey((int) $scene->id)
+            ->where('campaign_id', (int) $lockedCampaign->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        return [$lockedScene, $lockedCampaign];
+    }
+
+    /**
+     * @return array{isModerator: bool, requiresApproval: bool, worldSlug: string|null}
+     */
+    private function resolveModerationContext(Campaign $campaign, User $author): array
+    {
+        $campaign->loadMissing('world');
+
+        $isModerator = $author->isGmOrAdmin() || $campaign->isCoGm($author);
+        $requiresApproval = $campaign->requiresPostModeration()
+            && ! $campaign->userCanPostWithoutModeration($author)
+            && ! $isModerator;
+        $worldSlug = $campaign->world?->slug;
+
+        return [
+            'isModerator' => $isModerator,
+            'requiresApproval' => $requiresApproval,
+            'worldSlug' => is_string($worldSlug) && $worldSlug !== '' ? $worldSlug : null,
+        ];
     }
 
     /**

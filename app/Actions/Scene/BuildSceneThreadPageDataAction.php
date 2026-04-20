@@ -4,38 +4,35 @@ declare(strict_types=1);
 
 namespace App\Actions\Scene;
 
+use App\Domain\Scene\SceneThreadReadStateService;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
-use App\Models\SceneSubscription;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BuildSceneThreadPageDataAction
 {
+    public function __construct(
+        private readonly SceneThreadReadStateService $sceneThreadReadStateService,
+    ) {}
+
     public function execute(Scene $scene, Campaign $campaign, User $user): SceneThreadPageData
     {
         $posts = $this->threadPostsPaginator($scene);
-        $subscription = $this->sceneSubscription($scene, $user);
-        $latestPostId = $this->latestScenePostId($scene);
-        $unreadPostsCount = $this->sceneUnreadPostsCount($scene, $subscription, $latestPostId);
+        $threadReadState = $this->sceneThreadReadStateService->resolveForThreadRender(
+            scene: $scene,
+            user: $user,
+        );
         $canModerateScene = $this->canModerateScene($user, $campaign);
 
         return new SceneThreadPageData(
             posts: $posts,
-            subscription: $subscription,
-            latestPostId: $latestPostId,
-            unreadPostsCount: $unreadPostsCount,
+            subscription: $threadReadState->subscription,
+            latestPostId: $threadReadState->latestPostId,
+            unreadPostsCount: $threadReadState->unreadPostsCount,
             canModerateScene: $canModerateScene,
         );
-    }
-
-    private function sceneSubscription(Scene $scene, User $user): ?SceneSubscription
-    {
-        return SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
     }
 
     /**
@@ -49,25 +46,6 @@ class BuildSceneThreadPageDataAction
             ->latestByIdHotpath()
             ->paginate(Post::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
-    }
-
-    private function latestScenePostId(Scene $scene): int
-    {
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->max('id');
-    }
-
-    private function sceneUnreadPostsCount(Scene $scene, ?SceneSubscription $subscription, int $latestPostId): int
-    {
-        if (! $subscription || $latestPostId <= 0 || ! $subscription->hasUnread($latestPostId)) {
-            return 0;
-        }
-
-        return (int) Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('id', '>', (int) ($subscription->last_read_post_id ?? 0))
-            ->count();
     }
 
     private function canModerateScene(User $user, Campaign $campaign): bool

@@ -50,11 +50,7 @@ class PostModerationService
                 } catch (Throwable $throwable) {
                     $this->logger->info('moderation.post_notification_dispatch_failed', [
                         'moderator_id' => $moderator->id,
-                        'user_id' => $moderator->id,
-                        'scene_id' => $post->scene_id,
-                        'post_id' => $post->id,
-                        'previous_status' => $previousStatus,
-                        'new_status' => $newStatus,
+                        ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
                         'error' => $throwable->getMessage(),
                         'outcome' => 'failed',
                     ]);
@@ -64,16 +60,35 @@ class PostModerationService
             $this->logger->info('moderation.post_status_changed', [
                 'world_slug' => (string) data_get($post, 'scene.campaign.world.slug', 'unknown'),
                 'moderator_id' => $moderator?->id,
-                'user_id' => $moderator?->id,
-                'scene_id' => $post->scene_id,
-                'post_id' => $post->id,
-                'previous_status' => $previousStatus,
-                'new_status' => $newStatus,
+                ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
                 'has_reason' => $moderationNote !== null,
                 'outcome' => 'succeeded',
             ]);
         }
 
         $this->pointService->syncApprovedPost($post);
+    }
+
+    /**
+     * @return array{
+     *   user_id: int,
+     *   scene_id: int,
+     *   post_id: int,
+     *   previous_status: string,
+     *   new_status: string
+     * }
+     */
+    private function buildPostModerationLogContext(
+        Post $post,
+        string $previousStatus,
+        string $newStatus,
+    ): array {
+        return [
+            'user_id' => (int) $post->user_id,
+            'scene_id' => (int) $post->scene_id,
+            'post_id' => (int) $post->id,
+            'previous_status' => $previousStatus,
+            'new_status' => $newStatus,
+        ];
     }
 }

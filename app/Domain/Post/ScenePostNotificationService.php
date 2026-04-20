@@ -5,6 +5,7 @@ namespace App\Domain\Post;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Post;
+use App\Models\PostSceneNotificationDelivery;
 use App\Models\PushSubscription;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
@@ -19,6 +20,7 @@ class ScenePostNotificationService
 {
     public function __construct(
         private readonly DomainEventLogger $logger,
+        private readonly ScenePostNotificationDeliveryLedger $deliveryLedger,
     ) {}
 
     /**
@@ -54,6 +56,7 @@ class ScenePostNotificationService
 
         $recipients = User::query()
             ->whereIn('id', $recipientIds)
+            ->orderBy('id')
             ->get()
             ->filter(fn (User $recipient): bool => $campaign->isVisibleTo($recipient))
             ->values();
@@ -65,75 +68,155 @@ class ScenePostNotificationService
             ];
         }
 
-        Notification::send($recipients, new SceneNewPostNotification(
-            post: $post,
-            author: $author,
-        ));
+        $worldId = (int) ($post->scene->campaign->world_id ?? 0);
+        $webPushRecipientIdLookup = $this->resolveWebPushRecipientIdLookup($recipients, $worldId);
+        $inAppRecipientCount = 0;
+        $webPushRecipientCount = 0;
 
-        $browserRecipients = $recipients
-            ->filter(fn (User $recipient): bool => $recipient->wantsNotificationChannel('scene_new_post', 'browser'))
-            ->values();
+        foreach ($recipients as $recipient) {
+            if ($this->sendInAppNotification($post, $author, $recipient)) {
+                $inAppRecipientCount++;
+            }
 
-        if ($browserRecipients->isEmpty()) {
-            return [
-                'in_app_recipients' => $recipients->count(),
-                'webpush_recipients' => 0,
-            ];
+            if ($this->sendWebPushNotification($post, $author, $recipient, $campaign, $worldId, $webPushRecipientIdLookup)) {
+                $webPushRecipientCount++;
+            }
         }
 
-        $worldId = (int) ($post->scene->campaign->world_id ?? 0);
-        $webPushRecipientIds = PushSubscription::query()
+        return [
+            'in_app_recipients' => $inAppRecipientCount,
+            'webpush_recipients' => $webPushRecipientCount,
+        ];
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $recipients
+     * @return array<int, true>
+     */
+    private function resolveWebPushRecipientIdLookup(\Illuminate\Support\Collection $recipients, int $worldId): array
+    {
+        $browserRecipientIds = $recipients
+            ->filter(static fn (User $recipient): bool => $recipient->wantsNotificationChannel('scene_new_post', 'browser'))
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->filter(static fn (int $id): bool => $id > 0)
+            ->all();
+
+        if ($browserRecipientIds === []) {
+            return [];
+        }
+
+        /** @var array<int, int> $resolvedRecipientIds */
+        $resolvedRecipientIds = PushSubscription::query()
             ->forWorld($worldId)
-            ->whereIn('user_id', $browserRecipients->pluck('id'))
+            ->whereIn('user_id', $browserRecipientIds)
             ->distinct()
             ->pluck('user_id')
             ->map(static fn ($id): int => (int) $id)
             ->all();
 
-        $webPushRecipients = $browserRecipients
-            ->whereIn('id', $webPushRecipientIds)
-            ->values();
+        $lookup = [];
 
-        if ($webPushRecipients->isEmpty()) {
-            return [
-                'in_app_recipients' => $recipients->count(),
-                'webpush_recipients' => 0,
-            ];
+        foreach ($resolvedRecipientIds as $recipientId) {
+            if ($recipientId > 0) {
+                $lookup[$recipientId] = true;
+            }
+        }
+
+        return $lookup;
+    }
+
+    private function sendInAppNotification(Post $post, User $author, User $recipient): bool
+    {
+        $delivery = $this->deliveryLedger->claim(
+            post: $post,
+            recipient: $recipient,
+            channel: PostSceneNotificationDelivery::CHANNEL_DATABASE,
+        );
+
+        if (! $delivery instanceof PostSceneNotificationDelivery) {
+            return false;
         }
 
         try {
-            Notification::send($webPushRecipients, new SceneNewPostWebPush(
+            Notification::send($recipient, new SceneNewPostNotification(
                 post: $post,
                 author: $author,
             ));
+            $this->deliveryLedger->markSent($delivery);
+        } catch (Throwable $throwable) {
+            $this->deliveryLedger->markFailed($delivery, $throwable->getMessage());
 
+            throw $throwable;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array<int, true>  $webPushRecipientIdLookup
+     */
+    private function sendWebPushNotification(
+        Post $post,
+        User $author,
+        User $recipient,
+        Campaign $campaign,
+        int $worldId,
+        array $webPushRecipientIdLookup,
+    ): bool {
+        if (! $recipient->wantsNotificationChannel('scene_new_post', 'browser')) {
+            return false;
+        }
+
+        if (! isset($webPushRecipientIdLookup[(int) $recipient->id])) {
+            return false;
+        }
+
+        $delivery = $this->deliveryLedger->claim(
+            post: $post,
+            recipient: $recipient,
+            channel: PostSceneNotificationDelivery::CHANNEL_WEBPUSH,
+        );
+
+        if (! $delivery instanceof PostSceneNotificationDelivery) {
+            return false;
+        }
+
+        try {
+            Notification::send($recipient, new SceneNewPostWebPush(
+                post: $post,
+                author: $author,
+            ));
+            $this->deliveryLedger->markSent($delivery);
             $this->logger->info('webpush.scene_post_sent', [
-                'author_id' => $author->id,
-                'user_id' => $author->id,
-                'scene_id' => $post->scene_id,
-                'post_id' => $post->id,
+                'author_id' => (int) $author->id,
+                'user_id' => (int) $author->id,
+                'recipient_user_id' => (int) $recipient->id,
+                'scene_id' => (int) $post->scene_id,
+                'post_id' => (int) $post->id,
                 'world_id' => $worldId,
                 'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
-                'recipient_count' => $webPushRecipients->count(),
+                'recipient_count' => 1,
                 'outcome' => 'succeeded',
             ]);
+
+            return true;
         } catch (Throwable $exception) {
+            $this->deliveryLedger->markFailed($delivery, $exception->getMessage());
             $this->logger->info('webpush.scene_post_failed', [
-                'author_id' => $author->id,
-                'user_id' => $author->id,
-                'scene_id' => $post->scene_id,
-                'post_id' => $post->id,
+                'author_id' => (int) $author->id,
+                'user_id' => (int) $author->id,
+                'recipient_user_id' => (int) $recipient->id,
+                'scene_id' => (int) $post->scene_id,
+                'post_id' => (int) $post->id,
                 'world_id' => $worldId,
                 'world_slug' => (string) data_get($campaign, 'world.slug', 'unknown'),
-                'recipient_count' => $webPushRecipients->count(),
+                'recipient_count' => 1,
                 'error' => $exception->getMessage(),
                 'outcome' => 'failed',
             ]);
-        }
 
-        return [
-            'in_app_recipients' => $recipients->count(),
-            'webpush_recipients' => $webPushRecipients->count(),
-        ];
+            return false;
+        }
     }
 }

@@ -12,6 +12,8 @@ use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Support\Gamification\PointService;
+use App\Support\Observability\DomainEventLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
@@ -76,6 +78,48 @@ class PostModerationServiceTest extends TestCase
             'new_status' => 'rejected',
             'reason' => 'Technischer Fehler darf Moderation nicht blockieren.',
         ]);
+    }
+
+    public function test_it_logs_post_author_user_id_in_moderation_events(): void
+    {
+        [$gm, $player, $post] = $this->seedModerationContext();
+        $post->moderation_status = 'approved';
+        $post->approved_at = now();
+        $post->approved_by = $gm->id;
+        $post->save();
+
+        $dispatcher = $this->createMock(PostModerationNotificationDispatcher::class);
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willThrowException(new RuntimeException('Forced notification dispatch failure'));
+
+        $pointService = $this->createMock(PointService::class);
+        $pointService->expects($this->once())
+            ->method('syncApprovedPost')
+            ->with($this->callback(static fn (Post $updatedPost): bool => (int) $updatedPost->id === (int) $post->id));
+
+        $logger = $this->createMock(DomainEventLogger::class);
+        $logger->expects($this->exactly(2))
+            ->method('info')
+            ->with(
+                $this->logicalOr(
+                    $this->equalTo('moderation.post_notification_dispatch_failed'),
+                    $this->equalTo('moderation.post_status_changed'),
+                ),
+                $this->callback(function (array $context) use ($player, $post): bool {
+                    return (int) ($context['user_id'] ?? 0) === (int) $player->id
+                        && (int) ($context['post_id'] ?? 0) === (int) $post->id;
+                }),
+            );
+
+        $service = new PostModerationService($dispatcher, $pointService, $logger);
+
+        $service->synchronize(
+            post: $post,
+            moderator: $gm,
+            previousStatus: 'pending',
+            moderationNote: 'Freigabe nach Pruefung.',
+        );
     }
 
     /**

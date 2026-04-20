@@ -49,6 +49,46 @@ class SceneReadTrackingTest extends TestCase
         $this->assertNotNull($subscription->last_read_at);
     }
 
+    public function test_thread_page_render_does_not_mark_scene_subscription_as_read(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        $firstPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => $firstPost->id,
+            'last_read_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('campaigns.scenes.thread', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]));
+
+        $response->assertOk();
+        $response->assertViewIs('scenes.partials.thread-page');
+        $response->assertSee('Ungelesen: 1');
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => $firstPost->id,
+        ]);
+    }
+
     public function test_campaign_overview_shows_unread_flag_until_scene_is_opened(): void
     {
         $user = User::factory()->create();
@@ -207,6 +247,58 @@ class SceneReadTrackingTest extends TestCase
             'user_id' => $user->id,
             'last_read_post_id' => null,
             'last_read_at' => null,
+        ]);
+    }
+
+    public function test_show_render_and_thread_render_share_consistent_unread_contract_after_mark_read(): void
+    {
+        $user = User::factory()->create();
+        [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+        ]);
+
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'is_muted' => false,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+        ]);
+
+        $showResponse = $this->actingAs($user)
+            ->get(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]));
+
+        $showResponse->assertOk();
+        $showResponse->assertSee('2 neue Beitr');
+        $showResponse->assertSee('Thread gelesen');
+
+        $threadResponse = $this->actingAs($user)
+            ->get(route('campaigns.scenes.thread', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]));
+
+        $threadResponse->assertOk();
+        $threadResponse->assertViewIs('scenes.partials.thread-page');
+        $threadResponse->assertSee('Ungelesen: 0');
+        $threadResponse->assertSee('Du bist auf dem aktuellen Stand dieser Szene.');
+
+        $this->assertDatabaseHas('scene_subscriptions', [
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => $latestPost->id,
         ]);
     }
 
