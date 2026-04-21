@@ -38,10 +38,22 @@ class CampaignGmContactThreadController extends Controller
         $user = $this->authenticatedUser($request);
         $this->authorize('create', [CampaignGmContactThread::class, $campaign]);
 
+        /** @var array{subject: string, content: string, character_id?: int|null, scene_id?: int|null} $threadData */
+        $threadData = [
+            'subject' => (string) $request->validated('subject'),
+            'content' => (string) $request->validated('content'),
+            'character_id' => $request->filled('character_id')
+                ? (int) $request->validated('character_id')
+                : null,
+            'scene_id' => $request->filled('scene_id')
+                ? (int) $request->validated('scene_id')
+                : null,
+        ];
+
         $thread = $this->storeCampaignGmContactThreadAction->execute(
             campaign: $campaign,
             author: $user,
-            data: $request->validated(),
+            data: $threadData,
         );
 
         if ($this->isHtmxRequest($request)) {
@@ -90,10 +102,15 @@ class CampaignGmContactThreadController extends Controller
         $this->authorize('reply', $gmContactThread);
         $user = $this->authenticatedUser($request);
 
+        /** @var array{content: string} $messageData */
+        $messageData = [
+            'content' => (string) $request->validated('content'),
+        ];
+
         $this->storeCampaignGmContactMessageAction->execute(
             thread: $gmContactThread,
             author: $user,
-            data: $request->validated(),
+            data: $messageData,
         );
 
         if ($this->isHtmxRequest($request)) {

@@ -43,7 +43,7 @@ class StoreCampaignGmContactMessageAction
             ]);
 
             $thread->status = $status;
-            $thread->last_activity_at = $message->created_at;
+            $thread->last_activity_at = ($message->created_at ?? now())->toDateTimeString();
             $thread->save();
 
             return $message;

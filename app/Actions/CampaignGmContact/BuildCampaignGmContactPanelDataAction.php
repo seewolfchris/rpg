@@ -82,10 +82,7 @@ class BuildCampaignGmContactPanelDataAction
             }
         }
 
-        /** @var CampaignGmContactThread|null $first */
-        $first = $threads->first();
-
-        return $first;
+        return $threads->first();
     }
 
     /**
