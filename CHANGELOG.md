@@ -2,6 +2,12 @@
 
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
+## v0.30-beta (2026-04-21)
+- Privacy-first SL-Kontakt V1 eingefuehrt: kampagnengebundene Threads/Messages mit separatem Kontext (`CampaignGmContactThread`, `CampaignGmContactMessage`) statt Reuse des Post-/Scene-Write-Flows.
+- Sichtbarkeit und Antwortrechte policy-first gehaertet: nur Thread-Ersteller, Campaign-Owner, akzeptierte `co_gm` und `admin`; globale GM-Rolle ohne Kampagnenbezug bleibt ausgeschlossen.
+- Notifications fuer SL-Kontakte auf database-only erweitert (`kind=campaign_gm_contact_message`) und Empfaenger strikt pro Richtung begrenzt (Spieler -> Owner+Co-GMs, GM-Seite -> Thread-Ersteller) inkl. Self-Notification-Schutz.
+- HTMX-Panel nur in `campaigns.show` integriert (kein Dashboard-/Inbox-Flow), inklusive Status-Labels und Szenentitel in der Erstellung.
+
 ## v0.29-beta (2026-04-12)
 - Enzyklopaedie-Workflow PR-1 umgesetzt: Community-Vorschlaege als `pending`, Review fuer `gm/admin` und weltbezogene `co_gm`, schlanke Entry-Revision-Snapshots bei Proposal-Updates, neue Vorschlag-/Moderationsrouten und minimale Workflow-Views.
 - Oeffentlicher Enzyklopaediepfad bleibt strikt `published`-only.

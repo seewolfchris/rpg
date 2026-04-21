@@ -28,6 +28,7 @@ Der Fokus liegt auf asynchronem Storytelling, klaren Weltkontexten und einem sch
 
 - Authentifizierung mit Rollen (`player`, `gm`, `admin`, kampagnenspezifisch `co_gm`)
 - Kampagnen-/Szenenverwaltung mit Sichtbarkeit, Einladungen, Read-Tracking und Bookmarks
+- Privacy-first SL-Kontakt pro Kampagne (Thread-basiert, kein Chat/Realtime, kein Dashboard-Flow)
 - Posting mit IC/OOC, Spoiler, Edit-Historie und Moderationspfad
 - Charakterverwaltung inkl. Ownership-/Policy-Checks
 - Benachrichtigungen (In-App, Mail, Browser Web Push)
@@ -105,7 +106,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 
 ## Aktueller Status
 
-- Status: Beta (`v0.29-beta`), aktiv entwickelt
+- Status: Beta (`v0.30-beta`), aktiv entwickelt
 - Kernbereiche (Authentifizierung, Kampagnen/Szenen, Posting/Moderation, PWA-Boundary): stabil
 - Test-/Analyse-Gates: `php artisan test`, `composer analyse`, `npm run test:js`, `npm run test:e2e`, `npm run build`
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)

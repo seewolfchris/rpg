@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Campaign\CreateCampaignAction;
 use App\Actions\Campaign\DeleteCampaignAction;
 use App\Actions\Campaign\UpdateCampaignAction;
+use App\Actions\CampaignGmContact\BuildCampaignGmContactPanelDataAction;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Campaign\StoreCampaignRequest;
 use App\Http\Requests\Campaign\UpdateCampaignRequest;
@@ -23,6 +24,7 @@ class CampaignController extends Controller
         private readonly CreateCampaignAction $createCampaignAction,
         private readonly UpdateCampaignAction $updateCampaignAction,
         private readonly DeleteCampaignAction $deleteCampaignAction,
+        private readonly BuildCampaignGmContactPanelDataAction $buildCampaignGmContactPanelDataAction,
     ) {
         $this->authorizeResource(Campaign::class, 'campaign');
     }
@@ -127,6 +129,20 @@ class CampaignController extends Controller
                 ->get();
         }
 
+        $selectedThreadId = $request->integer('gm_contact_thread');
+        if ($selectedThreadId <= 0) {
+            $selectedThreadId = null;
+        }
+
+        $gmContactPanelData = $this->buildCampaignGmContactPanelDataAction->execute(
+            campaign: $campaign,
+            user: $user,
+            selectedThreadId: $selectedThreadId,
+            sceneStatus: $sceneStatus,
+            sceneSearch: $sceneSearch,
+            canManageCampaign: $canManageCampaign,
+        );
+
         return view('campaigns.show', compact(
             'world',
             'campaign',
@@ -136,6 +152,7 @@ class CampaignController extends Controller
             'invitations',
             'canManageInvitations',
             'canManageCampaign',
+            'gmContactPanelData',
         ));
     }
 

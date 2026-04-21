@@ -1,7 +1,7 @@
 # ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
 
-Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt, v0.29-beta mit Enzyklopädie-Vorschlagsworkflow ausgeliefert  
-Stand: 2026-04-12
+Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt, v0.30-beta mit privacy-first SL-Kontakt in `campaigns.show` ausgeliefert  
+Stand: 2026-04-21
 
 ## Zielbild
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\CampaignGmContactThreadController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\EncyclopediaCategoryController;
 use App\Http\Controllers\EncyclopediaEntryController;
@@ -50,6 +51,21 @@ Route::prefix('/w/{world:slug}')->scopeBindings()->group(function (): void {
     Route::middleware('auth')->scopeBindings()->group(function (): void {
         Route::resource('campaigns', CampaignController::class)
             ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+
+        Route::post('/campaigns/{campaign}/gm-contacts', [CampaignGmContactThreadController::class, 'store'])
+            ->middleware('throttle:writes')
+            ->name('campaigns.gm-contacts.store');
+
+        Route::get('/campaigns/{campaign}/gm-contacts/{gmContactThread}', [CampaignGmContactThreadController::class, 'show'])
+            ->name('campaigns.gm-contacts.show');
+
+        Route::post('/campaigns/{campaign}/gm-contacts/{gmContactThread}/messages', [CampaignGmContactThreadController::class, 'storeMessage'])
+            ->middleware('throttle:writes')
+            ->name('campaigns.gm-contacts.messages.store');
+
+        Route::patch('/campaigns/{campaign}/gm-contacts/{gmContactThread}/status', [CampaignGmContactThreadController::class, 'updateStatus'])
+            ->middleware('throttle:writes')
+            ->name('campaigns.gm-contacts.status.update');
 
         Route::post('/campaigns/{campaign}/invitations', [CampaignInvitationController::class, 'store'])
             ->middleware('throttle:writes')

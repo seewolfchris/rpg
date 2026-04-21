@@ -184,6 +184,12 @@
             @endif
         </div>
 
+        @include('campaigns.partials.gm-contacts-panel', [
+            'world' => $world,
+            'campaign' => $campaign,
+            'gmContactPanelData' => $gmContactPanelData,
+        ])
+
         @if ($canManageInvitations)
             <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
                 <h2 class="font-heading text-2xl text-stone-100">Einladungen</h2>

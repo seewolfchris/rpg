@@ -78,6 +78,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<CampaignGmContactThread, $this>
+     */
+    public function gmContactThreads(): HasMany
+    {
+        return $this->hasMany(CampaignGmContactThread::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignInvitation, $this>
      */
     public function invitations(): HasMany

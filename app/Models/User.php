@@ -136,6 +136,22 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<CampaignGmContactThread, $this>
+     */
+    public function createdGmContactThreads(): HasMany
+    {
+        return $this->hasMany(CampaignGmContactThread::class, 'created_by');
+    }
+
+    /**
+     * @return HasMany<CampaignGmContactMessage, $this>
+     */
+    public function campaignGmContactMessages(): HasMany
+    {
+        return $this->hasMany(CampaignGmContactMessage::class);
+    }
+
+    /**
      * @return HasMany<PostReaction, $this>
      */
     public function postReactions(): HasMany

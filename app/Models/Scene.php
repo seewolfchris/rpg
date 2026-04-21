@@ -72,6 +72,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<CampaignGmContactThread, $this>
+     */
+    public function gmContactThreads(): HasMany
+    {
+        return $this->hasMany(CampaignGmContactThread::class, 'scene_id');
+    }
+
+    /**
      * @return BelongsTo<Scene, $this>
      */
     public function previousScene(): BelongsTo
