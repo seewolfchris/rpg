@@ -31,20 +31,20 @@ class StorePostService
         array $data,
     ): StorePostResult
     {
-        $normalizedPayload = $this->normalizePostPayload($data);
-        $transactionResult = $this->executeStoreTransaction(
+        $normalizedPayload = $this->runValidationAndNormalizationPhase($data);
+        $transactionResult = $this->runTransactionalMutationPhase(
             scene: $scene,
             user: $user,
             data: $data,
             normalizedPayload: $normalizedPayload,
         );
 
-        $notificationMetrics = $this->dispatchPostCreatedNotifications(
+        $notificationMetrics = $this->runAfterCommitNotificationPhase(
             post: $transactionResult['post'],
             author: $user,
         );
 
-        $this->logPostCreated(
+        $this->runAfterCommitObservabilityPhase(
             post: $transactionResult['post'],
             user: $user,
             scene: $transactionResult['scene'],
@@ -73,7 +73,7 @@ class StorePostService
      *   meta: array<string, mixed>|null
      * }
      */
-    private function normalizePostPayload(array $data): array
+    private function runValidationAndNormalizationPhase(array $data): array
     {
         $postType = (string) ($data['post_type'] ?? 'ooc');
         $postMode = $postType === 'ic'
@@ -123,7 +123,7 @@ class StorePostService
      *   worldSlug: string|null
      * }
      */
-    private function executeStoreTransaction(
+    private function runTransactionalMutationPhase(
         Scene $scene,
         User $user,
         array $data,
@@ -142,7 +142,7 @@ class StorePostService
             [$lockedScene, $lockedCampaign] = $this->lockAndVerifyContext($scene);
             $moderationContext = $this->resolveModerationContext($lockedCampaign, $user);
 
-            $post = $this->persistPost(
+            $post = $this->applyTransactionalMutationPhase(
                 scene: $lockedScene,
                 user: $user,
                 data: $data,
@@ -150,22 +150,13 @@ class StorePostService
                 requiresApproval: $moderationContext['requiresApproval'],
                 normalizedPayload: $normalizedPayload,
             );
-            $probeCreated = $this->postProbeService->createForPost(
+            [$probeCreated, $inventoryAwardApplied] = $this->runInTransactionEffectsPhase(
                 post: $post,
-                data: $data,
-                user: $user,
                 scene: $lockedScene,
+                user: $user,
+                data: $data,
                 isModerator: $moderationContext['isModerator'],
             );
-            $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
-                post: $post,
-                data: $data,
-                scene: $lockedScene,
-                isModerator: $moderationContext['isModerator'],
-                user: $user,
-            ) !== null;
-
-            $this->applyInTransactionPostSideEffects($post, $user);
 
             return [
                 'post' => $post,
@@ -231,7 +222,7 @@ class StorePostService
      *   meta: array<string, mixed>|null
      * }  $normalizedPayload
      */
-    private function persistPost(
+    private function applyTransactionalMutationPhase(
         Scene $scene,
         User $user,
         array $data,
@@ -258,10 +249,36 @@ class StorePostService
         return $post;
     }
 
-    private function applyInTransactionPostSideEffects(Post $post, User $user): void
-    {
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{0: bool, 1: bool}
+     */
+    private function runInTransactionEffectsPhase(
+        Post $post,
+        Scene $scene,
+        User $user,
+        array $data,
+        bool $isModerator,
+    ): array {
+        $probeCreated = $this->postProbeService->createForPost(
+            post: $post,
+            data: $data,
+            user: $user,
+            scene: $scene,
+            isModerator: $isModerator,
+        );
+        $inventoryAwardApplied = $this->postInventoryAwardService->applyForPost(
+            post: $post,
+            data: $data,
+            scene: $scene,
+            isModerator: $isModerator,
+            user: $user,
+        ) !== null;
+
         $this->ensureAuthorSubscription($post, $user);
         $this->pointService->syncApprovedPost($post);
+
+        return [$probeCreated, $inventoryAwardApplied];
     }
 
     /**
@@ -271,7 +288,7 @@ class StorePostService
      *   mention_recipients: int
      * }
      */
-    private function dispatchPostCreatedNotifications(Post $post, User $author): array
+    private function runAfterCommitNotificationPhase(Post $post, User $author): array
     {
         $sceneNotificationResult = $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry($post, $author, 'store_post');
         $mentionRecipientCount = $this->postNotificationOrchestrator->notifyMentionsWithRetry($post, $author, 'store_post');
@@ -283,7 +300,7 @@ class StorePostService
         ];
     }
 
-    private function logPostCreated(
+    private function runAfterCommitObservabilityPhase(
         Post $post,
         User $user,
         Scene $scene,

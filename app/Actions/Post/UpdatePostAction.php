@@ -39,17 +39,46 @@ final class UpdatePostAction
      */
     public function execute(Post $post, User $editor, array $data): void
     {
-        $mutation = PostUpdateMutationInput::fromArray($data);
-        $result = $this->db->transaction(
-            fn (): PostUpdateTransactionResult => $this->applyMutation($post, $editor, $mutation),
-            3,
-        );
-        $this->orchestrateSideEffects($result, $editor);
+        $mutation = $this->runValidationAndNormalizationPhase($data);
+        $result = $this->runTransactionalMutationPhase($post, $editor, $mutation);
+        $this->runAfterCommitEffectsPhase($result, $editor);
 
         $post->refresh();
     }
 
-    private function applyMutation(Post $post, User $editor, PostUpdateMutationInput $mutation): PostUpdateTransactionResult
+    /**
+     * @param  array{
+     *   post_type: string,
+     *   post_mode?: string,
+     *   character_id?: mixed,
+     *   content_format: string,
+     *   content: string,
+     *   ic_quote?: mixed,
+     *   moderation_status?: mixed,
+     *   moderation_note?: mixed
+     * }  $data
+     */
+    private function runValidationAndNormalizationPhase(array $data): PostUpdateMutationInput
+    {
+        return PostUpdateMutationInput::fromArray($data);
+    }
+
+    private function runTransactionalMutationPhase(
+        Post $post,
+        User $editor,
+        PostUpdateMutationInput $mutation,
+    ): PostUpdateTransactionResult {
+        return $this->db->transaction(
+            fn (): PostUpdateTransactionResult => $this->applyTransactionalMutationPhase($post, $editor, $mutation),
+            3,
+        );
+    }
+
+    private function applyTransactionalMutationPhase(
+        Post $post,
+        User $editor,
+        PostUpdateMutationInput $mutation,
+    ): PostUpdateTransactionResult
     {
         $lockedPost = $this->lockAndVerifyContext($post);
         $lockedPost->loadMissing('scene.campaign');
@@ -66,16 +95,22 @@ final class UpdatePostAction
             'meta' => $normalizedMeta,
         ]);
 
-        if ($hasContentChange) {
-            $this->createRevisionSnapshot($lockedPost, $editor);
-        }
-
-        $this->persistPostMutation($lockedPost, $mutation, $normalizedMeta, $hasContentChange, $moderationContext);
+        $this->runInTransactionEffectsPhase($lockedPost, $editor, $hasContentChange);
+        $this->persistPostMutationPhase($lockedPost, $mutation, $normalizedMeta, $hasContentChange, $moderationContext);
 
         return new PostUpdateTransactionResult($lockedPost, $moderationContext, $hasContentChange);
     }
 
-    private function orchestrateSideEffects(PostUpdateTransactionResult $result, User $editor): void
+    private function runInTransactionEffectsPhase(Post $post, User $editor, bool $hasContentChange): void
+    {
+        if (! $hasContentChange) {
+            return;
+        }
+
+        $this->createRevisionSnapshot($post, $editor);
+    }
+
+    private function runAfterCommitEffectsPhase(PostUpdateTransactionResult $result, User $editor): void
     {
         $this->postModerationService->synchronize(
             post: $result->post,
@@ -159,7 +194,7 @@ final class UpdatePostAction
     /**
      * @param  array<string, mixed>|null  $normalizedMeta
      */
-    private function persistPostMutation(
+    private function persistPostMutationPhase(
         Post $post,
         PostUpdateMutationInput $mutation,
         ?array $normalizedMeta,

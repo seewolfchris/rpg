@@ -1301,6 +1301,16 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->willThrowException(new RuntimeException('Probe service failed.'));
         $this->app->instance(PostProbeService::class, $probeService);
 
+        $sceneNotificationService = $this->createMock(ScenePostNotificationService::class);
+        $sceneNotificationService->expects($this->never())
+            ->method('notifySceneParticipants');
+        $this->app->instance(ScenePostNotificationService::class, $sceneNotificationService);
+
+        $mentionNotificationService = $this->createMock(PostMentionNotificationService::class);
+        $mentionNotificationService->expects($this->never())
+            ->method('notifyMentions');
+        $this->app->instance(PostMentionNotificationService::class, $mentionNotificationService);
+
         $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
             'world' => $campaign->world,
             'campaign' => $campaign,
