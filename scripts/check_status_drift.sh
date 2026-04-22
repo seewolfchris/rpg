@@ -7,8 +7,19 @@ cd "$PROJECT_ROOT"
 NON_CANONICAL_STATUS_FILES=(
   "README.md"
   "ROADMAP.md"
-  "docs/PROJEKT-ÜBERSICHT.md"
 )
+
+PROJECT_OVERVIEW_FILES=()
+while IFS= read -r file; do
+  PROJECT_OVERVIEW_FILES+=("$file")
+done < <(git -c core.quotePath=false ls-files 'docs/PROJEKT-*BERSICHT.md')
+
+if [[ "${#PROJECT_OVERVIEW_FILES[@]}" -ne 1 ]]; then
+  echo "[status-drift] ERROR: expected exactly one tracked docs/PROJEKT-*BERSICHT.md file"
+  exit 1
+fi
+
+NON_CANONICAL_STATUS_FILES+=("${PROJECT_OVERVIEW_FILES[0]}")
 
 STATUS_PATTERNS=(
   'v[0-9]+\.[0-9]+([.-][0-9A-Za-z._-]+)?'
