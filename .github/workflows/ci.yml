@@ -49,6 +49,9 @@ jobs:
           touch database/database.sqlite
           php artisan key:generate
 
+      - name: Guard status drift
+        run: scripts/check_status_drift.sh
+
       - name: Run static analysis
         run: composer analyse
 

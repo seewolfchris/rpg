@@ -84,11 +84,15 @@ if ! [[ "$BUILD" =~ ^[0-9A-Za-z._-]+$ ]]; then
 fi
 
 require_cmd php
+require_cmd date
+
+RELEASE_DATE="$(date +%Y-%m-%d)"
 
 export RELEASE_VERSION="$VERSION"
 export RELEASE_BUILD="$BUILD"
 export RELEASE_UPDATE_DOTENV="$UPDATE_DOTENV"
 export RELEASE_DRY_RUN="$DRY_RUN"
+export RELEASE_DATE="$RELEASE_DATE"
 
 php <<'PHP'
 <?php
@@ -98,6 +102,7 @@ $version = (string) getenv('RELEASE_VERSION');
 $build = (string) getenv('RELEASE_BUILD');
 $updateDotenv = (string) getenv('RELEASE_UPDATE_DOTENV') === '1';
 $dryRun = (string) getenv('RELEASE_DRY_RUN') === '1';
+$releaseDate = (string) getenv('RELEASE_DATE');
 
 $changed = [];
 $unchanged = [];
@@ -186,9 +191,9 @@ $replaceRegex('.env.example', '/^APP_VERSION=.*$/m', 'APP_VERSION='.$version, '.
 $replaceRegex('config/app.php', "/'version'\\s*=>\\s*env\\('APP_VERSION',\\s*'[^']*'\\),/", "'version' => env('APP_VERSION', '".$version."'),", 'config app.version fallback');
 $replaceRegex('resources/views/layouts/app.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'app layout fallback version');
 $replaceRegex('resources/views/partials/version-footer.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'footer fallback version');
-$replaceRegex('README.md', '/Stand:\\s+\\*\\*Release-Beta\\s+`[^`]+`\\*\\*/', 'Stand: **Release-Beta `'.$version.'`**', 'README beta version line');
-$replaceRegex('docs/PROJEKT-ÜBERSICHT.md', '/- Laufende Versionslinie:\\s+\\*\\*`[^`]+`\\*\\*\\./', '- Laufende Versionslinie: **`'.$version.'`**.', 'project overview version line');
-$replaceRegex('docs/RELEASE-CHECKLISTE.md', '/\\(z\\. B\\. `[^`]+`\\)\\./', '(z. B. `'.$version.'`).', 'release checklist version example');
+$replaceRegex('docs/STATUS.md', '/^- Statusdatum:\s+\*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*$/m', '- Statusdatum: **'.$releaseDate.'**', 'status date');
+$replaceRegex('docs/STATUS.md', '/^- Versionslinie:\s+\*\*`[^`]+`\*\*$/m', '- Versionslinie: **`'.$version.'`**', 'status version line');
+$replaceRegex('docs/STATUS.md', '/^- Letzter Release-Eintrag:\s+\*\*`[^`]+`\s+am\s+[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*\s+\(Quelle:\s+`CHANGELOG\.md`\)$/m', '- Letzter Release-Eintrag: **`'.$version.'` am '.$releaseDate.'** (Quelle: `CHANGELOG.md`)', 'status release entry');
 
 if ($updateDotenv) {
     $upsertEnvKey('.env', 'APP_VERSION', $version);
