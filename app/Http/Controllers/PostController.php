@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Actions\Post\BuildPostThreadItemFragmentAction;
 use App\Actions\Post\DeletePostAction;
-use App\Actions\Post\StorePostAction;
 use App\Actions\Post\UpdatePostAction;
-use App\Actions\Post\ModeratePostAction;
-use App\Actions\Post\SetPostPinStateAction;
+use App\Actions\Post\ApplyPostModerationTransitionAction;
 use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
+use App\Domain\Post\PostPinStateService;
+use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
 use App\Http\Requests\Post\PreviewPostRequest;
@@ -32,11 +32,11 @@ class PostController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
-        private readonly StorePostAction $storePostAction,
+        private readonly StorePostService $storePostService,
         private readonly UpdatePostAction $updatePostAction,
         private readonly DeletePostAction $deletePostAction,
-        private readonly ModeratePostAction $moderatePostAction,
-        private readonly SetPostPinStateAction $setPostPinStateAction,
+        private readonly ApplyPostModerationTransitionAction $applyPostModerationTransitionAction,
+        private readonly PostPinStateService $postPinStateService,
         private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
     ) {}
 
@@ -49,9 +49,9 @@ class PostController extends Controller
         $user = $this->authenticatedUser($request);
 
         try {
-            $storedPost = $this->storePostAction->execute(
+            $storedPost = $this->storePostService->store(
                 scene: $scene,
-                author: $user,
+                user: $user,
                 data: $data,
             );
         } catch (PostProbeInvariantViolationException|PostInventoryAwardInvariantViolationException $exception) {
@@ -182,10 +182,10 @@ class PostController extends Controller
 
         $moderator = $this->authenticatedUser($request);
         $status = $request->validated('moderation_status');
-        $this->moderatePostAction->execute(
+        $this->applyPostModerationTransitionAction->execute(
             post: $post,
             moderator: $moderator,
-            status: $status,
+            targetStatus: $status,
             moderationNote: (string) $request->validated('moderation_note', ''),
         );
 
@@ -204,7 +204,7 @@ class PostController extends Controller
         $actor = $this->authenticatedUser($request);
         $pinnedById = (int) $actor->id;
 
-        $this->setPostPinStateAction->execute(
+        $this->postPinStateService->setPinState(
             post: $post,
             isPinned: true,
             pinnedByUserId: $pinnedById,
@@ -224,7 +224,7 @@ class PostController extends Controller
         $this->authorize('moderate', $post);
         $actor = $this->authenticatedUser($request);
 
-        $this->setPostPinStateAction->execute(
+        $this->postPinStateService->setPinState(
             post: $post,
             isPinned: false,
         );

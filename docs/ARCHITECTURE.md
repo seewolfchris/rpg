@@ -87,7 +87,7 @@ Policy:
 ## Migration Progress
 - Migrated in this batch (Slice 1 + Slice 2):
   - `CampaignInvitationController` mutation path (`DeleteCampaignInvitationAction` model-first).
-  - `PostController` mutations (`StorePostAction`, `UpdatePostAction`, `DeletePostAction` model-first).
+  - `PostController` mutations (`StorePostService`, `UpdatePostAction`, `DeletePostAction` model-first).
   - `EncyclopediaWorkflowController` mutations (`Store/Update/Approve/Reject` proposal actions model-first).
 - Migrated in this batch (Legacy-Controller Cleanup Slice):
   - `CampaignController`

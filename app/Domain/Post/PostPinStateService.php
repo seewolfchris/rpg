@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Post;
+namespace App\Domain\Post;
 
 use App\Models\Post;
 
-class SetPostPinStateAction
+final class PostPinStateService
 {
-    public function execute(Post $post, bool $isPinned, ?int $pinnedByUserId = null): void
+    public function setPinState(Post $post, bool $isPinned, ?int $pinnedByUserId = null): void
     {
         if ($isPinned) {
             $post->is_pinned = true;

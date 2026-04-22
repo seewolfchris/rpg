@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Actions\Post;
+namespace Tests\Unit\Domain\Post;
 
-use App\Actions\Post\SetPostPinStateAction;
+use App\Domain\Post\PostPinStateService;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
@@ -12,7 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class SetPostPinStateActionTest extends TestCase
+class PostPinStateServiceTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -38,8 +38,8 @@ class SetPostPinStateActionTest extends TestCase
             'pinned_by' => null,
         ]);
 
-        $action = new SetPostPinStateAction;
-        $action->execute($post, true, (int) $gm->id);
+        $service = new PostPinStateService;
+        $service->setPinState($post, true, (int) $gm->id);
 
         $post->refresh();
 
@@ -70,8 +70,8 @@ class SetPostPinStateActionTest extends TestCase
             'pinned_by' => $gm->id,
         ]);
 
-        $action = new SetPostPinStateAction;
-        $action->execute($post, false);
+        $service = new PostPinStateService;
+        $service->setPinState($post, false);
 
         $post->refresh();
 

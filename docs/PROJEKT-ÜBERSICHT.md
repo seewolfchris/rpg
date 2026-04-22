@@ -90,16 +90,18 @@ Repository-Branch: `main`
   - `app/Services/Character/AvatarService.php` (Stage/Finalize/Cleanup)
   - `app/Exceptions/CharacterCreationFailedException.php` (expliziter Fehlerpfad)
   - `CharacterController::store()` delegiert nur noch an die Action
-- Post-Write-/Moderations-Flow ist in Actions ausgelagert:
+- Post-Write-/Moderations-Flow ist in Actions und Domain-Services ausgelagert:
   - `app/Actions/Post/UpdatePostAction.php` (Moderationsentscheidung, Revisionssnapshot, Mention-Dispatch)
-  - `app/Actions/Post/ModeratePostAction.php` (Moderationsstatus inkl. Audit-Synchronisierung)
-  - `app/Actions/Post/SetPostPinStateAction.php` (Pin/Unpin-Write-Pfad)
+  - `app/Actions/Post/ApplyPostModerationTransitionAction.php` (Moderationsstatus inkl. Audit-Synchronisierung)
+  - `app/Domain/Post/StorePostService.php` (Store-Write-Orchestrierung)
+  - `app/Domain/Post/PostPinStateService.php` (Pin/Unpin-Write-Pfad)
   - `PostController::update()` delegiert auf die Action
-  - `PostController::moderate()`, `PostController::pin()` und `PostController::unpin()` delegieren auf Actions
-  - Unit-Absicherung:
+  - `PostController::store()`, `PostController::moderate()`, `PostController::pin()` und `PostController::unpin()` delegieren direkt auf die fachlichen Zielkomponenten
+  - Unit-/Feature-Absicherung:
     - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
-    - `tests/Unit/Actions/Post/ModeratePostActionTest.php`
-    - `tests/Unit/Actions/Post/SetPostPinStateActionTest.php`
+    - `tests/Unit/Actions/Post/ApplyPostModerationTransitionActionTest.php`
+    - `tests/Unit/Domain/Post/PostPinStateServiceTest.php`
+    - `tests/Feature/PostControllerActionDeflationTest.php`
 - Scene-Read-Flow ist entkoppelt:
   - `app/Actions/Scene/BuildSceneThreadPageDataAction.php` (Paginator, Subscription-Lookup, Unread-Berechnung, Moderationsflag)
   - `app/Actions/Scene/SceneThreadPageData.php` (typsicheres Ergebnisobjekt für das Thread-Fragment)
