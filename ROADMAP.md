@@ -1,162 +1,48 @@
-# ROADMAP - C76-RPG (6 Monate + Multi-Welt-Rollout)
+# ROADMAP - C76-RPG (Strategie)
 
-Status: Stabilisierung abgeschlossen, Multi-Welt-Umbau umgesetzt, v0.30-beta mit privacy-first SL-Kontakt in `campaigns.show` ausgeliefert  
-Stand: 2026-04-21
+Aktueller Live-Status (Version, Gate-Stand, letzter Release): siehe `docs/STATUS.md`.
 
 ## Zielbild
+
 - Stabile, wartbare Release-Beta mit verlässlicher Delivery.
-- Plattform ist nicht mehr auf eine einzelne Welt festgelegt.
+- Plattform bleibt multi-world-fähig mit harten Weltkontext-Invarianten.
+- Qualitätsgates bleiben strikt und werden nicht aufgeweicht.
+- Architektur wird gezielt vereinfacht: weniger Drift, weniger Wrapper, klarere Verantwortungen.
+
+## Leitplanken
+
+- Keine Feature-Expansion im Rahmen der Konsolidierungsschnitte.
+- Keine Lockerung von CI, Analyse, Architektur-Guardrails, E2E oder MySQL-Concurrency/Critical.
+- Keine stillen Änderungen an Route-Namen, URIs, Middleware oder Response-Verträgen.
+- Release-/CI-Befehle bleiben kanonisch in `docs/RELEASE-CHECKLISTE.md`.
 - WIP-Limit bleibt: `1 Feature-Task + 1 Bugfix`.
 
-## Quality Gates (jede Iteration)
-- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` ist grün.
-- Produktnahe MySQL-Gates (`--group=mysql-concurrency`, `--group=mysql-critical`) sind im MySQL-Job grün.
-- `node --test tests/js/*.mjs` ist grün.
-- `npm run build` ist grün.
-- `composer analyse` (Larastan/PHPStan) ist grün.
-- Keine Role/Policy-Regression in GM/Player-Flows.
-- Mobile Basischeck (375px) für geänderte Views.
-- Exakte Befehle für Release-/CI-Gates bleiben kanonisch in `docs/RELEASE-CHECKLISTE.md`.
+## Strategische Arbeitspakete (laufend)
 
-## Paket 1 - Stabilisierung (12 x 2 Wochen)
-| Sprint | Fokus | Status |
-|---|---|---|
-| 1 | Architektur-Baseline (ADR für Post/Scene-Domäne) | Erledigt |
-| 2 | Post-Flow Entkopplung I (Store/Notify/Points) | Erledigt |
-| 3 | Post-Flow Entkopplung II (Probe + Inventar-Award Services) | Erledigt |
-| 4 | Scene-Flow Entkopplung (Read-Tracking, Jump-URL, Quick-Action Services) | Erledigt |
-| 5 | CI-Grundlage (`.github/workflows/ci.yml`) | Erledigt |
-| 6 | Release-Härtung (`scripts/release_smoke.sh`) | Erledigt |
-| 7 | Datenbank-Performance (Hot-Path-Indizes) | Erledigt |
-| 8 | Observability (strukturierte Logs + `X-Request-Id`) | Erledigt |
-| 9 | UI-Foundation I (Design-Tokens + UI-Komponenten) | Erledigt |
-| 10 | UI-Foundation II (Konsistenz-Pass Kernviews) | Erledigt |
-| 11 | GM-Flow-Polish (Jump/Pin/Quick-Action UX) | Erledigt |
-| 12 | Release-Kandidat (Doku-Konsolidierung + Bugburn) | Erledigt |
+1. **Dokumentations- und Konfigurationsdrift abbauen**
+   - Eine kanonische Statusquelle verwenden, doppelte Live-Wahrheiten entfernen.
+2. **Action-Layer verschärfen**
+   - Nur Actions mit echtem Orchestrationswert behalten; dünne Wrapper abbauen.
+3. **Routing nach Kontexten weiter schneiden**
+   - Welt-Routing organisatorisch entflechten, bei unveränderten öffentlichen Verträgen.
+4. **Deploy-/Queue-Policy vereinheitlichen**
+   - Produktionsstandard Redis konsistent in Vorlagen, Runbooks und Guards durchziehen.
+5. **Historische Betriebsartefakte aus dem Standardpfad entfernen**
+   - Aktive Konfiguration von Archivmaterial trennen.
+6. **Post-Domäne phasenorientiert strukturieren**
+   - Store/Update-Flows in klare Phasen gliedern, ohne Verhaltensänderung.
 
-## Paket 2 - Multi-Welt-Plattform (Release A/B/C)
-| Release | Fokus | Status |
-|---|---|---|
-| A | Datenmodell + Admin-Welten (`worlds`, FKs, Backfill) | Erledigt |
-| B | Weltkontext-Routing `/w/{world}/...` + Legacy-`301` + Konsistenzhärtung | Erledigt |
-| C | UX/Branding auf `C76-RPG`, Weltkatalog, Weltgetrennte Wissensbasis | Erledigt |
+## Priorisierung
 
-## Paket 3 - Architektur-Konsolidierung (laufend)
-| Slice | Fokus | Status |
-|---|---|---|
-| A1 | Analyse-Härtung (PHPStan Level 5 -> 8) | Erledigt |
-| A2.1 | `PostController` Update-Write-Flow in Action auslagern | Erledigt |
-| A2.2 | `SceneController` entkoppeln | Erledigt |
-| A2.3 | `CharacterController` entkoppeln | Erledigt |
-| A3 | Autorisierung + Weltkontext als Invarianten-Matrix absichern | Erledigt (inkl. HTMX-Pfade + dediziertem Invarianten-Report) |
+1. Drift entfernen (Doku + Konfig).
+2. Dünne Wrapper-Actions zusammenziehen.
+3. `routes/web/world.php` weiter nach Kontexten splitten.
+4. Redis-Produktionsstandard überall konsistent machen.
+5. Historische Artefakte bereinigen/archivieren.
+6. Danach den Post-Hotspot tiefer phasenorientiert refactoren.
 
-## Implementierte Kernartefakte
-- ADR: `docs/adr/2026-03-08-post-scene-domain-services.md`
-- ADR (Outbox/Read-API-Spike): `docs/adr/2026-04-02-outbox-read-api-strategy.md`
-- Domänenservices: `app/Domain/Post/*`, `app/Domain/Scene/*`, `app/Domain/Campaign/CampaignParticipantResolver.php`
-- Post-Update-Action:
-  - `app/Actions/Post/UpdatePostAction.php`
-  - `tests/Unit/Actions/Post/UpdatePostActionTest.php`
-- Post-Moderations-/Pin-Actions:
-  - `app/Actions/Post/ModeratePostAction.php`
-  - `app/Actions/Post/SetPostPinStateAction.php`
-  - `tests/Unit/Actions/Post/ModeratePostActionTest.php`
-  - `tests/Unit/Actions/Post/SetPostPinStateActionTest.php`
-- Scene-ThreadPage-Action:
-  - `app/Actions/Scene/BuildSceneThreadPageDataAction.php`
-  - `app/Actions/Scene/SceneThreadPageData.php`
-  - `tests/Unit/Actions/Scene/BuildSceneThreadPageDataActionTest.php`
-- Scene-Show-Actions:
-  - `app/Actions/Scene/BuildSceneShowDataAction.php`
-  - `app/Actions/Scene/ResolveSceneJumpRedirectAction.php`
-  - `app/Actions/Scene/SceneShowData.php`
-  - `tests/Unit/Actions/Scene/BuildSceneShowDataActionTest.php`
-  - `tests/Unit/Actions/Scene/ResolveSceneJumpRedirectActionTest.php`
-- Character-Update-Action:
-  - `app/Actions/Character/UpdateCharacterAction.php`
-  - `tests/Unit/Actions/Character/UpdateCharacterActionTest.php`
-- Character-Inline-Update-Action:
-  - `app/Actions/Character/UpdateCharacterInlineAction.php`
-  - `app/Actions/Character/UpdateCharacterInlineResult.php`
-  - `tests/Unit/Actions/Character/UpdateCharacterInlineActionTest.php`
-- Character-Show-Action:
-  - `app/Actions/Character/BuildCharacterShowDataAction.php`
-  - `app/Actions/Character/CharacterShowData.php`
-  - `tests/Unit/Actions/Character/BuildCharacterShowDataActionTest.php`
-- Character-Index-Action:
-  - `app/Actions/Character/BuildCharacterIndexDataAction.php`
-  - `app/Actions/Character/CharacterIndexData.php`
-  - `tests/Unit/Actions/Character/BuildCharacterIndexDataActionTest.php`
-- Character-Edit-Action:
-  - `app/Actions/Character/BuildCharacterEditDataAction.php`
-  - `app/Actions/Character/CharacterEditData.php`
-  - `tests/Unit/Actions/Character/BuildCharacterEditDataActionTest.php`
-- A3 Invarianten-Matrix:
-  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationTestCase.php`
-  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCoreTest.php`
-  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationScopeTest.php`
-  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCrudTest.php`
-  - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationHxTest.php`
-  - Abdeckung: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
-  - HTMX-Response-Grenzen explizit abgesichert für `posts.moderate` sowie `posts.pin/unpin` (Fragment vs. Redirect)
-  - HTMX-Response-Grenzen explizit abgesichert für `gm.moderation.bulk-update` (Fragment vs. Redirect)
-  - Route-basierter Abschlussreport: `docs/A3-INVARIANTEN-REPORT.md`
-- Multi-Welt:
-  - `app/Models/World.php`
-  - `database/migrations/2026_03_09_120000_create_worlds_table.php`
-  - `database/migrations/2026_03_09_120100_add_world_context_to_core_tables.php`
-  - `app/Http/Controllers/WorldController.php`
-  - `app/Http/Controllers/WorldAdminController.php`
-  - `app/Http/Middleware/ApplyWorldContext.php`
-- Delivery:
-  - `.github/workflows/ci.yml`
-  - `scripts/release_smoke.sh` (inkl. Weltkontext-/Global-Wissen-Checks und Markdown-Report via `SMOKE_REPORT_OUT`)
-  - `docs/SMOKE-PASS-2026-03-09.md` (lokales Referenzprotokoll)
-  - `docs/SMOKE-PASS-2026-04-02.md` (lokales Hardening-Protokoll)
-  - `docs/SMOKE-PASS-STAGING-PROD.md` (echter HTTP-Prod-Smoke)
-  - Routing-Split: `routes/web.php` + `routes/web/public.php` + `routes/web/world.php` + `routes/web/guest.php` + `routes/web/authenticated.php`
-  - Browser-E2E (Offline/Auth-Boundary/Queue-Retry): `tests/e2e/*` + `playwright.config.mjs`
-- Immersion-Rollout:
-  - `docs/IMMERSION_ROLLOUT_PHASED.md` (Phase A/B/C Betriebsablauf)
-  - `scripts/release_phase_a_flow.sh` (Go/No-Go Rollout für Welle 1/2)
-  - `scripts/release_phase_a_stability_check.sh` (Daily-Stability-Checks nach Phase A)
-- Web Push:
-  - `laravel-notification-channels/webpush` (VAPID, echte Push-Zustellung)
-  - `app/Http/Controllers/Api/WebPushSubscriptionController.php` (`/api/webpush/subscribe`, `/api/webpush/unsubscribe`)
-  - `database/migrations/2026_03_09_230000_create_push_subscriptions_table.php`
-  - CI-Kompatibilität: WebPush-DB-Connection folgt standardmäßig `DB_CONNECTION` (optional via `WEBPUSH_DB_CONNECTION` übersteuerbar)
-- Performance:
-  - `php artisan perf:posts-latest-by-id-benchmark` (neuer Benchmark-Command)
-  - `scripts/perf_posts_latest_by_id.sh` (Recheck + Delta-Report)
-  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-2026-03-09.md` (lokale Baseline)
-  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md` (automatischer Vergleich zum letzten Lauf)
-  - `docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md` (Prod-Benchmark)
-- Observability:
-  - `app/Http/Middleware/AttachRequestId.php`
-  - `app/Support/Observability/StructuredLogger.php`
-  - `docs/OPERATIONS_RUNBOOK.md`
+## Nicht-Ziele der Roadmap
 
-## Aktueller Verifikationsstand (2026-04-04)
-- `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical` -> **370 passed, 2134 assertions**
-- `node --test tests/js/*.mjs` -> **19 passed**
-- `npm run test:e2e` -> **4 passed**
-- `npm run build` -> **grün**
-- `composer analyse` -> **keine Fehler (PHPStan Level 8)**
-- GitHub Actions (`main`) -> **grün**
-
-## Compliance und Betrieb
-- Rechtliche Verlinkung zentral auf:
-  - `https://c76.org/impressum/`
-  - `https://c76.org/datenschutz/`
-- Footer vereinheitlicht auf allen sichtbaren Seiten.
-- Repo-Lizenz klar als proprietär (`LICENSE`, Composer-Metadaten).
-- Alpine/Frontend ohne externe CDN-Abhängigkeit (lokal gehostet).
-
-## Parking Lot (bewusst nicht jetzt)
-- Realtime/WebSockets.
-- Externe Media/CDN-Optimierung.
-
-## Nächste Schritte
-1. `scripts/release_flow.sh vX.Y-beta --world <slug> --archive` als Standard-Release-Ablauf etablieren.
-2. Perf-Gate (`scripts/release_perf_gate.sh`) vor jedem Deploy gegen Zielsystem laufen lassen und Report ablegen.
-3. Runtime-Hint für `posts.latest_by_id` anhand der Perf-Gate-Historie aktiv/aus halten.
+- Kein Realtime-/WebSocket-Produktkern als Standard.
+- Keine SPA-First-Neuausrichtung.
+- Keine externe Medien-CDN-Optimierung als Pflichtpfad.

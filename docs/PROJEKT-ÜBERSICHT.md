@@ -5,6 +5,7 @@ Repository-Branch: `main`
 
 ## Quicklinks
 - Einstieg und Setup: `README.md`
+- Operativer Live-Status (kanonisch): `docs/STATUS.md`
 - Gesamt-Roadmap: `ROADMAP.md`
 - Immersion-Architektur: `docs/IMMERSION-ARCHITEKTUR.md`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
@@ -23,17 +24,8 @@ Repository-Branch: `main`
 - GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
 
 ## 1) Executive Summary
-- Produktstatus: **Release-Beta (stabilisiert, Multi-Welt-fähig)**.
 - Plattformname: **C76-RPG**.
-- Laufende Versionslinie: **`v0.30-beta`**.
-- Verifikation lokal (letzter Lauf):
-  - `php artisan test` -> **377 passed, 7 skipped, 2170 assertions** (2026-04-10)
-  - `node --test tests/js/*.mjs` -> **19 passed** (2026-04-10)
-  - `npm run test:e2e` -> **4 passed** (2026-04-04)
-  - `composer analyse` -> **keine Fehler (PHPStan Level 8)** (2026-04-04)
-  - `npm run build` -> **grün** (2026-04-02)
-- Verifikation CI (letzter Lauf):
-  - GitHub Actions (`main`) -> **test-and-build + mysql-concurrency + mysql-critical grün** (2026-04-04)
+- Operativer Live-Status (Version, Gate-Stand, letzter Release): **`docs/STATUS.md`**.
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -270,4 +262,4 @@ Repository-Branch: `main`
 3. Runtime-Hint aktiv lassen oder deaktivieren anhand wiederholter Messungen im Zielsystem.
 
 ---
-Diese Datei ist der operative Master-Status für Produkt, Technik und Delivery.
+Diese Datei ist eine Architektur- und Betriebsuebersicht; der operative Live-Status liegt in `docs/STATUS.md`.

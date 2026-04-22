@@ -104,11 +104,9 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 - Queue-Worker in Produktion aktiv betreiben
 - Vollständige Betriebs-/Deploy-Schritte stehen in [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) und [docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md](docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md)
 
-## Aktueller Status
+## Projektstatus
 
-- Status: Beta (`v0.30-beta`), aktiv entwickelt
-- Kernbereiche (Authentifizierung, Kampagnen/Szenen, Posting/Moderation, PWA-Boundary): stabil
-- Test-/Analyse-Gates: `php artisan test`, `composer analyse`, `npm run test:js`, `npm run test:e2e`, `npm run build`
+- Operativer Live-Status (Version, Gate-Stand, letzter Release): [docs/STATUS.md](docs/STATUS.md)
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)
 
 ## Bekannte Grenzen / Nicht-Ziele
@@ -119,6 +117,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 
 ## Dokumentation
 
+- Status (kanonisch): [docs/STATUS.md](docs/STATUS.md)
 - Roadmap: [ROADMAP.md](ROADMAP.md)
 - Release-Flow und Quality-Gates: [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md)
 - Betrieb/Incidents: [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
