@@ -5,6 +5,9 @@ Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden B
 Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 
 ## Verbindliche Produktions-Defaults (Security/Betrieb)
+- `QUEUE_CONNECTION=redis`.
+- `CACHE_STORE=redis`.
+- `SESSION_DRIVER=redis`.
 - `SESSION_SECURE_COOKIE=true` (alternativ Key entfernen, dann greift produktiver Secure-Fallback).
 - `QUEUE_AFTER_COMMIT=true` fuer commit-sicheres Dispatching asynchroner Jobs.
 - `TRUSTED_PROXIES=<proxy-ip/cidr,...>` (oder `*` nur bei voll vertrauenswuerdiger Proxy-Kette).
@@ -65,10 +68,10 @@ Hinweis:
 Wenn Szenen-/Mention-Benachrichtigungen ausfallen:
 
 0. `.env` prüfen:
-   - `QUEUE_CONNECTION=redis` (nicht `sync`)
+   - `QUEUE_CONNECTION=redis`
    - `QUEUE_AFTER_COMMIT=true`
    - `CACHE_STORE=redis`
-   - `SESSION_DRIVER=database` (optional `redis`, falls Session-Layer dafür stabil betrieben wird)
+   - `SESSION_DRIVER=redis`
 1. Queue-Worker prüfen (redis-queue):
    - `php artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90`
 2. Fehlgeschlagene Jobs prüfen:

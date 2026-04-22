@@ -89,10 +89,9 @@ Wichtig für Retry-/Notification-Stabilität:
 
 ```env
 QUEUE_CONNECTION=redis
+QUEUE_AFTER_COMMIT=true
 CACHE_STORE=redis
-SESSION_DRIVER=database
-# Optional bei stabiler Redis-Session-Infrastruktur:
-# SESSION_DRIVER=redis
+SESSION_DRIVER=redis
 ```
 
 Für Web Push (aktiv seit `v0.20-beta`) ergänzen:
@@ -157,7 +156,8 @@ Typische Ursachen:
 
 - falsche DB-Daten in `.env`
 - `APP_KEY` fehlt
-- `QUEUE_CONNECTION=sync` in Produktion oder kein Queue-Worker aktiv
+- `QUEUE_CONNECTION!=redis` oder `CACHE_STORE!=redis` in Produktion
+- `QUEUE_AFTER_COMMIT` fehlt/deaktiviert oder kein Queue-Worker aktiv
 - `public` nicht als Document Root
 - fehlende Rechte auf `storage` / `bootstrap/cache`
 - PHP-CLI zu alt (Projekt braucht `>= 8.5`)

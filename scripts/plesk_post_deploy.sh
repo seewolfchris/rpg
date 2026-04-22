@@ -121,14 +121,28 @@ fi
 
 echo "[6/10] Queue- und Security-Preflight prüfen..."
 queue_connection="$(read_env_var_from_dotenv "QUEUE_CONNECTION")"
-if [[ -z "$queue_connection" ]]; then
+normalized_queue_connection="$(printf '%s' "${queue_connection:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [[ -z "$normalized_queue_connection" ]]; then
   echo "ERROR: QUEUE_CONNECTION fehlt in .env."
-  echo "Setze QUEUE_CONNECTION=database und richte einen Queue-Worker ein."
+  echo "Setze QUEUE_CONNECTION=redis und richte einen Queue-Worker ein."
   exit 1
 fi
-if [[ "$queue_connection" == "sync" ]]; then
-  echo "ERROR: QUEUE_CONNECTION=sync ist fuer Produktion nicht zulaessig."
-  echo "Setze QUEUE_CONNECTION=database und betreibe queue:work."
+if [[ "$normalized_queue_connection" != "redis" ]]; then
+  echo "ERROR: QUEUE_CONNECTION=$queue_connection ist fuer Produktion nicht zulaessig."
+  echo "Setze QUEUE_CONNECTION=redis und betreibe queue:work."
+  exit 1
+fi
+
+cache_store="$(read_env_var_from_dotenv "CACHE_STORE")"
+normalized_cache_store="$(printf '%s' "${cache_store:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [[ -z "$normalized_cache_store" ]]; then
+  echo "ERROR: CACHE_STORE fehlt in .env."
+  echo "Setze CACHE_STORE=redis."
+  exit 1
+fi
+if [[ "$normalized_cache_store" != "redis" ]]; then
+  echo "ERROR: CACHE_STORE=$cache_store ist fuer Produktion nicht zulaessig."
+  echo "Setze CACHE_STORE=redis."
   exit 1
 fi
 

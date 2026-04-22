@@ -44,7 +44,7 @@ PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
 Dieses Script liegt im Repo und macht:
 - `composer install --no-dev`
 - prüft `APP_KEY` (fail-fast bei fehlendem/ungültigem Key)
-- prüft `QUEUE_CONNECTION` (fail-fast bei `sync`)
+- prüft `QUEUE_CONNECTION` und `CACHE_STORE` (fail-fast, nur `redis` erlaubt)
 - `php artisan migrate --force`
 - `php artisan storage:link`
 - Cache clear + cache build
@@ -81,10 +81,9 @@ Wichtig für Retry-Jobs in Produktion:
 
 ```env
 QUEUE_CONNECTION=redis
+QUEUE_AFTER_COMMIT=true
 CACHE_STORE=redis
-SESSION_DRIVER=database
-# Optional bei stabiler Redis-Session-Infrastruktur:
-# SESSION_DRIVER=redis
+SESSION_DRIVER=redis
 ```
 
 ## 5) Erster Deploy

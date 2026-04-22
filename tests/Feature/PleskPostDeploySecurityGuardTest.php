@@ -14,6 +14,7 @@ class PleskPostDeploySecurityGuardTest extends TestCase
             'APP_ENV=production',
             'APP_KEY=base64:guard-test-key',
             'QUEUE_CONNECTION=redis',
+            'CACHE_STORE=redis',
             'QUEUE_AFTER_COMMIT=',
             'SESSION_SECURE_COOKIE=true',
             'TRUSTED_PROXIES=127.0.0.1',
@@ -33,6 +34,7 @@ class PleskPostDeploySecurityGuardTest extends TestCase
             'APP_ENV=production',
             'APP_KEY=base64:guard-test-key',
             'QUEUE_CONNECTION=redis',
+            'CACHE_STORE=redis',
             'QUEUE_AFTER_COMMIT=true',
             'SESSION_SECURE_COOKIE=',
             'TRUSTED_PROXIES=127.0.0.1',
@@ -53,6 +55,7 @@ class PleskPostDeploySecurityGuardTest extends TestCase
             "APP_ENV={$appEnv}",
             'APP_KEY=base64:guard-test-key',
             'QUEUE_CONNECTION=redis',
+            'CACHE_STORE=redis',
             'QUEUE_AFTER_COMMIT=true',
             'SESSION_SECURE_COOKIE=true',
             'SECURITY_HSTS_MAX_AGE=31536000',
@@ -74,6 +77,46 @@ class PleskPostDeploySecurityGuardTest extends TestCase
             'production' => ['production'],
             'prod' => ['prod'],
         ];
+    }
+
+    public function test_deploy_guard_requires_redis_queue_connection(): void
+    {
+        $result = $this->runPostDeployScript([
+            'APP_ENV=production',
+            'APP_KEY=base64:guard-test-key',
+            'QUEUE_CONNECTION=database',
+            'CACHE_STORE=redis',
+            'QUEUE_AFTER_COMMIT=true',
+            'SESSION_SECURE_COOKIE=true',
+            'TRUSTED_PROXIES=127.0.0.1',
+            'SECURITY_HSTS_MAX_AGE=31536000',
+        ]);
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'QUEUE_CONNECTION=database ist fuer Produktion nicht zulaessig.',
+            $result['output']
+        );
+    }
+
+    public function test_deploy_guard_requires_redis_cache_store(): void
+    {
+        $result = $this->runPostDeployScript([
+            'APP_ENV=production',
+            'APP_KEY=base64:guard-test-key',
+            'QUEUE_CONNECTION=redis',
+            'CACHE_STORE=database',
+            'QUEUE_AFTER_COMMIT=true',
+            'SESSION_SECURE_COOKIE=true',
+            'TRUSTED_PROXIES=127.0.0.1',
+            'SECURITY_HSTS_MAX_AGE=31536000',
+        ]);
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'CACHE_STORE=database ist fuer Produktion nicht zulaessig.',
+            $result['output']
+        );
     }
 
     /**
