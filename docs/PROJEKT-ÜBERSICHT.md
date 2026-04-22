@@ -145,7 +145,7 @@ Repository-Branch: `main`
   - Character-/Progression-Autorisierung policy-first konsolidiert
   - Character-Actions request-frei via Input-DTOs (`CreateCharacterInput`, `UpdateCharacterInput`, `InlineUpdateCharacterInput`)
   - Payload-Typisierung entlang DTOs + Request-Grenze (`CharacterSheetRequest`) auf konsistente Shapes erweitert
-  - PHPStan-Baseline auf null reduziert (`phpstan-baseline.neon` ohne verbleibende Ignored Errors)
+  - PHPStan-Baseline auf null reduziert und danach aus der aktiven Konfiguration entfernt
 - A3 Invarianten-Matrix für Mutationsrouten ist eingeführt:
   - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationTestCase.php`
   - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCoreTest.php`

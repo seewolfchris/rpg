@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/release_phase_a_flow.sh [options]
+  ops/archive/release_phase_a/release_phase_a_flow.sh [options]
 
 Description:
   Executes the operational Phase-A rollout flow in fixed order:
@@ -29,8 +29,8 @@ Options:
   -h, --help                  Show this help
 
 Examples:
-  scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"
-  scripts/release_phase_a_flow.sh --smoke-mode artisan --skip-migrate
+  ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"
+  ops/archive/release_phase_a/release_phase_a_flow.sh --smoke-mode artisan --skip-migrate
 USAGE
 }
 
@@ -99,7 +99,7 @@ run_phase_a_smoke() {
   if [[ -n "$REPORT_OUT" ]]; then
     rendered="$rendered PHASE_A_REPORT_OUT=$REPORT_OUT"
   fi
-  rendered="$rendered scripts/release_phase_a_smoke.sh"
+  rendered="$rendered ops/archive/release_phase_a/release_phase_a_smoke.sh"
   echo "+ $rendered"
 
   if [[ "$DRY_RUN" == "1" ]]; then
@@ -113,7 +113,7 @@ run_phase_a_smoke() {
   PHASE_A_RUN_BASE_SMOKE="$RUN_BASE_SMOKE" \
   PHASE_A_RUN_TEST_GATES="$RUN_TEST_GATES" \
   PHASE_A_REPORT_OUT="$REPORT_OUT" \
-  scripts/release_phase_a_smoke.sh
+  ops/archive/release_phase_a/release_phase_a_smoke.sh
 }
 
 PHP_BIN="${PHP_BIN:-php}"

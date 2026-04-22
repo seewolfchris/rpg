@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/release_phase_a_stability_check.sh [options]
+  ops/archive/release_phase_a/release_phase_a_stability_check.sh [options]
 
 Description:
   Runs the daily 3-5 day stability checks after Phase-A rollout.
@@ -31,8 +31,8 @@ Options:
   -h, --help                  Show this help
 
 Examples:
-  scripts/release_phase_a_stability_check.sh --smoke-mode artisan --report-out docs/PHASE-A-STABILITY-DAY1.md
-  scripts/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http
+  ops/archive/release_phase_a/release_phase_a_stability_check.sh --smoke-mode artisan --report-out docs/PHASE-A-STABILITY-DAY1.md
+  ops/archive/release_phase_a/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http
 USAGE
 }
 
@@ -237,7 +237,7 @@ if [[ "$RUN_SMOKE" == "1" ]]; then
   if [[ -n "$SMOKE_REPORT_OUT" ]]; then
     local_rendered="$local_rendered PHASE_A_REPORT_OUT=$SMOKE_REPORT_OUT"
   fi
-  local_rendered="$local_rendered scripts/release_phase_a_smoke.sh"
+  local_rendered="$local_rendered ops/archive/release_phase_a/release_phase_a_smoke.sh"
   echo "Running: phase-a smoke gate (no test-gates)"
   echo "+ $local_rendered"
 
@@ -249,7 +249,7 @@ if [[ "$RUN_SMOKE" == "1" ]]; then
     PHASE_A_RUN_BASE_SMOKE="1" \
     PHASE_A_RUN_TEST_GATES="0" \
     PHASE_A_REPORT_OUT="$SMOKE_REPORT_OUT" \
-    scripts/release_phase_a_smoke.sh
+    ops/archive/release_phase_a/release_phase_a_smoke.sh
   fi
 
   record_result "PASS phase-a smoke gate (no test-gates)"

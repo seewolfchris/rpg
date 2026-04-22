@@ -153,27 +153,29 @@ $PHP_BIN artisan config:cache
 - GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
 
-## 6a. Immersion Phase-A Gate (wenn Welle 1/2 ausgerollt wird)
+## 6a. Immersion Phase-A Gate (historisch, archiviert)
+
+Die Phase-A-Rollout-Skripte sind nach `ops/archive/release_phase_a/` verschoben und nicht mehr Teil des Standard-Release-Pfads.
 
 - One-Command Deploy-Flow (empfohlen):
-  - `PHP_BIN=/opt/plesk/php/8.5/bin/php scripts/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+  - `PHP_BIN=/opt/plesk/php/8.5/bin/php ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
   - Enthalten: `migrate --force`, `optimize:clear`, `config:cache`, `release_phase_a_smoke.sh` als hartes Go/No-Go-Gate.
   - Deploy-sicherer Default: keine Testausführung auf der Zielumgebung (`--run-test-gates 0`).
 - Verbindlicher Gate-Run für DB + Welle 1/2:
-  - `PHP_BIN=/opt/plesk/php/8.5/bin/php PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" scripts/release_phase_a_smoke.sh`
+  - `PHP_BIN=/opt/plesk/php/8.5/bin/php PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" ops/archive/release_phase_a/release_phase_a_smoke.sh`
 - Hinweis: `<world-slug>` ist eine aktive Welt (`/w/<world-slug>/...`) oder kommt aus `WORLD_DEFAULT_SLUG`.
 - Das Skript prüft:
   - Basis-HTTP-Smoke (`scripts/release_smoke.sh`)
   - Flag-Zustände für Phase A (Welle 3/4 aus)
   - gezielte Immersion-Tests (Mood/Header/Vorgänger, IC-first/OOC, IC-Zitat, Relative Time)
 - Optional für bereits aktivierte Welle-3/4-Umgebungen:
-  - `PHASE_A_STRICT_FLAGS=0 ... scripts/release_phase_a_smoke.sh`
+  - `PHASE_A_STRICT_FLAGS=0 ... ops/archive/release_phase_a/release_phase_a_smoke.sh`
 - Optionaler lokaler Vorab-Lauf inklusive Test-Gates:
-  - `scripts/release_phase_a_flow.sh --smoke-mode artisan --skip-migrate --run-test-gates 1 --report-out "docs/SMOKE-PHASE-A-LOCAL.md"`
+  - `ops/archive/release_phase_a/release_phase_a_flow.sh --smoke-mode artisan --skip-migrate --run-test-gates 1 --report-out "docs/SMOKE-PHASE-A-LOCAL.md"`
 - Stabilitätsphase (Tag 1-5) als Daily-Gate:
-  - `scripts/release_phase_a_stability_check.sh --smoke-mode artisan --report-out "docs/PHASE-A-STABILITY-DAY1.md"`
+  - `ops/archive/release_phase_a/release_phase_a_stability_check.sh --smoke-mode artisan --report-out "docs/PHASE-A-STABILITY-DAY1.md"`
   - Optional mit produktionsnahem HTTP-Smoke:
-    - `scripts/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http --report-out "docs/PHASE-A-STABILITY-DAY1.md" --smoke-report-out "docs/SMOKE-PHASE-A-DAY1.md"`
+    - `ops/archive/release_phase_a/release_phase_a_stability_check.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --smoke-mode http --report-out "docs/PHASE-A-STABILITY-DAY1.md" --smoke-report-out "docs/SMOKE-PHASE-A-DAY1.md"`
   - Wichtig: `release_phase_a_stability_check.sh` benötigt `node` (wegen JS-Draft-Tests). Ohne Node auf dem Zielhost den Stability-Check lokal/CI laufen lassen und auf dem Server nur `release_phase_a_smoke.sh` nutzen.
 
 ## 6b. Performance-EXPLAIN (Staging/Prod, empfohlen)

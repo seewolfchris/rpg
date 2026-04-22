@@ -186,8 +186,9 @@ php artisan dev:testflight:seed --world=<world-slug> --password='<starkes-passwo
    - Runtime-Hint wird nicht automatisch in `.env` geschrieben.
    - Hint-Entscheidung kommt aus `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 
-## Phase-A Stabilitätschecks
-- `scripts/release_phase_a_stability_check.sh` benötigt `node` (JS-Draft-Tests).
+## Phase-A Stabilitätschecks (historisch, archiviert)
+- Archivpfad: `ops/archive/release_phase_a/`
+- `ops/archive/release_phase_a/release_phase_a_stability_check.sh` benötigt `node` (JS-Draft-Tests).
 - Falls Zielhost kein Node installiert hat:
   - Stabilitätscheck lokal oder in CI ausführen.
-  - Auf dem Zielhost nur `scripts/release_phase_a_smoke.sh` als laufende Betriebsprüfung nutzen.
+  - Auf dem Zielhost nur `ops/archive/release_phase_a/release_phase_a_smoke.sh` als laufende Betriebsprüfung nutzen.
