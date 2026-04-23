@@ -94,6 +94,22 @@ npm run test:js
 npm run build
 ```
 
+Pre-Push-Check (analyse + fokussierte Rechte-/Rollen-Tests):
+
+```bash
+scripts/pre_push_check.sh
+```
+
+Optional:
+- Voller Backend-Run wie CI (ohne `mysql-*` Gruppen): `scripts/pre_push_check.sh --full`
+- Mit Build-Artefakt-Driftcheck: `scripts/pre_push_check.sh --with-build`
+
+Git-Hook aktivieren (einmal lokal pro Clone):
+
+```bash
+git config core.hooksPath .githooks
+```
+
 Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md).
 
 ## Produktion (Kurz)
