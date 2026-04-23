@@ -26,7 +26,8 @@ Der Fokus liegt auf asynchronem Storytelling, klaren Weltkontexten und einem sch
 
 ## Kernfeatures
 
-- Authentifizierung mit Rollen (`player`, `gm`, `admin`, kampagnenspezifisch `co_gm`)
+- Plattformrollen und -rechte: `admin`/`player` plus Flags (`can_create_campaigns`, `can_post_without_moderation`)
+- Kampagnenrollen über `campaign_memberships`: `gm`, `trusted_player`, `player` bei separatem Kampagnen-Owner (`campaigns.owner_id`)
 - Kampagnen-/Szenenverwaltung mit Sichtbarkeit, Einladungen, Read-Tracking und Bookmarks
 - Privacy-first SL-Kontakt pro Kampagne (Thread-basiert, kein Chat/Realtime, kein Dashboard-Flow)
 - Posting mit IC/OOC, Spoiler, Edit-Historie und Moderationspfad

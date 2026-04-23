@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Übersicht
 
-Stand: 2026-04-21  
+Stand: 2026-04-23  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -39,9 +39,9 @@ Repository-Branch: `main`
 | Kampagnen/Szenen/Posts | Stabil | IC/OOC, Moderation, Revisionen, Pinning |
 | GM-Proben + Persistenz | Stabil | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
 | Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation |
-| Kampagnen-Einladungen | Stabil | Rollenfluss inkl. Co-GM |
+| Kampagnen-Einladungen | Stabil | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
 | SL-Kontakt (privacy-first) | Stabil | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow |
-| Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + GM/Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
+| Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
 | PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
 | Domänen-Invarianten + Retry-Resilienz | Stabil | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry für Notification-Fehler |
@@ -75,6 +75,14 @@ Repository-Branch: `main`
 
 ## 4) Architektur- und Code-Status
 - Controller sind auf Orchestrierung reduziert.
+- Rollenmodell (Stand PR1-PR6) ist fachlich getrennt:
+  - Plattformebene: `admin`/`player` plus Flags `can_create_campaigns` und `can_post_without_moderation`.
+  - Kampagnenebene: `owner` bleibt auf `campaigns.owner_id`; operative Rollen laufen ueber `campaign_memberships` (`gm`, `trusted_player`, `player`).
+  - Kampagnenerstellung: nur `admin || can_create_campaigns`; Ersteller wird automatisch `owner` + initiale `gm`-Membership.
+  - Invitation-Schreibpfade dual-writen in Memberships; Audit-Basis ueber `campaign_role_events`.
+  - Read-Pfade fuer Kampagne/Szene/Post sind membership-first, mit kleinem Transition-Fallback fuer Legacy-Invitations.
+  - Admin wird in normalen Kampagnenpfaden nicht implizit als Kampagnen-GM behandelt.
+  - UI ist getrennt: Adminseite fuer Plattformrechte, Kampagnenseite (owner-only) fuer Teilnehmerrollen.
 - Fachlogik in Domain Services:
   - `app/Domain/Post/*`
   - `app/Domain/Scene/*`
@@ -152,9 +160,9 @@ Repository-Branch: `main`
   - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationScopeTest.php`
   - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationCrudTest.php`
   - `tests/Feature/AuthorizationWorldContext/AuthorizationWorldContextMutationHxTest.php`
-  - Deckt Rollenmatrix (Owner/Co-GM/Admin/Player/Outsider), Ownership-Pfade und Weltkontext-Guards (aktiv/inaktiv/falsche Welt) für zentrale Write-Routen ab
+  - Deckt Rollenmatrix und Weltkontext-Guards fuer zentrale Write-Routen ab (historischer Stand siehe Datumsstempel im Report).
   - Konkrete Schreibpfade: Campaign-Store/Update/Delete, Campaign-Invitations Store/Destroy, Szenen-Create/Update/Delete, Post-Store/Update/Delete/Moderation/Pin/Unpin, Character-Inline-Update, GM-Progression-XP, Scene-Inventory-Quick-Action, Scene-Subscriptions-Bulk, GM-Bulk-Moderation
-  - Co-GM-Scope-Negativfälle sind explizit abgedeckt (fremde Kampagne in gleicher Welt + Fremdwelt) für die High-Risk-Write-Pfade
+  - Scope-Negativfaelle fuer fremde Kampagnen/Welten sind fuer die High-Risk-Write-Pfade explizit abgedeckt.
   - HTMX-Mutationspfade sind explizit abgesichert (`HX-Request=true`) inklusive Response-Grenzen (Fragment vs. Redirect), Rechte und Weltkontext für `posts.moderate`, `posts.pin/unpin` und `gm.moderation.bulk-update`
   - Abnahme-/Referenzdoku liegt als Route-Report vor: `docs/A3-INVARIANTEN-REPORT.md`
 - Routing-Monolith wurde auf thematische Dateien gesplittet:

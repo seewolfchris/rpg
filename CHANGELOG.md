@@ -2,6 +2,20 @@
 
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
+## Unreleased
+- Rollenmodell in Scheiben PR1-PR6 auf das neue Zielmodell umgestellt:
+  - globale Plattformrolle effektiv `admin`/`player` (globales `gm` entfernt)
+  - Plattformflags `can_create_campaigns` und `can_post_without_moderation`
+  - kampagnenbezogene Rollen ueber `campaign_memberships` (`gm`, `trusted_player`, `player`)
+  - `owner` bleibt getrennt auf `campaigns.owner_id`
+- Kampagnenerstellung auf `admin || can_create_campaigns` umgestellt; Ersteller wird `owner` plus initiale `gm`-Membership.
+- Invitation-Lifecycle bleibt bestehen, schreibt aber per Dual-Write in Memberships; Audit-Basis via `campaign_role_events`.
+- Rechte-Lesepfade fuer Kampagne/Szene/Post sind membership-first; Admin ist in normalen Kampagnenpfaden nicht mehr implizit GM.
+- UI-Trennung umgesetzt:
+  - Admin-Bereich verwaltet nur globale Plattformrechte.
+  - Kampagnenbereich verwaltet Teilnehmerrollen owner-only.
+- PHPStan-Folgefix: Membership-Typen (`assigned_at`, `membershipRoleValue`) konsistent gezogen.
+
 ## v0.30-beta (2026-04-21)
 - Privacy-first SL-Kontakt V1 eingefuehrt: kampagnengebundene Threads/Messages mit separatem Kontext (`CampaignGmContactThread`, `CampaignGmContactMessage`) statt Reuse des Post-/Scene-Write-Flows.
 - Sichtbarkeit und Antwortrechte policy-first gehaertet: nur Thread-Ersteller, Campaign-Owner, akzeptierte `co_gm` und `admin`; globale GM-Rolle ohne Kampagnenbezug bleibt ausgeschlossen.

@@ -7,7 +7,7 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 
 ## Operativer Live-Status
 
-- Statusdatum: **2026-04-22**
+- Statusdatum: **2026-04-23**
 - Produktstatus: **Beta (aktiv entwickelt)**
 - Versionslinie: **`v0.30-beta`**
 - Letzter Release-Eintrag: **`v0.30-beta` am 2026-04-21** (Quelle: `CHANGELOG.md`)

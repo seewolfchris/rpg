@@ -1,6 +1,6 @@
 # Docs-Übersicht
 
-Stand: 2026-04-20
+Stand: 2026-04-23
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
