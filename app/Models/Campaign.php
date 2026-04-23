@@ -333,7 +333,7 @@ class Campaign extends Model
         };
     }
 
-    private function membershipRoleValue(CampaignMembership $membership): ?string
+    private function membershipRoleValue(CampaignMembership $membership): string
     {
         $role = $membership->role;
 
@@ -341,6 +341,6 @@ class Campaign extends Model
             return $role->value;
         }
 
-        return is_string($role) ? $role : null;
+        return (string) $role;
     }
 }

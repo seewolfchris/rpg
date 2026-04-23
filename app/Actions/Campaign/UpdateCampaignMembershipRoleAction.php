@@ -69,7 +69,7 @@ final class UpdateCampaignMembershipRoleAction
         return $updatedMembership;
     }
 
-    private function membershipRoleValue(CampaignMembership $membership): ?string
+    private function membershipRoleValue(CampaignMembership $membership): string
     {
         $role = $membership->role;
 
@@ -77,6 +77,6 @@ final class UpdateCampaignMembershipRoleAction
             return $role->value;
         }
 
-        return is_string($role) ? $role : null;
+        return (string) $role;
     }
 }

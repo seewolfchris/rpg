@@ -228,7 +228,7 @@ final class SyncCampaignMembershipFromInvitationAction
         return $actorUserId !== null && $actorUserId > 0 ? $actorUserId : null;
     }
 
-    private function membershipRoleValue(CampaignMembership $membership): ?string
+    private function membershipRoleValue(CampaignMembership $membership): string
     {
         $role = $membership->role;
 
@@ -236,7 +236,7 @@ final class SyncCampaignMembershipFromInvitationAction
             return $role->value;
         }
 
-        return is_string($role) ? $role : null;
+        return (string) $role;
     }
 
     /**

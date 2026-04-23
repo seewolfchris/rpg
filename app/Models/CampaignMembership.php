@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property CampaignMembershipRole|string $role
  * @property int|null $assigned_by
+ * @property \Illuminate\Support\Carbon|null $assigned_at
  * @property-read Campaign $campaign
  * @property-read User $user
  * @property-read User|null $assigner
