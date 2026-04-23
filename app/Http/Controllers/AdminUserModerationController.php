@@ -28,7 +28,7 @@ class AdminUserModerationController extends Controller
                         ->orWhere('email', 'like', $searchTerm);
                 });
             })
-            ->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'gm' THEN 1 ELSE 2 END")
+            ->orderByRaw("CASE role WHEN 'admin' THEN 0 ELSE 1 END")
             ->orderBy('name')
             ->paginate(30)
             ->withQueryString();
@@ -39,10 +39,14 @@ class AdminUserModerationController extends Controller
     public function update(UpdateUserModerationRequest $request, User $user): RedirectResponse
     {
         $validated = $request->validated();
-        $isEnabled = (bool) $validated['can_post_without_moderation'];
+        $actor = $this->authenticatedUser($request);
 
         try {
-            $this->updateUserModerationPermissionAction->execute($user, $isEnabled);
+            $this->updateUserModerationPermissionAction->execute($actor, $user, [
+                'role' => (string) $validated['role'],
+                'can_create_campaigns' => (bool) $validated['can_create_campaigns'],
+                'can_post_without_moderation' => (bool) $validated['can_post_without_moderation'],
+            ]);
         } catch (ValidationException $exception) {
             return back()->withErrors([
                 'user' => $this->firstValidationMessage($exception),
@@ -51,7 +55,7 @@ class AdminUserModerationController extends Controller
 
         return redirect()
             ->route('admin.users.moderation.index', ['q' => $request->query('q')])
-            ->with('status', 'Moderationsrecht für '.$user->name.' aktualisiert.');
+            ->with('status', 'Plattformrechte für '.$user->name.' aktualisiert.');
     }
 
     private function firstValidationMessage(ValidationException $exception): string

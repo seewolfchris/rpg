@@ -6,6 +6,7 @@ use App\Actions\Campaign\CreateCampaignAction;
 use App\Actions\Campaign\DeleteCampaignAction;
 use App\Actions\Campaign\UpdateCampaignAction;
 use App\Actions\CampaignGmContact\BuildCampaignGmContactPanelDataAction;
+use App\Enums\CampaignMembershipRole;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Campaign\StoreCampaignRequest;
 use App\Http\Requests\Campaign\UpdateCampaignRequest;
@@ -116,13 +117,33 @@ class CampaignController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $invitations = collect();
-        $canManageInvitations = $campaign->owner_id === $user->id || $user->isGmOrAdmin();
+        $memberships = $campaign->memberships()
+            ->with(['user', 'assigner'])
+            ->get()
+            ->sortBy([
+                function ($membership): int {
+                    $role = $membership->role instanceof CampaignMembershipRole
+                        ? $membership->role->value
+                        : (string) $membership->role;
+
+                    return match ($role) {
+                        CampaignMembershipRole::GM->value => 0,
+                        CampaignMembershipRole::TRUSTED_PLAYER->value => 1,
+                        default => 2,
+                    };
+                },
+                fn ($membership) => mb_strtolower((string) data_get($membership, 'user.name', '')),
+            ])
+            ->values();
+
+        $pendingInvitations = collect();
+        $canManageInvitations = $campaign->isOwnedBy($user);
+        $canManageMembershipRoles = $campaign->isOwnedBy($user);
 
         if ($canManageInvitations) {
-            $invitations = $campaign->invitations()
+            $pendingInvitations = $campaign->invitations()
                 ->with(['user', 'inviter'])
-                ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'accepted' THEN 1 ELSE 2 END")
+                ->where('status', CampaignInvitation::STATUS_PENDING)
                 ->latest('created_at')
                 ->get();
         }
@@ -147,8 +168,10 @@ class CampaignController extends Controller
             'scenes',
             'sceneStatus',
             'sceneSearch',
-            'invitations',
+            'memberships',
+            'pendingInvitations',
             'canManageInvitations',
+            'canManageMembershipRoles',
             'canManageCampaign',
             'gmContactPanelData',
         ));

@@ -3,6 +3,7 @@
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignGmContactThreadController;
 use App\Http\Controllers\CampaignInvitationController;
+use App\Http\Controllers\CampaignMembershipController;
 use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
@@ -33,6 +34,10 @@ Route::post('/campaigns/{campaign}/invitations', [CampaignInvitationController::
 Route::delete('/campaigns/{campaign}/invitations/{invitation}', [CampaignInvitationController::class, 'destroy'])
     ->middleware('throttle:writes')
     ->name('campaigns.invitations.destroy');
+
+Route::patch('/campaigns/{campaign}/memberships/{membership}', [CampaignMembershipController::class, 'update'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.memberships.update');
 
 Route::patch('/campaign-invitations/{invitation}/accept', [CampaignInvitationController::class, 'accept'])
     ->withoutScopedBindings()

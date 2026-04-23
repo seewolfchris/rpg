@@ -15,13 +15,25 @@ final class UpdateUserModerationPermissionAction
         private readonly DatabaseManager $db,
     ) {}
 
-    public function execute(User $targetUser, bool $enabled): void
+    /**
+     * @param  array{role: string, can_create_campaigns: bool, can_post_without_moderation: bool}  $attributes
+     */
+    public function execute(User $actorUser, User $targetUser, array $attributes): void
     {
-        $this->db->transaction(function () use ($targetUser, $enabled): void {
-            $lockedUser = $this->lockAndVerifyContext($targetUser);
-            $nextPermission = $this->resolveAndValidatePermission($lockedUser, $enabled);
+        $this->db->transaction(function () use ($actorUser, $targetUser, $attributes): void {
+            $lockedActor = $this->lockAndVerifyContext($actorUser);
+            $lockedTarget = $this->lockAndVerifyContext($targetUser);
 
-            $this->persistPermission($lockedUser, $nextPermission);
+            if (! $lockedActor->isAdmin()) {
+                throw ValidationException::withMessages([
+                    'user' => 'Nur Admins dürfen Plattformrechte ändern.',
+                ]);
+            }
+
+            $nextRole = UserRole::from((string) $attributes['role']);
+
+            $this->assertAdminDemotionIsAllowed($lockedActor, $lockedTarget, $nextRole);
+            $this->persistPlatformRights($lockedTarget, $nextRole, $attributes);
         }, 3);
 
         $targetUser->refresh();
@@ -38,23 +50,39 @@ final class UpdateUserModerationPermissionAction
         return $lockedUser;
     }
 
-    private function resolveAndValidatePermission(User $targetUser, bool $enabled): bool
+    private function assertAdminDemotionIsAllowed(User $actorUser, User $targetUser, UserRole $nextRole): void
     {
-        $isTargetPlayer = $targetUser->hasRole(UserRole::PLAYER);
+        if (! $targetUser->hasRole(UserRole::ADMIN) || $nextRole === UserRole::ADMIN) {
+            return;
+        }
 
-        if (! $isTargetPlayer && $enabled) {
+        $adminCount = User::query()
+            ->where('role', UserRole::ADMIN->value)
+            ->lockForUpdate()
+            ->count();
+
+        if ($adminCount <= 1) {
             throw ValidationException::withMessages([
-                'user' => 'Das Recht kann nur für Spieler aktiviert werden.',
+                'user' => 'Der letzte Admin kann nicht degradiert werden.',
             ]);
         }
 
-        return $isTargetPlayer ? $enabled : false;
+        if ((int) $actorUser->id === (int) $targetUser->id) {
+            throw ValidationException::withMessages([
+                'user' => 'Du kannst dir die eigene Admin-Rolle nicht entziehen.',
+            ]);
+        }
     }
 
-    private function persistPermission(User $targetUser, bool $nextPermission): void
+    /**
+     * @param  array{role: string, can_create_campaigns: bool, can_post_without_moderation: bool}  $attributes
+     */
+    private function persistPlatformRights(User $targetUser, UserRole $nextRole, array $attributes): void
     {
         $targetUser->forceFill([
-            'can_post_without_moderation' => $nextPermission,
+            'role' => $nextRole->value,
+            'can_create_campaigns' => (bool) $attributes['can_create_campaigns'],
+            'can_post_without_moderation' => (bool) $attributes['can_post_without_moderation'],
         ]);
         $targetUser->save();
     }

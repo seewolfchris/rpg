@@ -184,6 +184,72 @@
             @endif
         </div>
 
+        <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <h2 class="font-heading text-2xl text-stone-100">Aktive Teilnehmer</h2>
+            <p class="mt-2 text-sm text-stone-300">
+                Owner: <span class="font-semibold text-stone-100">{{ $campaign->owner->name }}</span>.
+                Owner bleibt eine Kampagneneigenschaft und ist keine Membership-Rolle.
+            </p>
+
+            @if ($memberships->isEmpty())
+                <p class="mt-5 text-sm text-stone-400">Noch keine aktiven Memberships vorhanden.</p>
+            @else
+                <div class="mt-5 space-y-2">
+                    @foreach ($memberships as $membership)
+                        @php($membershipRole = $membership->role instanceof \App\Enums\CampaignMembershipRole ? $membership->role->value : (string) $membership->role)
+                        @php($isOwnerMembership = (int) $membership->user_id === (int) $campaign->owner_id)
+                        @php($roleLabel = match ($membershipRole) {
+                            \App\Enums\CampaignMembershipRole::GM->value => 'GM',
+                            \App\Enums\CampaignMembershipRole::TRUSTED_PLAYER->value => 'Trusted Player',
+                            default => 'Player',
+                        })
+                        <article class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-800 bg-neutral-900/60 px-4 py-3">
+                            <div>
+                                <p class="text-sm text-stone-200">
+                                    {{ $membership->user->name }}
+                                    <span class="text-stone-500">• {{ $membership->user->email }}</span>
+                                </p>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    @if ($isOwnerMembership)
+                                        <span class="rounded border border-amber-500/70 bg-amber-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-amber-200">Owner</span>
+                                    @endif
+                                    <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">{{ $roleLabel }}</span>
+                                    @if ($membership->assigned_at)
+                                        <span class="text-xs uppercase tracking-[0.08em] text-stone-500">
+                                            seit <x-relative-time :at="$membership->assigned_at" />
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if ($canManageMembershipRoles)
+                                <form method="POST" action="{{ route('campaigns.memberships.update', ['world' => $campaign->world, 'campaign' => $campaign, 'membership' => $membership]) }}" class="flex flex-wrap items-center gap-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <label class="sr-only" for="membership-role-{{ $membership->id }}">Rolle</label>
+                                    <select
+                                        id="membership-role-{{ $membership->id }}"
+                                        name="role"
+                                        class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs uppercase tracking-wider text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                                    >
+                                        <option value="{{ \App\Enums\CampaignMembershipRole::GM->value }}" @selected($membershipRole === \App\Enums\CampaignMembershipRole::GM->value)>GM</option>
+                                        <option value="{{ \App\Enums\CampaignMembershipRole::TRUSTED_PLAYER->value }}" @selected($membershipRole === \App\Enums\CampaignMembershipRole::TRUSTED_PLAYER->value)>Trusted</option>
+                                        <option value="{{ \App\Enums\CampaignMembershipRole::PLAYER->value }}" @selected($membershipRole === \App\Enums\CampaignMembershipRole::PLAYER->value)>Player</option>
+                                    </select>
+                                    <button
+                                        type="submit"
+                                        class="rounded-md border border-amber-500/70 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
+                                    >
+                                        Rolle setzen
+                                    </button>
+                                </form>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
         @include('campaigns.partials.gm-contacts-panel', [
             'world' => $world,
             'campaign' => $campaign,
@@ -192,9 +258,9 @@
 
         @if ($canManageInvitations)
             <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-                <h2 class="font-heading text-2xl text-stone-100">Einladungen</h2>
+                <h2 class="font-heading text-2xl text-stone-100">Offene Einladungen</h2>
                 <p class="mt-2 text-sm text-stone-300">
-                    Lade bestehende Benutzer per E-Mail ein und definiere ihre Kampagnenrolle.
+                    Pending Invitations sind getrennt von aktiven Memberships.
                 </p>
 
                 <form method="POST" action="{{ route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
@@ -212,9 +278,7 @@
                         class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                         <option value="player" @selected(old('role') === 'player')>Player</option>
-                        @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
-                            <option value="trusted_player" @selected(old('role') === 'trusted_player')>Trusted Player</option>
-                        @endif
+                        <option value="trusted_player" @selected(old('role') === 'trusted_player')>Trusted Player</option>
                         <option value="co_gm" @selected(old('role') === 'co_gm')>Co-GM</option>
                     </select>
                     <button
@@ -231,11 +295,11 @@
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                 @enderror
 
-                @if ($invitations->isEmpty())
-                    <p class="mt-5 text-sm text-stone-400">Noch keine Einladungen vorhanden.</p>
+                @if ($pendingInvitations->isEmpty())
+                    <p class="mt-5 text-sm text-stone-400">Keine offenen Einladungen vorhanden.</p>
                 @else
                     <div class="mt-5 space-y-2">
-                        @foreach ($invitations as $invitation)
+                        @foreach ($pendingInvitations as $invitation)
                             <article class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-800 bg-neutral-900/60 px-4 py-3">
                                 <div>
                                     <p class="text-sm text-stone-200">
@@ -243,13 +307,12 @@
                                         <span class="text-stone-500">• {{ $invitation->user->email }}</span>
                                     </p>
                                     <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
-                                        @php($roleLabel = match ($invitation->role) {
+                                        @php($invitationRoleLabel = match ($invitation->role) {
                                             \App\Models\CampaignInvitation::ROLE_CO_GM => 'CO_GM',
                                             \App\Models\CampaignInvitation::ROLE_TRUSTED_PLAYER => 'TRUSTED_PLAYER',
                                             default => 'PLAYER',
                                         })
-                                        Status: {{ strtoupper($invitation->status) }}
-                                        • Rolle: {{ $roleLabel }}
+                                        Rolle: {{ $invitationRoleLabel }}
                                         • von {{ $invitation->inviter?->name ?? 'System' }}
                                         • <x-relative-time :at="$invitation->created_at" />
                                     </p>

@@ -192,7 +192,7 @@
                                 href="{{ route('admin.users.moderation.index') }}"
                                 class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
                             >
-                                Admin-Nutzer
+                                Plattformrechte
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}" data-logout-form>
