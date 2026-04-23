@@ -84,7 +84,7 @@ class BuildCharacterIndexDataActionTest extends TestCase
         $this->assertTrue($result->characters->getCollection()->first()?->relationLoaded('world') ?? false);
     }
 
-    public function test_it_falls_back_to_first_active_world_and_applies_status_filter_for_gm(): void
+    public function test_it_falls_back_to_first_active_world_and_applies_status_filter_for_admin(): void
     {
         $worldA = World::factory()->create([
             'name' => 'A-Welt',
@@ -99,7 +99,7 @@ class BuildCharacterIndexDataActionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
         $player = User::factory()->create();
 
         $activeA = Character::factory()->create([
@@ -122,7 +122,7 @@ class BuildCharacterIndexDataActionTest extends TestCase
         ]);
 
         $result = app(BuildCharacterIndexDataAction::class)->execute(
-            user: $gm,
+            user: $admin,
             selectedWorldSlug: 'nicht-vorhanden',
             selectedStatus: 'active',
         );

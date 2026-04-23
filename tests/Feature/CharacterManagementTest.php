@@ -7,6 +7,7 @@ use App\Models\Character;
 use App\Models\CharacterInventoryLog;
 use App\Models\CharacterProgressionEvent;
 use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\PostMention;
@@ -103,6 +104,27 @@ class CharacterManagementTest extends TestCase
             'wisdom' => 40,
             'charisma' => 35,
         ], $overrides);
+    }
+
+    private function grantCoGmWorldAccess(User $owner, User $coGm, int $worldId): void
+    {
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'world_id' => $worldId,
+            'is_public' => false,
+            'status' => 'active',
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'invited_by' => (int) $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
     }
 
     public function test_guest_cannot_access_character_index(): void
@@ -302,7 +324,7 @@ class CharacterManagementTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_gm_can_view_and_update_other_users_character_inventory(): void
+    public function test_campaign_co_gm_can_view_and_update_other_users_character_inventory(): void
     {
         $owner = User::factory()->create();
         $gm = User::factory()->gm()->create();
@@ -322,6 +344,12 @@ class CharacterManagementTest extends TestCase
             ]],
             ...$this->persistedAttributes(),
         ]);
+
+        $this->grantCoGmWorldAccess(
+            owner: $owner,
+            coGm: $gm,
+            worldId: (int) $character->world_id,
+        );
 
         $this->actingAs($gm)
             ->get(route('characters.show', $character))
@@ -420,7 +448,7 @@ class CharacterManagementTest extends TestCase
         );
     }
 
-    public function test_gm_can_delete_other_users_character(): void
+    public function test_campaign_co_gm_can_delete_other_users_character(): void
     {
         $owner = User::factory()->create();
         $gm = User::factory()->gm()->create();
@@ -428,6 +456,12 @@ class CharacterManagementTest extends TestCase
         $character = Character::factory()->create([
             'user_id' => $owner->id,
         ]);
+
+        $this->grantCoGmWorldAccess(
+            owner: $owner,
+            coGm: $gm,
+            worldId: (int) $character->world_id,
+        );
 
         $this->actingAs($gm)
             ->delete(route('characters.destroy', $character))

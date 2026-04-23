@@ -260,9 +260,7 @@ class CampaignGmContactFeatureTest extends TestCase
                 'campaign' => $campaignA,
                 'gm_contact_thread' => $threadB->id,
             ]))
-            ->assertOk()
-            ->assertSee('Panel-Nur-Kampagne-A')
-            ->assertDontSee('Panel-Kampagnenfremd-B');
+            ->assertForbidden();
 
         $this->actingAs($admin)
             ->get(route('campaigns.gm-contacts.show', [
@@ -383,8 +381,7 @@ class CampaignGmContactFeatureTest extends TestCase
 
         $this->actingAs($globalGm)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
-            ->assertOk()
-            ->assertDontSee('Privater Thread ohne Global-GM-Zugriff');
+            ->assertForbidden();
 
         $this->actingAs($globalGm)
             ->post(route('campaigns.gm-contacts.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
