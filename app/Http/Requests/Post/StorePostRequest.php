@@ -129,7 +129,7 @@ class StorePostRequest extends FormRequest
                 : null;
             $user = $this->user();
             $canModerate = $user
-                && ($user->isGmOrAdmin() || $campaign->isCoGm($user));
+                && $campaign->canModeratePosts($user);
 
             if ($postType === 'ooc' && ! $scene->allow_ooc && ! $canModerate) {
                 $validator->errors()->add('post_type', 'OOC-Beiträge sind in dieser Szene deaktiviert.');

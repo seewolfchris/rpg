@@ -32,7 +32,7 @@ class BuildCharacterIndexDataAction
                 fn (Builder $query): Builder => $query->where('status', $normalizedStatus),
             )
             ->when(
-                ! $user->isGmOrAdmin(),
+                ! $user->isAdmin(),
                 fn (Builder $query): Builder => $query->where('user_id', (int) $user->id),
             )
             ->with(['user', 'world'])

@@ -15,7 +15,7 @@ abstract class AuthorizationWorldContextMutationTestCase extends TestCase
 
     protected function seedCampaignRoleMatrix(bool $worldActive): array
     {
-        $owner = User::factory()->gm()->create();
+        $owner = User::factory()->gm()->canCreateCampaigns()->create();
         $coGm = User::factory()->create();
         $player = User::factory()->create();
         $outsider = User::factory()->create();

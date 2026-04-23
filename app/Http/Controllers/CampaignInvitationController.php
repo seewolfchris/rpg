@@ -6,7 +6,6 @@ use App\Actions\Campaign\DeleteCampaignInvitationAction;
 use App\Actions\Campaign\RespondToCampaignInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
-use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
 use App\Models\Campaign;
@@ -86,16 +85,6 @@ class CampaignInvitationController extends Controller
         }
 
         $requestedRole = (string) $request->validated('role');
-        if (
-            $requestedRole === CampaignInvitation::ROLE_TRUSTED_PLAYER
-            && ! $user->hasRole(UserRole::ADMIN)
-        ) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'role' => 'Die Rolle "Trusted Player" kann nur von Admins vergeben werden.',
-                ]);
-        }
 
         $result = $this->upsertCampaignInvitationAction->execute(
             new UpsertCampaignInvitationInput(
@@ -223,6 +212,7 @@ class CampaignInvitationController extends Controller
 
         $this->deleteCampaignInvitationAction->execute(
             $invitation,
+            (int) $user->id,
         );
 
         return redirect()
@@ -252,7 +242,7 @@ class CampaignInvitationController extends Controller
 
     private function canManageInvitations(User $user, Campaign $campaign): bool
     {
-        return $campaign->owner_id === $user->id || $user->isGmOrAdmin();
+        return $campaign->isOwnedBy($user);
     }
 
     private function ensureInvitationBelongsToCampaign(Campaign $campaign, CampaignInvitation $invitation): void

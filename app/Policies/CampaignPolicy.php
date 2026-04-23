@@ -28,7 +28,7 @@ class CampaignPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isGmOrAdmin();
+        return $user->canCreateCampaigns();
     }
 
     /**
@@ -36,9 +36,7 @@ class CampaignPolicy
      */
     public function update(User $user, Campaign $campaign): bool
     {
-        return $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return $campaign->canManageCampaign($user);
     }
 
     /**
@@ -46,6 +44,6 @@ class CampaignPolicy
      */
     public function delete(User $user, Campaign $campaign): bool
     {
-        return $campaign->owner_id === $user->id || $user->isGmOrAdmin();
+        return $campaign->isOwnedBy($user);
     }
 }

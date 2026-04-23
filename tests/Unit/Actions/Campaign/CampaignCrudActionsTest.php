@@ -7,6 +7,7 @@ namespace Tests\Unit\Actions\Campaign;
 use App\Actions\Campaign\CreateCampaignAction;
 use App\Actions\Campaign\DeleteCampaignAction;
 use App\Actions\Campaign\UpdateCampaignAction;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\User;
 use App\Models\World;
@@ -40,6 +41,12 @@ class CampaignCrudActionsTest extends TestCase
             'world_id' => $world->id,
             'owner_id' => $owner->id,
             'slug' => 'atomarer-feldzug',
+        ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
         ]);
     }
 

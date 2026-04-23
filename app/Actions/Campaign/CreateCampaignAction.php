@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Campaign;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Database\DatabaseManager;
@@ -51,6 +53,14 @@ final class CreateCampaignAction
             'world_id' => (int) $world->id,
             'owner_id' => (int) $owner->id,
         ]));
+
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $owner->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
+        ]);
 
         return $campaign;
     }

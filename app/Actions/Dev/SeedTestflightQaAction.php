@@ -150,7 +150,8 @@ class SeedTestflightQaAction
                 key: 'gm',
                 worldSlug: $worldSlug,
                 name: '[TESTFLIGHT] Spielleitung '.$worldSlug,
-                role: UserRole::GM,
+                role: UserRole::PLAYER,
+                canCreateCampaigns: true,
                 plainPassword: $plainPassword,
             ),
             'co_gm' => $this->upsertAccount(
@@ -158,6 +159,7 @@ class SeedTestflightQaAction
                 worldSlug: $worldSlug,
                 name: '[TESTFLIGHT] Co-GM '.$worldSlug,
                 role: UserRole::PLAYER,
+                canCreateCampaigns: false,
                 plainPassword: $plainPassword,
             ),
             'player_one' => $this->upsertAccount(
@@ -165,6 +167,7 @@ class SeedTestflightQaAction
                 worldSlug: $worldSlug,
                 name: '[TESTFLIGHT] Spieler Eins '.$worldSlug,
                 role: UserRole::PLAYER,
+                canCreateCampaigns: false,
                 plainPassword: $plainPassword,
             ),
             'player_two' => $this->upsertAccount(
@@ -172,6 +175,7 @@ class SeedTestflightQaAction
                 worldSlug: $worldSlug,
                 name: '[TESTFLIGHT] Spieler Zwei '.$worldSlug,
                 role: UserRole::PLAYER,
+                canCreateCampaigns: false,
                 plainPassword: $plainPassword,
             ),
             'trusted_player' => $this->upsertAccount(
@@ -179,6 +183,7 @@ class SeedTestflightQaAction
                 worldSlug: $worldSlug,
                 name: '[TESTFLIGHT] Trusted Player '.$worldSlug,
                 role: UserRole::PLAYER,
+                canCreateCampaigns: false,
                 plainPassword: $plainPassword,
             ),
         ];
@@ -189,6 +194,7 @@ class SeedTestflightQaAction
         string $worldSlug,
         string $name,
         UserRole $role,
+        bool $canCreateCampaigns,
         string $plainPassword,
     ): User {
         $user = User::query()->firstOrNew([
@@ -201,6 +207,7 @@ class SeedTestflightQaAction
             'password' => $plainPassword,
             'email_verified_at' => now(),
             'can_post_without_moderation' => false,
+            'can_create_campaigns' => $canCreateCampaigns,
             'offline_queue_enabled' => true,
         ]);
         $user->save();

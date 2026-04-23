@@ -2,8 +2,10 @@
 
 namespace App\Domain\Campaign;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\User;
 use App\Models\World;
@@ -17,11 +19,17 @@ class CampaignParticipantResolver
      */
     public function participantUserIds(Campaign $campaign): Collection
     {
-        $participantUserIds = $campaign->invitations()
+        $participantUserIds = CampaignMembership::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->pluck('user_id');
+
+        // Transitional fallback until invitation-only legacy rows are fully backfilled.
+        $legacyInvitationUserIds = $campaign->invitations()
             ->where('status', CampaignInvitation::STATUS_ACCEPTED)
             ->pluck('user_id');
 
         return $participantUserIds
+            ->merge($legacyInvitationUserIds)
             ->merge([(int) $campaign->owner_id])
             ->map(static fn ($id): int => (int) $id)
             ->filter(static fn (int $id): bool => $id > 0)
@@ -35,20 +43,12 @@ class CampaignParticipantResolver
             return false;
         }
 
-        if ($user->isGmOrAdmin()) {
-            return true;
-        }
-
-        return $this->hasCampaignRole($campaign, $user, CampaignInvitation::ROLE_CO_GM);
+        return $campaign->canModeratePosts($user);
     }
 
     public function canModerateWorldQueue(User $user, World $world): bool
     {
-        if ($user->isGmOrAdmin()) {
-            return true;
-        }
-
-        return $this->hasCoGmAccessInWorld($user, $world);
+        return $this->moderatableCampaignIdsForWorld($user, $world)->isNotEmpty();
     }
 
     /**
@@ -89,14 +89,33 @@ class CampaignParticipantResolver
      */
     public function coGmCampaignIdsForWorld(User $user, World $world): Collection
     {
-        return CampaignInvitation::query()
-            ->where('user_id', (int) $user->id)
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->where('role', CampaignInvitation::ROLE_CO_GM)
-            ->whereHas('campaign', function (Builder $campaignQuery) use ($world): void {
-                $campaignQuery->where('world_id', (int) $world->id);
+        return $this->moderatableCampaignIdsForWorld($user, $world);
+    }
+
+    /**
+     * @return Collection<int, int<1, max>>
+     */
+    public function moderatableCampaignIdsForWorld(User $user, World $world): Collection
+    {
+        return Campaign::query()
+            ->where('world_id', (int) $world->id)
+            ->where(function (Builder $campaignQuery) use ($user): void {
+                $campaignQuery
+                    ->where('owner_id', (int) $user->id)
+                    ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
+                        $membershipQuery
+                            ->where('user_id', (int) $user->id)
+                            ->where('role', CampaignMembershipRole::GM->value);
+                    })
+                    ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
+                        // Transitional fallback until invitation-only legacy rows are fully backfilled.
+                        $invitationQuery
+                            ->where('user_id', (int) $user->id)
+                            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+                            ->where('role', CampaignInvitation::ROLE_CO_GM);
+                    });
             })
-            ->pluck('campaign_id')
+            ->pluck('id')
             ->map(static fn ($campaignId): int => (int) $campaignId)
             ->filter(static fn (int $campaignId): bool => $campaignId > 0)
             ->unique()
@@ -106,14 +125,5 @@ class CampaignParticipantResolver
     public function hasCoGmAccessInWorld(User $user, World $world): bool
     {
         return $this->coGmCampaignIdsForWorld($user, $world)->isNotEmpty();
-    }
-
-    private function hasCampaignRole(Campaign $campaign, User $user, string $role): bool
-    {
-        return $campaign->invitations()
-            ->where('user_id', (int) $user->id)
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->where('role', $role)
-            ->exists();
     }
 }

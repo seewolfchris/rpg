@@ -201,7 +201,7 @@ class CampaignGmContactThreadController extends Controller
     private function canManageCampaign(Campaign $campaign, User $user): bool
     {
         return (int) $campaign->owner_id === (int) $user->id
-            || $user->isGmOrAdmin()
+            || $user->isAdmin()
             || $campaign->isCoGm($user);
     }
 }

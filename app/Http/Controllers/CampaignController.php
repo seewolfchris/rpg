@@ -81,9 +81,7 @@ class CampaignController extends Controller
 
         $campaign->load('owner');
 
-        $canManageCampaign = $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        $canManageCampaign = $campaign->canManageCampaign($user);
 
         $scenesQuery = $campaign->scenes()
             ->with('creator')

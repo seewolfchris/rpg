@@ -15,15 +15,21 @@ final class DeleteCampaignInvitationAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly SyncCampaignMembershipFromInvitationAction $syncCampaignMembershipFromInvitationAction,
     ) {}
 
-    public function execute(CampaignInvitation $invitation): void
+    public function execute(CampaignInvitation $invitation, ?int $actorUserId = null): void
     {
-        $this->db->transaction(function () use ($invitation): void {
+        $this->db->transaction(function () use ($invitation, $actorUserId): void {
             $lockedInvitation = $this->lockAndVerifyContext($invitation);
 
             if ($this->isAcceptedInvitation($lockedInvitation)) {
                 $this->cleanupAcceptedInvitationAccessData($lockedInvitation);
+                $this->syncCampaignMembershipFromInvitationAction->revokeForAcceptedInvitation(
+                    invitation: $lockedInvitation,
+                    actorUserId: $actorUserId,
+                    source: 'invitation_delete_accepted',
+                );
             }
 
             $this->deleteInvitation($lockedInvitation);

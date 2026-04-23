@@ -31,6 +31,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::PLAYER->value,
             'can_post_without_moderation' => false,
+            'can_create_campaigns' => false,
             'offline_queue_enabled' => true,
             'remember_token' => Str::random(10),
         ];
@@ -49,7 +50,8 @@ class UserFactory extends Factory
     public function gm(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => UserRole::GM->value,
+            'role' => UserRole::PLAYER->value,
+            'can_create_campaigns' => true,
         ]);
     }
 
@@ -64,6 +66,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'can_post_without_moderation' => true,
+        ]);
+    }
+
+    public function canCreateCampaigns(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'can_create_campaigns' => true,
         ]);
     }
 }

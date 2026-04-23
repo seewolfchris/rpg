@@ -271,9 +271,26 @@ class CharacterProgressionTest extends TestCase
     {
         $owner = User::factory()->create();
         $gm = User::factory()->gm()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $gm->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
 
         $character = Character::factory()->create([
             'user_id' => $owner->id,
+            'world_id' => $campaign->world_id,
             'species' => 'mensch',
             'calling' => 'heiler',
             'mu' => 40,

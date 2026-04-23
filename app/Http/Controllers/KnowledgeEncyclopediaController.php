@@ -82,7 +82,7 @@ class KnowledgeEncyclopediaController extends Controller
                 ->values();
         }
 
-        $canManage = $request->user()?->isGmOrAdmin() ?? false;
+        $canManage = $request->user()?->isAdmin() ?? false;
         $initialFilters = [
             'search' => $search,
             'category' => $selectedCategorySlug,
@@ -148,7 +148,7 @@ class KnowledgeEncyclopediaController extends Controller
             ->values()
             ->all();
         $imagePrompts = $entryMetaBuilder->buildImagePrompts($entry);
-        $canManage = $request->user()?->isGmOrAdmin() ?? false;
+        $canManage = $request->user()?->isAdmin() ?? false;
 
         return view('knowledge.encyclopedia-entry', compact(
             'world',

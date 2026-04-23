@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Gm;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\Scene;
@@ -24,7 +25,7 @@ class StoreCharacterProgressionAwardRequest extends FormRequest
             return false;
         }
 
-        if ($user->isGmOrAdmin()) {
+        if ($user->hasRole(UserRole::ADMIN)) {
             return true;
         }
 

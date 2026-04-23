@@ -142,6 +142,6 @@ class BuildSceneShowDataAction
 
     private function canModerateScene(User $user, Campaign $campaign): bool
     {
-        return $user->isGmOrAdmin() || $campaign->isCoGm($user);
+        return $campaign->canModeratePosts($user);
     }
 }

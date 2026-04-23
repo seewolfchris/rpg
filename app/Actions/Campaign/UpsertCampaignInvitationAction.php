@@ -13,6 +13,7 @@ class UpsertCampaignInvitationAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly SyncCampaignMembershipFromInvitationAction $syncCampaignMembershipFromInvitationAction,
     ) {}
 
     public function execute(
@@ -82,6 +83,14 @@ class UpsertCampaignInvitationAction
             }
 
             $invitation->save();
+
+            if ($wasAccepted) {
+                $this->syncCampaignMembershipFromInvitationAction->syncAcceptedInvitation(
+                    invitation: $invitation,
+                    actorUserId: $inviterUserId,
+                    source: 'invitation_upsert_accepted',
+                );
+            }
 
             return new UpsertCampaignInvitationResult(
                 invitation: $invitation,

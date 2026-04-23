@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Campaign;
 
 use App\Actions\Campaign\DeleteCampaignInvitationAction;
+use App\Actions\Campaign\SyncCampaignMembershipFromInvitationAction;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
+use App\Models\CampaignRoleEvent;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
@@ -70,6 +73,13 @@ class DeleteCampaignInvitationActionTest extends TestCase
             'responded_at' => now(),
             'created_at' => now(),
         ]);
+        CampaignMembership::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitedUser->id,
+            'role' => \App\Enums\CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now()->subDay(),
+        ]);
 
         SceneSubscription::query()->create([
             'scene_id' => $sceneOne->id,
@@ -125,7 +135,7 @@ class DeleteCampaignInvitationActionTest extends TestCase
             'label' => 'D',
         ]);
 
-        app(DeleteCampaignInvitationAction::class)->execute($invitation);
+        app(DeleteCampaignInvitationAction::class)->execute($invitation, (int) $owner->id);
 
         $this->assertDatabaseMissing('campaign_invitations', [
             'id' => $invitation->id,
@@ -145,6 +155,19 @@ class DeleteCampaignInvitationActionTest extends TestCase
         $this->assertDatabaseMissing('scene_bookmarks', [
             'scene_id' => $sceneTwo->id,
             'user_id' => $invitedUser->id,
+        ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitedUser->id,
+        ]);
+        $this->assertDatabaseHas('campaign_role_events', [
+            'campaign_id' => $campaign->id,
+            'actor_user_id' => $owner->id,
+            'target_user_id' => $invitedUser->id,
+            'event_type' => CampaignRoleEvent::EVENT_MEMBERSHIP_REVOKED,
+            'old_role' => \App\Enums\CampaignMembershipRole::PLAYER->value,
+            'new_role' => null,
+            'source' => 'invitation_delete_accepted',
         ]);
 
         $this->assertDatabaseHas('scene_subscriptions', [
@@ -219,6 +242,11 @@ class DeleteCampaignInvitationActionTest extends TestCase
             'scene_id' => $scene->id,
             'user_id' => $invitedUser->id,
         ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitedUser->id,
+        ]);
+        $this->assertDatabaseCount('campaign_role_events', 0);
     }
 
     public function test_it_throws_when_invitation_context_is_mismatched(): void
@@ -322,7 +350,10 @@ class DeleteCampaignInvitationActionTest extends TestCase
                 }
             });
 
-        $action = new DeleteCampaignInvitationAction($mockedDb);
+        $action = new DeleteCampaignInvitationAction(
+            $mockedDb,
+            app(SyncCampaignMembershipFromInvitationAction::class),
+        );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Forced invitation delete failure');
@@ -342,5 +373,43 @@ class DeleteCampaignInvitationActionTest extends TestCase
                 'user_id' => $invitedUser->id,
             ]);
         }
+    }
+
+    public function test_it_keeps_owner_initial_gm_membership_stable_when_legacy_owner_invitation_is_deleted(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+        CampaignMembership::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'role' => \App\Enums\CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now()->subDay(),
+        ]);
+        $legacyOwnerInvitation = CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now()->subDay(),
+            'responded_at' => now()->subDay(),
+            'created_at' => now()->subDays(2),
+        ]);
+
+        app(DeleteCampaignInvitationAction::class)->execute($legacyOwnerInvitation, (int) $owner->id);
+
+        $this->assertDatabaseMissing('campaign_invitations', [
+            'id' => $legacyOwnerInvitation->id,
+        ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'role' => \App\Enums\CampaignMembershipRole::GM->value,
+        ]);
     }
 }

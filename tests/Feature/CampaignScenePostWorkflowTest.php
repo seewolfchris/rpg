@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\PostProbeService;
 use App\Domain\Post\ScenePostNotificationService;
+use App\Enums\CampaignMembershipRole;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Enums\UserRole;
@@ -43,11 +44,36 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseMissing('campaigns', ['slug' => 'verbotene-flamme']);
     }
 
-    public function test_gm_can_create_campaign_and_scene(): void
+    public function test_admin_can_create_campaign_without_create_flag(): void
     {
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create([
+            'can_create_campaigns' => false,
+        ]);
 
-        $campaignResponse = $this->actingAs($gm)->post(route('campaigns.store'), [
+        $response = $this->actingAs($admin)->post(route('campaigns.store'), [
+            'title' => 'Admin Kampagne',
+            'slug' => 'admin-kampagne',
+            'summary' => 'Admin erstellt ohne separates Flag.',
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $campaign = Campaign::query()->where('slug', 'admin-kampagne')->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+        $this->assertSame((int) $admin->id, (int) $campaign->owner_id);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $admin->id,
+            'role' => CampaignMembershipRole::GM->value,
+        ]);
+    }
+
+    public function test_user_with_create_campaign_flag_can_create_campaign_and_scene(): void
+    {
+        $creator = User::factory()->canCreateCampaigns()->create();
+
+        $campaignResponse = $this->actingAs($creator)->post(route('campaigns.store'), [
             'title' => 'Die Fahlmond-Chronik',
             'slug' => 'die-fahlmond-chronik',
             'summary' => 'Ein uralter Schwur droht zu brechen.',
@@ -58,9 +84,15 @@ class CampaignScenePostWorkflowTest extends TestCase
         $campaign = Campaign::query()->where('slug', 'die-fahlmond-chronik')->firstOrFail();
 
         $campaignResponse->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
-        $this->assertSame($gm->id, $campaign->owner_id);
+        $this->assertSame($creator->id, $campaign->owner_id);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $creator->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $creator->id,
+        ]);
 
-        $sceneResponse = $this->actingAs($gm)->post(route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+        $sceneResponse = $this->actingAs($creator)->post(route('campaigns.scenes.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'title' => 'Ankunft am Bluttor',
             'slug' => 'ankunft-am-bluttor',
             'summary' => 'Der Nebel oeffnet den ersten Pfad.',
@@ -73,7 +105,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseHas('scenes', [
             'campaign_id' => $campaign->id,
             'slug' => 'ankunft-am-bluttor',
-            'created_by' => $gm->id,
+            'created_by' => $creator->id,
         ]);
     }
 

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/wissen/enzyklopaedie/admin')
     ->as('knowledge.admin.')
-    ->middleware('role:gm,admin')
+    ->middleware('role:admin')
     ->group(function (): void {
         Route::resource('kategorien', EncyclopediaCategoryController::class)
             ->parameters(['kategorien' => 'encyclopediaCategory'])

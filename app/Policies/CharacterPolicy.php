@@ -7,7 +7,6 @@ use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\User;
-use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 
 class CharacterPolicy
@@ -42,21 +41,7 @@ class CharacterPolicy
             return true;
         }
 
-        if (! $user->hasRole(UserRole::GM)) {
-            return $this->hasAcceptedCoGmAccessForWorld($user, (int) $character->world_id);
-        }
-
-        $worldId = (int) $character->world_id;
-
-        if ($worldId <= 0) {
-            return false;
-        }
-
-        if ($this->resolveActiveWorldId() === $worldId) {
-            return true;
-        }
-
-        return $this->hasAcceptedCoGmAccessForWorld($user, $worldId);
+        return $this->hasAcceptedCoGmAccessForWorld($user, (int) $character->world_id);
     }
 
     private function hasAcceptedCoGmAccessForWorld(User $user, int $worldId): bool
@@ -76,41 +61,4 @@ class CharacterPolicy
             ->exists();
     }
 
-    private function resolveActiveWorldId(): ?int
-    {
-        $request = request();
-
-        if ($request !== null) {
-            $routeWorld = $request->route('world');
-
-            if ($routeWorld instanceof World) {
-                return (int) $routeWorld->id;
-            }
-
-            $routeWorldId = data_get($routeWorld, 'id');
-
-            if (is_numeric($routeWorldId)) {
-                return (int) $routeWorldId;
-            }
-
-            $worldSlug = trim((string) $request->session()->get('world_slug', ''));
-
-            if ($worldSlug !== '') {
-                $resolvedWorldId = (int) World::query()
-                    ->where('slug', $worldSlug)
-                    ->value('id');
-
-                if ($resolvedWorldId > 0) {
-                    return $resolvedWorldId;
-                }
-            }
-        }
-
-        $defaultWorldId = (int) World::query()
-            ->active()
-            ->ordered()
-            ->value('id');
-
-        return $defaultWorldId > 0 ? $defaultWorldId : null;
-    }
 }

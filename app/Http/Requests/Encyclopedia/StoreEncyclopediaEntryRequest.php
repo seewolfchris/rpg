@@ -23,7 +23,7 @@ class StoreEncyclopediaEntryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->isGmOrAdmin() ?? false;
+        return $this->user()?->isAdmin() ?? false;
     }
 
     /**

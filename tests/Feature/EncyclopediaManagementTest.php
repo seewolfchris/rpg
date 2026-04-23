@@ -283,12 +283,12 @@ class EncyclopediaManagementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_gm_can_open_encyclopedia_admin_index_route(): void
+    public function test_admin_can_open_encyclopedia_admin_index_route(): void
     {
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
         $world = $this->defaultWorld();
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
             ->assertOk()
             ->assertSeeText('Enzyklopädie-Kategorien');
@@ -296,7 +296,7 @@ class EncyclopediaManagementTest extends TestCase
 
     public function test_admin_index_uses_csp_safe_confirm_attribute(): void
     {
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
         $world = $this->defaultWorld();
 
         EncyclopediaCategory::query()->create([
@@ -308,19 +308,19 @@ class EncyclopediaManagementTest extends TestCase
             'is_public' => true,
         ]);
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->get(route('knowledge.admin.kategorien.index', ['world' => $world]))
             ->assertOk()
             ->assertSee('data-confirm="Kategorie wirklich löschen? Alle Einträge werden entfernt."', false)
             ->assertDontSee('onsubmit="return confirm(', false);
     }
 
-    public function test_gm_can_create_category_and_entry_with_game_relevance(): void
+    public function test_admin_can_create_category_and_entry_with_game_relevance(): void
     {
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
         $world = $this->defaultWorld();
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->post(route('knowledge.admin.kategorien.store', ['world' => $world]), [
                 'name' => 'Mythen',
                 'slug' => 'mythen',
@@ -334,7 +334,7 @@ class EncyclopediaManagementTest extends TestCase
 
         $this->assertNotNull($category);
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->post(route('knowledge.admin.kategorien.eintraege.store', [
                 'world' => $category->world,
                 'encyclopediaCategory' => $category,
@@ -362,7 +362,7 @@ class EncyclopediaManagementTest extends TestCase
         $this->assertSame('Frontlastige Szenen koennen schnelle LE-Verluste erzeugen.', data_get($entry->game_relevance, 'le_hint'));
         $this->assertSame('Mut und Charisma sind hier haeufige GM-Proben.', data_get($entry->game_relevance, 'probe_hint'));
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->put(route('knowledge.admin.kategorien.eintraege.update', [
                 'world' => $category->world,
                 'encyclopediaCategory' => $category,
@@ -519,7 +519,7 @@ class EncyclopediaManagementTest extends TestCase
 
     public function test_entry_edit_route_returns_404_for_category_mismatch(): void
     {
-        $gm = User::factory()->gm()->create();
+        $admin = User::factory()->admin()->create();
         $world = $this->defaultWorld();
         $fixture = $this->encyclopediaFixture($world);
 
@@ -538,11 +538,11 @@ class EncyclopediaManagementTest extends TestCase
             'status' => EncyclopediaEntry::STATUS_PUBLISHED,
             'position' => 10,
             'published_at' => now(),
-            'created_by' => $gm->id,
-            'updated_by' => $gm->id,
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
         ]);
 
-        $this->actingAs($gm)
+        $this->actingAs($admin)
             ->get(route('knowledge.admin.kategorien.eintraege.edit', [
                 'world' => $categoryB->world,
                 'encyclopediaCategory' => $categoryB,

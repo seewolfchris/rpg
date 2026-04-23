@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
@@ -83,6 +84,11 @@ class CampaignAccessInvitationTest extends TestCase
         $invitation->refresh();
         $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $invitation->status);
         $this->assertNotNull($invitation->accepted_at);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+        ]);
 
         $this->actingAs($player)
             ->get(route('campaigns.index'))
@@ -141,6 +147,10 @@ class CampaignAccessInvitationTest extends TestCase
         $this->assertDatabaseHas('campaign_invitations', [
             'id' => $invitation->id,
             'status' => CampaignInvitation::STATUS_DECLINED,
+        ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
         ]);
 
         $this->actingAs($player)
@@ -212,6 +222,11 @@ class CampaignAccessInvitationTest extends TestCase
             'id' => $invitation->id,
             'status' => CampaignInvitation::STATUS_ACCEPTED,
         ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+        ]);
     }
 
     public function test_invited_co_gm_can_manage_scenes_and_moderate_posts_but_cannot_delete_campaign(): void
@@ -246,6 +261,11 @@ class CampaignAccessInvitationTest extends TestCase
         $this->actingAs($coGm)
             ->patch(route('campaign-invitations.accept', ['world' => $campaign->world, 'invitation' => $coGmInvitation]))
             ->assertRedirect();
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+        ]);
 
         $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $player->email,
@@ -311,9 +331,10 @@ class CampaignAccessInvitationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_non_admin_cannot_assign_trusted_player_role_on_invitation(): void
+    public function test_non_owner_cannot_assign_trusted_player_role_on_invitation(): void
     {
         $owner = User::factory()->gm()->create();
+        $nonOwner = User::factory()->create();
         $player = User::factory()->create();
 
         $campaign = Campaign::factory()->create([
@@ -322,14 +343,12 @@ class CampaignAccessInvitationTest extends TestCase
             'is_public' => false,
         ]);
 
-        $this->actingAs($owner)
-            ->from(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+        $this->actingAs($nonOwner)
             ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
                 'email' => $player->email,
                 'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
             ])
-            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
-            ->assertSessionHasErrors('role');
+            ->assertForbidden();
 
         $this->assertDatabaseMissing('campaign_invitations', [
             'campaign_id' => $campaign->id,
@@ -378,10 +397,9 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_assign_trusted_player_role_and_player_posts_without_moderation(): void
+    public function test_owner_can_assign_trusted_player_role_and_player_posts_without_moderation(): void
     {
         $owner = User::factory()->gm()->create();
-        $admin = User::factory()->admin()->create();
         $player = User::factory()->create();
 
         $campaign = Campaign::factory()->create([
@@ -398,7 +416,7 @@ class CampaignAccessInvitationTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $this->actingAs($admin)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+        $this->actingAs($owner)->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
             'email' => $player->email,
             'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
         ])->assertRedirect();

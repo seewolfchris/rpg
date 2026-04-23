@@ -189,9 +189,10 @@ class TestflightSeedCommandTest extends TestCase
         $coGmInvitation->refresh();
 
         $this->assertSame('[TESTFLIGHT] Spielleitung '.$world->slug, $gm->name);
-        $this->assertSame(UserRole::GM->value, (string) $gm->role?->value ?? (string) $gm->role);
+        $this->assertSame(UserRole::PLAYER->value, (string) $gm->role?->value ?? (string) $gm->role);
         $this->assertTrue(Hash::check($password, (string) $gm->password));
         $this->assertFalse((bool) $gm->can_post_without_moderation);
+        $this->assertTrue((bool) $gm->can_create_campaigns);
         $this->assertTrue((bool) $gm->offline_queue_enabled);
 
         $this->assertSame('[TESTFLIGHT] QA-Kampagne · '.$world->name, $campaign->title);

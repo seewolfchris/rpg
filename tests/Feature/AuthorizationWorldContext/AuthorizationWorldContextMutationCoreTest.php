@@ -3,6 +3,8 @@
 namespace Tests\Feature\AuthorizationWorldContext;
 
 use App\Models\Character;
+use App\Models\Campaign;
+use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -17,7 +19,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -89,7 +91,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -184,6 +186,22 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         $gm = User::factory()->gm()->create();
         $admin = User::factory()->admin()->create();
         $outsider = User::factory()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $gm->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
+            'created_at' => now(),
+        ]);
 
         $cases = [
             'owner' => [$owner, 302],
@@ -195,6 +213,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         foreach ($cases as $suffix => [$actor, $expectedStatus]) {
             $character = Character::factory()->create([
                 'user_id' => $owner->id,
+                'world_id' => $campaign->world_id,
                 'status' => 'active',
                 'bio' => 'Ausgangszustand',
                 'concept' => 'Baseline',

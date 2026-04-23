@@ -201,7 +201,7 @@ class StorePostService
     {
         $campaign->loadMissing('world');
 
-        $isModerator = $author->isGmOrAdmin() || $campaign->isCoGm($author);
+        $isModerator = $campaign->canModeratePosts($author);
         $requiresApproval = $campaign->requiresPostModeration()
             && ! $campaign->userCanPostWithoutModeration($author)
             && ! $isModerator;

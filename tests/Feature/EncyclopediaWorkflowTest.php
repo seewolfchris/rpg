@@ -84,12 +84,11 @@ class EncyclopediaWorkflowTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_gm_admin_and_world_cogm_can_review_proposals(): void
+    public function test_campaign_owner_admin_and_world_cogm_can_review_proposals(): void
     {
         $world = $this->defaultWorld();
         $category = $this->createPublicCategory($world, 'workflow-review');
         $author = User::factory()->create();
-        $gm = User::factory()->gm()->create();
         $admin = User::factory()->admin()->create();
         $coGm = User::factory()->create();
         $owner = User::factory()->gm()->create();
@@ -113,22 +112,22 @@ class EncyclopediaWorkflowTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $entryForGm = $this->createPendingEntry($category, $author, 'gm-approve');
+        $entryForOwner = $this->createPendingEntry($category, $author, 'owner-approve');
         $entryForAdmin = $this->createPendingEntry($category, $author, 'admin-reject');
         $entryForCoGm = $this->createPendingEntry($category, $author, 'co-gm-approve');
         $entryForOutsider = $this->createPendingEntry($category, $author, 'outsider-denied');
 
-        $this->actingAs($gm)
+        $this->actingAs($owner)
             ->patch(route('knowledge.encyclopedia.moderation.approve', [
                 'world' => $world,
-                'encyclopediaEntry' => $entryForGm,
+                'encyclopediaEntry' => $entryForOwner,
             ]))
             ->assertRedirect(route('knowledge.encyclopedia.moderation.index', ['world' => $world]));
 
         $this->assertDatabaseHas('encyclopedia_entries', [
-            'id' => $entryForGm->id,
+            'id' => $entryForOwner->id,
             'status' => EncyclopediaEntry::STATUS_PUBLISHED,
-            'reviewed_by' => $gm->id,
+            'reviewed_by' => $owner->id,
         ]);
 
         $this->actingAs($admin)

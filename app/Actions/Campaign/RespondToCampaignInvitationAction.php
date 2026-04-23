@@ -11,6 +11,7 @@ final class RespondToCampaignInvitationAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly SyncCampaignMembershipFromInvitationAction $syncCampaignMembershipFromInvitationAction,
     ) {}
 
     public function execute(
@@ -50,6 +51,14 @@ final class RespondToCampaignInvitationAction
             $invitation->accepted_at = $isAccept ? now()->toDateTimeString() : null;
             $invitation->responded_at = now()->toDateTimeString();
             $invitation->save();
+
+            if ($isAccept) {
+                $this->syncCampaignMembershipFromInvitationAction->syncAcceptedInvitation(
+                    invitation: $invitation,
+                    actorUserId: $userId,
+                    source: 'invitation_accept',
+                );
+            }
 
             return new RespondToCampaignInvitationResult(
                 alreadyClosed: false,

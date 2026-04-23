@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AuthorizationWorldContext;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Post;
@@ -25,7 +26,7 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'author-player' => [$player, 302],
             'outsider' => [$outsider, 403],
         ];
@@ -166,7 +167,7 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'author-player' => [$player, 302],
             'outsider' => [$outsider, 403],
         ];
@@ -293,7 +294,7 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -422,7 +423,7 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -538,8 +539,8 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
-            'foreign-gm' => [$foreignGm, 302],
+            'admin' => [$admin, 403],
+            'foreign-gm' => [$foreignGm, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -695,8 +696,8 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
 
         $cases = [
             'owner' => [$owner, 302],
-            'admin' => [$admin, 302],
-            'foreign-gm' => [$foreignGm, 302],
+            'admin' => [$admin, 403],
+            'foreign-gm' => [$foreignGm, 403],
             'co-gm' => [$coGm, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
@@ -858,6 +859,16 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
                     'owner_id' => $actor->id,
                     'world_id' => $world->id,
                 ]);
+                $campaignId = (int) Campaign::query()
+                    ->where('slug', $slug)
+                    ->value('id');
+                $this->assertGreaterThan(0, $campaignId);
+                $this->assertDatabaseHas('campaign_memberships', [
+                    'campaign_id' => $campaignId,
+                    'user_id' => $actor->id,
+                    'role' => CampaignMembershipRole::GM->value,
+                    'assigned_by' => $actor->id,
+                ]);
 
                 continue;
             }
@@ -939,7 +950,7 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 302],
+            'admin' => [$admin, 403],
             'player' => [$player, 302],
             'outsider' => [$outsider, 403],
         ];

@@ -6,7 +6,6 @@ use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Domain\Character\CharacterProgressionService;
 use App\Http\Requests\Gm\StoreCharacterProgressionAwardRequest;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
@@ -27,7 +26,7 @@ class GmProgressionController extends Controller
         $user = $this->authenticatedUser($request);
         $campaigns = $this->campaignsForUserAndWorld($user, $world);
 
-        if (! $user->isGmOrAdmin() && $campaigns->isEmpty()) {
+        if (! $user->isAdmin() && $campaigns->isEmpty()) {
             abort(403);
         }
 
@@ -99,18 +98,20 @@ class GmProgressionController extends Controller
      */
     private function campaignsForUserAndWorld(User $user, World $world): Collection
     {
-        return Campaign::query()
-            ->forWorld($world)
-            ->when(
-                ! $user->isGmOrAdmin(),
-                fn ($query) => $query->whereHas(
-                    'invitations',
-                    fn ($invitationQuery) => $invitationQuery
-                        ->where('user_id', $user->id)
-                        ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                        ->where('role', CampaignInvitation::ROLE_CO_GM)
-                )
-            )
+        $query = Campaign::query()
+            ->forWorld($world);
+
+        if (! $user->isAdmin()) {
+            $campaignIds = $this->campaignParticipantResolver->moderatableCampaignIdsForWorld($user, $world);
+
+            if ($campaignIds->isEmpty()) {
+                return collect();
+            }
+
+            $query->whereIn('id', $campaignIds->all());
+        }
+
+        return $query
             ->orderBy('title')
             ->get(['id', 'title', 'world_id']);
     }

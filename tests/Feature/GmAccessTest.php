@@ -24,9 +24,12 @@ class GmAccessTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_gm_can_access_gm_hub(): void
+    public function test_campaign_owner_can_access_gm_hub(): void
     {
         $gm = User::factory()->gm()->create();
+        Campaign::factory()->create([
+            'owner_id' => $gm->id,
+        ]);
 
         $response = $this->actingAs($gm)->get(route('gm.index'));
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CampaignMembershipRole;
 use App\Enums\UserRole;
 use App\Notifications\Auth\ResetPasswordNotification;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -55,6 +56,7 @@ class User extends Authenticatable
         'email',
         'password',
         'can_post_without_moderation',
+        'can_create_campaigns',
         'offline_queue_enabled',
     ];
 
@@ -82,6 +84,7 @@ class User extends Authenticatable
             'points' => 'integer',
             'notification_preferences' => 'array',
             'can_post_without_moderation' => 'boolean',
+            'can_create_campaigns' => 'boolean',
             'offline_queue_enabled' => 'boolean',
         ];
     }
@@ -108,6 +111,14 @@ class User extends Authenticatable
     public function campaignInvitations(): HasMany
     {
         return $this->hasMany(CampaignInvitation::class);
+    }
+
+    /**
+     * @return HasMany<CampaignMembership, $this>
+     */
+    public function campaignMemberships(): HasMany
+    {
+        return $this->hasMany(CampaignMembership::class);
     }
 
     /**
@@ -291,13 +302,29 @@ class User extends Authenticatable
         return (bool) $value;
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(UserRole::ADMIN);
+    }
+
     public function isGmOrAdmin(): bool
     {
-        return $this->hasAnyRole(UserRole::GM, UserRole::ADMIN);
+        return $this->isAdmin();
     }
 
     public function hasAnyCoGmCampaignAccess(): bool
     {
+        if ($this->ownedCampaigns()->exists()) {
+            return true;
+        }
+
+        if ($this->campaignMemberships()
+            ->where('role', CampaignMembershipRole::GM->value)
+            ->exists()
+        ) {
+            return true;
+        }
+
         return $this->campaignInvitations()
             ->where('status', CampaignInvitation::STATUS_ACCEPTED)
             ->where('role', CampaignInvitation::ROLE_CO_GM)
@@ -307,6 +334,15 @@ class User extends Authenticatable
     public function canPostWithoutModeration(): bool
     {
         return (bool) $this->can_post_without_moderation;
+    }
+
+    public function canCreateCampaigns(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return (bool) $this->can_create_campaigns;
     }
 
     /**

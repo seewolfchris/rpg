@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CampaignMembershipRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -86,6 +87,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<CampaignMembership, $this>
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(CampaignMembership::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignInvitation, $this>
      */
     public function invitations(): HasMany
@@ -108,15 +117,15 @@ class Campaign extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        if ($user->isGmOrAdmin()) {
-            return $query;
-        }
-
         return $query->where(function (Builder $innerQuery) use ($user): void {
             $innerQuery
                 ->where('is_public', true)
                 ->orWhere('owner_id', $user->id)
+                ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
+                    $membershipQuery->where('user_id', $user->id);
+                })
                 ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
+                    // Transitional fallback until invitation-only legacy rows are fully backfilled.
                     $invitationQuery
                         ->where('user_id', $user->id)
                         ->where('status', CampaignInvitation::STATUS_ACCEPTED);
@@ -137,14 +146,97 @@ class Campaign extends Model
 
     public function isVisibleTo(User $user): bool
     {
-        if ($this->is_public || $this->owner_id === $user->id || $user->isGmOrAdmin()) {
+        if ($this->is_public || $this->isOwnedBy($user)) {
             return true;
         }
 
-        return $this->hasAcceptedInvitation($user);
+        return $this->hasMembership($user) || $this->hasLegacyAcceptedInvitation($user);
     }
 
     public function hasAcceptedInvitation(User $user): bool
+    {
+        if ($this->hasMembership($user)) {
+            return true;
+        }
+
+        return $this->hasLegacyAcceptedInvitation($user);
+    }
+
+    public function hasMembership(User $user): bool
+    {
+        if ($this->relationLoaded('memberships')) {
+            foreach ($this->memberships as $membership) {
+                if (! $membership instanceof CampaignMembership) {
+                    continue;
+                }
+
+                if ((int) $membership->user_id === (int) $user->id) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $this->memberships()
+            ->where('user_id', (int) $user->id)
+            ->exists();
+    }
+
+    public function hasMembershipRole(User $user, CampaignMembershipRole|string $role): bool
+    {
+        $roleValue = $role instanceof CampaignMembershipRole ? $role->value : $role;
+
+        if ($this->relationLoaded('memberships')) {
+            foreach ($this->memberships as $membership) {
+                if (! $membership instanceof CampaignMembership) {
+                    continue;
+                }
+
+                if ((int) $membership->user_id !== (int) $user->id) {
+                    continue;
+                }
+
+                if ($this->membershipRoleValue($membership) === $roleValue) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $this->memberships()
+            ->where('user_id', (int) $user->id)
+            ->where('role', $roleValue)
+            ->exists();
+    }
+
+    public function isOwnedBy(User $user): bool
+    {
+        return (int) $this->owner_id === (int) $user->id;
+    }
+
+    public function isGm(User $user): bool
+    {
+        if ($this->hasMembershipRole($user, CampaignMembershipRole::GM)) {
+            return true;
+        }
+
+        // Transitional fallback until invitation-only legacy rows are fully backfilled.
+        return $this->hasLegacyInvitationRole($user, CampaignInvitation::ROLE_CO_GM);
+    }
+
+    public function canManageCampaign(User $user): bool
+    {
+        return $this->isOwnedBy($user) || $this->isGm($user);
+    }
+
+    public function canModeratePosts(User $user): bool
+    {
+        return $this->canManageCampaign($user);
+    }
+
+    private function hasLegacyAcceptedInvitation(User $user): bool
     {
         if ($this->relationLoaded('invitations')) {
             foreach ($this->invitations as $invitation) {
@@ -171,6 +263,41 @@ class Campaign extends Model
 
     public function hasParticipantRole(User $user, string $role): bool
     {
+        $membershipRole = $this->mapLegacyRoleToMembershipRole($role);
+
+        if ($membershipRole instanceof CampaignMembershipRole && $this->hasMembershipRole($user, $membershipRole)) {
+            return true;
+        }
+
+        // Transitional fallback until invitation-only legacy rows are fully backfilled.
+        return $this->hasLegacyInvitationRole($user, $role);
+    }
+
+    public function isCoGm(User $user): bool
+    {
+        return $this->isGm($user);
+    }
+
+    public function requiresPostModeration(): bool
+    {
+        return (bool) ($this->is_public || $this->requires_post_moderation);
+    }
+
+    public function userCanPostWithoutModeration(User $user): bool
+    {
+        if ($this->canModeratePosts($user)) {
+            return true;
+        }
+
+        if ((bool) $user->can_post_without_moderation) {
+            return true;
+        }
+
+        return $this->hasParticipantRole($user, CampaignInvitation::ROLE_TRUSTED_PLAYER);
+    }
+
+    private function hasLegacyInvitationRole(User $user, string $role): bool
+    {
         if ($this->relationLoaded('invitations')) {
             foreach ($this->invitations as $invitation) {
                 if (! $invitation instanceof CampaignInvitation) {
@@ -178,7 +305,7 @@ class Campaign extends Model
                 }
 
                 if (
-                    $invitation->user_id === $user->id
+                    (int) $invitation->user_id === (int) $user->id
                     && $invitation->status === CampaignInvitation::STATUS_ACCEPTED
                     && $invitation->role === $role
                 ) {
@@ -190,32 +317,30 @@ class Campaign extends Model
         }
 
         return $this->invitations()
-            ->where('user_id', $user->id)
+            ->where('user_id', (int) $user->id)
             ->where('status', CampaignInvitation::STATUS_ACCEPTED)
             ->where('role', $role)
             ->exists();
     }
 
-    public function isCoGm(User $user): bool
+    private function mapLegacyRoleToMembershipRole(string $role): ?CampaignMembershipRole
     {
-        return $this->hasParticipantRole($user, CampaignInvitation::ROLE_CO_GM);
+        return match ($role) {
+            CampaignInvitation::ROLE_CO_GM, CampaignMembershipRole::GM->value => CampaignMembershipRole::GM,
+            CampaignInvitation::ROLE_TRUSTED_PLAYER, CampaignMembershipRole::TRUSTED_PLAYER->value => CampaignMembershipRole::TRUSTED_PLAYER,
+            CampaignInvitation::ROLE_PLAYER, CampaignMembershipRole::PLAYER->value => CampaignMembershipRole::PLAYER,
+            default => null,
+        };
     }
 
-    public function requiresPostModeration(): bool
+    private function membershipRoleValue(CampaignMembership $membership): ?string
     {
-        return (bool) ($this->is_public || $this->requires_post_moderation);
-    }
+        $role = $membership->role;
 
-    public function userCanPostWithoutModeration(User $user): bool
-    {
-        if ($user->isGmOrAdmin() || $this->owner_id === $user->id || $this->isCoGm($user)) {
-            return true;
+        if ($role instanceof CampaignMembershipRole) {
+            return $role->value;
         }
 
-        if ((bool) $user->can_post_without_moderation) {
-            return true;
-        }
-
-        return $this->hasParticipantRole($user, CampaignInvitation::ROLE_TRUSTED_PLAYER);
+        return is_string($role) ? $role : null;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Domain\Campaign;
 
 use App\Domain\Campaign\CampaignParticipantResolver;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\User;
@@ -15,7 +16,7 @@ class CampaignParticipantResolverTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_moderate_campaign_allows_admin_gm_and_accepted_co_gm_only(): void
+    public function test_can_moderate_campaign_allows_owner_and_campaign_gm_but_not_admin_or_global_gm(): void
     {
         $resolver = app(CampaignParticipantResolver::class);
         $owner = User::factory()->gm()->create();
@@ -24,10 +25,18 @@ class CampaignParticipantResolverTest extends TestCase
         ]);
 
         $admin = User::factory()->admin()->create();
-        $gm = User::factory()->gm()->create();
+        $globalGm = User::factory()->gm()->create();
+        $membershipGm = User::factory()->create();
         $acceptedCoGm = User::factory()->create();
         $acceptedPlayer = User::factory()->create();
         $pendingCoGm = User::factory()->create();
+
+        $campaign->memberships()->create([
+            'user_id' => $membershipGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now(),
+        ]);
 
         $this->createInvitation(
             campaign: $campaign,
@@ -51,9 +60,11 @@ class CampaignParticipantResolverTest extends TestCase
             role: CampaignInvitation::ROLE_CO_GM,
         );
 
-        $this->assertTrue($resolver->canModerateCampaign($admin, $campaign));
-        $this->assertTrue($resolver->canModerateCampaign($gm, $campaign));
+        $this->assertTrue($resolver->canModerateCampaign($owner, $campaign));
+        $this->assertTrue($resolver->canModerateCampaign($membershipGm, $campaign));
         $this->assertTrue($resolver->canModerateCampaign($acceptedCoGm, $campaign));
+        $this->assertFalse($resolver->canModerateCampaign($admin, $campaign));
+        $this->assertFalse($resolver->canModerateCampaign($globalGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($acceptedPlayer, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($pendingCoGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign(null, $campaign));

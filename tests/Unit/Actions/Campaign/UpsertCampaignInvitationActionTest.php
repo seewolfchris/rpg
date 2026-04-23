@@ -4,6 +4,7 @@ namespace Tests\Unit\Actions\Campaign;
 
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationInput;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\User;
@@ -40,6 +41,10 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'status' => CampaignInvitation::STATUS_PENDING,
             'role' => CampaignInvitation::ROLE_PLAYER,
         ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+        ]);
     }
 
     public function test_it_keeps_accepted_status_when_updating_existing_accepted_invitation(): void
@@ -64,6 +69,13 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'responded_at' => $respondedAt,
             'created_at' => now()->subDays(2),
         ]);
+        \App\Models\CampaignMembership::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now()->subDay(),
+        ]);
 
         $result = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
@@ -80,6 +92,21 @@ class UpsertCampaignInvitationActionTest extends TestCase
         $this->assertSame(CampaignInvitation::ROLE_CO_GM, $existing->role);
         $this->assertSame($acceptedAt->toDateTimeString(), optional($existing->accepted_at)?->toDateTimeString());
         $this->assertSame($respondedAt->toDateTimeString(), optional($existing->responded_at)?->toDateTimeString());
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
+        ]);
+        $this->assertDatabaseHas('campaign_role_events', [
+            'campaign_id' => $campaign->id,
+            'actor_user_id' => $owner->id,
+            'target_user_id' => $invitee->id,
+            'event_type' => \App\Models\CampaignRoleEvent::EVENT_MEMBERSHIP_ROLE_CHANGED,
+            'old_role' => CampaignMembershipRole::PLAYER->value,
+            'new_role' => CampaignMembershipRole::GM->value,
+            'source' => 'invitation_upsert_accepted',
+        ]);
     }
 
     public function test_it_resets_declined_invitation_back_to_pending(): void
@@ -120,6 +147,10 @@ class UpsertCampaignInvitationActionTest extends TestCase
         $this->assertSame(CampaignInvitation::STATUS_PENDING, $invitation->status);
         $this->assertNull($invitation->accepted_at);
         $this->assertNull($invitation->responded_at);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+        ]);
     }
 
     public function test_it_is_idempotent_for_repeated_invitation_upserts(): void
@@ -153,5 +184,45 @@ class UpsertCampaignInvitationActionTest extends TestCase
                 ->where('user_id', $invitee->id)
                 ->count()
         );
+    }
+
+    public function test_it_keeps_owner_gm_membership_stable_when_legacy_owner_invitation_is_mutated(): void
+    {
+        $owner = User::factory()->gm()->canCreateCampaigns()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+        \App\Models\CampaignMembership::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now()->subDay(),
+        ]);
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'accepted_at' => now()->subDay(),
+            'responded_at' => now()->subDay(),
+            'created_at' => now()->subDays(2),
+        ]);
+
+        app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
+            campaign: $campaign,
+            inviteeUserId: (int) $owner->id,
+            inviterUserId: (int) $owner->id,
+            requestedRole: CampaignInvitation::ROLE_PLAYER,
+        ));
+
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $owner->id,
+            'role' => CampaignMembershipRole::GM->value,
+        ]);
     }
 }

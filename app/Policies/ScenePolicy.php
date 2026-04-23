@@ -36,9 +36,7 @@ class ScenePolicy
             return true;
         }
 
-        return $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return $campaign->canManageCampaign($user);
     }
 
     /**
@@ -46,9 +44,7 @@ class ScenePolicy
      */
     public function create(User $user, Campaign $campaign): bool
     {
-        return $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return $campaign->canManageCampaign($user);
     }
 
     /**
@@ -61,9 +57,7 @@ class ScenePolicy
             return false;
         }
 
-        return $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return $campaign->canManageCampaign($user);
     }
 
     /**
@@ -76,9 +70,7 @@ class ScenePolicy
             return false;
         }
 
-        return $campaign->owner_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return $campaign->canManageCampaign($user);
     }
 
     private function resolveCampaign(Scene $scene): ?Campaign

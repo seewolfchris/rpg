@@ -23,7 +23,7 @@ class AuthorizationWorldContextMutationHxTest extends AuthorizationWorldContextM
         $cases = [
             'owner' => [$owner, 200],
             'co-gm' => [$coGm, 200],
-            'admin' => [$admin, 200],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -215,7 +215,7 @@ class AuthorizationWorldContextMutationHxTest extends AuthorizationWorldContextM
                 postIds: [],
                 sceneId: (int) $scene->id,
             ))
-            ->assertNotFound();
+            ->assertForbidden();
 
         $inactiveWorld = World::factory()->create([
             'slug' => 'a3-hx-bulk-moderation-inaktiv',
@@ -252,7 +252,7 @@ class AuthorizationWorldContextMutationHxTest extends AuthorizationWorldContextM
         $cases = [
             'owner' => [$owner, 200],
             'co-gm' => [$coGm, 200],
-            'admin' => [$admin, 200],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -391,7 +391,7 @@ class AuthorizationWorldContextMutationHxTest extends AuthorizationWorldContextM
         $cases = [
             'owner' => [$owner, 200],
             'co-gm' => [$coGm, 200],
-            'admin' => [$admin, 200],
+            'admin' => [$admin, 403],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];

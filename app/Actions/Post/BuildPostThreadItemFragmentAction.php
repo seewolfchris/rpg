@@ -56,15 +56,15 @@ class BuildPostThreadItemFragmentAction
 
         return (int) $user->sceneBookmarks()
             ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
-                if ($user->isGmOrAdmin()) {
-                    return;
-                }
-
                 $campaignQuery->where(function (Builder $innerQuery) use ($user): void {
                     $innerQuery
                         ->where('is_public', true)
                         ->orWhere('owner_id', $user->id)
+                        ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
+                            $membershipQuery->where('user_id', (int) $user->id);
+                        })
                         ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
+                            // Transitional fallback until invitation-only legacy rows are fully backfilled.
                             $invitationQuery
                                 ->where('user_id', $user->id)
                                 ->where('status', CampaignInvitation::STATUS_ACCEPTED);

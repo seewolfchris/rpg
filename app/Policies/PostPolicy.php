@@ -24,13 +24,11 @@ class PostPolicy
     {
         $campaign = $this->resolveCampaignFromPost($post);
         if (! $campaign instanceof Campaign) {
-            return $post->user_id === $user->id
-                || $user->isGmOrAdmin();
+            return (int) $post->user_id === (int) $user->id;
         }
 
         return $campaign->isVisibleTo($user)
-            || $post->user_id === $user->id
-            || $user->isGmOrAdmin();
+            || (int) $post->user_id === (int) $user->id;
     }
 
     /**
@@ -43,7 +41,7 @@ class PostPolicy
             return false;
         }
 
-        if ($scene->status !== 'open' && ! $user->isGmOrAdmin() && ! $campaign->isCoGm($user)) {
+        if ($scene->status !== 'open' && ! $campaign->canModeratePosts($user)) {
             return false;
         }
 
@@ -57,16 +55,15 @@ class PostPolicy
     {
         $campaign = $this->resolveCampaignFromPost($post);
         if (! $campaign instanceof Campaign) {
-            return $user->isGmOrAdmin();
+            return (int) $post->user_id === (int) $user->id;
         }
 
         if (! $campaign->isVisibleTo($user)) {
             return false;
         }
 
-        return $post->user_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return (int) $post->user_id === (int) $user->id
+            || $campaign->canModeratePosts($user);
     }
 
     /**
@@ -76,24 +73,23 @@ class PostPolicy
     {
         $campaign = $this->resolveCampaignFromPost($post);
         if (! $campaign instanceof Campaign) {
-            return $user->isGmOrAdmin();
+            return (int) $post->user_id === (int) $user->id;
         }
 
         if (! $campaign->isVisibleTo($user)) {
             return false;
         }
 
-        return $post->user_id === $user->id
-            || $user->isGmOrAdmin()
-            || $campaign->isCoGm($user);
+        return (int) $post->user_id === (int) $user->id
+            || $campaign->canModeratePosts($user);
     }
 
     public function moderate(User $user, Post $post): bool
     {
         $campaign = $this->resolveCampaignFromPost($post);
 
-        return $user->isGmOrAdmin()
-            || ($campaign instanceof Campaign && $campaign->isCoGm($user));
+        return $campaign instanceof Campaign
+            && $campaign->canModeratePosts($user);
     }
 
     private function resolveCampaignFromPost(Post $post): ?Campaign

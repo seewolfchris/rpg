@@ -13,7 +13,7 @@ class GmIndexController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user instanceof User && ($user->isGmOrAdmin() || $user->hasAnyCoGmCampaignAccess()),
+            $user instanceof User && ($user->isAdmin() || $user->hasAnyCoGmCampaignAccess()),
             403
         );
 

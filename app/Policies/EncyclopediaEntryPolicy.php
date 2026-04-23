@@ -29,7 +29,7 @@ class EncyclopediaEntryPolicy
 
     public function review(User $user, World $world): bool
     {
-        if ($user->isGmOrAdmin()) {
+        if ($user->isAdmin()) {
             return true;
         }
 
