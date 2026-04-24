@@ -490,20 +490,130 @@
         word-break: break-word;
     }
 
-    .landing-hero-figure {
-        box-shadow: 0 30px 60px rgb(0 0 0 / 40%);
+    .landing-hero-shell {
+        min-height: clamp(24rem, 58vw, 37rem);
         isolation: isolate;
-        overflow: clip;
     }
 
-    .landing-hero-image {
+    .landing-hero-media {
+        overflow: hidden;
+    }
+
+    .landing-hero-banner {
         display: block;
-        transition: filter 260ms ease;
+        transform: scale(1.02);
+        transition:
+            filter 260ms ease,
+            transform 320ms ease;
+    }
+
+    .landing-hero-overlay {
+        background:
+            linear-gradient(96deg, rgb(4 6 10 / 88%) 0%, rgb(6 8 12 / 74%) 42%, rgb(8 10 14 / 40%) 66%, rgb(6 8 12 / 56%) 100%),
+            linear-gradient(to top, rgb(4 4 6 / 70%), rgb(6 7 11 / 10%));
+    }
+
+    .landing-hero-content {
+        min-height: inherit;
+    }
+
+    .landing-hero-text {
+        text-wrap: balance;
+    }
+
+    .landing-hero-points {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .landing-hero-points li {
+        position: relative;
+        padding-left: 1rem;
+    }
+
+    .landing-hero-points li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.58em;
+        width: 0.44rem;
+        height: 0.44rem;
+        border-radius: 9999px;
+        background: rgb(251 191 36 / 88%);
+        box-shadow: 0 0 0 2px rgb(217 119 6 / 25%);
+    }
+
+    .landing-hero-actions > * {
+        min-width: 11.25rem;
+    }
+
+    .landing-hero-cta-primary {
+        box-shadow: 0 14px 28px rgb(0 0 0 / 28%);
+    }
+
+    .landing-hero-cta-secondary {
+        background: rgb(12 10 9 / 44%);
+    }
+
+    .landing-hero-cta-tertiary {
+        border-color: rgb(87 83 78 / 92%);
+        background: rgb(12 10 9 / 46%);
+        color: rgb(231 229 228);
+    }
+
+    .landing-hero-worlds .ui-badge {
+        border-color: rgb(161 161 170 / 45%);
+        background: rgb(12 10 9 / 62%);
+        color: rgb(231 229 228);
     }
 
     @media (hover: hover) {
-        .landing-hero-figure:hover .landing-hero-image {
+        .landing-hero-shell:hover .landing-hero-banner {
             filter: saturate(1.08) brightness(1.03);
+            transform: scale(1.035);
+        }
+    }
+
+    @media (min-width: 1536px) {
+        .landing-hero-shell {
+            min-height: clamp(29rem, 43vw, 40rem);
+        }
+
+        .landing-hero-text {
+            max-width: 41rem;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .landing-hero-shell {
+            min-height: clamp(24rem, 78vw, 34rem);
+        }
+
+        .landing-hero-overlay {
+            background:
+                linear-gradient(102deg, rgb(4 6 10 / 90%) 0%, rgb(6 8 12 / 80%) 46%, rgb(8 10 14 / 48%) 100%),
+                linear-gradient(to top, rgb(4 4 6 / 72%), rgb(6 7 11 / 16%));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .landing-hero-shell {
+            min-height: clamp(23rem, 108vw, 31rem);
+            border-radius: 1.2rem;
+        }
+
+        .landing-hero-content {
+            padding: 1.1rem;
+        }
+
+        .landing-hero-points {
+            gap: 0.42rem;
+        }
+
+        .landing-hero-actions > * {
+            min-width: 0;
+            flex: 1 1 100%;
         }
     }
 
