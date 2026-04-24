@@ -228,45 +228,51 @@
                 </section>
 
                 <section id="welten" class="mt-8">
-                    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-                        <div>
-                            <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Multi-World</p>
-                            <h2 class="font-heading text-3xl text-stone-100">Betrete eine Welt</h2>
-                            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-300">
-                                Ein gemeinsames Dach, mehrere Genres: von düsterer Fantasy bis Sci-Fi und Noir.
-                            </p>
+                    <div class="landing-worlds-intro rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="max-w-3xl">
+                                <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Multi-World</p>
+                                <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Viele Welten, ein gemeinsames Dach</h2>
+                                <p class="mt-3 text-sm leading-relaxed text-stone-300 sm:text-base">
+                                    C76-RPG vereint unterschiedliche Erzählstile auf einer Plattform:
+                                    Jede Welt hat ihren Ton, aber Einstieg und Zusammenarbeit bleiben vertraut.
+                                </p>
+                            </div>
+                            <a href="{{ route('worlds.index') }}" class="ui-btn inline-flex">Alle Welten</a>
                         </div>
-                        <a href="{{ route('worlds.index') }}" class="ui-btn">Alle Welten</a>
+
+                        <ul class="landing-world-genre-strip mt-4 flex flex-wrap gap-2">
+                            <li><span class="landing-world-genre-chip">Düstere Fantasy</span></li>
+                            <li><span class="landing-world-genre-chip">Klassische Abenteuer</span></li>
+                            <li><span class="landing-world-genre-chip">Ermittlungen und graue Wahrheiten</span></li>
+                            <li><span class="landing-world-genre-chip">Geschichten im Hier und Jetzt</span></li>
+                            <li><span class="landing-world-genre-chip">Sterne und synthetische Konflikte</span></li>
+                            <li><span class="landing-world-genre-chip">Fragile Ordnung nach dem Zusammenbruch</span></li>
+                        </ul>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
                         @forelse ($worlds as $world)
-                            @php($snippetSource = trim((string) ($world->tagline ?: $world->description ?: 'Eine neue Szene beginnt, sobald du den ersten Beitrag setzt.')))
-                            @php($worldSnippet = \Illuminate\Support\Str::limit($snippetSource, 150))
-                            @php($hoverSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
-                            <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80" data-parallax-layer data-parallax-depth="0.018">
-                                <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
-                                @if ($world->tagline)
-                                    <p class="mt-2 text-sm text-amber-200">{{ $world->tagline }}</p>
+                            @php($worldTagline = trim((string) ($world->tagline ?? '')))
+                            @php($descriptionSource = trim((string) ($world->description ?? '')))
+                            @php($fallbackSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
+                            @php($teaserSource = $descriptionSource !== '' ? $descriptionSource : $fallbackSnippet)
+                            @php($worldSnippet = \Illuminate\Support\Str::limit($teaserSource, 180))
+                            <article class="landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80" data-parallax-layer data-parallax-depth="0.018">
+                                <div class="flex items-start justify-between gap-3">
+                                    <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
+                                    <span class="landing-world-campaigns ui-badge whitespace-nowrap">{{ $world->campaigns_count }} Kampagnen</span>
+                                </div>
+
+                                @if ($worldTagline !== '')
+                                    <p class="mt-2 text-sm text-amber-200">{{ \Illuminate\Support\Str::limit($worldTagline, 110) }}</p>
                                 @endif
-                                <p class="mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
 
-                                <p class="landing-world-snippet mt-3 rounded-lg border border-amber-700/40 bg-amber-900/10 px-3 py-2 text-xs italic leading-relaxed text-amber-100 opacity-100 transition duration-300 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
-                                    {{ $hoverSnippet }}
-                                </p>
+                                <p class="landing-world-snippet mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
 
-                                <p class="mt-4 text-xs uppercase tracking-widest text-stone-500">{{ $world->campaigns_count }} Kampagnen</p>
-
-                                <div class="mt-4 flex flex-wrap gap-2">
-                                    <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn inline-flex">Welt ansehen</a>
-                                    @auth
-                                        <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt betreten</a>
-                                    @else
-                                        <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
-                                            @csrf
-                                            <button type="submit" class="ui-btn ui-btn-accent inline-flex">Welt betreten</button>
-                                        </form>
-                                    @endauth
+                                <div class="mt-5 flex flex-wrap gap-2">
+                                    <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt entdecken</a>
+                                    <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn inline-flex">Kampagnen ansehen</a>
                                 </div>
                             </article>
                         @empty

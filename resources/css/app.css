@@ -617,8 +617,66 @@
         }
     }
 
+    .landing-worlds-intro {
+        background:
+            radial-gradient(160% 110% at 0% 0%, rgb(180 83 9 / 12%), transparent 56%),
+            radial-gradient(120% 100% at 100% 100%, rgb(30 41 59 / 18%), transparent 62%),
+            rgb(0 0 0 / 35%);
+    }
+
+    .landing-world-genre-strip {
+        align-items: center;
+    }
+
+    .landing-world-genre-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        border: 1px solid rgb(87 83 78 / 84%);
+        background: rgb(10 10 10 / 62%);
+        padding: 0.3rem 0.7rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgb(231 229 228 / 92%);
+    }
+
     .landing-world-card {
         min-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .landing-world-snippet {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        overflow: hidden;
+    }
+
+    .landing-world-campaigns {
+        border-color: rgb(87 83 78 / 90%);
+        background: rgb(10 10 10 / 68%);
+        color: rgb(214 211 209);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .landing-world-card .ui-btn {
+        justify-content: center;
+    }
+
+    @media (min-width: 1536px) {
+        .landing-world-snippet {
+            -webkit-line-clamp: 5;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .landing-world-card .ui-btn {
+            width: 100%;
+        }
     }
 
     .thread-mood-indicator {
