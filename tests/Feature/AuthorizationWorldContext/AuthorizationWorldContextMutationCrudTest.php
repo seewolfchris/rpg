@@ -72,6 +72,52 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         }
     }
 
+    public function test_posts_update_denies_unauthorized_actor_before_payload_validation(): void
+    {
+        [$campaign, $owner, , $player, $outsider] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'A3 Post update boundary baseline',
+            'moderation_status' => 'pending',
+            'approved_at' => null,
+            'approved_by' => null,
+        ]);
+
+        $response = $this->actingAs($outsider)
+            ->from(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->patch(route('posts.update', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]), [
+                'post_type' => 'ic',
+                'content_format' => 'plain',
+                'content' => '',
+            ]);
+
+        $response->assertForbidden();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'content' => 'A3 Post update boundary baseline',
+        ]);
+    }
+
     public function test_posts_update_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
     {
         [$campaign, $owner, $coGm, $player] = $this->seedCampaignRoleMatrix(worldActive: true);
