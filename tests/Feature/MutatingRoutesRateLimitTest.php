@@ -9,11 +9,61 @@ use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Route as LaravelRoute;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class MutatingRoutesRateLimitTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * @var array<string, string>
+     */
+    private const THROTTLE_EXEMPT_MUTATING_WEB_ROUTES = [
+        'POST login' => 'Login is throttled inside LoginRequest by email and IP to keep auth failure handling centralized.',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const ACCESS_SCOPE_EXEMPT_MUTATING_WEB_ROUTES = [
+        'POST welten/{world}/aktivieren' => 'Public session-only world switch; CSRF-protected by web middleware and limited by throttle:writes.',
+    ];
+
+    public function test_mutating_web_routes_have_documented_protection(): void
+    {
+        $violations = [];
+
+        foreach (Route::getRoutes() as $route) {
+            if (! $this->isMutatingRoute($route) || $this->isLocalTestingRoute($route)) {
+                continue;
+            }
+
+            $middleware = $route->gatherMiddleware();
+            if (! $this->hasMiddleware($middleware, 'web')) {
+                continue;
+            }
+
+            $signature = $this->routeSignature($route);
+
+            if (
+                ! $this->hasThrottleMiddleware($middleware)
+                && ! array_key_exists($signature, self::THROTTLE_EXEMPT_MUTATING_WEB_ROUTES)
+            ) {
+                $violations[] = $signature.' is missing throttle middleware.';
+            }
+
+            if (
+                ! $this->hasAnyMiddleware($middleware, ['auth', 'guest'])
+                && ! array_key_exists($signature, self::ACCESS_SCOPE_EXEMPT_MUTATING_WEB_ROUTES)
+            ) {
+                $violations[] = $signature.' is missing auth/guest scope middleware.';
+            }
+        }
+
+        $this->assertSame([], $violations, implode(PHP_EOL, $violations));
+    }
 
     public function test_write_routes_are_rate_limited(): void
     {
@@ -157,5 +207,69 @@ class MutatingRoutesRateLimitTest extends TestCase
         ]);
 
         return [$gm, $player, $post];
+    }
+
+    private function isMutatingRoute(LaravelRoute $route): bool
+    {
+        return array_intersect($this->mutatingMethods($route), ['POST', 'PUT', 'PATCH', 'DELETE']) !== [];
+    }
+
+    private function isLocalTestingRoute(LaravelRoute $route): bool
+    {
+        $name = (string) $route->getName();
+        $uri = $route->uri();
+
+        return str_starts_with($name, 'e2e.')
+            || str_starts_with($uri, '_e2e/');
+    }
+
+    /**
+     * @param  list<string>  $middleware
+     */
+    private function hasThrottleMiddleware(array $middleware): bool
+    {
+        foreach ($middleware as $entry) {
+            if (str_starts_with($entry, 'throttle:')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<string>  $middleware
+     */
+    private function hasMiddleware(array $middleware, string $expected): bool
+    {
+        return in_array($expected, $middleware, true);
+    }
+
+    /**
+     * @param  list<string>  $middleware
+     * @param  list<string>  $expectedMiddleware
+     */
+    private function hasAnyMiddleware(array $middleware, array $expectedMiddleware): bool
+    {
+        foreach ($expectedMiddleware as $expected) {
+            if ($this->hasMiddleware($middleware, $expected)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function routeSignature(LaravelRoute $route): string
+    {
+        return implode('|', $this->mutatingMethods($route)).' '.$route->uri();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function mutatingMethods(LaravelRoute $route): array
+    {
+        return array_values(array_intersect($route->methods(), ['POST', 'PUT', 'PATCH', 'DELETE']));
     }
 }
