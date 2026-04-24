@@ -490,6 +490,60 @@
         word-break: break-word;
     }
 
+    .landing-shell {
+        max-width: 88rem;
+    }
+
+    .landing-main section[id] {
+        scroll-margin-top: 5.8rem;
+    }
+
+    .landing-main .ui-btn {
+        min-height: 2.45rem;
+    }
+
+    .landing-main .ui-btn:focus-visible {
+        box-shadow:
+            0 0 0 2px rgb(251 191 36 / 65%),
+            0 0 0 5px rgb(7 10 14 / 88%);
+    }
+
+    .landing-action-row {
+        align-items: stretch;
+    }
+
+    .landing-action-row > form {
+        display: inline-flex;
+    }
+
+    .landing-action-row > form > .ui-btn {
+        width: 100%;
+    }
+
+    .landing-rpg-points > article,
+    .landing-how-pillars > li,
+    .landing-how-steps > li,
+    .landing-start-steps > li,
+    .landing-faq-grid > article {
+        min-height: 100%;
+    }
+
+    .landing-world-grid {
+        align-items: stretch;
+    }
+
+    .landing-world-card-actions {
+        margin-top: auto;
+        padding-top: 1.15rem;
+    }
+
+    .landing-world-card:focus-within {
+        border-color: rgb(217 119 6 / 70%);
+        box-shadow:
+            0 0 0 2px rgb(245 158 11 / 28%),
+            0 16px 34px rgb(0 0 0 / 30%);
+    }
+
     .landing-hero-shell {
         min-height: clamp(24rem, 58vw, 37rem);
         isolation: isolate;
@@ -576,12 +630,20 @@
     }
 
     @media (min-width: 1536px) {
+        .landing-shell {
+            max-width: 92rem;
+        }
+
         .landing-hero-shell {
             min-height: clamp(29rem, 43vw, 40rem);
         }
 
         .landing-hero-text {
             max-width: 41rem;
+        }
+
+        .landing-world-grid {
+            gap: 1.2rem;
         }
     }
 
@@ -614,6 +676,12 @@
         .landing-hero-actions > * {
             min-width: 0;
             flex: 1 1 100%;
+        }
+
+        .landing-hero-overlay {
+            background:
+                linear-gradient(108deg, rgb(4 6 10 / 94%) 0%, rgb(6 8 12 / 88%) 52%, rgb(8 10 14 / 62%) 100%),
+                linear-gradient(to top, rgb(4 4 6 / 78%), rgb(6 7 11 / 22%));
         }
     }
 
@@ -674,6 +742,30 @@
     }
 
     @media (max-width: 640px) {
+        .landing-action-row > * {
+            width: 100%;
+            flex: 1 1 100%;
+        }
+
+        .landing-action-row > .ui-btn,
+        .landing-action-row > form > .ui-btn {
+            width: 100%;
+        }
+
+        .landing-world-genre-strip {
+            gap: 0.38rem;
+        }
+
+        .landing-world-genre-chip {
+            font-size: 0.62rem;
+            letter-spacing: 0.04em;
+            padding: 0.28rem 0.56rem;
+        }
+
+        .landing-world-card-actions {
+            padding-top: 0.95rem;
+        }
+
         .landing-world-card .ui-btn {
             width: 100%;
         }
@@ -1161,6 +1253,18 @@
             transform: none !important;
             opacity: 1 !important;
             animation: none !important;
+        }
+
+        .landing-hero-shell:hover .landing-hero-banner,
+        .landing-world-card:hover,
+        .landing-main .ui-btn:hover {
+            transform: none !important;
+        }
+
+        .landing-hero-banner,
+        .landing-world-card,
+        .landing-main .ui-btn {
+            transition: none !important;
         }
 
         .reading-progress-bookmark,

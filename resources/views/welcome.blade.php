@@ -86,7 +86,7 @@
         <div class="relative isolate overflow-x-clip">
             <div class="app-atmosphere pointer-events-none absolute inset-0 -z-10"></div>
 
-            <header class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <header class="landing-shell mx-auto flex w-full flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                 <div class="font-heading break-words text-xl tracking-[0.12em] text-amber-300 sm:text-2xl sm:tracking-[0.20em]">
                     C76-RPG
                 </div>
@@ -113,7 +113,7 @@
                 </div>
             </header>
 
-            <main class="mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8 lg:pb-24">
+            <main class="landing-shell landing-main mx-auto w-full break-words px-5 pb-16 pt-2 sm:px-8 lg:pb-24">
                 <section id="hero" class="landing-hero-shell relative mt-1 overflow-hidden rounded-[1.75rem] border border-stone-700/80 bg-black/35 shadow-2xl shadow-black/35" data-parallax-scene>
                     <figure class="landing-hero-media absolute inset-0 -z-10">
                         <img
@@ -183,7 +183,7 @@
                     </div>
                 </section>
 
-                <section id="kurzintro" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                <section id="kurzintro" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Kurzintro</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Gemeinsam Geschichten erleben</h2>
                     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
@@ -193,14 +193,14 @@
                     <a href="{{ route('knowledge.global.index') }}" class="ui-btn mt-4 inline-flex">Wissenszentrum öffnen</a>
                 </section>
 
-                <section id="was-ist-rpg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                <section id="was-ist-rpg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Für Einsteiger</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Was ist RPG?</h2>
                     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
                         Im Rollenspiel schreibst du eine Figur in einer gemeinsamen Geschichte.
                         Entscheidungen, Begegnungen und Konsequenzen entstehen Satz für Satz zusammen mit anderen.
                     </p>
-                    <div class="mt-4 grid gap-3 md:grid-cols-3">
+                    <div class="landing-rpg-points mt-4 grid gap-3 md:grid-cols-3">
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <h3 class="font-heading text-lg text-stone-100">Du spielst eine Figur</h3>
                             <p class="mt-2 text-sm leading-relaxed text-stone-300">Du entscheidest, wie sie denkt, spricht und handelt.</p>
@@ -216,7 +216,7 @@
                     </div>
                 </section>
 
-                <section id="wie-funktionierts" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                <section id="wie-funktionierts" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Ablauf</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Wie funktioniert C76-RPG?</h2>
                     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
@@ -224,7 +224,7 @@
                         In jeder Szene schreiben Spieler und Spielleitung nacheinander Beiträge statt in einem Live-Chat.
                     </p>
 
-                    <ul class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 sm:grid-cols-2 xl:grid-cols-5">
+                    <ul class="landing-how-pillars mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 sm:grid-cols-2 xl:grid-cols-5">
                         <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Kampagne</p>
                             <p class="mt-2">Der größere Handlungsrahmen einer Welt.</p>
@@ -247,7 +247,7 @@
                         </li>
                     </ul>
 
-                    <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
+                    <ol class="landing-how-steps mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
                         <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <p class="font-semibold text-stone-100">1. Kampagne wählen</p>
                             <p class="mt-2">Suche dir eine Welt und einen Einstieg, der dich anspricht.</p>
@@ -265,13 +265,13 @@
                             <p class="mt-2">Du steigst wieder ein, sobald neue Antworten da sind.</p>
                         </li>
                     </ol>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="landing-action-row mt-4 flex flex-wrap gap-2">
                         <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn ui-btn-accent inline-flex">Schnellstart ansehen</a>
                         <a href="{{ route('knowledge.global.rules') }}" class="ui-btn inline-flex">Regelwerk öffnen</a>
                     </div>
                 </section>
 
-                <section id="welten" class="mt-8">
+                <section id="welten" class="mt-8 xl:mt-10">
                     <div class="landing-worlds-intro rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div class="max-w-3xl">
@@ -295,7 +295,7 @@
                         </ul>
                     </div>
 
-                    <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
+                    <div class="landing-world-grid mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
                         @forelse ($worlds as $world)
                             @php($worldTagline = trim((string) ($world->tagline ?? '')))
                             @php($descriptionSource = trim((string) ($world->description ?? '')))
@@ -314,7 +314,7 @@
 
                                 <p class="landing-world-snippet mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
 
-                                <div class="mt-5 flex flex-wrap gap-2">
+                                <div class="landing-world-card-actions flex flex-wrap gap-2">
                                     <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt entdecken</a>
                                     <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn inline-flex">Kampagnen ansehen</a>
                                 </div>
@@ -327,13 +327,13 @@
                     </div>
                 </section>
 
-                <section id="einstieg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                <section id="einstieg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Startpfad</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Einstieg in 3 Schritten</h2>
                     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
                         Du musst nicht alles vorher wissen. Fang klein an und geh Schritt für Schritt vor.
                     </p>
-                    <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
+                    <ol class="landing-start-steps mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
                         <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Schritt 1</p>
                             <h3 class="mt-2 font-heading text-lg text-stone-100">Konto öffnen</h3>
@@ -353,7 +353,7 @@
                             <p class="mt-2 text-xs text-stone-400">Hinweis: Klar und ehrlich ist wichtiger als perfekt.</p>
                         </li>
                     </ol>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="landing-action-row mt-4 flex flex-wrap gap-2">
                         @guest
                             <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex">Jetzt starten</a>
                         @else
@@ -364,7 +364,7 @@
                     </div>
                 </section>
 
-                <section id="warum-schriftbasiert" class="mt-8">
+                <section id="warum-schriftbasiert" class="mt-8 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Warum Play-by-Post?</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Warum schriftbasiert?</h2>
                     <ul class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
@@ -374,13 +374,13 @@
                     </ul>
                 </section>
 
-                <section id="faq-anfaenger" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                <section id="faq-anfaenger" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">FAQ</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">FAQ für Anfänger</h2>
                     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
                         Die häufigsten Einstiegsfragen kurz beantwortet.
                     </p>
-                    <div class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
+                    <div class="landing-faq-grid mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <h3 class="font-heading text-lg text-stone-100">Brauche ich Erfahrung?</h3>
                             <p class="mt-2">Nein. Du kannst mit kurzen Beiträgen starten und lernst beim Mitspielen.</p>
@@ -405,16 +405,16 @@
                             </p>
                         </article>
                     </div>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                    <div class="landing-action-row mt-4 flex flex-wrap gap-2">
                         <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn ui-btn-accent inline-flex">Schnellstart öffnen</a>
                         <a href="{{ route('knowledge.global.index') }}" class="ui-btn inline-flex">Wissenszentrum öffnen</a>
                     </div>
                 </section>
 
-                <section id="finaler-cta" class="mt-8 rounded-2xl border border-amber-700/45 bg-amber-900/10 p-6 sm:p-7">
+                <section id="finaler-cta" class="mt-8 rounded-2xl border border-amber-700/45 bg-amber-900/10 p-6 sm:p-7 xl:mt-10">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/85">Dein Platz in der Geschichte</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Starte mit deinem nächsten Satz.</h2>
-                    <div class="mt-5 flex flex-wrap items-center gap-3 sm:gap-4">
+                    <div class="landing-action-row landing-action-row-prominent mt-5 flex flex-wrap items-center gap-3 sm:gap-4">
                         @guest
                             <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex px-6 py-3 text-sm">
                                 Jetzt starten
@@ -434,7 +434,7 @@
                 </section>
             </main>
 
-            <footer class="mx-auto w-full max-w-6xl border-t border-stone-800/80 px-5 py-6 text-center text-xs tracking-widest text-stone-500 sm:px-8">
+            <footer class="landing-shell mx-auto w-full border-t border-stone-800/80 px-5 py-6 text-center text-xs tracking-widest text-stone-500 sm:px-8">
                 <div>
                     @include('partials.version-footer')
                 </div>
