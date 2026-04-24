@@ -56,4 +56,14 @@ class HomeLandingInformationArchitectureTest extends TestCase
             ->assertSee('href="'.route('dashboard').'"', false)
             ->assertDontSee('href="'.route('register').'"', false);
     }
+
+    public function test_home_contains_beginner_guidance_links_to_knowledge_routes(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk()
+            ->assertSee('href="'.route('knowledge.global.how-to-play').'"', false)
+            ->assertSee('href="'.route('knowledge.global.index').'"', false)
+            ->assertSee('href="'.route('knowledge.global.rules').'"', false);
+    }
 }

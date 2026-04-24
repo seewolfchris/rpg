@@ -193,21 +193,25 @@
                     <a href="{{ route('knowledge.global.index') }}" class="ui-btn mt-4 inline-flex">Wissenszentrum öffnen</a>
                 </section>
 
-                <section id="was-ist-rpg" class="mt-8">
+                <section id="was-ist-rpg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Für Einsteiger</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Was ist RPG?</h2>
+                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
+                        Im Rollenspiel schreibst du eine Figur in einer gemeinsamen Geschichte.
+                        Entscheidungen, Begegnungen und Konsequenzen entstehen Satz für Satz zusammen mit anderen.
+                    </p>
                     <div class="mt-4 grid gap-3 md:grid-cols-3">
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Gemeinsames Erzählen</h3>
-                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Mehrere Figuren treiben dieselbe Handlung voran.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Du spielst eine Figur</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Du entscheidest, wie sie denkt, spricht und handelt.</p>
                         </article>
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Rolle statt Zuschauer</h3>
-                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Du schreibst aus Sicht deiner Figur und reagierst auf andere.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Ihr schreibt gemeinsam</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Mehrere Figuren formen dieselbe Handlung aus verschiedenen Blickwinkeln.</p>
                         </article>
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Asynchron</h3>
-                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Du brauchst keinen festen Termin, nur einen nächsten Beitrag.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Ereignisse bewegen die Story</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Begegnungen, Konflikte und Entscheidungen treiben alles weiter.</p>
                         </article>
                     </div>
                 </section>
@@ -215,11 +219,51 @@
                 <section id="wie-funktionierts" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Ablauf</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Wie funktioniert C76-RPG?</h2>
+                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
+                        Geschichten laufen in Kampagnen. Eine Kampagne besteht aus Szenen.
+                        In jeder Szene schreiben Spieler und Spielleitung nacheinander Beiträge statt in einem Live-Chat.
+                    </p>
+
+                    <ul class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 sm:grid-cols-2 xl:grid-cols-5">
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Kampagne</p>
+                            <p class="mt-2">Der größere Handlungsrahmen einer Welt.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Szene</p>
+                            <p class="mt-2">Ein konkreter Ort oder Moment in der Story.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Beitrag</p>
+                            <p class="mt-2">Dein nächster Text aus Sicht deiner Figur.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Spielleitung</p>
+                            <p class="mt-2">Setzt Rahmen, Impulse und Konsequenzen.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Asynchron</p>
+                            <p class="mt-2">Du antwortest, wenn Zeit ist - nicht gleichzeitig.</p>
+                        </li>
+                    </ul>
+
                     <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">1. Welt auswählen und Kontext lesen.</li>
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">2. Figur erstellen oder vorhandene Figur nutzen.</li>
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">3. In eine Szene einsteigen und IC posten.</li>
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">4. Auf Reaktionen antworten und den Thread weiterführen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="font-semibold text-stone-100">1. Kampagne wählen</p>
+                            <p class="mt-2">Suche dir eine Welt und einen Einstieg, der dich anspricht.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="font-semibold text-stone-100">2. Szene lesen</p>
+                            <p class="mt-2">Lies kurz, was passiert ist und wo deine Figur ansetzen kann.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="font-semibold text-stone-100">3. Beitrag schreiben</p>
+                            <p class="mt-2">Ein kurzer, klarer Beitrag reicht für den Start.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="font-semibold text-stone-100">4. Reagieren und weiterspielen</p>
+                            <p class="mt-2">Du steigst wieder ein, sobald neue Antworten da sind.</p>
+                        </li>
                     </ol>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn ui-btn-accent inline-flex">Schnellstart ansehen</a>
@@ -286,11 +330,38 @@
                 <section id="einstieg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Startpfad</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Einstieg in 3 Schritten</h2>
+                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
+                        Du musst nicht alles vorher wissen. Fang klein an und geh Schritt für Schritt vor.
+                    </p>
                     <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">1. Konto anlegen und erste Welt wählen.</li>
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">2. Kurz den Szenenkontext lesen.</li>
-                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">3. Deinen ersten IC-Satz posten.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Schritt 1</p>
+                            <h3 class="mt-2 font-heading text-lg text-stone-100">Konto öffnen</h3>
+                            <p class="mt-2">Registriere dich oder melde dich an.</p>
+                            <p class="mt-2 text-xs text-stone-400">Hinweis: Du brauchst kein Vorwissen.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Schritt 2</p>
+                            <h3 class="mt-2 font-heading text-lg text-stone-100">Welt und Szene wählen</h3>
+                            <p class="mt-2">Suche eine laufende Geschichte, die zu dir passt.</p>
+                            <p class="mt-2 text-xs text-stone-400">Hinweis: Lies kurz den Kontext vor deinem Einstieg.</p>
+                        </li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <p class="text-xs uppercase tracking-[0.10em] text-amber-200/90">Schritt 3</p>
+                            <h3 class="mt-2 font-heading text-lg text-stone-100">Ersten Beitrag schreiben</h3>
+                            <p class="mt-2">Starte mit ein paar Sätzen aus Sicht deiner Figur.</p>
+                            <p class="mt-2 text-xs text-stone-400">Hinweis: Klar und ehrlich ist wichtiger als perfekt.</p>
+                        </li>
                     </ol>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        @guest
+                            <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex">Jetzt starten</a>
+                        @else
+                            <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex">Zum Dashboard</a>
+                        @endguest
+                        <a href="#welten" class="ui-btn inline-flex">Welt auswählen</a>
+                        <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn inline-flex">Schnellstart lesen</a>
+                    </div>
                 </section>
 
                 <section id="warum-schriftbasiert" class="mt-8">
@@ -306,25 +377,38 @@
                 <section id="faq-anfaenger" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
                     <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">FAQ</p>
                     <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">FAQ für Anfänger</h2>
+                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
+                        Die häufigsten Einstiegsfragen kurz beantwortet.
+                    </p>
                     <div class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                             <h3 class="font-heading text-lg text-stone-100">Brauche ich Erfahrung?</h3>
-                            <p class="mt-2">Nein. Du kannst mit kurzen Beiträgen starten und dich Schritt für Schritt einfinden.</p>
+                            <p class="mt-2">Nein. Du kannst mit kurzen Beiträgen starten und lernst beim Mitspielen.</p>
                         </article>
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Wie viel Zeit braucht es?</h3>
-                            <p class="mt-2">Du schreibst asynchron. Ein Beitrag dauert oft nur wenige Minuten.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Muss ich ständig online sein?</h3>
+                            <p class="mt-2">Nein. C76-RPG ist asynchron, du antwortest, wenn du Zeit hast.</p>
                         </article>
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Wo beginne ich am besten?</h3>
-                            <p class="mt-2">Am schnellsten geht es über den geführten Einstieg im Wissenszentrum.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Muss ich perfekt schreiben können?</h3>
+                            <p class="mt-2">Nein. Verständlich und stimmungsvoll reicht völlig aus.</p>
                         </article>
                         <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
-                            <h3 class="font-heading text-lg text-stone-100">Was ist IC und OOC?</h3>
-                            <p class="mt-2">IC ist Spieltext in der Figur. OOC ist kurze Abstimmung außerhalb der Szene.</p>
+                            <h3 class="font-heading text-lg text-stone-100">Wie schnell muss ich antworten?</h3>
+                            <p class="mt-2">So schnell wie es für dich passt. Es gibt keinen Live-Chat-Zwang.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4 md:col-span-2">
+                            <h3 class="font-heading text-lg text-stone-100">Wo finde ich Hilfe und eine Einführung?</h3>
+                            <p class="mt-2">
+                                Im Wissenszentrum findest du Schnellstart, Regeln und Begriffe.
+                                Wenn du unsicher bist, starte mit dem Schnellstart und geh dann Schritt für Schritt weiter.
+                            </p>
                         </article>
                     </div>
-                    <a href="{{ route('knowledge.global.index') }}" class="ui-btn mt-4 inline-flex">Mehr im Wissenszentrum</a>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn ui-btn-accent inline-flex">Schnellstart öffnen</a>
+                        <a href="{{ route('knowledge.global.index') }}" class="ui-btn inline-flex">Wissenszentrum öffnen</a>
+                    </div>
                 </section>
 
                 <section id="finaler-cta" class="mt-8 rounded-2xl border border-amber-700/45 bg-amber-900/10 p-6 sm:p-7">
