@@ -1023,6 +1023,42 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
         ]);
     }
 
+    public function test_posts_store_denies_unauthorized_actor_before_payload_validation(): void
+    {
+        [$campaign, $owner, , , $outsider] = $this->seedCampaignRoleMatrix(worldActive: true);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $response = $this->actingAs($outsider)
+            ->from(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'content_format' => 'plain',
+                'content' => '',
+            ]);
+
+        $response->assertForbidden();
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('posts', [
+            'scene_id' => $scene->id,
+            'user_id' => $outsider->id,
+        ]);
+    }
+
     public function test_posts_store_co_gm_negative_scope_cases_same_world_and_foreign_world(): void
     {
         [$campaign, , $coGm] = $this->seedCampaignRoleMatrix(worldActive: true);

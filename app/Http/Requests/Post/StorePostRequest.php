@@ -6,6 +6,7 @@ use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\DiceRoll;
+use App\Models\Post;
 use App\Models\Scene;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,12 @@ class StorePostRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        $scene = $this->route('scene');
+
+        return $user !== null
+            && $scene instanceof Scene
+            && $user->can('create', [Post::class, $scene]);
     }
 
     /**
