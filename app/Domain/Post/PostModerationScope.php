@@ -30,6 +30,10 @@ class PostModerationScope
                 $campaignQuery->where('world_id', (int) $world->id);
             });
 
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
         $coGmCampaignIds = $this->campaignParticipantResolver
             ->moderatableCampaignIdsForWorld($user, $world);
 

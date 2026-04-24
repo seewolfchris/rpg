@@ -48,6 +48,10 @@ class CampaignParticipantResolver
 
     public function canModerateWorldQueue(User $user, World $world): bool
     {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         return $this->moderatableCampaignIdsForWorld($user, $world)->isNotEmpty();
     }
 
@@ -97,6 +101,16 @@ class CampaignParticipantResolver
      */
     public function moderatableCampaignIdsForWorld(User $user, World $world): Collection
     {
+        if ($user->isAdmin()) {
+            return Campaign::query()
+                ->where('world_id', (int) $world->id)
+                ->pluck('id')
+                ->map(static fn ($campaignId): int => (int) $campaignId)
+                ->filter(static fn (int $campaignId): bool => $campaignId > 0)
+                ->unique()
+                ->values();
+        }
+
         return Campaign::query()
             ->where('world_id', (int) $world->id)
             ->where(function (Builder $campaignQuery) use ($user): void {
