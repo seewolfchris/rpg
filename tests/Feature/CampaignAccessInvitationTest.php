@@ -357,6 +357,83 @@ class CampaignAccessInvitationTest extends TestCase
         ]);
     }
 
+    public function test_owner_invitation_store_uses_generic_status_for_existing_email(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => $player->email,
+                'role' => CampaignInvitation::ROLE_PLAYER,
+            ]);
+
+        $response->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', 'Falls ein passender Account existiert, wurde die Einladung verarbeitet.');
+
+        $this->assertDatabaseHas('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'status' => CampaignInvitation::STATUS_PENDING,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ]);
+    }
+
+    public function test_owner_invitation_store_uses_same_generic_status_for_unknown_email(): void
+    {
+        $owner = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => 'unbekannt@example.test',
+                'role' => CampaignInvitation::ROLE_PLAYER,
+            ]);
+
+        $response->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('status', 'Falls ein passender Account existiert, wurde die Einladung verarbeitet.');
+
+        $this->assertDatabaseCount('campaign_invitations', 0);
+    }
+
+    public function test_non_owner_still_cannot_store_campaign_invitation(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $nonOwner = User::factory()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        $this->actingAs($nonOwner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => $player->email,
+                'role' => CampaignInvitation::ROLE_PLAYER,
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+        ]);
+    }
+
     public function test_repeated_invitation_store_requests_keep_single_invitation_record(): void
     {
         $owner = User::factory()->gm()->create();

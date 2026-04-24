@@ -21,6 +21,8 @@ class CampaignInvitationController extends Controller
 {
     use EnsuresWorldContext;
 
+    private const INVITATION_STORE_STATUS = 'Falls ein passender Account existiert, wurde die Einladung verarbeitet.';
+
     public function __construct(
         private readonly UpsertCampaignInvitationAction $upsertCampaignInvitationAction,
         private readonly RespondToCampaignInvitationAction $respondToCampaignInvitationAction,
@@ -76,7 +78,13 @@ class CampaignInvitationController extends Controller
 
         $invitee = User::query()
             ->where('email', $request->validated('email'))
-            ->firstOrFail();
+            ->first();
+
+        if (! $invitee instanceof User) {
+            return redirect()
+                ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
+                ->with('status', self::INVITATION_STORE_STATUS);
+        }
 
         if ($invitee->id === $campaign->owner_id) {
             return back()->withErrors([
@@ -96,7 +104,6 @@ class CampaignInvitationController extends Controller
         );
 
         $invitation = $result->invitation;
-        $isNew = $result->isNew;
         $wasAccepted = $result->wasAccepted;
 
         if (! $wasAccepted) {
@@ -104,15 +111,9 @@ class CampaignInvitationController extends Controller
             $invitee->notify(new CampaignInvitationNotification($invitation));
         }
 
-        $status = $wasAccepted
-            ? 'Teilnehmerrolle aktualisiert: '.$invitee->name
-            : ($isNew
-                ? 'Einladung versendet: '.$invitee->name
-                : 'Einladung erneut vorgemerkt: '.$invitee->name);
-
         return redirect()
             ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
-            ->with('status', $status);
+            ->with('status', self::INVITATION_STORE_STATUS);
     }
 
     public function decline(Request $request, World $world, CampaignInvitation $invitation): RedirectResponse
