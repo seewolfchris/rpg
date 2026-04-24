@@ -61,10 +61,12 @@ final class SceneThreadReadStateService
         }
 
         $unreadPostsCount = (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->where('id', '>', $lastReadPostIdBeforeOpen)
             ->count();
         $firstUnreadPostId = (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->where('id', '>', $lastReadPostIdBeforeOpen)
             ->orderBy('id')
@@ -108,6 +110,7 @@ final class SceneThreadReadStateService
     private function latestScenePostId(Scene $scene): int
     {
         return (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->max('id');
     }

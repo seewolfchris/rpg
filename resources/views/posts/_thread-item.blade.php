@@ -1,14 +1,31 @@
-@php
-    $isIcPost = $post->post_type === 'ic';
-    $isOocPost = $post->post_type === 'ooc';
-    $isGmNarration = $post->isGmNarration();
-    $postStyleClass = $isOocPost
-        ? 'thread-post-ooc'
-        : ($isGmNarration ? 'thread-post-gm' : 'thread-post-ic');
-    $postContentClass = $isIcPost
-        ? 'mx-auto max-w-[78ch] text-[1.03rem] leading-8 text-stone-100 sm:text-[1.08rem] [&_blockquote]:my-6 [&_blockquote]:rounded-xl [&_blockquote]:border-amber-700/45 [&_blockquote]:bg-amber-900/10 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:italic [&_blockquote]:text-amber-100 [&_p]:my-0 [&_p+p]:mt-5'
-        : 'max-w-[84ch] text-[0.96rem] leading-7 text-stone-200 [&_blockquote]:my-4 [&_blockquote]:rounded-lg [&_blockquote]:border-stone-600/70 [&_blockquote]:bg-black/30 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-stone-200 [&_p]:my-0 [&_p+p]:mt-4';
-@endphp
+@if ($post->trashed())
+    <article id="post-{{ $post->id }}" data-reading-post-anchor tabindex="-1" class="thread-post rounded-xl border border-stone-800/80 bg-black/30 p-5 opacity-85 sm:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+                <p class="text-sm text-stone-300">
+                    <span class="font-semibold">{{ $post->user->name }}</span>
+                    <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
+                    @if ($post->deleted_at)
+                        <span class="text-stone-500">• gelöscht <x-relative-time :at="$post->deleted_at" /></span>
+                    @endif
+                </p>
+
+                <p class="mt-3 text-sm font-semibold text-stone-300">Beitrag gelöscht.</p>
+            </div>
+        </div>
+    </article>
+@else
+    @php
+        $isIcPost = $post->post_type === 'ic';
+        $isOocPost = $post->post_type === 'ooc';
+        $isGmNarration = $post->isGmNarration();
+        $postStyleClass = $isOocPost
+            ? 'thread-post-ooc'
+            : ($isGmNarration ? 'thread-post-gm' : 'thread-post-ic');
+        $postContentClass = $isIcPost
+            ? 'mx-auto max-w-[78ch] text-[1.03rem] leading-8 text-stone-100 sm:text-[1.08rem] [&_blockquote]:my-6 [&_blockquote]:rounded-xl [&_blockquote]:border-amber-700/45 [&_blockquote]:bg-amber-900/10 [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:italic [&_blockquote]:text-amber-100 [&_p]:my-0 [&_p+p]:mt-5'
+            : 'max-w-[84ch] text-[0.96rem] leading-7 text-stone-200 [&_blockquote]:my-4 [&_blockquote]:rounded-lg [&_blockquote]:border-stone-600/70 [&_blockquote]:bg-black/30 [&_blockquote]:px-4 [&_blockquote]:py-3 [&_blockquote]:text-stone-200 [&_p]:my-0 [&_p+p]:mt-4';
+    @endphp
 
 <article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" data-post-author-role="{{ $isGmNarration ? 'gm' : 'default' }}" data-reading-post-anchor tabindex="-1" class="thread-post {{ $postStyleClass }} rounded-xl border p-5 sm:p-6">
     <div class="thread-post-meta flex flex-wrap items-start justify-between gap-4">
@@ -417,6 +434,7 @@
         </form>
     @endcan
 </article>
+@endif
 
 @if (request()->header('HX-Request') === 'true' && isset($bookmarkCountForNav))
     @if ($bookmarkCountForNav > 0)

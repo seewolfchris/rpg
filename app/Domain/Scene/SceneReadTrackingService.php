@@ -14,6 +14,7 @@ class SceneReadTrackingService
         int $lastReadPostIdBeforeOpen,
     ): SceneReadTrackingResult {
         $latestPostId = (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->max('id');
 
@@ -27,14 +28,17 @@ class SceneReadTrackingService
             if ($hasUnreadPosts) {
                 $newPostsSinceLastRead = $lastReadPostIdBeforeOpen > 0
                     ? Post::query()
+                        ->withTrashed()
                         ->where('scene_id', $scene->id)
                         ->where('id', '>', $lastReadPostIdBeforeOpen)
                         ->count()
                     : Post::query()
+                        ->withTrashed()
                         ->where('scene_id', $scene->id)
                         ->count();
 
                 $firstUnreadPostId = (int) Post::query()
+                    ->withTrashed()
                     ->where('scene_id', $scene->id)
                     ->when(
                         $lastReadPostIdBeforeOpen > 0,

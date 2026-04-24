@@ -14,6 +14,7 @@ final class SubscribeSceneSubscriptionAction
     public function execute(User $user, Scene $scene): SubscribeSceneSubscriptionResult
     {
         $latestPostId = (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->max('id');
 

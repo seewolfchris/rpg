@@ -133,6 +133,7 @@ class BuildSceneShowDataAction
     private function threadPostsPaginator(Scene $scene): LengthAwarePaginator
     {
         return Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->with(Post::THREAD_PAGE_RELATIONS)
             ->latestByIdHotpath()

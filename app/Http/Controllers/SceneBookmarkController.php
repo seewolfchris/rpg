@@ -154,8 +154,7 @@ class SceneBookmarkController extends Controller
             ->withoutGlobalScope(SoftDeletingScope::class)
             ->selectRaw('current_posts.id as post_id')
             ->selectRaw('current_posts.scene_id as scene_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id AND newer_posts.deleted_at IS NULL) as newer_posts_count')
-            ->whereNull('current_posts.deleted_at')
+            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
             ->whereIn('current_posts.id', array_keys($sceneIdByPostId))
             ->get();
 

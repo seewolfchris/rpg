@@ -45,6 +45,7 @@ final class MarkSceneSubscriptionReadAction
     private function latestScenePostId(Scene $scene): int
     {
         return (int) Post::query()
+            ->withTrashed()
             ->where('scene_id', $scene->id)
             ->max('id');
     }

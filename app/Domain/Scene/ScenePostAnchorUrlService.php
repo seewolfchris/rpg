@@ -33,9 +33,8 @@ class ScenePostAnchorUrlService
             ->from('posts as current_posts')
             ->withoutGlobalScope(SoftDeletingScope::class)
             ->selectRaw('current_posts.id as post_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id AND newer_posts.deleted_at IS NULL) as newer_posts_count')
+            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
             ->where('current_posts.scene_id', $scene->id)
-            ->whereNull('current_posts.deleted_at')
             ->whereIn('current_posts.id', $normalizedIds)
             ->pluck('newer_posts_count', 'post_id');
 
