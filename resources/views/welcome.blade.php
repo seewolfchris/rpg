@@ -77,7 +77,6 @@
                 'Der Rat schweigt, aber die Wachen greifen bereits zu den Klingen.',
             ]
         )
-
         <div class="relative isolate overflow-x-clip">
             <div class="app-atmosphere pointer-events-none absolute inset-0 -z-10"></div>
 
@@ -108,113 +107,228 @@
                 </div>
             </header>
 
-            <main class="mx-auto grid w-full max-w-6xl gap-9 break-words px-5 pb-16 pt-2 sm:px-8 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-center md:gap-12 lg:gap-14 lg:pb-24">
-                <section class="md:pr-2">
-                    <p class="mb-3 text-xs uppercase tracking-[0.16em] text-amber-300/85 sm:text-sm">
-                        Letzter Satz einer laufenden Szene
-                    </p>
-                    <blockquote class="rounded-2xl border border-amber-700/45 bg-amber-900/10 px-5 py-4 text-base italic leading-relaxed text-amber-100 shadow-lg shadow-black/25 sm:text-lg">
-                        {{ $randomTeaser }}
-                    </blockquote>
-
-                    <h1 class="mt-6 font-heading text-3xl leading-tight text-stone-100 sm:text-4xl lg:text-5xl">
-                        Betrete eine Welt.<br class="hidden sm:block">Schreibe weiter, wo andere aufgehört haben.
-                    </h1>
-
-                    <div class="font-body mt-5 max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
-                        <p>
-                            In jeder Kampagne wartet bereits ein offener Konflikt.
-                            In jeder Szene liegt ein Satz, der auf deine Figur wartet.
+            <main class="mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8 lg:pb-24">
+                <section id="hero" class="grid gap-9 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-center md:gap-12 lg:gap-14">
+                    <div class="md:pr-2">
+                        <p class="mb-3 text-xs uppercase tracking-[0.16em] text-amber-300/85 sm:text-sm">
+                            Letzter Satz einer laufenden Szene
                         </p>
-                        <p>
-                            C76-RPG verbindet Charaktere, Szenen und Lore zu einem Schreibraum,
-                            der sich wie ein Roman liest und wie ein Rollenspiel atmet.
-                        </p>
+                        <blockquote class="rounded-2xl border border-amber-700/45 bg-amber-900/10 px-5 py-4 text-base italic leading-relaxed text-amber-100 shadow-lg shadow-black/25 sm:text-lg">
+                            {{ $randomTeaser }}
+                        </blockquote>
+
+                        <h1 class="mt-6 font-heading text-3xl leading-tight text-stone-100 sm:text-4xl lg:text-5xl">
+                            Betrete eine Welt.<br class="hidden sm:block">Schreibe weiter, wo andere aufgehört haben.
+                        </h1>
+
+                        <div class="font-body mt-5 max-w-2xl space-y-4 text-lg leading-relaxed text-stone-300 sm:text-xl">
+                            <p>
+                                In jeder Kampagne wartet bereits ein offener Konflikt.
+                                In jeder Szene liegt ein Satz, der auf deine Figur wartet.
+                            </p>
+                            <p>
+                                C76-RPG verbindet Charaktere, Szenen und Lore zu einem Schreibraum,
+                                der sich wie ein Roman liest und wie ein Rollenspiel atmet.
+                            </p>
+                        </div>
+
+                        <div class="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+                            @guest
+                                <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex px-6 py-3 text-sm">
+                                    Jetzt starten
+                                </a>
+                            @else
+                                <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex px-6 py-3 text-sm">
+                                    Jetzt starten
+                                </a>
+                            @endguest
+                            <a href="#wie-funktionierts" class="ui-btn inline-flex px-6 py-3 text-sm">
+                                So funktioniert’s
+                            </a>
+                            <a href="#welten" class="ui-btn ui-btn-danger inline-flex px-6 py-3 text-sm">
+                                Welten entdecken
+                            </a>
+                        </div>
                     </div>
 
-                    <div class="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+                    <section class="relative" data-parallax-scene>
+                        <figure class="landing-hero-figure group relative overflow-hidden rounded-3xl border border-stone-700/70 bg-black/40 shadow-2xl shadow-black/35">
+                            <img
+                                src="{{ asset('images/og/c76-rpg-og.png') }}"
+                                alt="Atmosphärische Vorschau auf das C76-RPG Universum"
+                                class="landing-hero-image h-[18rem] w-full object-cover sm:h-[22rem] lg:h-[28rem]"
+                                data-parallax-layer
+                                data-parallax-depth="0.035"
+                                loading="lazy"
+                            >
+                            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" data-parallax-layer data-parallax-depth="0.02"></div>
+                            <figcaption class="absolute inset-x-0 bottom-0 p-4 text-sm leading-relaxed text-stone-100 sm:p-5 sm:text-base" data-parallax-layer data-parallax-depth="0.015">
+                                „Die Szene läuft bereits. Du setzt den nächsten Satz.“
+                            </figcaption>
+                        </figure>
+                    </section>
+                </section>
+
+                <section id="kurzintro" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Kurzintro</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Gemeinsam Geschichten erleben</h2>
+                    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300 sm:text-base">
+                        C76-RPG ist eine asynchrone Play-by-Post-Plattform für mehrere Welten.
+                        Du steigst in laufende Szenen ein und schreibst die Geschichte weiter.
+                    </p>
+                    <a href="{{ route('knowledge.global.index') }}" class="ui-btn mt-4 inline-flex">Wissenszentrum öffnen</a>
+                </section>
+
+                <section id="was-ist-rpg" class="mt-8">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Für Einsteiger</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Was ist RPG?</h2>
+                    <div class="mt-4 grid gap-3 md:grid-cols-3">
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Gemeinsames Erzählen</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Mehrere Figuren treiben dieselbe Handlung voran.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Rolle statt Zuschauer</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Du schreibst aus Sicht deiner Figur und reagierst auf andere.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Asynchron</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-stone-300">Du brauchst keinen festen Termin, nur einen nächsten Beitrag.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <section id="wie-funktionierts" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Ablauf</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Wie funktioniert C76-RPG?</h2>
+                    <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">1. Welt auswählen und Kontext lesen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">2. Figur erstellen oder vorhandene Figur nutzen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">3. In eine Szene einsteigen und IC posten.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">4. Auf Reaktionen antworten und den Thread weiterführen.</li>
+                    </ol>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn ui-btn-accent inline-flex">Schnellstart ansehen</a>
+                        <a href="{{ route('knowledge.global.rules') }}" class="ui-btn inline-flex">Regelwerk öffnen</a>
+                    </div>
+                </section>
+
+                <section id="welten" class="mt-8">
+                    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Multi-World</p>
+                            <h2 class="font-heading text-3xl text-stone-100">Betrete eine Welt</h2>
+                            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-stone-300">
+                                Ein gemeinsames Dach, mehrere Genres: von düsterer Fantasy bis Sci-Fi und Noir.
+                            </p>
+                        </div>
+                        <a href="{{ route('worlds.index') }}" class="ui-btn">Alle Welten</a>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
+                        @forelse ($worlds as $world)
+                            @php($snippetSource = trim((string) ($world->tagline ?: $world->description ?: 'Eine neue Szene beginnt, sobald du den ersten Beitrag setzt.')))
+                            @php($worldSnippet = \Illuminate\Support\Str::limit($snippetSource, 150))
+                            @php($hoverSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
+                            <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80" data-parallax-layer data-parallax-depth="0.018">
+                                <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
+                                @if ($world->tagline)
+                                    <p class="mt-2 text-sm text-amber-200">{{ $world->tagline }}</p>
+                                @endif
+                                <p class="mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
+
+                                <p class="landing-world-snippet mt-3 rounded-lg border border-amber-700/40 bg-amber-900/10 px-3 py-2 text-xs italic leading-relaxed text-amber-100 opacity-100 transition duration-300 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
+                                    {{ $hoverSnippet }}
+                                </p>
+
+                                <p class="mt-4 text-xs uppercase tracking-widest text-stone-500">{{ $world->campaigns_count }} Kampagnen</p>
+
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn inline-flex">Welt ansehen</a>
+                                    @auth
+                                        <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt betreten</a>
+                                    @else
+                                        <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
+                                            @csrf
+                                            <button type="submit" class="ui-btn ui-btn-accent inline-flex">Welt betreten</button>
+                                        </form>
+                                    @endauth
+                                </div>
+                            </article>
+                        @empty
+                            <article class="rounded-2xl border border-amber-700/60 bg-amber-900/20 p-5 text-amber-100">
+                                Aktuell sind keine aktiven Welten verfügbar.
+                            </article>
+                        @endforelse
+                    </div>
+                </section>
+
+                <section id="einstieg" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Startpfad</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Einstieg in 3 Schritten</h2>
+                    <ol class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">1. Konto anlegen und erste Welt wählen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">2. Kurz den Szenenkontext lesen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">3. Deinen ersten IC-Satz posten.</li>
+                    </ol>
+                </section>
+
+                <section id="warum-schriftbasiert" class="mt-8">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Warum Play-by-Post?</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Warum schriftbasiert?</h2>
+                    <ul class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-3">
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">Mehr Zeit für gute Szenen statt Echtzeitdruck.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">Besserer Überblick über Verlauf, Figuren und Konsequenzen.</li>
+                        <li class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">Ideal für gemeinsames Storytelling über mehrere Welten.</li>
+                    </ul>
+                </section>
+
+                <section id="faq-anfaenger" class="mt-8 rounded-2xl border border-stone-800 bg-black/35 p-5 sm:p-6">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">FAQ</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">FAQ für Anfänger</h2>
+                    <div class="mt-4 grid gap-3 text-sm leading-relaxed text-stone-300 md:grid-cols-2">
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Brauche ich Erfahrung?</h3>
+                            <p class="mt-2">Nein. Du kannst mit kurzen Beiträgen starten und dich Schritt für Schritt einfinden.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Wie viel Zeit braucht es?</h3>
+                            <p class="mt-2">Du schreibst asynchron. Ein Beitrag dauert oft nur wenige Minuten.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Wo beginne ich am besten?</h3>
+                            <p class="mt-2">Am schnellsten geht es über den geführten Einstieg im Wissenszentrum.</p>
+                        </article>
+                        <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
+                            <h3 class="font-heading text-lg text-stone-100">Was ist IC und OOC?</h3>
+                            <p class="mt-2">IC ist Spieltext in der Figur. OOC ist kurze Abstimmung außerhalb der Szene.</p>
+                        </article>
+                    </div>
+                    <a href="{{ route('knowledge.global.index') }}" class="ui-btn mt-4 inline-flex">Mehr im Wissenszentrum</a>
+                </section>
+
+                <section id="finaler-cta" class="mt-8 rounded-2xl border border-amber-700/45 bg-amber-900/10 p-6 sm:p-7">
+                    <p class="text-xs uppercase tracking-[0.12em] text-amber-300/85">Dein Platz in der Geschichte</p>
+                    <h2 class="mt-2 font-heading text-2xl text-stone-100 sm:text-3xl">Starte mit deinem nächsten Satz.</h2>
+                    <div class="mt-5 flex flex-wrap items-center gap-3 sm:gap-4">
                         @guest
                             <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex px-6 py-3 text-sm">
-                                Jetzt eintreten
-                            </a>
-                            <a href="{{ $loginUrl }}" class="ui-btn inline-flex px-6 py-3 text-sm">
-                                Bereits registriert
+                                Jetzt starten
                             </a>
                         @else
                             <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex px-6 py-3 text-sm">
-                                Zurück ins Dashboard
+                                Jetzt starten
                             </a>
                         @endguest
+                        <a href="#wie-funktionierts" class="ui-btn inline-flex px-6 py-3 text-sm">
+                            So funktioniert’s
+                        </a>
                         <a href="#welten" class="ui-btn ui-btn-danger inline-flex px-6 py-3 text-sm">
-                            Betrete eine Welt
+                            Welten entdecken
                         </a>
                     </div>
                 </section>
-
-                <section class="relative" data-parallax-scene>
-                    <figure class="landing-hero-figure group relative overflow-hidden rounded-3xl border border-stone-700/70 bg-black/40 shadow-2xl shadow-black/35">
-                        <img
-                            src="{{ asset('images/og/c76-rpg-og.png') }}"
-                            alt="Atmosphärische Vorschau auf das C76-RPG Universum"
-                            class="landing-hero-image h-[18rem] w-full object-cover sm:h-[22rem] lg:h-[28rem]"
-                            data-parallax-layer
-                            data-parallax-depth="0.035"
-                            loading="lazy"
-                        >
-                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" data-parallax-layer data-parallax-depth="0.02"></div>
-                        <figcaption class="absolute inset-x-0 bottom-0 p-4 text-sm leading-relaxed text-stone-100 sm:p-5 sm:text-base" data-parallax-layer data-parallax-depth="0.015">
-                            „Die Szene läuft bereits. Du setzt den nächsten Satz.“
-                        </figcaption>
-                    </figure>
-                </section>
             </main>
-
-            <section id="welten" class="mx-auto w-full max-w-6xl px-5 pb-20 sm:px-8">
-                <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.12em] text-amber-300/80">Weltenübersicht</p>
-                        <h2 class="font-heading text-3xl text-stone-100">Betrete eine Welt</h2>
-                    </div>
-                    <a href="{{ route('worlds.index') }}" class="ui-btn">Alle Welten</a>
-                </div>
-
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-parallax-scene>
-                    @forelse ($worlds as $world)
-                        @php($snippetSource = trim((string) ($world->tagline ?: $world->description ?: 'Eine neue Szene beginnt, sobald du den ersten Beitrag setzt.')))
-                        @php($worldSnippet = \Illuminate\Support\Str::limit($snippetSource, 150))
-                        @php($hoverSnippet = $worldSnippets[$loop->index % count($worldSnippets)])
-                        <article class="group landing-world-card relative rounded-2xl border border-stone-800 bg-neutral-900/65 p-5 shadow-xl shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/60 hover:bg-neutral-900/80" data-parallax-layer data-parallax-depth="0.018">
-                            <h3 class="font-heading text-2xl text-stone-100">{{ $world->name }}</h3>
-                            @if ($world->tagline)
-                                <p class="mt-2 text-sm text-amber-200">{{ $world->tagline }}</p>
-                            @endif
-                            <p class="mt-3 text-sm leading-relaxed text-stone-300">{{ $worldSnippet }}</p>
-
-                            <p class="landing-world-snippet mt-3 rounded-lg border border-amber-700/40 bg-amber-900/10 px-3 py-2 text-xs italic leading-relaxed text-amber-100 opacity-100 transition duration-300 sm:opacity-0 sm:translate-y-1 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
-                                {{ $hoverSnippet }}
-                            </p>
-
-                            <p class="mt-4 text-xs uppercase tracking-widest text-stone-500">{{ $world->campaigns_count }} Kampagnen</p>
-
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn inline-flex">Welt ansehen</a>
-                                @auth
-                                    <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent inline-flex">Welt betreten</a>
-                                @else
-                                    <form method="POST" action="{{ route('worlds.activate', ['world' => $world]) }}">
-                                        @csrf
-                                        <button type="submit" class="ui-btn ui-btn-accent inline-flex">Welt betreten</button>
-                                    </form>
-                                @endauth
-                            </div>
-                        </article>
-                    @empty
-                        <article class="rounded-2xl border border-amber-700/60 bg-amber-900/20 p-5 text-amber-100">
-                            Aktuell sind keine aktiven Welten verfügbar.
-                        </article>
-                    @endforelse
-                </div>
-            </section>
 
             <footer class="mx-auto w-full max-w-6xl border-t border-stone-800/80 px-5 py-6 text-center text-xs tracking-widest text-stone-500 sm:px-8">
                 <div>
