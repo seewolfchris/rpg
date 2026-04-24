@@ -12,6 +12,7 @@ use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -150,9 +151,11 @@ class SceneBookmarkController extends Controller
 
         $postRows = Post::query()
             ->from('posts as current_posts')
+            ->withoutGlobalScope(SoftDeletingScope::class)
             ->selectRaw('current_posts.id as post_id')
             ->selectRaw('current_posts.scene_id as scene_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
+            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id AND newer_posts.deleted_at IS NULL) as newer_posts_count')
+            ->whereNull('current_posts.deleted_at')
             ->whereIn('current_posts.id', array_keys($sceneIdByPostId))
             ->get();
 

@@ -6,6 +6,7 @@ use App\Support\PostContentRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,6 +17,7 @@ class Post extends Model
 {
     /** @use HasFactory<\Database\Factories\PostFactory> */
     use HasFactory;
+    use SoftDeletes;
 
     public const THREAD_POSTS_PER_PAGE = 20;
 
@@ -90,6 +92,7 @@ class Post extends Model
             'is_edited' => 'boolean',
             'is_pinned' => 'boolean',
             'pinned_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 
@@ -131,6 +134,14 @@ class Post extends Model
     public function pinnedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pinned_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     /**

@@ -152,17 +152,19 @@ class PostController extends Controller
             ->with('status', 'Beitrag aktualisiert.');
     }
 
-    public function destroy(World $world, Post $post): RedirectResponse
+    public function destroy(Request $request, World $world, Post $post): RedirectResponse
     {
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('delete', $post);
+        $actor = $this->authenticatedUser($request);
 
         $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $this->deletePostAction->execute(
             $post,
+            (int) $actor->id,
         );
 
         return redirect()

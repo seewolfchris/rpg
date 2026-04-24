@@ -136,6 +136,10 @@ class GamificationPointsTest extends TestCase
 
         $gm->refresh();
         $this->assertSame(0, $gm->points);
+        $this->assertSoftDeleted('posts', [
+            'id' => $post->id,
+            'deleted_by' => $gm->id,
+        ]);
     }
 
     /**

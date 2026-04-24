@@ -8,6 +8,8 @@ use App\Actions\Post\DeletePostAction;
 use App\Models\Campaign;
 use App\Models\PointEvent;
 use App\Models\Post;
+use App\Models\PostModerationLog;
+use App\Models\PostRevision;
 use App\Models\Scene;
 use App\Models\User;
 use App\Support\Gamification\PointService;
@@ -23,23 +25,55 @@ class DeletePostActionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_deletes_post_and_revokes_approved_points_atomically(): void
+    public function test_it_soft_deletes_post_sets_deleter_and_revokes_approved_points_atomically(): void
     {
         [, $author, $post] = $this->seedApprovedPostContext();
+        $moderator = User::factory()->gm()->create();
+        $revision = PostRevision::query()->create([
+            'post_id' => $post->id,
+            'version' => 1,
+            'editor_id' => $author->id,
+            'character_id' => null,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'Earlier approved post content',
+            'meta' => null,
+            'moderation_status' => 'approved',
+            'created_at' => now(),
+        ]);
+        $moderationLog = PostModerationLog::query()->create([
+            'post_id' => $post->id,
+            'moderator_id' => $moderator->id,
+            'previous_status' => 'pending',
+            'new_status' => 'approved',
+            'reason' => 'Approved before deletion.',
+            'created_at' => now(),
+        ]);
 
-        app(DeletePostAction::class)->execute($post);
+        app(DeletePostAction::class)->execute($post, (int) $moderator->id);
 
         $author->refresh();
         $this->assertSame(0, (int) $author->points);
 
-        $this->assertDatabaseMissing('posts', [
+        $this->assertSoftDeleted('posts', [
             'id' => $post->id,
+            'deleted_by' => $moderator->id,
         ]);
         $this->assertDatabaseMissing('point_events', [
             'user_id' => $author->id,
             'source_type' => 'post',
             'source_id' => $post->id,
             'event_key' => 'approved',
+        ]);
+        $this->assertDatabaseHas('post_revisions', [
+            'id' => $revision->id,
+            'post_id' => $post->id,
+            'content' => 'Earlier approved post content',
+        ]);
+        $this->assertDatabaseHas('post_moderation_logs', [
+            'id' => $moderationLog->id,
+            'post_id' => $post->id,
+            'reason' => 'Approved before deletion.',
         ]);
     }
 
@@ -62,7 +96,7 @@ class DeletePostActionTest extends TestCase
         } finally {
             $author->refresh();
             $this->assertSame(10, (int) $author->points);
-            $this->assertDatabaseHas('posts', [
+            $this->assertNotSoftDeleted('posts', [
                 'id' => $post->id,
             ]);
         }
@@ -103,7 +137,7 @@ class DeletePostActionTest extends TestCase
             $author->refresh();
             $this->assertSame(10, (int) $author->points);
 
-            $this->assertDatabaseHas('posts', [
+            $this->assertNotSoftDeleted('posts', [
                 'id' => $post->id,
             ]);
             $this->assertDatabaseHas('point_events', [

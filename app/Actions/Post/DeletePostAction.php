@@ -15,12 +15,12 @@ final class DeletePostAction
         private readonly PointService $pointService,
     ) {}
 
-    public function execute(Post $post): void
+    public function execute(Post $post, ?int $deletedByUserId = null): void
     {
-        $this->db->transaction(function () use ($post): void {
+        $this->db->transaction(function () use ($post, $deletedByUserId): void {
             $lockedPost = $this->lockAndVerifyContext($post);
 
-            $this->revokePointsAndDeletePost($lockedPost);
+            $this->revokePointsAndDeletePost($lockedPost, $deletedByUserId);
         }, 3);
     }
 
@@ -37,9 +37,14 @@ final class DeletePostAction
         return $lockedPost;
     }
 
-    private function revokePointsAndDeletePost(Post $post): void
+    private function revokePointsAndDeletePost(Post $post, ?int $deletedByUserId): void
     {
         $this->pointService->revokeApprovedPostPoints($post);
+        $post->forceFill([
+            'deleted_by' => $deletedByUserId !== null && $deletedByUserId > 0
+                ? $deletedByUserId
+                : null,
+        ])->save();
         $post->delete();
     }
 }

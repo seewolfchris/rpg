@@ -241,14 +241,18 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
                     'campaign' => $campaign,
                     'scene' => $scene,
                 ]));
-                $this->assertDatabaseMissing('posts', [
+                $this->assertSoftDeleted('posts', [
                     'id' => $post->id,
+                    'deleted_by' => $actor->id,
                 ]);
 
                 continue;
             }
 
             $response->assertStatus($expectedStatus);
+            $this->assertNotSoftDeleted('posts', [
+                'id' => $post->id,
+            ]);
             $this->assertDatabaseHas('posts', [
                 'id' => $post->id,
                 'content' => 'A3 Post destroy baseline '.$suffix,
@@ -289,6 +293,9 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
             'post' => $sameWorldForeignPost,
         ]))->assertForbidden();
 
+        $this->assertNotSoftDeleted('posts', [
+            'id' => $sameWorldForeignPost->id,
+        ]);
         $this->assertDatabaseHas('posts', [
             'id' => $sameWorldForeignPost->id,
             'content' => 'A3 CoGM destroy same world',
@@ -327,6 +334,9 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
             'post' => $foreignWorldPost,
         ]))->assertForbidden();
 
+        $this->assertNotSoftDeleted('posts', [
+            'id' => $foreignWorldPost->id,
+        ]);
         $this->assertDatabaseHas('posts', [
             'id' => $foreignWorldPost->id,
             'content' => 'A3 CoGM destroy foreign world',
