@@ -48,6 +48,29 @@ class GmAccessTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_gm_hub_links_to_world_scoped_tools_without_empty_world_query(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = World::factory()->create([
+            'slug' => 'gm-link-clean-world',
+            'is_active' => true,
+            'position' => -100,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withSession(['world_slug' => $world->slug])
+            ->get('/gm?world=');
+
+        $queueUrl = url('/w/'.$world->slug.'/gm/moderation');
+        $progressionUrl = url('/w/'.$world->slug.'/gm/progression');
+
+        $response->assertOk();
+        $response->assertSee('href="'.$queueUrl.'"', false);
+        $response->assertSee('href="'.$progressionUrl.'"', false);
+        $response->assertDontSee('/gm/moderation?world=', false);
+        $response->assertDontSee('/gm/progression?world=', false);
+    }
+
     public function test_co_gm_with_active_invitation_can_access_gm_hub(): void
     {
         $owner = User::factory()->gm()->create();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -17,6 +18,12 @@ class GmIndexController extends Controller
             403
         );
 
-        return view('gm.index');
+        $activeWorldSlug = (string) $request->attributes->get('active_world_slug', '');
+
+        if ($activeWorldSlug === '') {
+            $activeWorldSlug = World::defaultSlug();
+        }
+
+        return view('gm.index', compact('activeWorldSlug'));
     }
 }

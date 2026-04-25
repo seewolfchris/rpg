@@ -18,7 +18,7 @@
                 Prüfe pending/approved/rejected Posts, filtere die Liste und setze Status direkt mit Quick-Buttons.
             </p>
             <a
-                href="{{ route('gm.moderation.index') }}"
+                href="{{ route('gm.moderation.index', ['world' => $activeWorldSlug]) }}"
                 class="mt-5 inline-flex rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
                     Zur Queue
@@ -31,7 +31,7 @@
                 Vergib XP-Meilensteine oder Korrekturen für Kampagnen-Charaktere und steuere den Stufenfortschritt.
             </p>
             <a
-                href="{{ route('gm.progression.index') }}"
+                href="{{ route('gm.progression.index', ['world' => $activeWorldSlug]) }}"
                 class="mt-5 inline-flex rounded-md border border-emerald-500/60 bg-emerald-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-500/30"
             >
                 Zur Charakterentwicklung
