@@ -4,6 +4,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignGmContactThreadController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CampaignMembershipController;
+use App\Http\Controllers\HandoutController;
 use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
@@ -52,6 +53,41 @@ Route::patch('/campaign-invitations/{invitation}/decline', [CampaignInvitationCo
 Route::resource('campaigns.scenes', SceneController::class)
     ->except('index')
     ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+
+Route::get('/campaigns/{campaign}/handouts', [HandoutController::class, 'index'])
+    ->name('campaigns.handouts.index');
+
+Route::get('/campaigns/{campaign}/handouts/create', [HandoutController::class, 'create'])
+    ->name('campaigns.handouts.create');
+
+Route::post('/campaigns/{campaign}/handouts', [HandoutController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.handouts.store');
+
+Route::get('/campaigns/{campaign}/handouts/{handout}', [HandoutController::class, 'show'])
+    ->name('campaigns.handouts.show');
+
+Route::get('/campaigns/{campaign}/handouts/{handout}/edit', [HandoutController::class, 'edit'])
+    ->name('campaigns.handouts.edit');
+
+Route::patch('/campaigns/{campaign}/handouts/{handout}', [HandoutController::class, 'update'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.handouts.update');
+
+Route::delete('/campaigns/{campaign}/handouts/{handout}', [HandoutController::class, 'destroy'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.handouts.destroy');
+
+Route::patch('/campaigns/{campaign}/handouts/{handout}/reveal', [HandoutController::class, 'reveal'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.handouts.reveal');
+
+Route::patch('/campaigns/{campaign}/handouts/{handout}/unreveal', [HandoutController::class, 'unreveal'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.handouts.unreveal');
+
+Route::get('/campaigns/{campaign}/handouts/{handout}/file', [HandoutController::class, 'file'])
+    ->name('campaigns.handouts.file');
 
 Route::get('/campaigns/{campaign}/scenes/{scene}/thread', [SceneController::class, 'threadPage'])
     ->name('campaigns.scenes.thread');

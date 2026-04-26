@@ -69,14 +69,25 @@
                     <h2 class="font-heading text-2xl text-stone-100">Thread-Übersicht</h2>
                 </div>
 
-                @can('create', [App\Models\Scene::class, $campaign])
-                    <a
-                        href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
-                        class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
-                    >
-                        Szene anlegen
-                    </a>
-                @endcan
+                <div class="flex flex-wrap items-center gap-2">
+                    @can('viewAny', [App\Models\Handout::class, $campaign])
+                        <a
+                            href="{{ route('campaigns.handouts.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        >
+                            Handouts
+                        </a>
+                    @endcan
+
+                    @can('create', [App\Models\Scene::class, $campaign])
+                        <a
+                            href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
+                        >
+                            Szene anlegen
+                        </a>
+                    @endcan
+                </div>
             </div>
 
             <form method="GET" action="{{ route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">

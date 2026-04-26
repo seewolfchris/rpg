@@ -80,6 +80,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<Handout, $this>
+     */
+    public function handouts(): HasMany
+    {
+        return $this->hasMany(Handout::class, 'scene_id');
+    }
+
+    /**
      * @return BelongsTo<Scene, $this>
      */
     public function previousScene(): BelongsTo

@@ -87,6 +87,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<Handout, $this>
+     */
+    public function handouts(): HasMany
+    {
+        return $this->hasMany(Handout::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignMembership, $this>
      */
     public function memberships(): HasMany

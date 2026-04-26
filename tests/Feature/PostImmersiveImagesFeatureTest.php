@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Campaign;
 use App\Models\Character;
+use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -309,10 +310,12 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $response->assertDontSee($mediaUrl, false);
     }
 
-    public function test_only_post_model_has_media_library_interfaces_in_pr2_scope(): void
+    public function test_only_post_and_handout_models_have_media_library_interfaces_in_current_scope(): void
     {
         $this->assertTrue(is_subclass_of(Post::class, HasMedia::class));
         $this->assertContains(InteractsWithMedia::class, class_uses_recursive(Post::class));
+        $this->assertTrue(is_subclass_of(Handout::class, HasMedia::class));
+        $this->assertContains(InteractsWithMedia::class, class_uses_recursive(Handout::class));
 
         $this->assertFalse(is_subclass_of(Character::class, HasMedia::class));
         $this->assertFalse(is_subclass_of(User::class, HasMedia::class));
@@ -394,4 +397,3 @@ class PostImmersiveImagesFeatureTest extends TestCase
         ];
     }
 }
-

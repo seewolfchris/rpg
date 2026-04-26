@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Models\Campaign;
 use App\Models\EncyclopediaCategory;
+use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\World;
@@ -31,6 +32,11 @@ trait EnsuresWorldContext
         $campaignWorldId = (int) ($post->scene->campaign->world_id ?? 0);
 
         abort_unless($campaignWorldId === (int) $world->id, 404);
+    }
+
+    protected function ensureHandoutBelongsToCampaign(Campaign $campaign, Handout $handout): void
+    {
+        abort_unless((int) $handout->campaign_id === (int) $campaign->id, 404);
     }
 
     protected function ensureCategoryBelongsToWorld(World $world, EncyclopediaCategory $category): void
