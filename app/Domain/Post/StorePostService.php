@@ -10,12 +10,15 @@ use App\Models\User;
 use App\Support\Gamification\PointService;
 use App\Support\Observability\DomainEventLogger;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Http\UploadedFile;
+use Throwable;
 
 class StorePostService
 {
     public function __construct(
         private readonly PostProbeService $postProbeService,
         private readonly PostInventoryAwardService $postInventoryAwardService,
+        private readonly PostImmersiveImageService $postImmersiveImageService,
         private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
         private readonly PointService $pointService,
         private readonly DomainEventLogger $logger,
@@ -37,6 +40,10 @@ class StorePostService
             user: $user,
             data: $data,
             normalizedPayload: $normalizedPayload,
+        );
+        $this->runAfterCommitMediaMutationPhase(
+            post: $transactionResult['post'],
+            data: $data,
         );
 
         $notificationMetrics = $this->runAfterCommitNotificationPhase(
@@ -63,6 +70,28 @@ class StorePostService
             probeCreated: $transactionResult['probeCreated'],
             inventoryAwardApplied: $transactionResult['inventoryAwardApplied'],
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function runAfterCommitMediaMutationPhase(Post $post, array $data): void
+    {
+        if (! $post->isGmNarration()) {
+            return;
+        }
+
+        $immersiveImages = $this->extractImmersiveImagesFromPayload($data);
+
+        if ($immersiveImages === []) {
+            return;
+        }
+
+        try {
+            $this->postImmersiveImageService->attachImmersiveImages($post, $immersiveImages);
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
     }
 
     /**
@@ -355,5 +384,29 @@ class StorePostService
         $subscription->last_read_post_id = $nextLastReadPostId;
         $subscription->last_read_at = now();
         $subscription->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<UploadedFile>
+     */
+    private function extractImmersiveImagesFromPayload(array $data): array
+    {
+        $rawFiles = $data['immersive_images'] ?? [];
+        $files = $rawFiles instanceof UploadedFile
+            ? [$rawFiles]
+            : (is_array($rawFiles) ? $rawFiles : []);
+
+        $immersiveImages = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $immersiveImages[] = $file;
+        }
+
+        return $immersiveImages;
     }
 }

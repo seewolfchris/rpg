@@ -9,6 +9,7 @@ use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\Scene;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -36,6 +37,15 @@ class StorePostRequest extends FormRequest
             'content_format' => ['required', Rule::in(['markdown', 'bbcode', 'plain'])],
             'content' => ['required', 'string', 'min:5', 'max:10000'],
             'ic_quote' => ['nullable', 'string', 'max:180'],
+            'immersive_images' => ['nullable', 'array', 'max:4'],
+            'immersive_images.*' => [
+                'bail',
+                'file',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:4096',
+            ],
             'probe_enabled' => ['nullable', 'boolean'],
             'probe_character_id' => ['nullable', 'integer', 'required_if:probe_enabled,1', 'exists:characters,id'],
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
@@ -159,6 +169,15 @@ class StorePostRequest extends FormRequest
                 $validator->errors()->add('ic_quote', 'Ein IC-Zitat ist nur für IC-Beiträge erlaubt.');
             }
 
+            $immersiveImages = $this->immersiveImagesFromInput();
+
+            if ($immersiveImages !== [] && (! ($postType === 'ic' && $postMode === 'gm') || ! $canModerate)) {
+                $validator->errors()->add(
+                    'immersive_images',
+                    'Immersive Bilder sind nur für IC-Beiträge im Spielleitungsmodus erlaubt.'
+                );
+            }
+
             if ($postType === 'ic' && $postMode === 'character' && $characterId) {
                 /** @var Character|null $character */
                 $character = Character::query()->find($characterId);
@@ -258,6 +277,29 @@ class StorePostRequest extends FormRequest
                 }
             }
         });
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    private function immersiveImagesFromInput(): array
+    {
+        $rawFiles = $this->file('immersive_images', []);
+        $files = $rawFiles instanceof UploadedFile
+            ? [$rawFiles]
+            : (is_array($rawFiles) ? $rawFiles : []);
+
+        $immersiveImages = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $immersiveImages[] = $file;
+        }
+
+        return $immersiveImages;
     }
 
     /**

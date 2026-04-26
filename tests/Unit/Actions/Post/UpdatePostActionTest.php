@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Post;
 
 use App\Actions\Post\UpdatePostAction;
+use App\Domain\Post\PostImmersiveImageService;
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\PostNotificationOrchestrator;
 use App\Models\Campaign;
@@ -47,6 +48,7 @@ class UpdatePostActionTest extends TestCase
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
+            app(PostImmersiveImageService::class),
             $moderationService,
             $notificationOrchestrator,
         );
@@ -94,6 +96,7 @@ class UpdatePostActionTest extends TestCase
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
+            app(PostImmersiveImageService::class),
             $moderationService,
             $notificationOrchestrator,
         );
@@ -137,6 +140,7 @@ class UpdatePostActionTest extends TestCase
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
+            app(PostImmersiveImageService::class),
             $moderationService,
             $notificationOrchestrator,
         );
@@ -188,6 +192,7 @@ class UpdatePostActionTest extends TestCase
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
+            app(PostImmersiveImageService::class),
             $moderationService,
             $notificationOrchestrator,
         );

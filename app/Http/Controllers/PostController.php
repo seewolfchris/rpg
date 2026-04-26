@@ -98,7 +98,7 @@ class PostController extends Controller
         $this->ensurePostBelongsToWorld($world, $post);
         $this->authorize('update', $post);
 
-        $post->load([...Post::SCENE_CONTEXT_RELATIONS, 'user', 'character']);
+        $post->load([...Post::SCENE_CONTEXT_RELATIONS, 'user', 'character', 'media']);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
         $characterOwner = $post->user_id === (int) auth()->id()

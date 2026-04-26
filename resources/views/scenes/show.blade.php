@@ -498,6 +498,7 @@
                 <form
                     method="POST"
                     action="{{ route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
+                    enctype="multipart/form-data"
                     class="mt-6"
                     data-offline-post-form
                     @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif

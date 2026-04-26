@@ -21,6 +21,7 @@
         <form
             method="POST"
             action="{{ route('posts.update', ['world' => $post->scene->campaign->world, 'post' => $post]) }}"
+            enctype="multipart/form-data"
             class="mt-8"
             @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif
             @if ($wave3EditorPreviewEnabled) data-preview-url="{{ route('posts.preview', ['world' => $post->scene->campaign->world]) }}" @endif

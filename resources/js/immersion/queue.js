@@ -202,6 +202,14 @@ export function createQueueModule({
 
                 event.preventDefault();
 
+                if (formHasSelectedFiles(form)) {
+                    showSyncNotice(
+                        'Offline mit Bildanhang: Bitte erst online senden. Dateianhänge werden offline nicht vorgemerkt.',
+                        'warning',
+                    );
+                    return;
+                }
+
                 try {
                     await queuePostSubmission(form);
                     form.reset();
@@ -429,8 +437,12 @@ export function createQueueModule({
         const entries = [];
 
         for (const [key, value] of formData.entries()) {
-            if (typeof key !== 'string' || typeof value !== 'string') {
+            if (typeof key !== 'string') {
                 continue;
+            }
+
+            if (typeof value !== 'string') {
+                throw new Error('Offline queue does not support binary form entries.');
             }
 
             if (isSensitiveQueueKey(key)) {
@@ -807,6 +819,22 @@ export function createQueueModule({
         }
 
         return '';
+    }
+
+    function formHasSelectedFiles(form) {
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+
+        for (const candidate of fileInputs) {
+            if (!(candidate instanceof HTMLInputElement)) {
+                continue;
+            }
+
+            if ((candidate.files?.length || 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     function openQueueDatabase() {

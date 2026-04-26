@@ -7,6 +7,7 @@ namespace App\Actions\Post;
 use App\Actions\Post\Support\PostUpdateModerationContext;
 use App\Actions\Post\Support\PostUpdateMutationInput;
 use App\Actions\Post\Support\PostUpdateTransactionResult;
+use App\Domain\Post\PostImmersiveImageService;
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\PostNotificationOrchestrator;
 use App\Models\Campaign;
@@ -16,11 +17,13 @@ use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Carbon;
 use RuntimeException;
+use Throwable;
 
 final class UpdatePostAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly PostImmersiveImageService $postImmersiveImageService,
         private readonly PostModerationService $postModerationService,
         private readonly PostNotificationOrchestrator $postNotificationOrchestrator,
     ) {}
@@ -33,6 +36,8 @@ final class UpdatePostAction
      *   content_format: string,
      *   content: string,
      *   ic_quote?: mixed,
+     *   immersive_images?: mixed,
+     *   remove_immersive_media_ids?: mixed,
      *   moderation_status?: mixed,
      *   moderation_note?: mixed
      * }  $data
@@ -41,6 +46,7 @@ final class UpdatePostAction
     {
         $mutation = $this->runValidationAndNormalizationPhase($data);
         $result = $this->runTransactionalMutationPhase($post, $editor, $mutation);
+        $this->runAfterCommitMediaMutationPhase($result->post, $mutation);
         $this->runAfterCommitEffectsPhase($result, $editor);
 
         $post->refresh();
@@ -54,6 +60,8 @@ final class UpdatePostAction
      *   content_format: string,
      *   content: string,
      *   ic_quote?: mixed,
+     *   immersive_images?: mixed,
+     *   remove_immersive_media_ids?: mixed,
      *   moderation_status?: mixed,
      *   moderation_note?: mixed
      * }  $data
@@ -121,6 +129,23 @@ final class UpdatePostAction
 
         if ($result->hasContentChange) {
             $this->postNotificationOrchestrator->notifyMentionsWithRetry($result->post, $editor, 'update_post');
+        }
+    }
+
+    private function runAfterCommitMediaMutationPhase(Post $post, PostUpdateMutationInput $mutation): void
+    {
+        try {
+            if ($mutation->removeImmersiveMediaIds !== []) {
+                $this->postImmersiveImageService->removeImmersiveImagesById($post, $mutation->removeImmersiveMediaIds);
+            }
+
+            if (! $this->isGmNarrationMutation($mutation) || $mutation->immersiveImages === []) {
+                return;
+            }
+
+            $this->postImmersiveImageService->attachImmersiveImages($post, $mutation->immersiveImages);
+        } catch (Throwable $throwable) {
+            report($throwable);
         }
     }
 
@@ -275,5 +300,11 @@ final class UpdatePostAction
             'moderation_status' => $post->moderation_status,
             'created_at' => now(),
         ]);
+    }
+
+    private function isGmNarrationMutation(PostUpdateMutationInput $mutation): bool
+    {
+        return $mutation->postType === 'ic'
+            && $mutation->postMode === 'gm';
     }
 }

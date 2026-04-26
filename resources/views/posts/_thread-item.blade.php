@@ -178,6 +178,24 @@
         {!! $post->renderedContent() !!}
     </div>
 
+    @php($immersiveImages = $post->relationLoaded('media')
+        ? $post->media->where('collection_name', \App\Models\Post::IMMERSIVE_IMAGES_COLLECTION)->values()
+        : collect())
+    @if ($isGmNarration && $immersiveImages->isNotEmpty())
+        <section class="mt-4">
+            <div class="grid gap-3 sm:grid-cols-2">
+                @foreach ($immersiveImages as $immersiveImage)
+                    <img
+                        src="{{ $immersiveImage->getUrl() }}"
+                        alt="Immersives Bild zu Beitrag #{{ $post->id }}"
+                        loading="lazy"
+                        class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                    >
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     @if (\App\Support\SensitiveFeatureGate::enabled('features.wave4.reactions', false))
         @php($reactionSymbols = ['heart' => '❤️', 'joy' => '😂', 'clap' => '👏', 'fire' => '🔥'])
         @php($reactionCollection = $post->relationLoaded('reactions') ? $post->reactions : collect())

@@ -12,14 +12,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Post extends Model
+class Post extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\PostFactory> */
     use HasFactory;
+    use InteractsWithMedia;
     use SoftDeletes;
 
     public const THREAD_POSTS_PER_PAGE = 20;
+    public const IMMERSIVE_IMAGES_COLLECTION = 'immersive_images';
 
     /**
      * @var list<string>
@@ -49,6 +53,7 @@ class Post extends Model
         'moderationLogs.moderator',
         'diceRoll.character.user',
         'reactions',
+        'media',
     ];
 
     /**
@@ -227,5 +232,16 @@ class Post extends Model
             && $this->getAttribute('character_id') === null
             && is_string($authorRole)
             && $authorRole === 'gm';
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection(self::IMMERSIVE_IMAGES_COLLECTION)
+            ->acceptsMimeTypes([
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ]);
     }
 }

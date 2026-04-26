@@ -32,6 +32,16 @@
     $currentInventoryAwardItem = old('inventory_award_item');
     $currentInventoryAwardQuantity = old('inventory_award_quantity', 1);
     $currentInventoryAwardEquipped = (bool) old('inventory_award_equipped', false);
+    $editingPost = $post instanceof \App\Models\Post;
+    $existingImmersiveImages = $editingPost
+        ? ($post->relationLoaded('media')
+            ? $post->media->where('collection_name', \App\Models\Post::IMMERSIVE_IMAGES_COLLECTION)->values()
+            : $post->media()->where('collection_name', \App\Models\Post::IMMERSIVE_IMAGES_COLLECTION)->get())
+        : collect();
+    $selectedImmersiveRemovalIds = collect((array) old('remove_immersive_media_ids', []))
+        ->map(static fn ($id) => is_numeric($id) ? (int) $id : 0)
+        ->filter(static fn (int $id): bool => $id > 0)
+        ->all();
 @endphp
 
 <div
@@ -197,6 +207,67 @@
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror
     </div>
+
+    <div x-show="isGmMode()" x-cloak>
+        <label for="immersive_images" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Immersive Bilder (optional)</label>
+        <input
+            id="immersive_images"
+            type="file"
+            name="immersive_images[]"
+            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            multiple
+            :disabled="!isGmMode()"
+            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 file:mr-3 file:rounded-md file:border-0 file:bg-amber-800/60 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:uppercase file:tracking-[0.08em] file:text-amber-100"
+        >
+        <p class="mt-2 text-xs text-stone-500">
+            Erlaubte Formate: JPG, PNG, WEBP. Maximal 4 Bilder pro Beitrag, jeweils bis 4 MB.
+        </p>
+        @error('immersive_images')
+            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+        @enderror
+        @error('immersive_images.*')
+            <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+        @enderror
+    </div>
+
+    @if ($editingPost && $existingImmersiveImages->isNotEmpty())
+        <section class="rounded-lg border border-stone-700/80 bg-black/30 p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Bestehende immersive Bilder</p>
+            <p class="mt-2 text-xs text-stone-500">
+                Bilder bleiben unverändert, solange sie nicht explizit zur Entfernung markiert werden.
+            </p>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($existingImmersiveImages as $immersiveImage)
+                    <label class="rounded-lg border border-stone-700/80 bg-black/35 p-3">
+                        <img
+                            src="{{ $immersiveImage->getUrl() }}"
+                            alt="Immersives Bild zu Beitrag #{{ $post->id }}"
+                            loading="lazy"
+                            class="h-40 w-full rounded-md object-cover"
+                        >
+                        <span class="mt-3 inline-flex items-center gap-2 text-xs text-stone-300">
+                            <input
+                                type="checkbox"
+                                name="remove_immersive_media_ids[]"
+                                value="{{ $immersiveImage->id }}"
+                                @checked(in_array((int) $immersiveImage->id, $selectedImmersiveRemovalIds, true))
+                                class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                            >
+                            Bild entfernen
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+
+            @error('remove_immersive_media_ids')
+                <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('remove_immersive_media_ids.*')
+                <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+        </section>
+    @endif
 
     @if ($wave3EditorPreviewEnabled)
         <section data-post-preview class="rounded-lg border border-stone-700/80 bg-black/30 p-4">
