@@ -84,6 +84,63 @@ class HandoutManagementTest extends TestCase
         $this->assertDatabaseCount('handouts', 0);
     }
 
+    public function test_store_rejects_svg_handout_file(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.handouts.create', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]))
+            ->post(route('campaigns.handouts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]), [
+                'title' => 'Ungueltiges SVG',
+                'scene_id' => $scene->id,
+                'handout_file' => UploadedFile::fake()->createWithContent(
+                    'invalid.svg',
+                    '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'
+                ),
+            ]);
+
+        $response->assertRedirect(route('campaigns.handouts.create', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]));
+        $response->assertSessionHasErrors('handout_file');
+        $this->assertDatabaseCount('handouts', 0);
+        $this->assertDatabaseCount('media', 0);
+    }
+
+    public function test_store_rejects_non_image_handout_file(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.handouts.create', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]))
+            ->post(route('campaigns.handouts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]), [
+                'title' => 'Ungueltige Textdatei',
+                'scene_id' => $scene->id,
+                'handout_file' => UploadedFile::fake()->create('invalid.txt', 12, 'text/plain'),
+            ]);
+
+        $response->assertRedirect(route('campaigns.handouts.create', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]));
+        $response->assertSessionHasErrors('handout_file');
+        $this->assertDatabaseCount('handouts', 0);
+        $this->assertDatabaseCount('media', 0);
+    }
+
     public function test_trusted_player_cannot_manage_existing_handout(): void
     {
         [$campaign, $scene, , $gm, $trustedPlayer] = $this->seedCampaignContext();
@@ -219,6 +276,101 @@ class HandoutManagementTest extends TestCase
 
         $this->assertCount(1, $media);
         $this->assertSame($oldMediaId, (int) $media->first()->id);
+    }
+
+    public function test_update_rejects_svg_replacement_and_keeps_existing_primary_file(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+        $handout = $this->createHandoutWithFile($campaign, $gm, $scene);
+
+        $oldMediaId = (int) $handout->getFirstMedia(Handout::HANDOUT_FILE_COLLECTION)?->id;
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.handouts.edit', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))
+            ->patch(route('campaigns.handouts.update', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]), [
+                'title' => $handout->title,
+                'description' => $handout->description,
+                'scene_id' => $scene->id,
+                'version_label' => $handout->version_label,
+                'sort_order' => $handout->sort_order,
+                'handout_file' => UploadedFile::fake()->createWithContent(
+                    'replace.svg',
+                    '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="5"/></svg>'
+                ),
+            ]);
+
+        $response->assertRedirect(route('campaigns.handouts.edit', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]));
+        $response->assertSessionHasErrors('handout_file');
+
+        $handout->refresh();
+        $media = $handout->getMedia(Handout::HANDOUT_FILE_COLLECTION);
+
+        $this->assertCount(1, $media);
+        $this->assertSame($oldMediaId, (int) $media->first()->id);
+
+        $this->actingAs($gm)->get(route('campaigns.handouts.file', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]))->assertOk();
+    }
+
+    public function test_update_rejects_non_image_replacement_and_keeps_existing_primary_file(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+        $handout = $this->createHandoutWithFile($campaign, $gm, $scene);
+
+        $oldMediaId = (int) $handout->getFirstMedia(Handout::HANDOUT_FILE_COLLECTION)?->id;
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.handouts.edit', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))
+            ->patch(route('campaigns.handouts.update', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]), [
+                'title' => $handout->title,
+                'description' => $handout->description,
+                'scene_id' => $scene->id,
+                'version_label' => $handout->version_label,
+                'sort_order' => $handout->sort_order,
+                'handout_file' => UploadedFile::fake()->create('replace.txt', 14, 'text/plain'),
+            ]);
+
+        $response->assertRedirect(route('campaigns.handouts.edit', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]));
+        $response->assertSessionHasErrors('handout_file');
+
+        $handout->refresh();
+        $media = $handout->getMedia(Handout::HANDOUT_FILE_COLLECTION);
+
+        $this->assertCount(1, $media);
+        $this->assertSame($oldMediaId, (int) $media->first()->id);
+
+        $this->actingAs($gm)->get(route('campaigns.handouts.file', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]))->assertOk();
     }
 
     public function test_gm_can_reveal_and_unreveal_handout(): void

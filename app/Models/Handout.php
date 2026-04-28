@@ -88,6 +88,7 @@ class Handout extends Model implements HasMedia
         $this
             ->addMediaCollection(self::HANDOUT_FILE_COLLECTION)
             ->useDisk('local')
+            ->singleFile()
             ->acceptsMimeTypes([
                 'image/jpeg',
                 'image/png',
