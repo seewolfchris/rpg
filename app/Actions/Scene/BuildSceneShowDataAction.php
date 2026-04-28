@@ -8,12 +8,14 @@ use App\Domain\Campaign\CampaignParticipantResolver;
 use App\Domain\Scene\ScenePostAnchorUrlService;
 use App\Domain\Scene\SceneThreadReadStateService;
 use App\Models\Campaign;
+use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class BuildSceneShowDataAction
 {
@@ -67,6 +69,7 @@ class BuildSceneShowDataAction
         $probeCharacters = $canModerateScene
             ? $this->campaignParticipantResolver->probeCharacters($campaign)
             : collect();
+        $sceneHandouts = $this->sceneHandouts($campaign, $scene, $user);
 
         $userBookmark = SceneBookmark::query()
             ->where('scene_id', $scene->id)
@@ -113,6 +116,7 @@ class BuildSceneShowDataAction
             pinnedPostJumpUrls: $pinnedPostJumpUrls,
             characters: $characters,
             probeCharacters: $probeCharacters,
+            sceneHandouts: $sceneHandouts,
             canModerateScene: $canModerateScene,
             subscription: $subscription,
             latestPostId: $latestPostId,
@@ -144,5 +148,41 @@ class BuildSceneShowDataAction
     private function canModerateScene(User $user, Campaign $campaign): bool
     {
         return $campaign->canModeratePosts($user);
+    }
+
+    /**
+     * @return Collection<int, Handout>
+     */
+    private function sceneHandouts(Campaign $campaign, Scene $scene, User $user): Collection
+    {
+        $canManageCampaign = $campaign->canManageCampaign($user);
+
+        /** @var Collection<int, Handout> $handouts */
+        $handouts = Handout::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where(function ($query) use ($scene): void {
+                $query
+                    ->whereNull('scene_id')
+                    ->orWhere('scene_id', (int) $scene->id);
+            })
+            ->when(
+                ! $canManageCampaign,
+                fn ($query) => $query->whereNotNull('revealed_at')
+            )
+            ->orderByRaw('sort_order IS NULL')
+            ->orderBy('sort_order')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'campaign_id',
+                'scene_id',
+                'title',
+                'revealed_at',
+                'sort_order',
+                'created_at',
+            ]);
+
+        return $handouts;
     }
 }

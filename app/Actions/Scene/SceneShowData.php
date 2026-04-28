@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Scene;
 
 use App\Models\Character;
+use App\Models\Handout;
 use App\Models\Post;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
@@ -19,6 +20,7 @@ final readonly class SceneShowData
      * @param  array<int, string|null>  $pinnedPostJumpUrls
      * @param  Collection<int, Character>  $characters
      * @param  Collection<int, Character>  $probeCharacters
+     * @param  Collection<int, Handout>  $sceneHandouts
      */
     public function __construct(
         public LengthAwarePaginator $posts,
@@ -26,6 +28,7 @@ final readonly class SceneShowData
         public array $pinnedPostJumpUrls,
         public Collection $characters,
         public Collection $probeCharacters,
+        public Collection $sceneHandouts,
         public bool $canModerateScene,
         public ?SceneSubscription $subscription,
         public int $latestPostId,

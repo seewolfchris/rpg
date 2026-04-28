@@ -126,159 +126,199 @@
                 </section>
             @endif
 
-            <div class="ui-card-soft mt-6 space-y-3 p-4" data-reading-mode-chrome>
-                <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Werkzeuge</p>
-                <div class="flex flex-wrap items-center gap-3">
-                @if ($jumpToLatestPostUrl)
-                    <a
-                        href="{{ $jumpToLatestPostUrl }}"
-                        class="ui-btn"
-                    >
-                        Zum neuesten Post
-                    </a>
-                @endif
-                @if ($jumpToLastReadUrl)
-                    <a
-                        href="{{ $jumpToLastReadUrl }}"
-                        class="ui-btn"
-                    >
-                        Zum letzten Lesepunkt
-                    </a>
-                @endif
-                @if ($jumpToFirstUnreadUrl)
-                    <a
-                        href="{{ $jumpToFirstUnreadUrl }}"
-                        class="ui-btn ui-btn-accent"
-                    >
-                        Zum ersten neuen
-                    </a>
-                @endif
-                @if ($bookmarkJumpUrl)
-                    <a
-                        href="{{ $bookmarkJumpUrl }}"
-                        class="ui-btn ui-btn-success"
-                    >
-                        Zum Lesezeichen
-                    </a>
-                @endif
-                @can('create', [App\Models\Post::class, $scene])
-                    <a
-                        href="#new-post-form"
-                        hx-boost="false"
-                        class="ui-btn"
-                    >
-                        Zum Schreibfeld
-                    </a>
-                @endcan
-                @if ($canModerateScene)
-                    <a
-                        href="#inventory-quick-action"
-                        hx-boost="false"
-                        class="ui-btn ui-btn-success"
-                    >
-                        Inventar-Schnellaktion
-                    </a>
-                @endif
-                </div>
-
-                @if ($subscription)
-                    <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
-                        @csrf
-                        @method('PATCH')
-                        <button
-                            type="submit"
+            <div class="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+                <div class="ui-card-soft space-y-3 p-4" data-reading-mode-chrome>
+                    <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Werkzeuge</p>
+                    <div class="flex flex-wrap items-center gap-3">
+                    @if ($jumpToLatestPostUrl)
+                        <a
+                            href="{{ $jumpToLatestPostUrl }}"
                             class="ui-btn"
                         >
-                            {{ $subscription->is_muted ? 'Stumm aus' : 'Stumm schalten' }}
-                        </button>
-                    </form>
-
-                    <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
-                        @csrf
-                        @method('DELETE')
-                        <button
-                            type="submit"
+                            Zum neuesten Post
+                        </a>
+                    @endif
+                    @if ($jumpToLastReadUrl)
+                        <a
+                            href="{{ $jumpToLastReadUrl }}"
                             class="ui-btn"
                         >
-                            Entfolgen
-                        </button>
-                    </form>
-
-                    <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
-                        @csrf
-                        @method('PATCH')
-                        <button
-                            type="submit"
-                            class="ui-btn"
-                        >
-                            Als ungelesen
-                        </button>
-                    </form>
-                @else
-                    <form method="POST" action="{{ route('campaigns.scenes.subscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
-                        @csrf
-                        <button
-                            type="submit"
+                            Zum letzten Lesepunkt
+                        </a>
+                    @endif
+                    @if ($jumpToFirstUnreadUrl)
+                        <a
+                            href="{{ $jumpToFirstUnreadUrl }}"
                             class="ui-btn ui-btn-accent"
                         >
-                            Folgen
-                        </button>
-                    </form>
-                @endif
+                            Zum ersten neuen
+                        </a>
+                    @endif
+                    @if ($bookmarkJumpUrl)
+                        <a
+                            href="{{ $bookmarkJumpUrl }}"
+                            class="ui-btn ui-btn-success"
+                        >
+                            Zum Lesezeichen
+                        </a>
+                    @endif
+                    @can('create', [App\Models\Post::class, $scene])
+                        <a
+                            href="#new-post-form"
+                            hx-boost="false"
+                            class="ui-btn"
+                        >
+                            Zum Schreibfeld
+                        </a>
+                    @endcan
+                    @if ($canModerateScene)
+                        <a
+                            href="#inventory-quick-action"
+                            hx-boost="false"
+                            class="ui-btn ui-btn-success"
+                        >
+                            Inventar-Schnellaktion
+                        </a>
+                    @endif
+                    </div>
 
-                <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                    @csrf
-                    <input type="hidden" name="post_id" value="{{ $latestPostId > 0 ? $latestPostId : '' }}">
-                    <input
-                        type="text"
-                        name="label"
-                        maxlength="80"
-                        value="{{ old('label', $userBookmark?->label) }}"
-                        placeholder="Lesezeichen-Label (optional)"
-                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 sm:w-48"
-                    >
-                    <button
-                        type="submit"
-                        class="ui-btn ui-btn-success"
-                    >
-                        {{ $userBookmark ? 'Lesezeichen aktualisieren' : 'Lesezeichen setzen' }}
-                    </button>
-                </form>
+                    @if ($subscription)
+                        <form method="POST" action="{{ route('campaigns.scenes.subscription.mute', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button
+                                type="submit"
+                                class="ui-btn"
+                            >
+                                {{ $subscription->is_muted ? 'Stumm aus' : 'Stumm schalten' }}
+                            </button>
+                        </form>
 
-                @if ($userBookmark)
-                    <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                        <form method="POST" action="{{ route('campaigns.scenes.unsubscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                class="ui-btn"
+                            >
+                                Entfolgen
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('campaigns.scenes.subscription.unread', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button
+                                type="submit"
+                                class="ui-btn"
+                            >
+                                Als ungelesen
+                            </button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('campaigns.scenes.subscribe', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="ui-btn ui-btn-accent"
+                            >
+                                Folgen
+                            </button>
+                        </form>
+                    @endif
+
+                    <form method="POST" action="{{ route('campaigns.scenes.bookmark.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                         @csrf
-                        @method('DELETE')
+                        <input type="hidden" name="post_id" value="{{ $latestPostId > 0 ? $latestPostId : '' }}">
+                        <input
+                            type="text"
+                            name="label"
+                            maxlength="80"
+                            value="{{ old('label', $userBookmark?->label) }}"
+                            placeholder="Lesezeichen-Label (optional)"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-xs text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40 sm:w-48"
+                        >
                         <button
                             type="submit"
-                            class="ui-btn ui-btn-danger"
+                            class="ui-btn ui-btn-success"
                         >
-                            Lesezeichen löschen
+                            {{ $userBookmark ? 'Lesezeichen aktualisieren' : 'Lesezeichen setzen' }}
                         </button>
                     </form>
-                @endif
 
-                @can('update', $scene)
-                    <a
-                        href="{{ route('campaigns.scenes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
-                        class="ui-btn"
-                    >
-                        Szene bearbeiten
-                    </a>
-                @endcan
+                    @if ($userBookmark)
+                        <form method="POST" action="{{ route('campaigns.scenes.bookmark.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                class="ui-btn ui-btn-danger"
+                            >
+                                Lesezeichen löschen
+                            </button>
+                        </form>
+                    @endif
 
-                @can('delete', $scene)
-                    <form method="POST" action="{{ route('campaigns.scenes.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" data-confirm="Szene wirklich löschen?">
-                        @csrf
-                        @method('DELETE')
-                        <button
-                            type="submit"
-                            class="ui-btn ui-btn-danger"
+                    @can('update', $scene)
+                        <a
+                            href="{{ route('campaigns.scenes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
+                            class="ui-btn"
                         >
-                            Szene löschen
-                        </button>
-                    </form>
-                @endcan
+                            Szene bearbeiten
+                        </a>
+                    @endcan
+
+                    @can('delete', $scene)
+                        <form method="POST" action="{{ route('campaigns.scenes.destroy', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" data-confirm="Szene wirklich löschen?">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                class="ui-btn ui-btn-danger"
+                            >
+                                Szene löschen
+                            </button>
+                        </form>
+                    @endcan
+                </div>
+
+                <aside class="ui-card-soft p-4" data-reading-mode-chrome>
+                    <h2 class="font-heading text-lg text-stone-100">Szenen-Handouts</h2>
+
+                    @if ($sceneHandouts->isEmpty())
+                        <p class="mt-3 text-sm text-stone-400">Noch keine sichtbaren Handouts.</p>
+                        @if ($canModerateScene)
+                            <a
+                                href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                class="ui-btn mt-3 ui-btn-accent !px-3 !py-2 !text-[0.68rem]"
+                            >
+                                Handout anlegen
+                            </a>
+                        @endif
+                    @else
+                        <ul class="mt-3 space-y-2">
+                            @foreach ($sceneHandouts as $sceneHandout)
+                                <li class="ui-card-soft border-stone-700/70 bg-black/25 p-3">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <span class="ui-badge !rounded !text-[0.62rem]">
+                                            {{ $sceneHandout->scene_id === null ? 'Kampagne' : 'Szene' }}
+                                        </span>
+                                        @if ($canModerateScene && $sceneHandout->revealed_at === null)
+                                            <span class="ui-badge !rounded !border-amber-700/70 !bg-amber-900/20 !text-amber-200 !text-[0.62rem]">Verborgen</span>
+                                        @endif
+                                    </div>
+
+                                    <a
+                                        href="{{ route('campaigns.handouts.show', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $sceneHandout]) }}"
+                                        class="mt-2 block text-sm font-semibold text-stone-100 underline decoration-amber-500/60 underline-offset-4 hover:text-amber-100"
+                                    >
+                                        {{ $sceneHandout->title }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </aside>
             </div>
 
             @if ($newPostsSinceLastRead > 0)

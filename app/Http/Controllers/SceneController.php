@@ -90,6 +90,7 @@ class SceneController extends Controller
             'pinnedPostJumpUrls' => $showData->pinnedPostJumpUrls,
             'characters' => $showData->characters,
             'probeCharacters' => $showData->probeCharacters,
+            'sceneHandouts' => $showData->sceneHandouts,
             'canModerateScene' => $showData->canModerateScene,
             'subscription' => $showData->subscription,
             'latestPostId' => $showData->latestPostId,
