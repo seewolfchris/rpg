@@ -377,6 +377,47 @@ class CharacterProgressionTest extends TestCase
         $this->assertSame(8, (int) $character->attribute_points_unspent);
     }
 
+    public function test_character_show_renders_progression_log_when_events_are_empty(): void
+    {
+        $owner = User::factory()->create();
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('characters.show', $character));
+
+        $response->assertOk()
+            ->assertSeeText('Progressions-Log')
+            ->assertSeeText('Noch keine Progressions-Einträge vorhanden.');
+    }
+
+    public function test_character_show_renders_progression_log_when_events_exist(): void
+    {
+        $owner = User::factory()->create();
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+        ]);
+
+        CharacterProgressionEvent::query()->create([
+            'character_id' => $character->id,
+            'actor_user_id' => $owner->id,
+            'event_type' => CharacterProgressionEvent::EVENT_LEVEL_UP_SYSTEM,
+            'xp_delta' => 0,
+            'level_before' => 1,
+            'level_after' => 2,
+            'ap_delta' => 8,
+            'attribute_deltas' => ['mu' => 2],
+            'reason' => 'Regression test',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('characters.show', $character));
+
+        $response->assertOk()
+            ->assertSeeText('Progressions-Log')
+            ->assertSeeText('Stufenaufstieg');
+    }
+
     public function test_progression_dashboard_lists_only_campaign_participant_characters(): void
     {
         [$gm, $player, $campaign, $scene, $character] = $this->seedCampaignWithParticipantCharacter();

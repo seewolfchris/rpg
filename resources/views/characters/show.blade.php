@@ -382,59 +382,9 @@
                     @endif
                 </section>
 
-                <section class="rounded-lg border border-emerald-700/60 bg-emerald-950/10 p-4">
-                    <h4 class="text-xs font-semibold uppercase tracking-widest text-emerald-200">Progressions-Log</h4>
-                    @if ($progressionEvents->isNotEmpty())
-                        <ul class="mt-3 space-y-2 text-sm text-emerald-100">
-                            @foreach ($progressionEvents as $event)
-                                @php
-                                    $eventType = (string) $event->event_type;
-                                    $eventLabel = match ($eventType) {
-                                        'xp_milestone' => 'XP-Meilenstein',
-                                        'xp_correction' => 'XP-Korrektur',
-                                        'ap_spend' => 'AP-Ausgabe',
-                                        'level_up_system' => 'Stufenaufstieg',
-                                        default => $eventType,
-                                    };
-                                    $attributeDeltas = is_array($event->attribute_deltas) ? $event->attribute_deltas : [];
-                                @endphp
-                                <li class="rounded border border-emerald-700/40 bg-black/20 px-3 py-2">
-                                    <p class="text-xs uppercase tracking-[0.08em] text-emerald-300">
-                                        <x-relative-time :at="$event->created_at" />
-                                        • {{ $eventLabel }}
-                                        • {{ $event->actorUser->name ?? 'System' }}
-                                    </p>
-                                    <p class="mt-1">
-                                        XP Δ {{ (int) $event->xp_delta >= 0 ? '+' : '' }}{{ (int) $event->xp_delta }}
-                                        • AP Δ {{ (int) $event->ap_delta >= 0 ? '+' : '' }}{{ (int) $event->ap_delta }}
-                                        • Stufe {{ (int) $event->level_before }} → {{ (int) $event->level_after }}
-                                    </p>
-                                    @if ($attributeDeltas !== [])
-                                        <p class="mt-1 text-xs text-emerald-200/90">
-                                            Attribute:
-                                            {{ collect($attributeDeltas)->map(fn ($value, $key): string => strtoupper((string) $key).' +'.(int) $value)->implode(', ') }}
-                                        </p>
-                                    @endif
-                                    @if ($event->campaign || $event->scene || $event->reason)
-                                        <p class="mt-1 text-xs text-emerald-200/80">
-                                            @if ($event->campaign)
-                                                Kampagne: {{ $event->campaign->title }}
-                                            @endif
-                                            @if ($event->scene)
-                                                • Szene: {{ $event->scene->title }}
-                                            @endif
-                                            @if ($event->reason)
-                                                • Grund: {{ $event->reason }}
-                                            @endif
-                                        </p>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ul>
-                    @else
-                        <p class="mt-2 text-sm text-emerald-200/80">Noch keine Progressions-Einträge vorhanden.</p>
-                    @endif
-                </section>
+                @include('characters.partials.progression-log', [
+                    'progressionEvents' => $progressionEvents,
+                ])
             </article>
         </div>
 
