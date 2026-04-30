@@ -84,6 +84,109 @@ class HandoutManagementTest extends TestCase
         $this->assertDatabaseCount('handouts', 0);
     }
 
+    public function test_player_does_not_see_create_link_on_handout_index(): void
+    {
+        [$campaign, $scene, $player, $gm] = $this->seedCampaignContext();
+        $this->createHandoutWithFile($campaign, $gm, $scene, true, 'Nur sichtbar');
+
+        $response = $this->actingAs($player)->get(route('campaigns.handouts.index', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee(route('campaigns.handouts.create', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]), false);
+    }
+
+    public function test_player_does_not_see_management_actions_on_revealed_handout_detail(): void
+    {
+        [$campaign, $scene, $player, $gm] = $this->seedCampaignContext();
+        $handout = $this->createHandoutWithFile($campaign, $gm, $scene, true, 'Spieler-Ansicht');
+
+        $response = $this->actingAs($player)->get(route('campaigns.handouts.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee(route('campaigns.handouts.edit', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]), false);
+        $response->assertDontSee(route('campaigns.handouts.reveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]), false);
+        $response->assertDontSee(route('campaigns.handouts.unreveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]), false);
+        $response->assertDontSee('Handout wirklich löschen?');
+    }
+
+    public function test_player_and_trusted_player_cannot_access_management_routes_directly(): void
+    {
+        [$campaign, $scene, $player, $gm, $trustedPlayer] = $this->seedCampaignContext();
+        $handout = $this->createHandoutWithFile($campaign, $gm, $scene, false, 'Nur GM verwaltet');
+
+        foreach ([$player, $trustedPlayer] as $actor) {
+            $this->actingAs($actor)->get(route('campaigns.handouts.create', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]))->assertForbidden();
+
+            $this->actingAs($actor)->post(route('campaigns.handouts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]), [
+                'title' => 'Verbotenes Handout '.$actor->id,
+                'scene_id' => $scene->id,
+                'handout_file' => UploadedFile::fake()->image('blocked-'.$actor->id.'.jpg', 1200, 700),
+            ])->assertForbidden();
+
+            $this->actingAs($actor)->get(route('campaigns.handouts.edit', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))->assertForbidden();
+
+            $this->actingAs($actor)->patch(route('campaigns.handouts.update', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]), [
+                'title' => 'Manipuliert',
+                'description' => 'x',
+                'scene_id' => $scene->id,
+            ])->assertForbidden();
+
+            $this->actingAs($actor)->delete(route('campaigns.handouts.destroy', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))->assertForbidden();
+
+            $this->actingAs($actor)->patch(route('campaigns.handouts.reveal', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))->assertForbidden();
+
+            $this->actingAs($actor)->patch(route('campaigns.handouts.unreveal', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'handout' => $handout,
+            ]))->assertForbidden();
+        }
+    }
+
     public function test_store_rejects_svg_handout_file(): void
     {
         [$campaign, $scene, , $gm] = $this->seedCampaignContext();

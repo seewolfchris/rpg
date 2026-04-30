@@ -286,14 +286,17 @@
                     <h2 class="font-heading text-lg text-stone-100">Szenen-Handouts</h2>
 
                     @if ($sceneHandouts->isEmpty())
-                        <p class="mt-3 text-sm text-stone-400">Noch keine sichtbaren Handouts.</p>
                         @if ($canModerateScene)
+                            <p class="mt-3 text-sm text-stone-400">Noch keine Handouts vorhanden.</p>
                             <a
                                 href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
                                 class="ui-btn mt-3 ui-btn-accent !px-3 !py-2 !text-[0.68rem]"
                             >
                                 Handout anlegen
                             </a>
+                        @else
+                            <p class="mt-3 text-sm text-stone-400">Noch keine sichtbaren Handouts.</p>
+                            <p class="mt-2 text-xs text-stone-500">Sobald die Spielleitung Karten, Briefe oder Hinweise freigibt, erscheinen sie hier.</p>
                         @endif
                     @else
                         <ul class="mt-3 space-y-2">
@@ -304,7 +307,7 @@
                                             {{ $sceneHandout->scene_id === null ? 'Kampagne' : 'Szene' }}
                                         </span>
                                         @if ($canModerateScene && $sceneHandout->revealed_at === null)
-                                            <span class="ui-badge !rounded !border-amber-700/70 !bg-amber-900/20 !text-amber-200 !text-[0.62rem]">Verborgen</span>
+                                            <span class="ui-badge !rounded !border-amber-700/70 !bg-amber-900/20 !text-amber-200 !text-[0.62rem]">Verborgen für Spieler</span>
                                         @endif
                                     </div>
 

@@ -88,6 +88,40 @@ class SceneHandoutPanelTest extends TestCase
         $response->assertDontSee('Verborgener Hinweis');
     }
 
+    public function test_scene_show_does_not_render_handout_management_cta_for_player(): void
+    {
+        [$campaign, $scene, , , $player] = $this->seedSceneContext();
+
+        $response = $this->actingAs($player)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee(route('campaigns.handouts.create', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]), false);
+    }
+
+    public function test_scene_show_renders_handout_management_cta_for_gm(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedSceneContext();
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee(route('campaigns.handouts.create', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]), false);
+    }
+
     public function test_scene_show_displays_unrevealed_handout_with_hidden_marker_for_gm(): void
     {
         [$campaign, $scene, $owner, $gm] = $this->seedSceneContext();
@@ -108,7 +142,7 @@ class SceneHandoutPanelTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Nur fuer Leitung');
-        $response->assertSee('Verborgen');
+        $response->assertSee('Verborgen für Spieler');
     }
 
     public function test_scene_show_does_not_include_handouts_from_other_campaign(): void

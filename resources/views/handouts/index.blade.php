@@ -33,7 +33,18 @@
 
         @if ($handouts->isEmpty())
             <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 text-sm text-stone-400 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-                Für diese Kampagne sind aktuell keine sichtbaren Handouts vorhanden.
+                @can('create', [\App\Models\Handout::class, $campaign])
+                    <p>Noch keine Handouts vorhanden.</p>
+                    <a
+                        href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                        class="mt-3 inline-flex rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
+                    >
+                        Handout anlegen
+                    </a>
+                @else
+                    <p>Noch keine sichtbaren Handouts.</p>
+                    <p class="mt-2 text-xs text-stone-500">Sobald die Spielleitung Karten, Briefe oder Hinweise freigibt, erscheinen sie hier.</p>
+                @endcan
             </section>
         @else
             <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
