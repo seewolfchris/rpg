@@ -88,6 +88,15 @@
                         </a>
                     @endcan
 
+                    @can('viewAny', [App\Models\PlayerNote::class, $campaign])
+                        <a
+                            href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        >
+                            Meine Notizen
+                        </a>
+                    @endcan
+
                     @can('create', [App\Models\Scene::class, $campaign])
                         <a
                             href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"

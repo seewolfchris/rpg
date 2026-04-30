@@ -181,6 +181,14 @@ class Character extends Model
         return $this->hasMany(CharacterProgressionEvent::class)->latest('created_at');
     }
 
+    /**
+     * @return HasMany<PlayerNote, $this>
+     */
+    public function playerNotes(): HasMany
+    {
+        return $this->hasMany(PlayerNote::class);
+    }
+
     public function avatarUrl(): string
     {
         if ($this->avatar_path) {

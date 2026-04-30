@@ -103,6 +103,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<PlayerNote, $this>
+     */
+    public function playerNotes(): HasMany
+    {
+        return $this->hasMany(PlayerNote::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignMembership, $this>
      */
     public function memberships(): HasMany

@@ -5,6 +5,7 @@ use App\Http\Controllers\CampaignGmContactThreadController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CampaignMembershipController;
 use App\Http\Controllers\HandoutController;
+use App\Http\Controllers\PlayerNoteController;
 use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
@@ -121,6 +122,30 @@ Route::patch('/campaigns/{campaign}/story-log/{storyLogEntry}/reveal', [StoryLog
 Route::patch('/campaigns/{campaign}/story-log/{storyLogEntry}/unreveal', [StoryLogEntryController::class, 'unreveal'])
     ->middleware('throttle:writes')
     ->name('campaigns.story-log.unreveal');
+
+Route::get('/campaigns/{campaign}/player-notes', [PlayerNoteController::class, 'index'])
+    ->name('campaigns.player-notes.index');
+
+Route::get('/campaigns/{campaign}/player-notes/create', [PlayerNoteController::class, 'create'])
+    ->name('campaigns.player-notes.create');
+
+Route::post('/campaigns/{campaign}/player-notes', [PlayerNoteController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.player-notes.store');
+
+Route::get('/campaigns/{campaign}/player-notes/{playerNote}', [PlayerNoteController::class, 'show'])
+    ->name('campaigns.player-notes.show');
+
+Route::get('/campaigns/{campaign}/player-notes/{playerNote}/edit', [PlayerNoteController::class, 'edit'])
+    ->name('campaigns.player-notes.edit');
+
+Route::patch('/campaigns/{campaign}/player-notes/{playerNote}', [PlayerNoteController::class, 'update'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.player-notes.update');
+
+Route::delete('/campaigns/{campaign}/player-notes/{playerNote}', [PlayerNoteController::class, 'destroy'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.player-notes.destroy');
 
 Route::get('/campaigns/{campaign}/scenes/{scene}/thread', [SceneController::class, 'threadPage'])
     ->name('campaigns.scenes.thread');

@@ -92,6 +92,7 @@ class SceneController extends Controller
             'probeCharacters' => $showData->probeCharacters,
             'sceneHandouts' => $showData->sceneHandouts,
             'sceneChronicleCount' => $showData->sceneChronicleCount,
+            'scenePlayerNotesCount' => $showData->scenePlayerNotesCount,
             'canModerateScene' => $showData->canModerateScene,
             'subscription' => $showData->subscription,
             'latestPostId' => $showData->latestPostId,

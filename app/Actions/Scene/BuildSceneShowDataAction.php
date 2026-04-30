@@ -9,6 +9,7 @@ use App\Domain\Scene\ScenePostAnchorUrlService;
 use App\Domain\Scene\SceneThreadReadStateService;
 use App\Models\Campaign;
 use App\Models\Handout;
+use App\Models\PlayerNote;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
@@ -72,6 +73,7 @@ class BuildSceneShowDataAction
             : collect();
         $sceneHandouts = $this->sceneHandouts($campaign, $scene, $user);
         $sceneChronicleCount = $this->sceneChronicleCount($campaign, $scene, $user);
+        $scenePlayerNotesCount = $this->scenePlayerNotesCount($campaign, $scene, $user);
 
         $userBookmark = SceneBookmark::query()
             ->where('scene_id', $scene->id)
@@ -120,6 +122,7 @@ class BuildSceneShowDataAction
             probeCharacters: $probeCharacters,
             sceneHandouts: $sceneHandouts,
             sceneChronicleCount: $sceneChronicleCount,
+            scenePlayerNotesCount: $scenePlayerNotesCount,
             canModerateScene: $canModerateScene,
             subscription: $subscription,
             latestPostId: $latestPostId,
@@ -204,6 +207,19 @@ class BuildSceneShowDataAction
                 ! $canManageCampaign,
                 fn ($query) => $query->whereNotNull('revealed_at')
             )
+            ->count();
+    }
+
+    private function scenePlayerNotesCount(Campaign $campaign, Scene $scene, User $user): int
+    {
+        return PlayerNote::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where('user_id', (int) $user->id)
+            ->where(function ($query) use ($scene): void {
+                $query
+                    ->whereNull('scene_id')
+                    ->orWhere('scene_id', (int) $scene->id);
+            })
             ->count();
     }
 }

@@ -96,6 +96,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<PlayerNote, $this>
+     */
+    public function playerNotes(): HasMany
+    {
+        return $this->hasMany(PlayerNote::class, 'scene_id');
+    }
+
+    /**
      * @return BelongsTo<Scene, $this>
      */
     public function previousScene(): BelongsTo

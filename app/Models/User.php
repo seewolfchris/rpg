@@ -227,6 +227,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<PlayerNote, $this>
+     */
+    public function playerNotes(): HasMany
+    {
+        return $this->hasMany(PlayerNote::class);
+    }
+
+    /**
      * @return BelongsToMany<Scene, $this>
      */
     public function subscribedScenes(): BelongsToMany
