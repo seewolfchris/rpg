@@ -50,9 +50,10 @@ class HandoutController extends Controller
                 ! $canManage,
                 fn ($query) => $query->whereNotNull('revealed_at')
             )
-            ->orderByRaw('COALESCE(sort_order, 2147483647) ASC')
-            ->orderByDesc('revealed_at')
-            ->orderByDesc('created_at')
+            ->orderByRaw('sort_order IS NULL')
+            ->orderBy('sort_order')
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->paginate(24)
             ->withQueryString();
 

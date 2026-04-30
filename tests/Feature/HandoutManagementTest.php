@@ -101,6 +101,91 @@ class HandoutManagementTest extends TestCase
         ]), false);
     }
 
+    public function test_handout_index_orders_by_sort_order_then_created_at_then_id_with_nulls_last(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+
+        $createdAt = now()->startOfMinute();
+
+        $olderSortOne = Handout::factory()->create([
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'created_by' => $gm->id,
+            'title' => 'Sortierung 1 alt',
+            'revealed_at' => now(),
+            'sort_order' => 1,
+            'created_at' => $createdAt->copy()->subMinutes(2),
+            'updated_at' => $createdAt->copy()->subMinutes(2),
+        ]);
+        $newerSortOne = Handout::factory()->create([
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'created_by' => $gm->id,
+            'title' => 'Sortierung 1 neu',
+            'revealed_at' => now(),
+            'sort_order' => 1,
+            'created_at' => $createdAt->copy()->subMinute(),
+            'updated_at' => $createdAt->copy()->subMinute(),
+        ]);
+        $sameTimestampLowerId = Handout::factory()->create([
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'created_by' => $gm->id,
+            'title' => 'Sortierung 2 A',
+            'revealed_at' => now(),
+            'sort_order' => 2,
+            'created_at' => $createdAt->copy(),
+            'updated_at' => $createdAt->copy(),
+        ]);
+        $sameTimestampHigherId = Handout::factory()->create([
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'created_by' => $gm->id,
+            'title' => 'Sortierung 2 B',
+            'revealed_at' => now(),
+            'sort_order' => 2,
+            'created_at' => $createdAt->copy(),
+            'updated_at' => $createdAt->copy(),
+        ]);
+        $nullSortOrder = Handout::factory()->create([
+            'campaign_id' => $campaign->id,
+            'scene_id' => $scene->id,
+            'created_by' => $gm->id,
+            'title' => 'Sortierung ohne Wert',
+            'revealed_at' => now(),
+            'sort_order' => null,
+            'created_at' => $createdAt->copy()->subHours(3),
+            'updated_at' => $createdAt->copy()->subHours(3),
+        ]);
+
+        $response = $this->actingAs($gm)->get(route('campaigns.handouts.index', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertIsString($html);
+
+        $positionOlderSortOne = strpos($html, $olderSortOne->title);
+        $positionNewerSortOne = strpos($html, $newerSortOne->title);
+        $positionSameTimestampLowerId = strpos($html, $sameTimestampLowerId->title);
+        $positionSameTimestampHigherId = strpos($html, $sameTimestampHigherId->title);
+        $positionNullSortOrder = strpos($html, $nullSortOrder->title);
+
+        $this->assertIsInt($positionOlderSortOne);
+        $this->assertIsInt($positionNewerSortOne);
+        $this->assertIsInt($positionSameTimestampLowerId);
+        $this->assertIsInt($positionSameTimestampHigherId);
+        $this->assertIsInt($positionNullSortOrder);
+
+        $this->assertLessThan($positionNewerSortOne, $positionOlderSortOne);
+        $this->assertLessThan($positionSameTimestampLowerId, $positionNewerSortOne);
+        $this->assertLessThan($positionSameTimestampHigherId, $positionSameTimestampLowerId);
+        $this->assertLessThan($positionNullSortOrder, $positionSameTimestampHigherId);
+    }
+
     public function test_player_does_not_see_management_actions_on_revealed_handout_detail(): void
     {
         [$campaign, $scene, $player, $gm] = $this->seedCampaignContext();
