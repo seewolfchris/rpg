@@ -88,6 +88,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<StoryLogEntry, $this>
+     */
+    public function storyLogEntries(): HasMany
+    {
+        return $this->hasMany(StoryLogEntry::class, 'scene_id');
+    }
+
+    /**
      * @return BelongsTo<Scene, $this>
      */
     public function previousScene(): BelongsTo

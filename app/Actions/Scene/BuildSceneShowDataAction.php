@@ -12,6 +12,7 @@ use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
+use App\Models\StoryLogEntry;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -70,6 +71,7 @@ class BuildSceneShowDataAction
             ? $this->campaignParticipantResolver->probeCharacters($campaign)
             : collect();
         $sceneHandouts = $this->sceneHandouts($campaign, $scene, $user);
+        $sceneChronicleCount = $this->sceneChronicleCount($campaign, $scene, $user);
 
         $userBookmark = SceneBookmark::query()
             ->where('scene_id', $scene->id)
@@ -117,6 +119,7 @@ class BuildSceneShowDataAction
             characters: $characters,
             probeCharacters: $probeCharacters,
             sceneHandouts: $sceneHandouts,
+            sceneChronicleCount: $sceneChronicleCount,
             canModerateScene: $canModerateScene,
             subscription: $subscription,
             latestPostId: $latestPostId,
@@ -184,5 +187,23 @@ class BuildSceneShowDataAction
             ]);
 
         return $handouts;
+    }
+
+    private function sceneChronicleCount(Campaign $campaign, Scene $scene, User $user): int
+    {
+        $canManageCampaign = $campaign->canManageCampaign($user);
+
+        return StoryLogEntry::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where(function ($query) use ($scene): void {
+                $query
+                    ->whereNull('scene_id')
+                    ->orWhere('scene_id', (int) $scene->id);
+            })
+            ->when(
+                ! $canManageCampaign,
+                fn ($query) => $query->whereNotNull('revealed_at')
+            )
+            ->count();
     }
 }

@@ -321,6 +321,28 @@
                             @endforeach
                         </ul>
                     @endif
+
+                    <div class="mt-5 border-t border-stone-700/70 pt-4">
+                        <h2 class="font-heading text-lg text-stone-100">Chronik</h2>
+                        <p class="mt-2 text-sm text-stone-400">Wichtige Ereignisse und Kapitel dieser Kampagne.</p>
+                        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
+                            {{ $sceneChronicleCount }} {{ $sceneChronicleCount === 1 ? 'relevanter Eintrag' : 'relevante Einträge' }}
+                        </p>
+                        <a
+                            href="{{ route('campaigns.story-log.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            class="ui-btn mt-3 !px-3 !py-2 !text-[0.68rem]"
+                        >
+                            Chronik öffnen
+                        </a>
+                        @can('create', [App\Models\StoryLogEntry::class, $campaign])
+                            <a
+                                href="{{ route('campaigns.story-log.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                class="ui-btn ui-btn-accent mt-2 !px-3 !py-2 !text-[0.68rem]"
+                            >
+                                Eintrag erstellen
+                            </a>
+                        @endcan
+                    </div>
                 </aside>
             </div>
 

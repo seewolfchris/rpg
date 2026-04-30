@@ -7,6 +7,7 @@ use App\Models\EncyclopediaCategory;
 use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\StoryLogEntry;
 use App\Models\World;
 
 trait EnsuresWorldContext
@@ -37,6 +38,11 @@ trait EnsuresWorldContext
     protected function ensureHandoutBelongsToCampaign(Campaign $campaign, Handout $handout): void
     {
         abort_unless((int) $handout->campaign_id === (int) $campaign->id, 404);
+    }
+
+    protected function ensureStoryLogEntryBelongsToCampaign(Campaign $campaign, StoryLogEntry $storyLogEntry): void
+    {
+        abort_unless((int) $storyLogEntry->campaign_id === (int) $campaign->id, 404);
     }
 
     protected function ensureCategoryBelongsToWorld(World $world, EncyclopediaCategory $category): void

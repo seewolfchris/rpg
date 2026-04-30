@@ -95,6 +95,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<StoryLogEntry, $this>
+     */
+    public function storyLogEntries(): HasMany
+    {
+        return $this->hasMany(StoryLogEntry::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignMembership, $this>
      */
     public function memberships(): HasMany

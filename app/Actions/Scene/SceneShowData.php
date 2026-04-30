@@ -29,6 +29,7 @@ final readonly class SceneShowData
         public Collection $characters,
         public Collection $probeCharacters,
         public Collection $sceneHandouts,
+        public int $sceneChronicleCount,
         public bool $canModerateScene,
         public ?SceneSubscription $subscription,
         public int $latestPostId,

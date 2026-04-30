@@ -8,6 +8,7 @@ use App\Http\Controllers\HandoutController;
 use App\Http\Controllers\SceneBookmarkController;
 use App\Http\Controllers\SceneController;
 use App\Http\Controllers\SceneSubscriptionController;
+use App\Http\Controllers\StoryLogEntryController;
 use Illuminate\Support\Facades\Route;
 
 Route::resource('campaigns', CampaignController::class)
@@ -88,6 +89,38 @@ Route::patch('/campaigns/{campaign}/handouts/{handout}/unreveal', [HandoutContro
 
 Route::get('/campaigns/{campaign}/handouts/{handout}/file', [HandoutController::class, 'file'])
     ->name('campaigns.handouts.file');
+
+Route::get('/campaigns/{campaign}/story-log', [StoryLogEntryController::class, 'index'])
+    ->name('campaigns.story-log.index');
+
+Route::get('/campaigns/{campaign}/story-log/create', [StoryLogEntryController::class, 'create'])
+    ->name('campaigns.story-log.create');
+
+Route::post('/campaigns/{campaign}/story-log', [StoryLogEntryController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.story-log.store');
+
+Route::get('/campaigns/{campaign}/story-log/{storyLogEntry}', [StoryLogEntryController::class, 'show'])
+    ->name('campaigns.story-log.show');
+
+Route::get('/campaigns/{campaign}/story-log/{storyLogEntry}/edit', [StoryLogEntryController::class, 'edit'])
+    ->name('campaigns.story-log.edit');
+
+Route::patch('/campaigns/{campaign}/story-log/{storyLogEntry}', [StoryLogEntryController::class, 'update'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.story-log.update');
+
+Route::delete('/campaigns/{campaign}/story-log/{storyLogEntry}', [StoryLogEntryController::class, 'destroy'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.story-log.destroy');
+
+Route::patch('/campaigns/{campaign}/story-log/{storyLogEntry}/reveal', [StoryLogEntryController::class, 'reveal'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.story-log.reveal');
+
+Route::patch('/campaigns/{campaign}/story-log/{storyLogEntry}/unreveal', [StoryLogEntryController::class, 'unreveal'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.story-log.unreveal');
 
 Route::get('/campaigns/{campaign}/scenes/{scene}/thread', [SceneController::class, 'threadPage'])
     ->name('campaigns.scenes.thread');
