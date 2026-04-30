@@ -148,6 +148,18 @@ class CharacterManagementTest extends TestCase
             ->assertDontSee(':5173', false);
     }
 
+    public function test_character_create_page_shows_neutral_origin_label(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('characters.create'));
+
+        $response
+            ->assertOk()
+            ->assertSeeText('Aus dieser Welt')
+            ->assertDontSeeText("Native aus Vhal'Tor");
+    }
+
     public function test_user_can_create_character(): void
     {
         $user = User::factory()->create();
@@ -221,6 +233,66 @@ class CharacterManagementTest extends TestCase
 
         $response->assertRedirect(route('characters.create'));
         $response->assertSessionHasErrors('species');
+        $this->assertDatabaseCount('characters', 0);
+    }
+
+    public function test_real_world_beginner_can_use_realworld_calling(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/characters', $this->characterPayload([
+            'name' => 'Realworld Technik',
+            'origin' => 'real_world_beginner',
+            'species' => 'mensch',
+            'calling' => 'realworld_tech',
+        ]));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('characters', [
+            'user_id' => (int) $user->id,
+            'name' => 'Realworld Technik',
+            'origin' => 'real_world_beginner',
+            'calling' => 'realworld_tech',
+        ]);
+    }
+
+    public function test_real_world_beginner_can_use_eigene_calling_with_custom_fields(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/characters', $this->characterPayload([
+            'name' => 'Eigene Realworld',
+            'origin' => 'real_world_beginner',
+            'species' => 'mensch',
+            'calling' => 'eigene',
+            'calling_custom_name' => 'Krisenkoordinator',
+            'calling_custom_description' => 'Ich koordiniere Einsaetze und sichere Entscheidungen unter Zeitdruck.',
+        ]));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('characters', [
+            'user_id' => (int) $user->id,
+            'name' => 'Eigene Realworld',
+            'origin' => 'real_world_beginner',
+            'calling' => 'eigene',
+            'calling_custom_name' => 'Krisenkoordinator',
+        ]);
+    }
+
+    public function test_real_world_beginner_cannot_use_setting_calling(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.create'))
+            ->post(route('characters.store'), $this->characterPayload([
+                'origin' => 'real_world_beginner',
+                'species' => 'mensch',
+                'calling' => 'barde',
+            ]));
+
+        $response->assertRedirect(route('characters.create'));
+        $response->assertSessionHasErrors('calling');
         $this->assertDatabaseCount('characters', 0);
     }
 
@@ -657,6 +729,35 @@ class CharacterManagementTest extends TestCase
 
         $character->refresh();
         $this->assertSame(40, (int) $character->mu);
+    }
+
+    public function test_update_rejects_real_world_beginner_with_setting_calling(): void
+    {
+        $user = User::factory()->create();
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'origin' => 'real_world_beginner',
+            'species' => 'mensch',
+            'calling' => 'realworld_tech',
+            ...$this->persistedAttributes(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('characters.edit', $character))
+            ->put(route('characters.update', $character), [
+                ...$this->characterPayload([
+                    'name' => $character->name,
+                    'origin' => 'real_world_beginner',
+                    'species' => 'mensch',
+                    'calling' => 'barde',
+                ]),
+            ]);
+
+        $response->assertRedirect(route('characters.edit', $character));
+        $response->assertSessionHasErrors('calling');
+
+        $character->refresh();
+        $this->assertSame('realworld_tech', (string) $character->calling);
     }
 
     public function test_updating_character_keeps_current_pools_and_ignores_injected_pool_values(): void

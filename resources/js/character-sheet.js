@@ -203,7 +203,7 @@ export function characterSheetForm(payload = {}) {
 
             if (typeof this.$watch === 'function') {
                 this.$watch('origin', () => {
-                    this.enforceOriginSpeciesConstraint();
+                    this.enforceOriginSelections();
                 });
 
                 this.$watch('worldId', () => {
@@ -237,6 +237,28 @@ export function characterSheetForm(payload = {}) {
 
         get callingOptions() {
             return this.config.callings ?? {};
+        },
+
+        isRealWorldOrigin(originKey = this.origin) {
+            return String(originKey ?? '').trim().toLowerCase() === 'real_world_beginner';
+        },
+
+        isRealWorldOnlyCalling(callingKey) {
+            return Boolean(this.callingOptions?.[callingKey]?.real_world_only ?? false);
+        },
+
+        isCallingAllowedForOrigin(callingKey, originKey = this.origin) {
+            const key = String(callingKey ?? '');
+
+            if (!Object.prototype.hasOwnProperty.call(this.callingOptions, key)) {
+                return false;
+            }
+
+            if (this.isRealWorldOrigin(originKey)) {
+                return key === 'eigene' || this.isRealWorldOnlyCalling(key);
+            }
+
+            return !this.isRealWorldOnlyCalling(key);
         },
 
         allowedSpeciesForOrigin(originKey = this.origin) {
@@ -298,16 +320,21 @@ export function characterSheetForm(payload = {}) {
         },
 
         get visibleCallingEntries() {
-            return Object.entries(this.callingOptions).map(([key, meta]) => ({
-                key,
-                meta: meta ?? {},
-            }));
+            return Object.entries(this.callingOptions)
+                .filter(([key]) => this.isCallingAllowedForOrigin(key))
+                .map(([key, meta]) => ({
+                    key,
+                    meta: meta ?? {},
+                }));
         },
 
-        enforceWorldSelections() {
-            const availableCallingKeys = Object.keys(this.callingOptions);
-
+        enforceOriginSelections() {
             this.enforceOriginSpeciesConstraint();
+            this.enforceCallingSelection();
+        },
+
+        enforceCallingSelection() {
+            const availableCallingKeys = this.visibleCallingEntries.map((entry) => entry.key);
 
             if (availableCallingKeys.length === 0) {
                 this.calling = '';
@@ -317,6 +344,10 @@ export function characterSheetForm(payload = {}) {
             if (!availableCallingKeys.includes(String(this.calling))) {
                 this.calling = availableCallingKeys[0];
             }
+        },
+
+        enforceWorldSelections() {
+            this.enforceOriginSelections();
         },
 
         get selectedSpecies() {

@@ -142,6 +142,7 @@ abstract class CharacterSheetRequest extends FormRequest
             $this->validateTraitPairing($validator);
             $this->validateCustomCalling($validator);
             $this->validateOriginSpeciesCompatibility($validator);
+            $this->validateOriginCallingCompatibility($validator);
         });
     }
 
@@ -681,6 +682,35 @@ abstract class CharacterSheetRequest extends FormRequest
         );
     }
 
+    protected function validateOriginCallingCompatibility(Validator $validator): void
+    {
+        if ($validator->errors()->has('calling')) {
+            return;
+        }
+
+        $origin = (string) $this->input('origin', '');
+        $calling = (string) $this->input('calling', '');
+
+        if ($origin === '' || $calling === '' || $this->isCallingAllowedForOrigin($origin, $calling)) {
+            return;
+        }
+
+        $originLabel = (string) data_get($this->sheet(), 'origins.'.$origin, $origin);
+        if ($this->isRealWorldOrigin($origin)) {
+            $validator->errors()->add(
+                'calling',
+                'Für Herkunft "'.$originLabel.'" sind nur realweltliche Berufungen oder "Eigene" erlaubt.'
+            );
+
+            return;
+        }
+
+        $validator->errors()->add(
+            'calling',
+            'Die gewählte Berufung passt nicht zur Herkunft "'.$originLabel.'".'
+        );
+    }
+
     /**
      * @return list<string>|null
      */
@@ -700,6 +730,29 @@ abstract class CharacterSheetRequest extends FormRequest
         ), static fn (string $value): bool => $value !== ''));
 
         return $normalized === [] ? null : $normalized;
+    }
+
+    protected function isCallingAllowedForOrigin(string $origin, string $calling): bool
+    {
+        if ($calling === '') {
+            return false;
+        }
+
+        if ($this->isRealWorldOrigin($origin)) {
+            return $calling === 'eigene' || $this->isRealWorldOnlyCalling($calling);
+        }
+
+        return ! $this->isRealWorldOnlyCalling($calling);
+    }
+
+    protected function isRealWorldOrigin(string $origin): bool
+    {
+        return Str::lower(trim($origin)) === 'real_world_beginner';
+    }
+
+    protected function isRealWorldOnlyCalling(string $calling): bool
+    {
+        return (bool) data_get($this->sheet(), 'callings.'.$calling.'.real_world_only', false);
     }
 
     /**

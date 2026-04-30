@@ -37,6 +37,7 @@ class CharacterSheetResolver
             ->orderBy('position')
             ->orderBy('id')
             ->get();
+        $realWorldCallingDefaults = $this->realWorldCallingDefaults();
 
         $species = [];
         $magicSpecies = [];
@@ -65,10 +66,17 @@ class CharacterSheetResolver
                 'minimums' => (array) ($row->minimums_json ?? []),
                 'bonuses' => (array) ($row->bonuses_json ?? []),
                 'custom' => (bool) $row->is_custom,
+                'real_world_only' => array_key_exists((string) $row->key, $realWorldCallingDefaults),
             ];
 
             if ($row->is_magic_capable) {
                 $magicCallings[] = (string) $row->key;
+            }
+        }
+
+        foreach ($realWorldCallingDefaults as $callingKey => $callingMeta) {
+            if (! array_key_exists($callingKey, $callings)) {
+                $callings[$callingKey] = $callingMeta;
             }
         }
 
@@ -120,5 +128,34 @@ class CharacterSheetResolver
         ]);
 
         return $this->baseSheetCache;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function realWorldCallingDefaults(): array
+    {
+        $defaults = [];
+
+        foreach ((array) config('character_sheet.callings', []) as $callingKey => $callingMeta) {
+            if (! is_string($callingKey) || ! is_array($callingMeta)) {
+                continue;
+            }
+
+            if (($callingMeta['real_world_only'] ?? false) !== true) {
+                continue;
+            }
+
+            $defaults[$callingKey] = [
+                'label' => (string) ($callingMeta['label'] ?? $callingKey),
+                'description' => (string) ($callingMeta['description'] ?? ''),
+                'minimums' => (array) ($callingMeta['minimums'] ?? []),
+                'bonuses' => (array) ($callingMeta['bonuses'] ?? []),
+                'custom' => (bool) ($callingMeta['custom'] ?? false),
+                'real_world_only' => true,
+            ];
+        }
+
+        return $defaults;
     }
 }

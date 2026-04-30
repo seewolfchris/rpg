@@ -571,6 +571,9 @@
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <h2 class="font-heading text-2xl text-stone-100">Berufung</h2>
                 <p class="mt-2 text-sm text-stone-300">Mindestwerte werden gegen deine effektiven Attribute (inkl. Spezies) geprüft.</p>
+                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500" x-show="isRealWorldOrigin()" x-cloak>
+                    Herkunft "Real-World Anfänger": Es werden nur realweltliche Berufungen oder "Eigene" angeboten.
+                </p>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     <template x-if="visibleCallingEntries.length === 0">

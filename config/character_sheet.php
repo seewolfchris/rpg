@@ -16,7 +16,7 @@ return [
 
     'origins' => [
         'real_world_beginner' => 'Real-World Anfänger',
-        'native_vhaltor' => "Native aus Vhal'Tor",
+        'native_vhaltor' => 'Aus dieser Welt',
     ],
 
     // Falls eine Herkunft hier hinterlegt ist, sind nur diese Spezies erlaubt.
@@ -129,6 +129,76 @@ return [
             'minimums' => ['kl' => 50, 'in' => 40],
             'bonuses' => ['attributes' => ['kl' => 5, 'ch' => 5]],
             'description' => 'Du sammelst Fragmente gefallener Zeitalter und setzt sie zu Sinn zusammen. Manche Wahrheiten machen dich wertvoll, andere gefährlich.',
+        ],
+        'realworld_none' => [
+            'label' => 'Keine feste Berufung',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du bringst keine festgelegte Berufsrolle mit, sondern definierst dich über Haltung und Handeln.',
+            'real_world_only' => true,
+        ],
+        'realworld_craft' => [
+            'label' => 'Handwerk',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du arbeitest praktisch, präzise und lösungsorientiert mit Werkzeug, Material und Erfahrung.',
+            'real_world_only' => true,
+        ],
+        'realworld_medicine' => [
+            'label' => 'Medizin / Pflege',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du stabilisierst, behandelst und begleitest Menschen in physischen und psychischen Krisen.',
+            'real_world_only' => true,
+        ],
+        'realworld_tech' => [
+            'label' => 'Technik / IT',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du verstehst Systeme, behebst Störungen und strukturierst komplexe technische Abläufe.',
+            'real_world_only' => true,
+        ],
+        'realworld_science' => [
+            'label' => 'Wissenschaft / Forschung',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du arbeitest methodisch mit Daten, Hypothesen und reproduzierbaren Ergebnissen.',
+            'real_world_only' => true,
+        ],
+        'realworld_security' => [
+            'label' => 'Sicherheit / Militär / Polizei',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du triffst Entscheidungen unter Druck und übernimmst Verantwortung in Bedrohungslagen.',
+            'real_world_only' => true,
+        ],
+        'realworld_maritime_transport' => [
+            'label' => 'Seefahrt / Transport',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du bewegst Menschen, Güter und Informationen zuverlässig durch komplexe Routen und Zeitpläne.',
+            'real_world_only' => true,
+        ],
+        'realworld_trade_admin' => [
+            'label' => 'Handel / Verwaltung',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du organisierst Ressourcen, Prozesse und Verbindlichkeiten in belastbaren Strukturen.',
+            'real_world_only' => true,
+        ],
+        'realworld_arts_media' => [
+            'label' => 'Kunst / Medien',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du erzählst, dokumentierst oder gestaltest Wirklichkeit für ein Publikum.',
+            'real_world_only' => true,
+        ],
+        'realworld_education' => [
+            'label' => 'Bildung',
+            'minimums' => [],
+            'bonuses' => ['attributes' => []],
+            'description' => 'Du vermittelst Wissen, begleitest Entwicklung und gibst Orientierung in Lernprozessen.',
+            'real_world_only' => true,
         ],
         'eigene' => [
             'label' => 'Eigene',
