@@ -12,6 +12,7 @@ import {
 const SCENE_THREAD_READING_MODE_SELECTOR = '[data-scene-thread-reading-mode]';
 const READING_MODE_TOGGLE_SELECTOR = '[data-reading-mode-toggle]';
 const READING_MODE_FULLSCREEN_SELECTOR = '[data-reading-mode-fullscreen]';
+const READING_MODE_EXIT_TO_WRITE_SELECTOR = '[data-reading-mode-exit-to-write]';
 const READING_POST_SELECTOR = '[data-reading-post-anchor]';
 const READING_PROGRESS_BOOKMARK_SELECTOR = '[data-reading-progress-bookmark]';
 const READING_PROGRESS_VALUE_SELECTOR = '[data-reading-progress-value]';
@@ -65,6 +66,7 @@ export function setupSceneThreadReadingMode() {
 
         applyReadingModeState(root, readingStored, false);
         bindReadingModeButtons(root, readingStorageKey);
+        bindReadingModeExitToWrite(root, readingStorageKey);
         bindReadingKeyboardShortcuts(root, readingStorageKey);
         bindThreadPostReveal(root);
         bindReadingProgressBookmark(root);
@@ -97,6 +99,48 @@ function bindReadingModeButtons(root, readingStorageKey) {
         buttonNode.dataset.readingBound = '1';
         buttonNode.addEventListener('click', async () => {
             await requestReadingFullscreen(root);
+        });
+    });
+}
+
+function bindReadingModeExitToWrite(root, readingStorageKey) {
+    const exitButtons = root.querySelectorAll(READING_MODE_EXIT_TO_WRITE_SELECTOR);
+
+    exitButtons.forEach((buttonNode) => {
+        if (!(buttonNode instanceof HTMLButtonElement) || buttonNode.dataset.readingExitBound === '1') {
+            return;
+        }
+
+        buttonNode.dataset.readingExitBound = '1';
+        buttonNode.addEventListener('click', () => {
+            applyReadingModeState(root, false, true, readingStorageKey);
+
+            const writeSection = document.getElementById('new-post-form');
+
+            if (!(writeSection instanceof HTMLElement)) {
+                return;
+            }
+
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const scrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+            window.requestAnimationFrame(() => {
+                writeSection.scrollIntoView({
+                    behavior: scrollBehavior,
+                    block: 'start',
+                    inline: 'nearest',
+                });
+
+                window.requestAnimationFrame(() => {
+                    const contentField = writeSection.querySelector('#content');
+
+                    if (contentField instanceof HTMLElement) {
+                        contentField.focus({
+                            preventScroll: true,
+                        });
+                    }
+                });
+            });
         });
     });
 }

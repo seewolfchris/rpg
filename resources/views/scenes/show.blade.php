@@ -542,6 +542,23 @@
             <div id="scene-thread-feed" class="mt-5 space-y-6">
                 @include('scenes.partials.thread-page', ['posts' => $posts, 'campaign' => $campaign, 'scene' => $scene])
             </div>
+
+            @can('create', [App\Models\Post::class, $scene])
+                <div
+                    class="reading-mode-exit-write mt-6 rounded-xl border border-amber-700/45 bg-black/35 p-4"
+                    data-reading-mode-exit-write-panel
+                >
+                    <p class="text-sm text-stone-200">Du bist am Ende des aktuellen Leseflusses.</p>
+                    <p class="mt-1 text-xs text-stone-400">Beende den Romanmodus, um als Spielleitung oder Charakter zu antworten.</p>
+                    <button
+                        type="button"
+                        class="ui-btn ui-btn-accent mt-3 !px-3 !py-2 !text-[0.68rem]"
+                        data-reading-mode-exit-to-write
+                    >
+                        Romanmodus beenden &amp; antworten
+                    </button>
+                </div>
+            @endcan
         </section>
 
         @can('create', [App\Models\Post::class, $scene])

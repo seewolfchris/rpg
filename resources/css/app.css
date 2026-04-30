@@ -898,6 +898,14 @@
         background: rgb(8 8 10 / 42%);
     }
 
+    .reading-mode-exit-write {
+        display: none;
+    }
+
+    body.is-reading-mode .reading-mode-exit-write {
+        display: block;
+    }
+
     body.has-overlay-modal {
         overflow: hidden;
     }
