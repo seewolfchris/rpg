@@ -154,11 +154,24 @@ class SceneBookmarkController extends Controller
             ->withoutGlobalScope(SoftDeletingScope::class)
             ->selectRaw('current_posts.id as post_id')
             ->selectRaw('current_posts.scene_id as scene_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
+            ->selectRaw(<<<'SQL'
+                (
+                    SELECT COUNT(*)
+                    FROM posts as older_posts
+                    WHERE older_posts.scene_id = current_posts.scene_id
+                        AND (
+                            older_posts.created_at < current_posts.created_at
+                            OR (
+                                older_posts.created_at = current_posts.created_at
+                                AND older_posts.id < current_posts.id
+                            )
+                        )
+                ) as older_posts_count
+            SQL)
             ->whereIn('current_posts.id', array_keys($sceneIdByPostId))
             ->get();
 
-        $newerPostsCountByPostId = [];
+        $olderPostsCountByPostId = [];
         foreach ($postRows as $postRow) {
             $postId = (int) ($postRow->post_id ?? 0);
             $sceneId = (int) ($postRow->scene_id ?? 0);
@@ -166,7 +179,7 @@ class SceneBookmarkController extends Controller
                 continue;
             }
 
-            $newerPostsCountByPostId[$postId] = (int) ($postRow->newer_posts_count ?? 0);
+            $olderPostsCountByPostId[$postId] = (int) ($postRow->older_posts_count ?? 0);
         }
 
         foreach ($bookmarks as $bookmark) {
@@ -177,11 +190,11 @@ class SceneBookmarkController extends Controller
                 continue;
             }
 
-            if (! array_key_exists($postId, $newerPostsCountByPostId)) {
+            if (! array_key_exists($postId, $olderPostsCountByPostId)) {
                 continue;
             }
 
-            $page = intdiv($newerPostsCountByPostId[$postId], Post::THREAD_POSTS_PER_PAGE) + 1;
+            $page = intdiv($olderPostsCountByPostId[$postId], Post::THREAD_POSTS_PER_PAGE) + 1;
             $bookmarkJumpUrls[(int) $bookmark->id] = $this->sceneRouteUrl($world, $campaign, $scene, $page).'#post-'.$postId;
         }
 

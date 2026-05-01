@@ -207,7 +207,7 @@
         hx-swap="outerHTML"
         hx-indicator="#global-hx-indicator"
     >
-        Ältere Beiträge laden ...
+        Weitere Beiträge laden ...
     </div>
 @elseif ($pagePosts->isNotEmpty())
     <div class="mt-6 text-center text-xs uppercase tracking-[0.08em] text-stone-500">

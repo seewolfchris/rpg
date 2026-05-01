@@ -330,7 +330,7 @@ class SceneReadTrackingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Zum letzten Lesepunkt');
-        $response->assertSee('page=2#post-'.$readCheckpointPost->id, false);
+        $response->assertSee('page=1#post-'.$readCheckpointPost->id, false);
     }
 
     public function test_author_post_updates_existing_subscription_read_pointer_without_changing_mute_state(): void

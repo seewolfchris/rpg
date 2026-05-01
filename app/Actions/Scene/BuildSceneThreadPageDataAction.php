@@ -48,7 +48,8 @@ class BuildSceneThreadPageDataAction
             ->withTrashed()
             ->where('scene_id', $scene->id)
             ->with(Post::THREAD_PAGE_RELATIONS)
-            ->latestByIdHotpath()
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
             ->paginate(Post::THREAD_POSTS_PER_PAGE)
             ->withQueryString();
     }

@@ -1308,6 +1308,80 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame(['Fackel'], $targetCharacter->fresh()->inventory);
     }
 
+    public function test_scene_thread_renders_posts_in_chronological_order_for_show_and_thread_fragment(): void
+    {
+        $gm = User::factory()->gm()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $baseTime = now()->subHour();
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'content' => 'ORDER_OLDEST',
+            'moderation_status' => 'approved',
+            'created_at' => $baseTime->copy(),
+            'updated_at' => $baseTime->copy(),
+        ]);
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'content' => 'ORDER_MIDDLE',
+            'moderation_status' => 'approved',
+            'created_at' => $baseTime->copy()->addMinute(),
+            'updated_at' => $baseTime->copy()->addMinute(),
+        ]);
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'content' => 'ORDER_NEWEST',
+            'moderation_status' => 'approved',
+            'created_at' => $baseTime->copy()->addMinutes(2),
+            'updated_at' => $baseTime->copy()->addMinutes(2),
+        ]);
+
+        $showResponse = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $showResponse->assertOk();
+        $this->assertHtmlContainsInOrder((string) $showResponse->getContent(), [
+            'ORDER_OLDEST',
+            'ORDER_MIDDLE',
+            'ORDER_NEWEST',
+        ]);
+
+        $threadResponse = $this->actingAs($gm)->get(route('campaigns.scenes.thread', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $threadResponse->assertOk();
+        $this->assertHtmlContainsInOrder((string) $threadResponse->getContent(), [
+            'ORDER_OLDEST',
+            'ORDER_MIDDLE',
+            'ORDER_NEWEST',
+        ]);
+    }
+
     public function test_store_post_rolls_back_when_probe_service_throws(): void
     {
         $gm = User::factory()->gm()->create();
@@ -1410,6 +1484,25 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseCount('scene_subscriptions', 1);
         Queue::assertPushed(RetryScenePostNotificationsJob::class, 1);
         Queue::assertPushed(RetryPostMentionNotificationsJob::class, 1);
+    }
+
+    /**
+     * @param  list<string>  $needles
+     */
+    private function assertHtmlContainsInOrder(string $html, array $needles): void
+    {
+        $lastPosition = -1;
+
+        foreach ($needles as $needle) {
+            $position = strpos($html, $needle);
+            $this->assertNotFalse($position, 'Expected token "'.$needle.'" to be rendered.');
+            $this->assertGreaterThan(
+                $lastPosition,
+                (int) $position,
+                'Expected token order to stay chronological.'
+            );
+            $lastPosition = (int) $position;
+        }
     }
 
 }

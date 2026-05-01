@@ -29,20 +29,33 @@ class ScenePostAnchorUrlService
             return [];
         }
 
-        $newerPostCounts = Post::query()
+        $olderPostCounts = Post::query()
             ->from('posts as current_posts')
             ->withoutGlobalScope(SoftDeletingScope::class)
             ->selectRaw('current_posts.id as post_id')
-            ->selectRaw('(SELECT COUNT(*) FROM posts as newer_posts WHERE newer_posts.scene_id = current_posts.scene_id AND newer_posts.id > current_posts.id) as newer_posts_count')
+            ->selectRaw(<<<'SQL'
+                (
+                    SELECT COUNT(*)
+                    FROM posts as older_posts
+                    WHERE older_posts.scene_id = current_posts.scene_id
+                        AND (
+                            older_posts.created_at < current_posts.created_at
+                            OR (
+                                older_posts.created_at = current_posts.created_at
+                                AND older_posts.id < current_posts.id
+                            )
+                        )
+                ) as older_posts_count
+            SQL)
             ->where('current_posts.scene_id', $scene->id)
             ->whereIn('current_posts.id', $normalizedIds)
-            ->pluck('newer_posts_count', 'post_id');
+            ->pluck('older_posts_count', 'post_id');
 
         $urls = [];
 
-        foreach ($newerPostCounts as $postId => $newerPostsCount) {
+        foreach ($olderPostCounts as $postId => $olderPostsCount) {
             $postId = (int) $postId;
-            $page = intdiv((int) $newerPostsCount, $this->threadPostsPerPage) + 1;
+            $page = intdiv((int) $olderPostsCount, $this->threadPostsPerPage) + 1;
 
             $urls[$postId] = route('campaigns.scenes.show', [
                 'world' => $world,

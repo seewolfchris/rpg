@@ -211,14 +211,14 @@ class PostTombstoneThreadTest extends TestCase
         ]));
 
         $sceneResponse->assertOk();
-        $sceneResponse->assertSee('page=2#post-'.$deletedPost->id, false);
+        $sceneResponse->assertSee('page=1#post-'.$deletedPost->id, false);
 
         $bookmarkResponse = $this->actingAs($viewer)->get(route('bookmarks.index', [
             'world' => $campaign->world,
         ]));
 
         $bookmarkResponse->assertOk();
-        $bookmarkResponse->assertSee('page=2#post-'.$deletedPost->id, false);
+        $bookmarkResponse->assertSee('page=1#post-'.$deletedPost->id, false);
     }
 
     public function test_read_state_jumps_and_mutating_routes_treat_tombstones_as_visible_but_not_mutable(): void
