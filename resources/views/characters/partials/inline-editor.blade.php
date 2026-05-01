@@ -1,6 +1,10 @@
 @php
     $statusOptions = (array) config('characters.statuses', []);
-    $canInlineEdit = auth()->id() === (int) $character->user_id || auth()->user()?->isGmOrAdmin();
+    $canManageCharacter = auth()->user()?->can('update', $character) ?? false;
+    $canInlineEdit = $canManageCharacter;
+    $hasVisibleNarrativeMeta = $character->concept
+        || $character->world_connection
+        || ($canManageCharacter && ($character->gm_secret || $character->gm_note));
 @endphp
 
 <section id="character-inline-editor" class="character-narrative-dossier space-y-4 rounded-lg border border-stone-700/70 bg-black/30 p-4" x-data="{ editing: false }">
@@ -30,7 +34,7 @@
             <div class="character-manuscript-text mt-2 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
         </section>
 
-        @if ($character->concept || $character->world_connection || $character->gm_secret || $character->gm_note)
+        @if ($hasVisibleNarrativeMeta)
             <section class="mt-4 space-y-2">
                 @if ($character->concept)
                     <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Konzept:</span> {{ $character->concept }}</p>
@@ -38,10 +42,10 @@
                 @if ($character->world_connection)
                     <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Weltbezug:</span> {{ $character->world_connection }}</p>
                 @endif
-                @if ($character->gm_secret)
+                @if ($canManageCharacter && $character->gm_secret)
                     <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (GM):</span> {{ $character->gm_secret }}</p>
                 @endif
-                @if ($character->gm_note)
+                @if ($canManageCharacter && $character->gm_note)
                     <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">GM-Notiz:</span> {{ $character->gm_note }}</p>
                 @endif
             </section>

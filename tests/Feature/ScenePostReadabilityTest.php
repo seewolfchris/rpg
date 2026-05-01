@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -63,6 +65,56 @@ class ScenePostReadabilityTest extends TestCase
             ->assertSee('target="_blank"', false)
             ->assertSee('rel="noopener noreferrer"', false)
             ->assertSee('character-placeholder.svg', false);
+    }
+
+    public function test_ic_character_post_links_character_name_for_campaign_participant_viewer(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneWithOwner();
+        $author = User::factory()->create(['name' => 'Heldenautor']);
+        $viewer = User::factory()->create(['name' => 'Mitspieler']);
+
+        CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $author->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $gm->id,
+        ]);
+        CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $viewer->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $gm->id,
+        ]);
+
+        $character = Character::factory()->create([
+            'user_id' => $author->id,
+            'world_id' => $campaign->world_id,
+            'name' => 'Talan vom Nordgrat',
+            'avatar_path' => null,
+        ]);
+
+        Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $author->id,
+            'character_id' => $character->id,
+            'post_type' => 'ic',
+            'content_format' => 'plain',
+            'content' => 'Ich ziehe die Klinge und halte die Linie.',
+            'moderation_status' => 'approved',
+        ]);
+
+        $characterUrl = route('characters.show', ['character' => $character]);
+        $response = $this->actingAs($viewer)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk()
+            ->assertSeeText('Talan vom Nordgrat')
+            ->assertSee('href="'.$characterUrl.'"', false)
+            ->assertSee('target="_blank"', false)
+            ->assertSee('rel="noopener noreferrer"', false);
     }
 
     public function test_ic_character_name_stays_plain_text_for_viewer_without_character_permission(): void

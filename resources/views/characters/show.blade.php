@@ -96,22 +96,26 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <a
-                    href="{{ route('characters.edit', $character) }}"
-                    class="ui-btn inline-flex"
-                >
-                    Bearbeiten
-                </a>
-                <form method="POST" action="{{ route('characters.destroy', $character) }}" data-confirm="Diesen Charakter wirklich löschen?">
-                    @csrf
-                    @method('DELETE')
-                    <button
-                        type="submit"
-                        class="ui-btn ui-btn-danger inline-flex"
+                @can('update', $character)
+                    <a
+                        href="{{ route('characters.edit', $character) }}"
+                        class="ui-btn inline-flex"
                     >
-                        Löschen
-                    </button>
-                </form>
+                        Bearbeiten
+                    </a>
+                @endcan
+                @can('delete', $character)
+                    <form method="POST" action="{{ route('characters.destroy', $character) }}" data-confirm="Diesen Charakter wirklich löschen?">
+                        @csrf
+                        @method('DELETE')
+                        <button
+                            type="submit"
+                            class="ui-btn ui-btn-danger inline-flex"
+                        >
+                            Löschen
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
 

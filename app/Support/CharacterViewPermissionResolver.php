@@ -8,6 +8,8 @@ use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class CharacterViewPermissionResolver
 {
@@ -52,18 +54,37 @@ class CharacterViewPermissionResolver
             ->values()
             ->all();
 
-        if ($coGmWorldIds === []) {
-            return $this->normalizeCharacterIds($ownedCharacterIds);
+        $coGmWorldCharacterIds = [];
+        if ($coGmWorldIds !== []) {
+            $coGmWorldCharacterIds = Character::query()
+                ->whereIn('id', $remainingCharacterIds)
+                ->whereIn('world_id', $coGmWorldIds)
+                ->pluck('id')
+                ->map(static fn (mixed $id): int => (int) $id)
+                ->all();
         }
 
-        $coGmWorldCharacterIds = Character::query()
-            ->whereIn('id', $remainingCharacterIds)
-            ->whereIn('world_id', $coGmWorldIds)
+        $remainingAfterCoGmIds = array_values(array_diff($remainingCharacterIds, $coGmWorldCharacterIds));
+        if ($remainingAfterCoGmIds === []) {
+            return $this->normalizeCharacterIds(array_merge($ownedCharacterIds, $coGmWorldCharacterIds));
+        }
+
+        $participantCampaignCharacterIds = Character::query()
+            ->whereIn('id', $remainingAfterCoGmIds)
+            ->whereHas('posts.scene.campaign', function (Builder $campaignQuery) use ($user): void {
+                $campaignQuery
+                    ->whereColumn('campaigns.world_id', 'characters.world_id');
+                $this->applyParticipantCampaignConstraint($campaignQuery, $user);
+            })
             ->pluck('id')
             ->map(static fn (mixed $id): int => (int) $id)
             ->all();
 
-        return $this->normalizeCharacterIds(array_merge($ownedCharacterIds, $coGmWorldCharacterIds));
+        return $this->normalizeCharacterIds(array_merge(
+            $ownedCharacterIds,
+            $coGmWorldCharacterIds,
+            $participantCampaignCharacterIds
+        ));
     }
 
     /**
@@ -78,5 +99,24 @@ class CharacterViewPermissionResolver
         sort($normalized);
 
         return $normalized;
+    }
+
+    /**
+     * @param  Builder<Model>  $campaignQuery
+     */
+    private function applyParticipantCampaignConstraint(Builder $campaignQuery, User $user): void
+    {
+        $campaignQuery->where(function (Builder $participantQuery) use ($user): void {
+            $participantQuery
+                ->where('campaigns.owner_id', (int) $user->id)
+                ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
+                    $membershipQuery->where('user_id', (int) $user->id);
+                })
+                ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
+                    $invitationQuery
+                        ->where('user_id', (int) $user->id)
+                        ->where('status', CampaignInvitation::STATUS_ACCEPTED);
+                });
+        });
     }
 }
