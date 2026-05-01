@@ -16,9 +16,19 @@
     </article>
 @else
     @php
+        $viewableCharacterIds = is_array($viewableCharacterIds ?? null) ? $viewableCharacterIds : [];
         $isIcPost = $post->post_type === 'ic';
         $isOocPost = $post->post_type === 'ooc';
         $isGmNarration = $post->isGmNarration();
+        $character = $post->character;
+        $isCharacterIcPost = $isIcPost && ! $isGmNarration && $character !== null;
+        $characterId = $isCharacterIcPost ? (int) $character->id : 0;
+        $canViewCharacterSheet = $characterId > 0 && in_array($characterId, $viewableCharacterIds, true);
+        $characterProfileUrl = $canViewCharacterSheet
+            ? route('characters.show', ['character' => $character])
+            : null;
+        $characterAvatarUrl = $isCharacterIcPost ? $character->avatarUrl() : null;
+        $isOocBySpielleitung = $isOocPost && (int) $post->user_id === (int) $scene->created_by;
         $postStyleClass = $isOocPost
             ? 'thread-post-ooc'
             : ($isGmNarration ? 'thread-post-gm' : 'thread-post-ic');
@@ -30,20 +40,45 @@
 <article id="post-{{ $post->id }}" data-post-type="{{ $post->post_type }}" data-post-author-role="{{ $isGmNarration ? 'gm' : 'default' }}" data-reading-post-anchor tabindex="-1" class="thread-post {{ $postStyleClass }} rounded-xl border p-5 sm:p-6">
     <div class="thread-post-meta flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0 flex-1">
-            <p class="{{ $isIcPost ? 'text-base text-stone-100 sm:text-lg' : 'text-sm text-stone-200' }}">
-                <span class="font-semibold">{{ $post->user->name }}</span>
-                <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
-            </p>
-
-            @if ($post->character && ! $isGmNarration)
-                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300/95">
-                    Charakter: {{ $post->character->name }}
+            @if ($isCharacterIcPost)
+                <div class="thread-post-author-row">
+                    <img
+                        src="{{ $characterAvatarUrl }}"
+                        alt="Avatar von {{ $character->name }}"
+                        loading="lazy"
+                        class="thread-post-author-avatar"
+                    >
+                    <div class="min-w-0 flex-1">
+                        <p class="thread-post-author-character break-words">
+                            @if ($characterProfileUrl)
+                                <a
+                                    href="{{ $characterProfileUrl }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="thread-post-author-character-link"
+                                >
+                                    {{ $character->name }}
+                                </a>
+                            @else
+                                <span>{{ $character->name }}</span>
+                            @endif
+                        </p>
+                        <p class="thread-post-author-player mt-1 break-words text-xs text-stone-400">
+                            gespielt von <span class="font-semibold text-stone-200">{{ $post->user->name }}</span>
+                            <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
+                        </p>
+                    </div>
+                </div>
+            @else
+                <p class="{{ $isIcPost ? 'text-base text-stone-100 sm:text-lg' : 'text-sm text-stone-200' }}">
+                    <span class="font-semibold">{{ $post->user->name }}</span>
+                    <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
                 </p>
             @endif
 
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
-                    {{ $isOocPost ? 'Meta' : strtoupper($post->post_type) }}
+                    {{ $isOocPost ? 'OOC' : strtoupper($post->post_type) }}
                 </span>
                 <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
                     {{ match ($post->moderation_status) {
@@ -62,6 +97,14 @@
                 @if ($isGmNarration)
                     <span class="rounded border border-cyan-700/70 bg-cyan-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-cyan-200">
                         Spielleitung
+                    </span>
+                    <span class="rounded border border-cyan-800/70 bg-cyan-950/25 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-cyan-200/90">
+                        Erzählerstimme
+                    </span>
+                @endif
+                @if ($isOocBySpielleitung)
+                    <span class="rounded border border-emerald-700/60 bg-emerald-950/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-emerald-200/90">
+                        OOC · Spielleitung
                     </span>
                 @endif
                 @if ($post->is_edited)

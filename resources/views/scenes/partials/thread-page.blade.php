@@ -159,7 +159,12 @@
             @else
                 <div id="scene-thread-ic-list-{{ $posts->currentPage() }}" class="mt-5 space-y-5" data-reading-post-list>
                     @foreach ($icPosts as $post)
-                        @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
+                        @include('posts._thread-item', [
+                            'post' => $post,
+                            'campaign' => $campaign,
+                            'scene' => $scene,
+                            'viewableCharacterIds' => $viewableCharacterIds ?? [],
+                        ])
                     @endforeach
                 </div>
             @endif
@@ -179,7 +184,12 @@
                 @else
                     <div id="scene-thread-ooc-list-{{ $posts->currentPage() }}" class="mt-4 space-y-4" data-reading-post-list>
                         @foreach ($oocPosts as $post)
-                            @include('posts._thread-item', ['post' => $post, 'campaign' => $campaign, 'scene' => $scene])
+                            @include('posts._thread-item', [
+                                'post' => $post,
+                                'campaign' => $campaign,
+                                'scene' => $scene,
+                                'viewableCharacterIds' => $viewableCharacterIds ?? [],
+                            ])
                         @endforeach
                     </div>
                 @endif

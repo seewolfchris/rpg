@@ -9,12 +9,17 @@ use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Support\CharacterViewPermissionResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use RuntimeException;
 
 class BuildPostThreadItemFragmentAction
 {
+    public function __construct(
+        private readonly CharacterViewPermissionResolver $characterViewPermissionResolver,
+    ) {}
+
     public function execute(Post $post, ?User $user): View
     {
         $post->load(Post::THREAD_ITEM_RELATIONS);
@@ -22,8 +27,9 @@ class BuildPostThreadItemFragmentAction
         $scene = $this->resolveScene($post);
         $campaign = $this->resolveCampaign($scene);
         $bookmarkCountForNav = $this->visibleBookmarkCountForUser($user);
+        $viewableCharacterIds = $this->resolveViewableCharacterIds($post, $user);
 
-        return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav'));
+        return view('posts._thread-item', compact('post', 'scene', 'campaign', 'bookmarkCountForNav', 'viewableCharacterIds'));
     }
 
     private function resolveScene(Post $post): Scene
@@ -72,5 +78,20 @@ class BuildPostThreadItemFragmentAction
                 });
             })
             ->count();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function resolveViewableCharacterIds(Post $post, ?User $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        return $this->characterViewPermissionResolver->resolveViewableIdsForUser(
+            characterIds: [(int) ($post->character_id ?? 0)],
+            user: $user,
+        );
     }
 }

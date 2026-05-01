@@ -564,7 +564,12 @@
             </aside>
             <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
             <div id="scene-thread-feed" class="mt-5 space-y-6">
-                @include('scenes.partials.thread-page', ['posts' => $posts, 'campaign' => $campaign, 'scene' => $scene])
+                @include('scenes.partials.thread-page', [
+                    'posts' => $posts,
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                    'viewableCharacterIds' => $viewableCharacterIds ?? [],
+                ])
             </div>
 
             @can('create', [App\Models\Post::class, $scene])

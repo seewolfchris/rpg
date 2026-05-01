@@ -16,6 +16,7 @@ use App\Models\SceneBookmark;
 use App\Models\StoryLogEntry;
 use App\Models\User;
 use App\Models\World;
+use App\Support\CharacterViewPermissionResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -25,6 +26,7 @@ class BuildSceneShowDataAction
         private readonly SceneThreadReadStateService $sceneThreadReadStateService,
         private readonly ScenePostAnchorUrlService $scenePostAnchorUrlService,
         private readonly CampaignParticipantResolver $campaignParticipantResolver,
+        private readonly CharacterViewPermissionResolver $characterViewPermissionResolver,
     ) {}
 
     public function execute(World $world, Campaign $campaign, Scene $scene, User $user): SceneShowData
@@ -46,6 +48,7 @@ class BuildSceneShowDataAction
         $lastReadPostIdBeforeOpen = $threadReadState->lastReadPostIdBeforeOpen;
 
         $posts = $this->threadPostsPaginator($scene);
+        $viewableCharacterIds = $this->resolveViewableCharacterIds($posts, $user);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Post> $pinnedPosts */
         $pinnedPosts = Post::query()
@@ -121,6 +124,7 @@ class BuildSceneShowDataAction
             characters: $characters,
             probeCharacters: $probeCharacters,
             sceneHandouts: $sceneHandouts,
+            viewableCharacterIds: $viewableCharacterIds,
             sceneChronicleCount: $sceneChronicleCount,
             scenePlayerNotesCount: $scenePlayerNotesCount,
             canModerateScene: $canModerateScene,
@@ -154,6 +158,22 @@ class BuildSceneShowDataAction
     private function canModerateScene(User $user, Campaign $campaign): bool
     {
         return $campaign->canModeratePosts($user);
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, Post>  $posts
+     * @return list<int>
+     */
+    private function resolveViewableCharacterIds(LengthAwarePaginator $posts, User $user): array
+    {
+        $characterIds = collect($posts->items())
+            ->pluck('character_id')
+            ->all();
+
+        return $this->characterViewPermissionResolver->resolveViewableIdsForUser(
+            characterIds: $characterIds,
+            user: $user,
+        );
     }
 
     /**

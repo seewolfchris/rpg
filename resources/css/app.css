@@ -831,6 +831,52 @@
         font-family: 'DM Mono', monospace;
     }
 
+    .thread-post-author-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+
+    .thread-post-author-avatar {
+        flex-shrink: 0;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgb(87 83 78 / 70%);
+        background: rgb(23 23 23 / 70%);
+        object-fit: cover;
+    }
+
+    .thread-post-author-character {
+        color: rgb(245 245 244);
+        font-size: 1.05rem;
+        line-height: 1.35;
+        font-weight: 700;
+    }
+
+    .thread-post-author-character-link {
+        color: rgb(253 230 138);
+        text-decoration: underline;
+        text-decoration-color: rgb(217 119 6 / 65%);
+        text-underline-offset: 0.18em;
+        transition: color 140ms ease, text-decoration-color 140ms ease;
+    }
+
+    .thread-post-author-character-link:hover {
+        color: rgb(254 243 199);
+        text-decoration-color: rgb(251 191 36 / 82%);
+    }
+
+    .thread-post-author-character-link:focus-visible {
+        outline: none;
+        border-radius: 0.28rem;
+        box-shadow: 0 0 0 2px rgb(251 191 36 / 38%);
+    }
+
+    .thread-post-author-player {
+        line-height: 1.45;
+    }
+
     .thread-post-ic {
         border-color: rgb(120 53 15 / 55%);
         background: linear-gradient(180deg, rgb(18 16 16 / 92%), rgb(8 8 10 / 82%));
@@ -864,6 +910,18 @@
     .thread-meta-channel[open] {
         border-color: rgb(113 113 122 / 75%);
         box-shadow: 0 16px 30px rgb(0 0 0 / 22%);
+    }
+
+    @media (max-width: 640px) {
+        .thread-post-author-avatar {
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 0.65rem;
+        }
+
+        .thread-post-author-character {
+            font-size: 1rem;
+        }
     }
 
     .narrative-flow,

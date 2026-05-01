@@ -91,6 +91,7 @@ class SceneController extends Controller
             'characters' => $showData->characters,
             'probeCharacters' => $showData->probeCharacters,
             'sceneHandouts' => $showData->sceneHandouts,
+            'viewableCharacterIds' => $showData->viewableCharacterIds,
             'sceneChronicleCount' => $showData->sceneChronicleCount,
             'scenePlayerNotesCount' => $showData->scenePlayerNotesCount,
             'canModerateScene' => $showData->canModerateScene,
@@ -121,6 +122,7 @@ class SceneController extends Controller
 
         return view('scenes.partials.thread-page', [
             'posts' => $threadPageData->posts,
+            'viewableCharacterIds' => $threadPageData->viewableCharacterIds,
             'campaign' => $campaign,
             'scene' => $scene,
             'subscription' => $threadPageData->subscription,

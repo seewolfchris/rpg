@@ -9,17 +9,20 @@ use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Support\CharacterViewPermissionResolver;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BuildSceneThreadPageDataAction
 {
     public function __construct(
         private readonly SceneThreadReadStateService $sceneThreadReadStateService,
+        private readonly CharacterViewPermissionResolver $characterViewPermissionResolver,
     ) {}
 
     public function execute(Scene $scene, Campaign $campaign, User $user): SceneThreadPageData
     {
         $posts = $this->threadPostsPaginator($scene);
+        $viewableCharacterIds = $this->resolveViewableCharacterIds($posts, $user);
         $threadReadState = $this->sceneThreadReadStateService->resolveForThreadRender(
             scene: $scene,
             user: $user,
@@ -28,6 +31,7 @@ class BuildSceneThreadPageDataAction
 
         return new SceneThreadPageData(
             posts: $posts,
+            viewableCharacterIds: $viewableCharacterIds,
             subscription: $threadReadState->subscription,
             latestPostId: $threadReadState->latestPostId,
             unreadPostsCount: $threadReadState->unreadPostsCount,
@@ -52,5 +56,21 @@ class BuildSceneThreadPageDataAction
     private function canModerateScene(User $user, Campaign $campaign): bool
     {
         return $campaign->canModeratePosts($user);
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, Post>  $posts
+     * @return list<int>
+     */
+    private function resolveViewableCharacterIds(LengthAwarePaginator $posts, User $user): array
+    {
+        $characterIds = collect($posts->items())
+            ->pluck('character_id')
+            ->all();
+
+        return $this->characterViewPermissionResolver->resolveViewableIdsForUser(
+            characterIds: $characterIds,
+            user: $user,
+        );
     }
 }

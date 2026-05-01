@@ -21,6 +21,7 @@ final readonly class SceneShowData
      * @param  Collection<int, Character>  $characters
      * @param  Collection<int, Character>  $probeCharacters
      * @param  Collection<int, Handout>  $sceneHandouts
+     * @param  list<int>  $viewableCharacterIds
      */
     public function __construct(
         public LengthAwarePaginator $posts,
@@ -29,6 +30,7 @@ final readonly class SceneShowData
         public Collection $characters,
         public Collection $probeCharacters,
         public Collection $sceneHandouts,
+        public array $viewableCharacterIds,
         public int $sceneChronicleCount,
         public int $scenePlayerNotesCount,
         public bool $canModerateScene,
