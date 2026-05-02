@@ -3,6 +3,7 @@
 @section('title', 'Benachrichtigungen | C76-RPG')
 
 @section('content')
+    @php($returnTo = is_string($returnTo ?? null) && $returnTo !== '' ? $returnTo : route('notifications.index'))
     <section class="mx-auto w-full max-w-5xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -37,7 +38,7 @@
                         Abo-Dashboard
                     </a>
                     <a
-                        href="{{ route('notifications.preferences') }}"
+                        href="{{ route('notifications.preferences', ['return_to' => $returnTo]) }}"
                         class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Einstellungen
@@ -51,6 +52,7 @@
                             hx-swap="outerHTML"
                         >
                             @csrf
+                            <input type="hidden" name="return_to" value="{{ $returnTo }}">
                             <button
                                 type="submit"
                                 class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
@@ -97,7 +99,7 @@
 
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a
-                                            href="{{ route('campaigns.scenes.show', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene]) }}"
+                                            href="{{ route('campaigns.scenes.show', ['world' => $subscribedScene->campaign->world, 'campaign' => $subscribedScene->campaign, 'scene' => $subscribedScene, 'return_to' => $returnTo]) }}"
                                             class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                         >
                                             Szene
@@ -138,7 +140,7 @@
                 @endif
             @endif
 
-            @include('notifications.partials.inbox', ['notifications' => $notifications, 'unreadCount' => $unreadCount])
+            @include('notifications.partials.inbox', ['notifications' => $notifications, 'unreadCount' => $unreadCount, 'returnTo' => $returnTo])
         </section>
     </section>
 @endsection

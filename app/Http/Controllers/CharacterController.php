@@ -19,6 +19,7 @@ use App\Http\Requests\Character\StoreCharacterRequest;
 use App\Http\Requests\Character\UpdateCharacterRequest;
 use App\Models\Character;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class CharacterController extends Controller
         private readonly DeleteCharacterAction $deleteCharacterAction,
         private readonly UpdateCharacterAction $updateCharacterAction,
         private readonly UpdateCharacterInlineAction $updateCharacterInlineAction,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function index(Request $request): View
@@ -67,10 +69,15 @@ class CharacterController extends Controller
     {
         $selectedWorldSlug = trim((string) $request->query('world', (string) $request->session()->get('world_slug', World::defaultSlug())));
         $createData = $this->buildCharacterCreateDataAction->execute($selectedWorldSlug);
+        $fallback = route('characters.index');
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
         return view('characters.create', [
             'worlds' => $createData->worlds,
             'selectedWorld' => $createData->selectedWorld,
+            'backUrl' => $backUrl,
+            'returnTo' => $returnTo,
         ]);
     }
 
@@ -87,12 +94,18 @@ class CharacterController extends Controller
             ),
         );
 
+        $parameters = ['character' => $character];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('characters.show', $character)
+            ->route('characters.show', $parameters)
             ->with('status', 'Charakter erstellt.');
     }
 
-    public function show(Character $character): View|RedirectResponse
+    public function show(Request $request, Character $character): View|RedirectResponse
     {
         $this->authorize('view', $character);
 
@@ -111,17 +124,23 @@ class CharacterController extends Controller
             'inventoryLogs' => $showData->inventoryLogs,
             'progressionEvents' => $showData->progressionEvents,
             'progressionState' => $showData->progressionState,
+            'backUrl' => $this->safeReturnUrl->resolve($request, route('characters.index')),
+            'returnTo' => $this->safeReturnUrl->carry($request),
         ]);
     }
 
-    public function edit(Character $character): View
+    public function edit(Request $request, Character $character): View
     {
         $this->authorize('update', $character);
         $editData = $this->buildCharacterEditDataAction->execute();
+        $backUrl = $this->safeReturnUrl->resolve($request, route('characters.index'));
+        $returnTo = $this->safeReturnUrl->carry($request);
 
         return view('characters.edit', [
             'character' => $character,
             'worlds' => $editData->worlds,
+            'backUrl' => $backUrl,
+            'returnTo' => $returnTo,
         ]);
     }
 
@@ -141,8 +160,14 @@ class CharacterController extends Controller
             ),
         );
 
+        $parameters = ['character' => $character];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('characters.show', $character)
+            ->route('characters.show', $parameters)
             ->with('status', 'Charakter aktualisiert.');
     }
 

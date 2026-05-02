@@ -1,4 +1,12 @@
 <div class="space-y-5">
+    @php
+        $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
+            ? $cancelUrl
+            : (isset($campaign)
+                ? route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
+                : route('campaigns.index', ['world' => $world]));
+    @endphp
+
     <div>
         <label for="title" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Titel</label>
         <input
@@ -146,9 +154,7 @@
         </button>
 
         <a
-            href="{{ isset($campaign)
-                ? route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
-                : route('campaigns.index', ['world' => $world]) }}"
+            href="{{ $cancelUrl }}"
             class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
         >
             Abbrechen

@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\World;
 use App\Support\PostContentRenderer;
 use App\Support\SensitiveFeatureGate;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,6 +39,7 @@ class PostController extends Controller
         private readonly ApplyPostModerationTransitionAction $applyPostModerationTransitionAction,
         private readonly PostPinStateService $postPinStateService,
         private readonly BuildPostThreadItemFragmentAction $buildPostThreadItemFragmentAction,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function store(StorePostRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -92,7 +94,7 @@ class PostController extends Controller
             ->with('post_feedback', $postFeedback);
     }
 
-    public function edit(World $world, Post $post): View
+    public function edit(Request $request, World $world, Post $post): View
     {
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
@@ -115,7 +117,15 @@ class PostController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('posts.edit', compact('world', 'post', 'scene', 'campaign', 'characters'));
+        $fallback = route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id;
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
+
+        return view('posts.edit', compact('world', 'post', 'scene', 'campaign', 'characters', 'backUrl', 'returnTo'));
     }
 
     public function update(UpdatePostRequest $request, World $world, Post $post): RedirectResponse
@@ -143,12 +153,18 @@ class PostController extends Controller
         $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
 
+        $parameters = [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->to(route('campaigns.scenes.show', [
-                'world' => $campaign->world,
-                'campaign' => $campaign,
-                'scene' => $scene,
-            ]).'#post-'.$post->id)
+            ->to(route('campaigns.scenes.show', $parameters).'#post-'.$post->id)
             ->with('status', 'Beitrag aktualisiert.');
     }
 

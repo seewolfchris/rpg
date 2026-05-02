@@ -14,6 +14,7 @@ use App\Http\Requests\StoryLog\UpdateStoryLogEntryRequest;
 use App\Models\Campaign;
 use App\Models\StoryLogEntry;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -29,6 +30,7 @@ class StoryLogEntryController extends Controller
         private readonly RevealStoryLogEntryAction $revealStoryLogEntryAction,
         private readonly UnrevealStoryLogEntryAction $unrevealStoryLogEntryAction,
         private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function index(Request $request, World $world, Campaign $campaign): View
@@ -56,15 +58,18 @@ class StoryLogEntryController extends Controller
         return view('story-log.index', compact('world', 'campaign', 'storyLogEntries', 'canManage'));
     }
 
-    public function create(World $world, Campaign $campaign): View
+    public function create(Request $request, World $world, Campaign $campaign): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [StoryLogEntry::class, $campaign]);
 
         $storyLogEntry = new StoryLogEntry;
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
+        $fallback = route('campaigns.story-log.index', ['world' => $world, 'campaign' => $campaign]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('story-log.create', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions'));
+        return view('story-log.create', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function store(
@@ -80,27 +85,36 @@ class StoryLogEntryController extends Controller
 
         $storyLogEntry = $this->storeStoryLogEntryAction->execute($campaign, $actor, $data);
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.story-log.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'storyLogEntry' => $storyLogEntry,
-            ])
+            ->route('campaigns.story-log.show', $parameters)
             ->with('status', 'Chronik-Eintrag erstellt.');
     }
 
-    public function show(World $world, Campaign $campaign, StoryLogEntry $storyLogEntry): View
+    public function show(Request $request, World $world, Campaign $campaign, StoryLogEntry $storyLogEntry): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->ensureStoryLogEntryBelongsToCampaign($campaign, $storyLogEntry);
         $this->authorize('view', $storyLogEntry);
 
         $storyLogEntry->loadMissing(['scene', 'createdBy', 'updatedBy']);
+        $fallback = $this->storyLogFallbackUrl($world, $campaign, $storyLogEntry);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('story-log.show', compact('world', 'campaign', 'storyLogEntry'));
+        return view('story-log.show', compact('world', 'campaign', 'storyLogEntry', 'backUrl', 'returnTo'));
     }
 
-    public function edit(World $world, Campaign $campaign, StoryLogEntry $storyLogEntry): View
+    public function edit(Request $request, World $world, Campaign $campaign, StoryLogEntry $storyLogEntry): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->ensureStoryLogEntryBelongsToCampaign($campaign, $storyLogEntry);
@@ -108,8 +122,11 @@ class StoryLogEntryController extends Controller
 
         $storyLogEntry->loadMissing(['scene', 'createdBy', 'updatedBy']);
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
+        $fallback = $this->storyLogFallbackUrl($world, $campaign, $storyLogEntry);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('story-log.edit', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions'));
+        return view('story-log.edit', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function update(
@@ -127,12 +144,18 @@ class StoryLogEntryController extends Controller
 
         $this->updateStoryLogEntryAction->execute($storyLogEntry, $actor, $data);
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.story-log.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'storyLogEntry' => $storyLogEntry,
-            ])
+            ->route('campaigns.story-log.show', $parameters)
             ->with('status', 'Chronik-Eintrag aktualisiert.');
     }
 
@@ -186,6 +209,23 @@ class StoryLogEntryController extends Controller
                 'storyLogEntry' => $storyLogEntry,
             ])
             ->with('status', 'Chronik-Eintrag verborgen.');
+    }
+
+    private function storyLogFallbackUrl(World $world, Campaign $campaign, StoryLogEntry $storyLogEntry): string
+    {
+        $scene = $storyLogEntry->scene;
+        if ($scene !== null && (int) $scene->campaign_id === (int) $campaign->id) {
+            return route('campaigns.scenes.show', [
+                'world' => $world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]);
+        }
+
+        return route('campaigns.story-log.index', [
+            'world' => $world,
+            'campaign' => $campaign,
+        ]);
     }
 
 }

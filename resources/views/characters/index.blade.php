@@ -4,6 +4,7 @@
 
 @section('content')
     @php
+        $returnTo = request()->getRequestUri();
         $sheet = (array) config('character_sheet', []);
         $isGmView = auth()->user()->isGmOrAdmin();
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
@@ -49,7 +50,7 @@
                 </div>
 
                 <a
-                    href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null]) }}"
+                    href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null, 'return_to' => $returnTo]) }}"
                     class="ui-btn ui-btn-accent inline-flex"
                 >
                     Neuer Charakter
@@ -157,7 +158,7 @@
 
                             <div class="flex flex-wrap gap-2">
                                 <a
-                                    href="{{ route('characters.show', $character) }}"
+                                    href="{{ route('characters.show', ['character' => $character, 'return_to' => $returnTo]) }}"
                                     class="ui-btn inline-flex"
                                 >
                                     Details

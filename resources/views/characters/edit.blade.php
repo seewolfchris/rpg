@@ -9,5 +9,8 @@
         'method' => 'PUT',
         'submitLabel' => 'Charakter speichern',
         'character' => $character,
+        'backUrl' => $backUrl,
+        'returnTo' => $returnTo,
+        'cancelUrl' => $backUrl,
     ])
 @endsection

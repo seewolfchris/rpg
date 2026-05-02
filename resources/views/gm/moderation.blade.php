@@ -3,6 +3,7 @@
 @section('title', 'GM Moderationszentrale | C76-RPG')
 
 @section('content')
+    @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
@@ -170,7 +171,7 @@
 
                             <div class="mt-4 space-y-3">
                                 <a
-                                    href="{{ route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) }}#post-{{ $post->id }}"
+                                    href="{{ route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene, 'return_to' => $returnTo]) }}#post-{{ $post->id }}"
                                     class="ui-btn"
                                 >
                                     In Szene ansehen

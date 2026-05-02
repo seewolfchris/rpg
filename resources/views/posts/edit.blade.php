@@ -9,6 +9,7 @@
         $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
     @endphp
     <section class="mx-auto w-full max-w-4xl rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+        <x-navigation.back-link :href="$backUrl" label="Zurück" />
         <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Beitrag bearbeiten</p>
         <h1 class="font-heading text-3xl text-stone-100">Thread-Beitrag aktualisieren</h1>
         <p class="mt-2 text-stone-300">
@@ -29,6 +30,9 @@
         >
             @csrf
             @method('PATCH')
+            @if (is_string($returnTo ?? null) && $returnTo !== '')
+                <input type="hidden" name="return_to" value="{{ $returnTo }}">
+            @endif
             @include('posts._form', [
                 'post' => $post,
                 'characters' => $characters,
@@ -36,6 +40,7 @@
                 'showProbeControls' => false,
                 'submitLabel' => 'Speichern',
                 'showModerationControls' => auth()->user()->can('moderate', $post),
+                'cancelUrl' => $backUrl,
             ])
         </form>
     </section>

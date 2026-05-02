@@ -4,6 +4,7 @@
 
 @section('content')
     @php
+        $returnTo = request()->getRequestUri();
         $sceneMoodConfig = (array) config('scenes.moods', []);
         $sceneMoodKey = (string) ($scene->mood ?: config('scenes.default_mood', 'neutral'));
         $sceneMoodMeta = (array) data_get($sceneMoodConfig, $sceneMoodKey, data_get($sceneMoodConfig, 'neutral', []));
@@ -21,9 +22,7 @@
     @endphp
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="ui-card {{ $sceneMoodThemeClass }} p-6 sm:p-8">
-            <a href="{{ route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="break-words text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
-                Zur Kampagne: {{ $campaign->title }}
-            </a>
+            <x-navigation.back-link :href="$backUrl" label="Zurück" />
 
             <div class="mt-3 flex flex-wrap items-start justify-between gap-4 rounded-xl p-4 sm:p-5 {{ $sceneHeaderStyle ? 'border border-stone-700/80' : '' }}" @if ($sceneHeaderStyle) style="{{ $sceneHeaderStyle }}" @endif>
                 <div>
@@ -74,7 +73,7 @@
                     <p class="text-xs uppercase tracking-[0.08em] text-amber-300">Diese Szene folgt auf:</p>
                     @if (auth()->user()->can('view', $scene->previousScene))
                         <a
-                            href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene->previousScene]) }}"
+                            href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene->previousScene, 'return_to' => $returnTo]) }}"
                             class="text-sm font-semibold text-amber-100 underline decoration-amber-500/60 underline-offset-4 hover:text-amber-50"
                         >
                             {{ $scene->previousScene->title }}
@@ -261,7 +260,7 @@
 
                     @can('update', $scene)
                         <a
-                            href="{{ route('campaigns.scenes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
+                            href="{{ route('campaigns.scenes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene, 'return_to' => $returnTo]) }}"
                             class="ui-btn"
                         >
                             Szene bearbeiten
@@ -289,7 +288,7 @@
                         @if ($canModerateScene)
                             <p class="mt-3 text-sm text-stone-400">Noch keine Handouts vorhanden.</p>
                             <a
-                                href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                                 class="ui-btn mt-3 ui-btn-accent !px-3 !py-2 !text-[0.68rem]"
                             >
                                 Handout anlegen
@@ -312,7 +311,7 @@
                                     </div>
 
                                     <a
-                                        href="{{ route('campaigns.handouts.show', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $sceneHandout]) }}"
+                                        href="{{ route('campaigns.handouts.show', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $sceneHandout, 'return_to' => $returnTo]) }}"
                                         class="mt-2 block text-sm font-semibold text-stone-100 underline decoration-amber-500/60 underline-offset-4 hover:text-amber-100"
                                     >
                                         {{ $sceneHandout->title }}
@@ -329,14 +328,14 @@
                             {{ $sceneChronicleCount }} {{ $sceneChronicleCount === 1 ? 'relevanter Eintrag' : 'relevante Einträge' }}
                         </p>
                         <a
-                            href="{{ route('campaigns.story-log.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.story-log.index', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="ui-btn mt-3 !px-3 !py-2 !text-[0.68rem]"
                         >
                             Chronik öffnen
                         </a>
                         @can('create', [App\Models\StoryLogEntry::class, $campaign])
                             <a
-                                href="{{ route('campaigns.story-log.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                href="{{ route('campaigns.story-log.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                                 class="ui-btn ui-btn-accent mt-2 !px-3 !py-2 !text-[0.68rem]"
                             >
                                 Eintrag erstellen
@@ -352,14 +351,14 @@
                                 {{ $scenePlayerNotesCount }} {{ $scenePlayerNotesCount === 1 ? 'eigene Notiz' : 'eigene Notizen' }}
                             </p>
                             <a
-                                href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                                 class="ui-btn mt-3 !px-3 !py-2 !text-[0.68rem]"
                             >
                                 Notizen öffnen
                             </a>
                             @can('create', [App\Models\PlayerNote::class, $campaign])
                                 <a
-                                    href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                                    href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                                     class="ui-btn ui-btn-accent mt-2 !px-3 !py-2 !text-[0.68rem]"
                                 >
                                     Notiz erstellen

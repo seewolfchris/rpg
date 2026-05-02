@@ -5,6 +5,7 @@
 @section('content')
     <section class="mx-auto w-full max-w-4xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <x-navigation.back-link :href="$backUrl" label="Zurück" />
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Einstellungen</p>
             <h1 class="font-heading text-3xl text-stone-100">Mitteilungs-Präferenzen</h1>
             <p class="mt-3 text-sm text-stone-300">
@@ -30,6 +31,9 @@
         >
             @csrf
             @method('PATCH')
+            @if (is_string($returnTo ?? null) && $returnTo !== '')
+                <input type="hidden" name="return_to" value="{{ $returnTo }}">
+            @endif
 
             <div class="space-y-5">
                 <article class="rounded-xl border border-amber-700/50 bg-amber-950/20 p-4">
@@ -144,7 +148,7 @@
                     Speichern
                 </button>
                 <a
-                    href="{{ route('notifications.index') }}"
+                    href="{{ $backUrl }}"
                     class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Zum Posteingang

@@ -25,7 +25,10 @@
         $characterId = $isCharacterIcPost ? (int) $character->id : 0;
         $canViewCharacterSheet = $characterId > 0 && in_array($characterId, $viewableCharacterIds, true);
         $characterProfileUrl = $canViewCharacterSheet
-            ? route('characters.show', ['character' => $character])
+            ? route('characters.show', [
+                'character' => $character,
+                'return_to' => route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id,
+            ])
             : null;
         $characterAvatarUrl = $isCharacterIcPost ? $character->avatarUrl() : null;
         $isOocBySpielleitung = $isOocPost && (int) $post->user_id === (int) $scene->created_by;
@@ -188,7 +191,11 @@
 
             @can('update', $post)
                 <a
-                    href="{{ route('posts.edit', ['world' => $campaign->world, 'post' => $post]) }}"
+                    href="{{ route('posts.edit', [
+                        'world' => $campaign->world,
+                        'post' => $post,
+                        'return_to' => route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$post->id,
+                    ]) }}"
                     class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                 >
                     Bearbeiten

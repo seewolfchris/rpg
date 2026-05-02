@@ -3,6 +3,7 @@
 @section('title', $campaign->title.' | Meine Notizen')
 
 @section('content')
+    @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -15,7 +16,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     @can('create', [\App\Models\PlayerNote::class, $campaign])
                         <a
-                            href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                         >
                             Notiz erstellen
@@ -37,7 +38,7 @@
                 <p class="mt-2 text-xs text-stone-500">Lege private Gedanken, Hinweise oder offene Fragen zu dieser Kampagne ab.</p>
                 @can('create', [\App\Models\PlayerNote::class, $campaign])
                     <a
-                        href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                        href="{{ route('campaigns.player-notes.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                         class="mt-3 inline-flex rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                     >
                         Notiz erstellen
@@ -75,14 +76,14 @@
 
                         <div class="mt-4 flex flex-wrap items-center gap-2">
                             <a
-                                href="{{ route('campaigns.player-notes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'playerNote' => $playerNote]) }}"
+                                href="{{ route('campaigns.player-notes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'playerNote' => $playerNote, 'return_to' => $returnTo]) }}"
                                 class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                             >
                                 Öffnen
                             </a>
                             @can('update', $playerNote)
                                 <a
-                                    href="{{ route('campaigns.player-notes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'playerNote' => $playerNote]) }}"
+                                    href="{{ route('campaigns.player-notes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'playerNote' => $playerNote, 'return_to' => $returnTo]) }}"
                                     class="rounded-md border border-amber-500/70 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                                 >
                                     Bearbeiten

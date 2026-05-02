@@ -2,6 +2,9 @@
     $sceneMoodOptions = (array) config('scenes.moods', []);
     $selectedSceneMood = (string) old('mood', $scene->mood ?? (string) config('scenes.default_mood', 'neutral'));
     $previousSceneOptions = collect($previousSceneOptions ?? []);
+    $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
+        ? $cancelUrl
+        : (isset($scene) ? route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) : route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 @endphp
 
 <div class="space-y-5">
@@ -229,7 +232,7 @@
         </button>
 
         <a
-            href="{{ isset($scene) ? route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) : route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+            href="{{ $cancelUrl }}"
             class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
         >
             Abbrechen

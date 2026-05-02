@@ -42,7 +42,13 @@
         ->map(static fn ($id) => is_numeric($id) ? (int) $id : 0)
         ->filter(static fn (int $id): bool => $id > 0)
         ->all();
-@endphp
+    @endphp
+
+    @php
+        $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
+            ? $cancelUrl
+            : (isset($post) ? route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) : null);
+    @endphp
 
 <div
     class="space-y-5"
@@ -580,9 +586,9 @@
             {{ $submitLabel }}
         </button>
 
-        @if (isset($post))
+        @if (is_string($cancelUrl) && $cancelUrl !== '')
             <a
-                href="{{ route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) }}"
+                href="{{ $cancelUrl }}"
                 class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
             >
                 Abbrechen

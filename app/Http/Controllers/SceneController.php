@@ -17,6 +17,7 @@ use App\Http\Requests\Scene\UpdateSceneRequest;
 use App\Models\Campaign;
 use App\Models\Scene;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -34,16 +35,20 @@ class SceneController extends Controller
         private readonly StoreSceneAction $storeSceneAction,
         private readonly UpdateSceneAction $updateSceneAction,
         private readonly DeleteSceneAction $deleteSceneAction,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
-    public function create(World $world, Campaign $campaign): View
+    public function create(Request $request, World $world, Campaign $campaign): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Scene::class, $campaign]);
 
         $previousSceneOptions = $this->previousSceneOptions($campaign);
+        $fallback = route('campaigns.show', ['world' => $world, 'campaign' => $campaign]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('scenes.create', compact('world', 'campaign', 'previousSceneOptions'));
+        return view('scenes.create', compact('world', 'campaign', 'previousSceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function store(StoreSceneRequest $request, World $world, Campaign $campaign): RedirectResponse
@@ -58,8 +63,14 @@ class SceneController extends Controller
             headerImage: $this->headerImageFromRequest($request),
         );
 
+        $parameters = ['world' => $world, 'campaign' => $campaign, 'scene' => $scene];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene])
+            ->route('campaigns.scenes.show', $parameters)
             ->with('status', 'Szene erstellt.');
     }
 
@@ -85,6 +96,7 @@ class SceneController extends Controller
             'world' => $world,
             'campaign' => $campaign,
             'scene' => $scene,
+            'backUrl' => $this->safeReturnUrl->resolve($request, route('campaigns.show', ['world' => $world, 'campaign' => $campaign])),
             'posts' => $showData->posts,
             'pinnedPosts' => $showData->pinnedPosts,
             'pinnedPostJumpUrls' => $showData->pinnedPostJumpUrls,
@@ -132,14 +144,17 @@ class SceneController extends Controller
         ]);
     }
 
-    public function edit(World $world, Campaign $campaign, Scene $scene): View
+    public function edit(Request $request, World $world, Campaign $campaign, Scene $scene): View
     {
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
         $previousSceneOptions = $this->previousSceneOptions($campaign, $scene);
+        $fallback = route('campaigns.show', ['world' => $world, 'campaign' => $campaign]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('scenes.edit', compact('world', 'campaign', 'scene', 'previousSceneOptions'));
+        return view('scenes.edit', compact('world', 'campaign', 'scene', 'previousSceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function update(UpdateSceneRequest $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -154,8 +169,14 @@ class SceneController extends Controller
             removeHeaderImage: $request->boolean('remove_header_image'),
         );
 
+        $parameters = ['world' => $world, 'campaign' => $campaign, 'scene' => $scene];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene])
+            ->route('campaigns.scenes.show', $parameters)
             ->with('status', 'Szene aktualisiert.');
     }
 

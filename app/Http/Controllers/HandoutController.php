@@ -15,6 +15,7 @@ use App\Http\Requests\Handout\UpdateHandoutRequest;
 use App\Models\Campaign;
 use App\Models\Handout;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -34,6 +35,7 @@ class HandoutController extends Controller
         private readonly UnrevealHandoutAction $unrevealHandoutAction,
         private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
         private readonly HandoutMediaService $handoutMediaService,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function index(Request $request, World $world, Campaign $campaign): View
@@ -61,15 +63,18 @@ class HandoutController extends Controller
         return view('handouts.index', compact('world', 'campaign', 'handouts', 'canManage'));
     }
 
-    public function create(World $world, Campaign $campaign): View
+    public function create(Request $request, World $world, Campaign $campaign): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Handout::class, $campaign]);
 
         $handout = new Handout;
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
+        $fallback = route('campaigns.handouts.index', ['world' => $world, 'campaign' => $campaign]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('handouts.create', compact('world', 'campaign', 'handout', 'sceneOptions'));
+        return view('handouts.create', compact('world', 'campaign', 'handout', 'sceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function store(
@@ -106,27 +111,36 @@ class HandoutController extends Controller
                 ]);
         }
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.handouts.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'handout' => $handout,
-            ])
+            ->route('campaigns.handouts.show', $parameters)
             ->with('status', 'Handout erstellt.');
     }
 
-    public function show(World $world, Campaign $campaign, Handout $handout): View
+    public function show(Request $request, World $world, Campaign $campaign, Handout $handout): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->ensureHandoutBelongsToCampaign($campaign, $handout);
         $this->authorize('view', $handout);
 
         $handout->loadMissing(['scene', 'creator', 'updater', 'media']);
+        $fallback = $this->handoutFallbackUrl($world, $campaign, $handout);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('handouts.show', compact('world', 'campaign', 'handout'));
+        return view('handouts.show', compact('world', 'campaign', 'handout', 'backUrl', 'returnTo'));
     }
 
-    public function edit(World $world, Campaign $campaign, Handout $handout): View
+    public function edit(Request $request, World $world, Campaign $campaign, Handout $handout): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->ensureHandoutBelongsToCampaign($campaign, $handout);
@@ -134,8 +148,11 @@ class HandoutController extends Controller
 
         $handout->loadMissing(['scene', 'creator', 'updater', 'media']);
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
+        $fallback = $this->handoutFallbackUrl($world, $campaign, $handout);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('handouts.edit', compact('world', 'campaign', 'handout', 'sceneOptions'));
+        return view('handouts.edit', compact('world', 'campaign', 'handout', 'sceneOptions', 'backUrl', 'returnTo'));
     }
 
     public function update(
@@ -166,12 +183,18 @@ class HandoutController extends Controller
                 ]);
         }
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.handouts.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'handout' => $handout,
-            ])
+            ->route('campaigns.handouts.show', $parameters)
             ->with('status', 'Handout aktualisiert.');
     }
 
@@ -243,6 +266,23 @@ class HandoutController extends Controller
             'Content-Type' => (string) ($media->mime_type ?: 'application/octet-stream'),
             'Content-Disposition' => 'inline; filename="'.$media->file_name.'"',
             'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
+    }
+
+    private function handoutFallbackUrl(World $world, Campaign $campaign, Handout $handout): string
+    {
+        $scene = $handout->scene;
+        if ($scene !== null && (int) $scene->campaign_id === (int) $campaign->id) {
+            return route('campaigns.scenes.show', [
+                'world' => $world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]);
+        }
+
+        return route('campaigns.handouts.index', [
+            'world' => $world,
+            'campaign' => $campaign,
         ]);
     }
 

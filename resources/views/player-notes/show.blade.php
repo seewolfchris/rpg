@@ -5,9 +5,7 @@
 @section('content')
     <section class="mx-auto w-full max-w-5xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <a href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="text-xs uppercase tracking-widest text-amber-300 hover:text-amber-200">
-                Zu meinen Notizen
-            </a>
+            <x-navigation.back-link :href="$backUrl" label="Zurück" />
 
             <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -47,7 +45,12 @@
             @can('update', $playerNote)
                 <div class="mt-6 flex flex-wrap items-center gap-2">
                     <a
-                        href="{{ route('campaigns.player-notes.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'playerNote' => $playerNote]) }}"
+                        href="{{ route('campaigns.player-notes.edit', [
+                            'world' => $campaign->world,
+                            'campaign' => $campaign,
+                            'playerNote' => $playerNote,
+                            'return_to' => is_string($returnTo) ? $returnTo : null,
+                        ]) }}"
                         class="rounded-md border border-amber-500/70 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                     >
                         Bearbeiten

@@ -61,7 +61,7 @@ class ScenePostReadabilityTest extends TestCase
             ->assertSeeText('Sir Avar')
             ->assertSeeText('gespielt von')
             ->assertSeeText('Spieler Armin')
-            ->assertSee('href="'.$characterUrl.'"', false)
+            ->assertSee('href="'.$characterUrl, false)
             ->assertSee('target="_blank"', false)
             ->assertSee('rel="noopener noreferrer"', false)
             ->assertSee('character-placeholder.svg', false);
@@ -112,7 +112,7 @@ class ScenePostReadabilityTest extends TestCase
 
         $response->assertOk()
             ->assertSeeText('Talan vom Nordgrat')
-            ->assertSee('href="'.$characterUrl.'"', false)
+            ->assertSee('href="'.$characterUrl, false)
             ->assertSee('target="_blank"', false)
             ->assertSee('rel="noopener noreferrer"', false);
     }

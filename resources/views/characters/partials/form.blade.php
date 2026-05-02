@@ -289,11 +289,20 @@
             'armors' => $initialArmors,
         ],
     ];
+    $backUrl = is_string($backUrl ?? null) && $backUrl !== '' ? $backUrl : null;
+    $returnTo = is_string($returnTo ?? null) && $returnTo !== '' ? $returnTo : null;
+    $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
+        ? $cancelUrl
+        : ($backUrl ?? (isset($character) ? route('characters.show', $character) : route('characters.index')));
 @endphp
 
 <section class="mx-auto w-full max-w-7xl rounded-3xl border border-stone-800 bg-black/40 p-5 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8"
     x-data="characterSheetForm({{ json_encode($componentPayload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }})"
 >
+    @if ($backUrl)
+        <x-navigation.back-link :href="$backUrl" label="Zurück" />
+    @endif
+
     <header class="rounded-2xl border border-stone-800 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950/35 p-6">
         <p class="text-xs uppercase tracking-[0.2em] text-red-300/80">{{ $selectedWorldName }}</p>
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">
@@ -318,6 +327,9 @@
 
     <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-8">
         @csrf
+        @if ($returnTo)
+            <input type="hidden" name="return_to" value="{{ $returnTo }}">
+        @endif
         @if (($method ?? 'POST') !== 'POST')
             @method($method)
         @endif
@@ -1043,7 +1055,7 @@
 
         <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-stone-800 pt-6">
             <a
-                href="{{ $cancelUrl ?? (isset($character) ? route('characters.show', $character) : route('characters.index')) }}"
+                href="{{ $cancelUrl }}"
                 class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
             >
                 Abbrechen

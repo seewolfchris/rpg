@@ -1,4 +1,5 @@
 @php($isHtmxRequest = request()->header('HX-Request') === 'true')
+@php($returnTo = is_string($returnTo ?? null) && $returnTo !== '' ? $returnTo : route('notifications.index'))
 
 <section id="notifications-inbox">
     @if ($isHtmxRequest)
@@ -44,6 +45,7 @@
                         <div class="flex items-center gap-2">
                             <form method="POST" action="{{ route('notifications.read', $notification->id) }}" hx-boost="false">
                                 @csrf
+                                <input type="hidden" name="return_to" value="{{ $returnTo }}">
                                 <button
                                     type="submit"
                                     class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
@@ -61,6 +63,7 @@
                                     hx-swap="outerHTML"
                                 >
                                     @csrf
+                                    <input type="hidden" name="return_to" value="{{ $returnTo }}">
                                     <button
                                         type="submit"
                                         class="rounded-md border border-amber-500/70 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"

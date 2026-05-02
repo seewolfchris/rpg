@@ -3,8 +3,10 @@
 @section('title', $campaign->title.' | Kampagne')
 
 @section('content')
+    @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
+            <x-navigation.back-link :href="$backUrl" label="Zurück" />
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Kampagne</p>
@@ -40,7 +42,7 @@
             <div class="mt-6 flex flex-wrap items-center gap-3">
                 @can('update', $campaign)
                     <a
-                        href="{{ route('campaigns.edit', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                        href="{{ route('campaigns.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                         class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Bearbeiten
@@ -72,7 +74,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     @can('viewAny', [App\Models\Handout::class, $campaign])
                         <a
-                            href="{{ route('campaigns.handouts.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.handouts.index', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Handouts
@@ -81,7 +83,7 @@
 
                     @can('viewAny', [App\Models\StoryLogEntry::class, $campaign])
                         <a
-                            href="{{ route('campaigns.story-log.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.story-log.index', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Chronik
@@ -90,7 +92,7 @@
 
                     @can('viewAny', [App\Models\PlayerNote::class, $campaign])
                         <a
-                            href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.player-notes.index', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Meine Notizen
@@ -99,7 +101,7 @@
 
                     @can('create', [App\Models\Scene::class, $campaign])
                         <a
-                            href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.scenes.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                         >
                             Szene anlegen
@@ -196,7 +198,7 @@
                                         @endif
                                     @endif
                                     <a
-                                        href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}"
+                                        href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene, 'return_to' => $returnTo]) }}"
                                         class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                                     >
                                         Öffnen

@@ -8,5 +8,8 @@
         'action' => route('characters.store'),
         'method' => 'POST',
         'submitLabel' => 'Charakter erstellen',
+        'backUrl' => $backUrl,
+        'returnTo' => $returnTo,
+        'cancelUrl' => $backUrl,
     ])
 @endsection

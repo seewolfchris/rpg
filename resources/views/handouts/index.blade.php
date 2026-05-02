@@ -3,6 +3,7 @@
 @section('title', $campaign->title.' | Handouts')
 
 @section('content')
+    @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -15,7 +16,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     @can('create', [\App\Models\Handout::class, $campaign])
                         <a
-                            href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                         >
                             Handout anlegen
@@ -36,7 +37,7 @@
                 @can('create', [\App\Models\Handout::class, $campaign])
                     <p>Noch keine Handouts vorhanden.</p>
                     <a
-                        href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign]) }}"
+                        href="{{ route('campaigns.handouts.create', ['world' => $campaign->world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                         class="mt-3 inline-flex rounded-md border border-amber-400/70 bg-amber-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-400/30"
                     >
                         Handout anlegen
@@ -80,7 +81,7 @@
 
                         <div class="mt-4 flex flex-wrap items-center gap-2">
                             <a
-                                href="{{ route('campaigns.handouts.show', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                                href="{{ route('campaigns.handouts.show', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout, 'return_to' => $returnTo]) }}"
                                 class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                             >
                                 Öffnen
@@ -88,7 +89,7 @@
 
                             @can('update', $handout)
                                 <a
-                                    href="{{ route('campaigns.handouts.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                                    href="{{ route('campaigns.handouts.edit', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout, 'return_to' => $returnTo]) }}"
                                     class="rounded-md border border-amber-500/70 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                                 >
                                     Bearbeiten

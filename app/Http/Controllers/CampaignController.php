@@ -13,6 +13,7 @@ use App\Http\Requests\Campaign\UpdateCampaignRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,6 +27,7 @@ class CampaignController extends Controller
         private readonly UpdateCampaignAction $updateCampaignAction,
         private readonly DeleteCampaignAction $deleteCampaignAction,
         private readonly BuildCampaignGmContactPanelDataAction $buildCampaignGmContactPanelDataAction,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {
         $this->authorizeResource(Campaign::class, 'campaign');
     }
@@ -50,9 +52,13 @@ class CampaignController extends Controller
         return view('campaigns.index', compact('campaigns', 'world'));
     }
 
-    public function create(World $world): View
+    public function create(Request $request, World $world): View
     {
-        return view('campaigns.create', compact('world'));
+        $fallback = route('campaigns.index', ['world' => $world]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
+
+        return view('campaigns.create', compact('world', 'backUrl', 'returnTo'));
     }
 
     public function store(StoreCampaignRequest $request, World $world): RedirectResponse
@@ -64,8 +70,14 @@ class CampaignController extends Controller
             data: $request->validated(),
         );
 
+        $parameters = ['world' => $world, 'campaign' => $campaign];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
+            ->route('campaigns.show', $parameters)
             ->with('status', 'Kampagne erstellt.');
     }
 
@@ -162,6 +174,8 @@ class CampaignController extends Controller
             canManageCampaign: $canManageCampaign,
         );
 
+        $backUrl = $this->safeReturnUrl->resolve($request, route('campaigns.index', ['world' => $world]));
+
         return view('campaigns.show', compact(
             'world',
             'campaign',
@@ -174,14 +188,19 @@ class CampaignController extends Controller
             'canManageMembershipRoles',
             'canManageCampaign',
             'gmContactPanelData',
+            'backUrl',
         ));
     }
 
-    public function edit(World $world, Campaign $campaign): View
+    public function edit(Request $request, World $world, Campaign $campaign): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
 
-        return view('campaigns.edit', compact('campaign', 'world'));
+        $fallback = route('campaigns.index', ['world' => $world]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
+
+        return view('campaigns.edit', compact('campaign', 'world', 'backUrl', 'returnTo'));
     }
 
     public function update(UpdateCampaignRequest $request, World $world, Campaign $campaign): RedirectResponse
@@ -192,8 +211,14 @@ class CampaignController extends Controller
             data: $request->validated(),
         );
 
+        $parameters = ['world' => $world, 'campaign' => $campaign];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
+            ->route('campaigns.show', $parameters)
             ->with('status', 'Kampagne aktualisiert.');
     }
 

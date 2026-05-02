@@ -8,12 +8,12 @@ use App\Actions\Notification\UpdateNotificationPreferencesAction;
 use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
 use App\Models\SceneSubscription;
+use App\Support\Navigation\SafeReturnUrl;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
@@ -24,6 +24,7 @@ class NotificationController extends Controller
         private readonly UpdateNotificationPreferencesAction $updateNotificationPreferencesAction,
         private readonly MarkNotificationReadAction $markNotificationReadAction,
         private readonly MarkAllNotificationsReadAction $markAllNotificationsReadAction,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function preferences(Request $request): View
@@ -31,8 +32,10 @@ class NotificationController extends Controller
         $user = $this->authenticatedUser($request);
         $preferences = $user->resolvedNotificationPreferences();
         $offlineQueueEnabled = $user->offlineQueueEnabled();
+        $backUrl = $this->safeReturnUrl->resolve($request, route('notifications.index'));
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('notifications.preferences', compact('preferences', 'offlineQueueEnabled'));
+        return view('notifications.preferences', compact('preferences', 'offlineQueueEnabled', 'backUrl', 'returnTo'));
     }
 
     public function updatePreferences(UpdateNotificationPreferencesRequest $request): RedirectResponse|JsonResponse
@@ -54,8 +57,14 @@ class NotificationController extends Controller
             ]);
         }
 
+        $parameters = [];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('notifications.preferences')
+            ->route('notifications.preferences', $parameters)
             ->with('status', 'Benachrichtigungspräferenzen gespeichert.');
     }
 
@@ -89,6 +98,7 @@ class NotificationController extends Controller
             ->first() ?? []);
         $activeSubscriptionCount = (int) ($subscriptionCounts['active_count'] ?? 0);
         $mutedSubscriptionCount = (int) ($subscriptionCounts['muted_count'] ?? 0);
+        $returnTo = $this->notificationReturnTo($request);
 
         return view('notifications.index', compact(
             'notifications',
@@ -96,6 +106,7 @@ class NotificationController extends Controller
             'subscriptions',
             'activeSubscriptionCount',
             'mutedSubscriptionCount',
+            'returnTo',
         ));
     }
 
@@ -110,53 +121,13 @@ class NotificationController extends Controller
 
         $fallbackUrl = route('notifications.index');
         $actionUrl = data_get($notification->data, 'action_url');
-        $resolvedUrl = $this->resolveSafeActionUrl($request, $actionUrl, $fallbackUrl);
+        $resolvedUrl = $this->safeReturnUrl->sanitizeCandidate(is_string($actionUrl) ? $actionUrl : null, $request) ?? $fallbackUrl;
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $resolvedUrl = $this->appendQueryParameter($resolvedUrl, 'return_to', $returnTo);
+        }
 
         return redirect()->to($resolvedUrl);
-    }
-
-    private function resolveSafeActionUrl(Request $request, mixed $actionUrl, string $fallbackUrl): string
-    {
-        if (! is_string($actionUrl) || trim($actionUrl) === '') {
-            return $fallbackUrl;
-        }
-
-        $candidate = trim($actionUrl);
-        // Block protocol-relative targets such as //evil.example.
-        if (Str::startsWith($candidate, '//')) {
-            return $fallbackUrl;
-        }
-
-        if (Str::startsWith($candidate, ['/'])) {
-            return $candidate;
-        }
-
-        $parsed = parse_url($candidate);
-        if (! is_array($parsed)) {
-            return $fallbackUrl;
-        }
-
-        $host = strtolower((string) ($parsed['host'] ?? ''));
-        $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
-        $port = isset($parsed['port']) ? (int) $parsed['port'] : null;
-
-        if ($host === '' || ! in_array($scheme, ['http', 'https'], true)) {
-            return $fallbackUrl;
-        }
-
-        $requestHost = strtolower($request->getHost());
-        $requestScheme = strtolower($request->getScheme());
-        $requestPort = $request->getPort();
-
-        if ($host !== $requestHost || $scheme !== $requestScheme) {
-            return $fallbackUrl;
-        }
-
-        if ($port !== null && $port !== $requestPort) {
-            return $fallbackUrl;
-        }
-
-        return $candidate;
     }
 
     public function readAll(Request $request): View|RedirectResponse
@@ -168,7 +139,11 @@ class NotificationController extends Controller
             return $this->renderInboxPanel($request, $user);
         }
 
-        return back()->with('status', 'Alle Benachrichtigungen als gelesen markiert.');
+        $backUrl = $this->safeReturnUrl->resolve($request, route('notifications.index'));
+
+        return redirect()
+            ->to($backUrl)
+            ->with('status', 'Alle Benachrichtigungen als gelesen markiert.');
     }
 
     private function renderInboxPanel(Request $request, User $user): View
@@ -179,7 +154,43 @@ class NotificationController extends Controller
             ->withQueryString();
 
         $unreadCount = $user->unreadNotifications()->count();
+        $returnTo = $this->notificationReturnTo($request, false);
 
-        return view('notifications.partials.inbox', compact('notifications', 'unreadCount'));
+        return view('notifications.partials.inbox', compact('notifications', 'unreadCount', 'returnTo'));
+    }
+
+    private function notificationReturnTo(Request $request, bool $allowCurrentUri = true): string
+    {
+        $explicitReturnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($explicitReturnTo) && $explicitReturnTo !== '') {
+            return $explicitReturnTo;
+        }
+
+        if ($allowCurrentUri) {
+            $currentUri = $this->safeReturnUrl->sanitizeCandidate($request->getRequestUri(), $request);
+            if (is_string($currentUri) && $currentUri !== '') {
+                return $currentUri;
+            }
+        }
+
+        return route('notifications.index');
+    }
+
+    private function appendQueryParameter(string $url, string $key, string $value): string
+    {
+        $fragment = '';
+        $fragmentPosition = strpos($url, '#');
+        if ($fragmentPosition !== false) {
+            $fragment = substr($url, $fragmentPosition);
+            $url = substr($url, 0, $fragmentPosition);
+        }
+
+        if (str_contains($url, $key.'=')) {
+            return $url.$fragment;
+        }
+
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.rawurlencode($key).'='.rawurlencode($value).$fragment;
     }
 }

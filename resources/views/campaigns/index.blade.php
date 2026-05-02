@@ -3,6 +3,7 @@
 @section('title', 'Kampagnen | C76-RPG')
 
 @section('content')
+    @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -20,7 +21,7 @@
                 </a>
                 @can('create', App\Models\Campaign::class)
                     <a
-                        href="{{ route('campaigns.create', ['world' => $world]) }}"
+                        href="{{ route('campaigns.create', ['world' => $world, 'return_to' => $returnTo]) }}"
                         class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
                     >
                         Neue Kampagne
@@ -64,7 +65,7 @@
                         </div>
 
                         <a
-                            href="{{ route('campaigns.show', ['world' => $world, 'campaign' => $campaign]) }}"
+                            href="{{ route('campaigns.show', ['world' => $world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
                             class="mt-5 inline-flex rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                         >
                             Öffnen

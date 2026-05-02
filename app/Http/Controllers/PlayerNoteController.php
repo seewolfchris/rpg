@@ -13,6 +13,7 @@ use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\PlayerNote;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,6 +27,7 @@ class PlayerNoteController extends Controller
         private readonly UpdatePlayerNoteAction $updatePlayerNoteAction,
         private readonly DeletePlayerNoteAction $deletePlayerNoteAction,
         private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
+        private readonly SafeReturnUrl $safeReturnUrl,
     ) {}
 
     public function index(Request $request, World $world, Campaign $campaign): View
@@ -58,8 +60,11 @@ class PlayerNoteController extends Controller
         $playerNote = new PlayerNote;
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
         $characterOptions = $this->characterOptionsForCampaignAndUser($campaign, $actor);
+        $fallback = route('campaigns.player-notes.index', ['world' => $world, 'campaign' => $campaign]);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('player-notes.create', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions'));
+        return view('player-notes.create', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions', 'backUrl', 'returnTo'));
     }
 
     public function store(
@@ -74,24 +79,33 @@ class PlayerNoteController extends Controller
         $data = $request->validated();
         $playerNote = $this->storePlayerNoteAction->execute($campaign, $actor, $data);
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'playerNote' => $playerNote,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.player-notes.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'playerNote' => $playerNote,
-            ])
+            ->route('campaigns.player-notes.show', $parameters)
             ->with('status', 'Notiz erstellt.');
     }
 
-    public function show(World $world, Campaign $campaign, PlayerNote $playerNote): View
+    public function show(Request $request, World $world, Campaign $campaign, PlayerNote $playerNote): View
     {
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->ensurePlayerNoteBelongsToCampaign($campaign, $playerNote);
         $this->authorize('view', $playerNote);
 
         $playerNote->loadMissing(['scene', 'character']);
+        $fallback = $this->playerNoteFallbackUrl($world, $campaign, $playerNote);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('player-notes.show', compact('world', 'campaign', 'playerNote'));
+        return view('player-notes.show', compact('world', 'campaign', 'playerNote', 'backUrl', 'returnTo'));
     }
 
     public function edit(Request $request, World $world, Campaign $campaign, PlayerNote $playerNote): View
@@ -104,8 +118,11 @@ class PlayerNoteController extends Controller
         $playerNote->loadMissing(['scene', 'character']);
         $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
         $characterOptions = $this->characterOptionsForCampaignAndUser($campaign, $actor);
+        $fallback = $this->playerNoteFallbackUrl($world, $campaign, $playerNote);
+        $backUrl = $this->safeReturnUrl->resolve($request, $fallback);
+        $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('player-notes.edit', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions'));
+        return view('player-notes.edit', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions', 'backUrl', 'returnTo'));
     }
 
     public function update(
@@ -123,12 +140,18 @@ class PlayerNoteController extends Controller
 
         $this->updatePlayerNoteAction->execute($playerNote, $campaign, $actor, $data);
 
+        $parameters = [
+            'world' => $world,
+            'campaign' => $campaign,
+            'playerNote' => $playerNote,
+        ];
+        $returnTo = $this->safeReturnUrl->carry($request);
+        if (is_string($returnTo) && $returnTo !== '') {
+            $parameters['return_to'] = $returnTo;
+        }
+
         return redirect()
-            ->route('campaigns.player-notes.show', [
-                'world' => $world,
-                'campaign' => $campaign,
-                'playerNote' => $playerNote,
-            ])
+            ->route('campaigns.player-notes.show', $parameters)
             ->with('status', 'Notiz aktualisiert.');
     }
 
@@ -160,5 +183,22 @@ class PlayerNoteController extends Controller
             ->get(['id', 'name', 'world_id']);
 
         return $characters;
+    }
+
+    private function playerNoteFallbackUrl(World $world, Campaign $campaign, PlayerNote $playerNote): string
+    {
+        $scene = $playerNote->scene;
+        if ($scene !== null && (int) $scene->campaign_id === (int) $campaign->id) {
+            return route('campaigns.scenes.show', [
+                'world' => $world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]);
+        }
+
+        return route('campaigns.player-notes.index', [
+            'world' => $world,
+            'campaign' => $campaign,
+        ]);
     }
 }

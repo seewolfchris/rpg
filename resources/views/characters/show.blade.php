@@ -86,6 +86,7 @@
     @endphp
 
     <section class="character-living-document mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.back-link :href="$backUrl" label="Zurück" />
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Charakterbogen</p>
@@ -98,7 +99,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 @can('update', $character)
                     <a
-                        href="{{ route('characters.edit', $character) }}"
+                        href="{{ route('characters.edit', ['character' => $character, 'return_to' => is_string($returnTo) ? $returnTo : null]) }}"
                         class="ui-btn inline-flex"
                     >
                         Bearbeiten
@@ -392,11 +393,5 @@
             </article>
         </div>
 
-        <a
-            href="{{ route('characters.index') }}"
-            class="ui-btn inline-flex"
-        >
-            Zurück zur Übersicht
-        </a>
     </section>
 @endsection
