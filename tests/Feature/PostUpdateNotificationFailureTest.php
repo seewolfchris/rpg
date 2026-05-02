@@ -2,10 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Domain\Post\PostMentionNotificationService;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -39,18 +40,17 @@ class PostUpdateNotificationFailureTest extends TestCase
             'status' => 'open',
             'allow_ooc' => true,
         ]);
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
         $character = Character::factory()->create([
             'user_id' => $player->id,
             'world_id' => $campaign->world_id,
+        ]);
+        CampaignMembership::query()->updateOrCreate([
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+        ], [
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $gm->id,
+            'source' => 'test_fixture',
         ]);
         $post = Post::factory()->create([
             'scene_id' => $scene->id,

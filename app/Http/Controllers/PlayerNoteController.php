@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Actions\PlayerNote\DeletePlayerNoteAction;
 use App\Actions\PlayerNote\StorePlayerNoteAction;
 use App\Actions\PlayerNote\UpdatePlayerNoteAction;
+use App\Domain\Campaign\CampaignSceneOptionsProvider;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\PlayerNote\StorePlayerNoteRequest;
 use App\Http\Requests\PlayerNote\UpdatePlayerNoteRequest;
 use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\PlayerNote;
-use App\Models\Scene;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +25,7 @@ class PlayerNoteController extends Controller
         private readonly StorePlayerNoteAction $storePlayerNoteAction,
         private readonly UpdatePlayerNoteAction $updatePlayerNoteAction,
         private readonly DeletePlayerNoteAction $deletePlayerNoteAction,
+        private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
     ) {}
 
     public function index(Request $request, World $world, Campaign $campaign): View
@@ -55,7 +56,7 @@ class PlayerNoteController extends Controller
 
         $actor = $this->authenticatedUser($request);
         $playerNote = new PlayerNote;
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
         $characterOptions = $this->characterOptionsForCampaignAndUser($campaign, $actor);
 
         return view('player-notes.create', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions'));
@@ -101,7 +102,7 @@ class PlayerNoteController extends Controller
 
         $actor = $this->authenticatedUser($request);
         $playerNote->loadMissing(['scene', 'character']);
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
         $characterOptions = $this->characterOptionsForCampaignAndUser($campaign, $actor);
 
         return view('player-notes.edit', compact('world', 'campaign', 'playerNote', 'sceneOptions', 'characterOptions'));
@@ -145,20 +146,6 @@ class PlayerNoteController extends Controller
                 'campaign' => $campaign,
             ])
             ->with('status', 'Notiz gelöscht.');
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Scene>
-     */
-    private function sceneOptionsForCampaign(Campaign $campaign): \Illuminate\Database\Eloquent\Collection
-    {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Scene> $scenes */
-        $scenes = $campaign->scenes()
-            ->orderBy('position')
-            ->orderBy('title')
-            ->get(['id', 'title', 'position']);
-
-        return $scenes;
     }
 
     /**

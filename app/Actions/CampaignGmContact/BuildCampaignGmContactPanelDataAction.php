@@ -2,6 +2,7 @@
 
 namespace App\Actions\CampaignGmContact;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
 use App\Models\CampaignGmContactThread;
 use App\Models\Character;
@@ -11,6 +12,10 @@ use Illuminate\Support\Collection;
 
 class BuildCampaignGmContactPanelDataAction
 {
+    public function __construct(
+        private readonly CampaignAccess $campaignAccess,
+    ) {}
+
     public function execute(
         Campaign $campaign,
         User $user,
@@ -19,8 +24,8 @@ class BuildCampaignGmContactPanelDataAction
         string $sceneSearch = '',
         bool $canManageCampaign = false,
     ): CampaignGmContactPanelData {
-        $canCreateThread = CampaignGmContactThread::hasCampaignContactAccess($campaign, $user);
-        $isGmSide = CampaignGmContactThread::isGmSide($campaign, $user);
+        $canCreateThread = $this->campaignAccess->hasCampaignContactAccess($campaign, $user);
+        $isGmSide = $this->campaignAccess->isCampaignContactGmSide($campaign, $user);
 
         $threads = collect();
         $selectedThread = null;

@@ -8,8 +8,9 @@ use App\Domain\Post\PostInventoryAwardService;
 use App\Domain\Post\PostProbeService;
 use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Domain\Scene\SceneInventoryQuickActionService;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Post;
@@ -27,14 +28,12 @@ class ServiceScopeInvariantTest extends TestCase
     {
         [$gm, $campaign, $scene] = $this->campaignContext();
         $participant = User::factory()->create();
-        $campaign->invitations()->create([
-            'user_id' => $participant->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $participant->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
 
         $otherWorld = World::factory()->create();
@@ -129,14 +128,12 @@ class ServiceScopeInvariantTest extends TestCase
     {
         [$gm, $campaign, $scene] = $this->campaignContext();
         $participant = User::factory()->create();
-        $campaign->invitations()->create([
-            'user_id' => $participant->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $participant->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
         $otherWorld = World::factory()->create();
         $targetCharacter = Character::factory()->create([
@@ -213,14 +210,12 @@ class ServiceScopeInvariantTest extends TestCase
         $this->assertSame(['Fackel'], $outsiderCharacter->fresh()->inventory);
 
         $participant = User::factory()->create();
-        $campaign->invitations()->create([
-            'user_id' => $participant->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $participant->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
         $otherWorld = World::factory()->create();
         $wrongWorldCharacter = Character::factory()->create([
@@ -264,14 +259,12 @@ class ServiceScopeInvariantTest extends TestCase
         ]);
 
         $participant = User::factory()->create();
-        $campaign->invitations()->create([
-            'user_id' => $participant->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $participant->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
         $targetCharacter = Character::factory()->create([
             'user_id' => $participant->id,

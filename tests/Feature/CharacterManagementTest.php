@@ -3,11 +3,12 @@
 namespace Tests\Feature;
 
 use App\Domain\Character\CharacterProgressionService;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Character;
 use App\Models\CharacterInventoryLog;
 use App\Models\CharacterProgressionEvent;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\PostMention;
@@ -115,16 +116,17 @@ class CharacterManagementTest extends TestCase
             'status' => 'active',
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => (int) $campaign->id,
-            'user_id' => (int) $coGm->id,
-            'invited_by' => (int) $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $coGm->id,
+            ],
+            [
+                'role' => CampaignMembershipRole::GM->value,
+                'assigned_by' => (int) $owner->id,
+                'assigned_at' => now(),
+            ]
+        );
     }
 
     public function test_guest_cannot_access_character_index(): void

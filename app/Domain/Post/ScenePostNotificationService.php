@@ -2,8 +2,9 @@
 
 namespace App\Domain\Post;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\PostSceneNotificationDelivery;
 use App\Models\PushSubscription;
@@ -27,6 +28,7 @@ class ScenePostNotificationService
     public function __construct(
         private readonly DomainEventLogger $logger,
         private readonly ScenePostNotificationDeliveryLedger $deliveryLedger,
+        private readonly CampaignAccess $campaignAccess,
     ) {}
 
     /**
@@ -40,9 +42,8 @@ class ScenePostNotificationService
         /** @var Campaign $campaign */
         $campaign = $scene->campaign;
         $campaign->loadMissing([
-            'invitations' => fn ($query) => $query
-                ->select(['id', 'campaign_id', 'user_id', 'status', 'role', 'accepted_at', 'responded_at', 'invited_by', 'created_at'])
-                ->where('status', CampaignInvitation::STATUS_ACCEPTED),
+            'memberships' => fn ($query) => $query
+                ->select(['id', 'campaign_id', 'user_id', 'role', 'assigned_by', 'assigned_at']),
         ]);
 
         $recipientIds = SceneSubscription::query()
@@ -65,7 +66,7 @@ class ScenePostNotificationService
             ->whereIn('id', $recipientIds)
             ->orderBy('id')
             ->get()
-            ->filter(fn (User $recipient): bool => $campaign->isVisibleTo($recipient))
+            ->filter(fn (User $recipient): bool => $this->campaignAccess->isVisibleTo($campaign, $recipient))
             ->values();
 
         if ($recipients->isEmpty()) {

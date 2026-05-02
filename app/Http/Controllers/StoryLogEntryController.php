@@ -7,11 +7,11 @@ use App\Actions\StoryLog\RevealStoryLogEntryAction;
 use App\Actions\StoryLog\StoreStoryLogEntryAction;
 use App\Actions\StoryLog\UnrevealStoryLogEntryAction;
 use App\Actions\StoryLog\UpdateStoryLogEntryAction;
+use App\Domain\Campaign\CampaignSceneOptionsProvider;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\StoryLog\StoreStoryLogEntryRequest;
 use App\Http\Requests\StoryLog\UpdateStoryLogEntryRequest;
 use App\Models\Campaign;
-use App\Models\Scene;
 use App\Models\StoryLogEntry;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +28,7 @@ class StoryLogEntryController extends Controller
         private readonly DeleteStoryLogEntryAction $deleteStoryLogEntryAction,
         private readonly RevealStoryLogEntryAction $revealStoryLogEntryAction,
         private readonly UnrevealStoryLogEntryAction $unrevealStoryLogEntryAction,
+        private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
     ) {}
 
     public function index(Request $request, World $world, Campaign $campaign): View
@@ -61,7 +62,7 @@ class StoryLogEntryController extends Controller
         $this->authorize('create', [StoryLogEntry::class, $campaign]);
 
         $storyLogEntry = new StoryLogEntry;
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
 
         return view('story-log.create', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions'));
     }
@@ -106,7 +107,7 @@ class StoryLogEntryController extends Controller
         $this->authorize('update', $storyLogEntry);
 
         $storyLogEntry->loadMissing(['scene', 'createdBy', 'updatedBy']);
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
 
         return view('story-log.edit', compact('world', 'campaign', 'storyLogEntry', 'sceneOptions'));
     }
@@ -187,17 +188,4 @@ class StoryLogEntryController extends Controller
             ->with('status', 'Chronik-Eintrag verborgen.');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Scene>
-     */
-    private function sceneOptionsForCampaign(Campaign $campaign): \Illuminate\Database\Eloquent\Collection
-    {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Scene> $scenes */
-        $scenes = $campaign->scenes()
-            ->orderBy('position')
-            ->orderBy('title')
-            ->get(['id', 'title', 'position']);
-
-        return $scenes;
-    }
 }

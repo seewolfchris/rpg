@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Scene;
 
 use App\Actions\Scene\BuildSceneThreadPageDataAction;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
@@ -33,14 +34,12 @@ class BuildSceneThreadPageDataActionTest extends TestCase
             'status' => 'open',
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $readPost = Post::factory()->create([

@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use App\Models\User;
@@ -101,15 +102,12 @@ class EncyclopediaWorkflowTest extends TestCase
             'is_public' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $entryForOwner = $this->createPendingEntry($category, $author, 'owner-approve');

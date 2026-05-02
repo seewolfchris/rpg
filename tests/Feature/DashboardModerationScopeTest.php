@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -81,15 +82,12 @@ class DashboardModerationScopeTest extends TestCase
             'is_public' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $primaryCampaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $primaryCampaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $this->createPendingPost($primaryCampaign, $owner);
@@ -129,4 +127,3 @@ class DashboardModerationScopeTest extends TestCase
         ]);
     }
 }
-

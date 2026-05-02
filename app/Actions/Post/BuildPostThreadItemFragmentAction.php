@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Post;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -17,6 +17,7 @@ use RuntimeException;
 class BuildPostThreadItemFragmentAction
 {
     public function __construct(
+        private readonly CampaignAccess $campaignAccess,
         private readonly CharacterViewPermissionResolver $characterViewPermissionResolver,
     ) {}
 
@@ -62,20 +63,7 @@ class BuildPostThreadItemFragmentAction
 
         return (int) $user->sceneBookmarks()
             ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($user): void {
-                $campaignQuery->where(function (Builder $innerQuery) use ($user): void {
-                    $innerQuery
-                        ->where('is_public', true)
-                        ->orWhere('owner_id', $user->id)
-                        ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
-                            $membershipQuery->where('user_id', (int) $user->id);
-                        })
-                        ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                            // Transitional fallback until invitation-only legacy rows are fully backfilled.
-                            $invitationQuery
-                                ->where('user_id', $user->id)
-                                ->where('status', CampaignInvitation::STATUS_ACCEPTED);
-                        });
-                });
+                $this->campaignAccess->applyVisibleCampaignConstraint($campaignQuery, $user);
             })
             ->count();
     }

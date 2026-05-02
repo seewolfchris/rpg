@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AuthorizationWorldContext;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Character;
@@ -202,8 +203,8 @@ class AuthorizationWorldContextMutationScopeTest extends AuthorizationWorldConte
             'status' => 'active',
             'is_public' => true,
         ]);
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $cases = [
             'owner' => $owner,

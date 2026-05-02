@@ -2,9 +2,9 @@
 
 namespace App\Actions\CampaignGmContact;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
 use App\Models\CampaignGmContactThread;
-use App\Models\CampaignInvitation;
 use App\Models\User;
 use App\Notifications\CampaignGmContactMessageNotification;
 use Illuminate\Support\Collection;
@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Notification;
 
 class NotifyCampaignGmContactMessageAction
 {
+    public function __construct(
+        private readonly CampaignAccess $campaignAccess,
+    ) {}
+
     public function execute(CampaignGmContactThread $thread, User $author, string $content): void
     {
         $thread->loadMissing('campaign.world');
@@ -41,7 +45,7 @@ class NotifyCampaignGmContactMessageAction
     {
         $authorId = (int) $author->id;
 
-        if (CampaignGmContactThread::isGmSide($campaign, $author)) {
+        if ($this->campaignAccess->isCampaignContactGmSide($campaign, $author)) {
             $creatorId = (int) $thread->created_by;
 
             if ($creatorId <= 0 || $creatorId === $authorId) {
@@ -53,14 +57,8 @@ class NotifyCampaignGmContactMessageAction
                 ->get();
         }
 
-        $coGmIds = $campaign->invitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->where('role', CampaignInvitation::ROLE_CO_GM)
-            ->pluck('user_id')
-            ->map(static fn ($userId): int => (int) $userId);
-
         $recipientIds = collect([(int) $campaign->owner_id])
-            ->merge($coGmIds)
+            ->merge($this->campaignAccess->gmContactCoGmRecipientIds($campaign))
             ->filter(static fn (int $userId): bool => $userId > 0)
             ->reject(static fn (int $userId): bool => $userId === $authorId)
             ->unique()

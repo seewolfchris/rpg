@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Console;
 
+use App\Enums\CampaignMembershipRole;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
@@ -69,6 +71,14 @@ class TestflightSeedCommandTest extends TestCase
                 ->whereIn('user_id', $managedUserIds)
                 ->count()
         );
+
+        $this->assertSame(
+            3,
+            CampaignMembership::query()
+                ->where('campaign_id', (int) $campaign->id)
+                ->whereIn('user_id', $managedUserIds)
+                ->count()
+        );
     }
 
     public function test_no_duplicates_on_second_run(): void
@@ -115,6 +125,14 @@ class TestflightSeedCommandTest extends TestCase
         $this->assertSame(
             4,
             CampaignInvitation::query()
+                ->where('campaign_id', (int) $campaign->id)
+                ->whereIn('user_id', $managedUserIds)
+                ->count()
+        );
+
+        $this->assertSame(
+            3,
+            CampaignMembership::query()
                 ->where('campaign_id', (int) $campaign->id)
                 ->whereIn('user_id', $managedUserIds)
                 ->count()
@@ -209,6 +227,11 @@ class TestflightSeedCommandTest extends TestCase
         $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $coGmInvitation->status);
         $this->assertNotNull($coGmInvitation->accepted_at);
         $this->assertNotNull($coGmInvitation->responded_at);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+        ]);
     }
 
     public function test_world_isolation(): void
@@ -324,6 +347,31 @@ class TestflightSeedCommandTest extends TestCase
         $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $byEmail[$emails['trusted_player']]['status']);
         $this->assertNotNull($byEmail[$emails['trusted_player']]['accepted_at']);
         $this->assertNotNull($byEmail[$emails['trusted_player']]['responded_at']);
+
+        $userIdByEmail = User::query()
+            ->whereIn('email', array_values($emails))
+            ->pluck('id', 'email')
+            ->all();
+
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) ($userIdByEmail[$emails['co_gm']] ?? 0),
+            'role' => CampaignMembershipRole::GM->value,
+        ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) ($userIdByEmail[$emails['player_one']] ?? 0),
+            'role' => CampaignMembershipRole::PLAYER->value,
+        ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) ($userIdByEmail[$emails['trusted_player']] ?? 0),
+            'role' => CampaignMembershipRole::TRUSTED_PLAYER->value,
+        ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) ($userIdByEmail[$emails['player_two']] ?? 0),
+        ]);
     }
 
     public function test_output_contains_expected_accounts_and_urls(): void

@@ -27,9 +27,8 @@ class CampaignParticipantResolverTest extends TestCase
         $admin = User::factory()->admin()->create();
         $globalGm = User::factory()->gm()->create();
         $membershipGm = User::factory()->create();
-        $acceptedCoGm = User::factory()->create();
-        $acceptedPlayer = User::factory()->create();
-        $pendingCoGm = User::factory()->create();
+        $membershipPlayer = User::factory()->create();
+        $acceptedInvitationOnlyCoGm = User::factory()->create();
 
         $campaign->memberships()->create([
             'user_id' => $membershipGm->id,
@@ -37,40 +36,31 @@ class CampaignParticipantResolverTest extends TestCase
             'assigned_by' => $owner->id,
             'assigned_at' => now(),
         ]);
+        $campaign->memberships()->create([
+            'user_id' => $membershipPlayer->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now(),
+        ]);
 
         $this->createInvitation(
             campaign: $campaign,
-            user: $acceptedCoGm,
+            user: $acceptedInvitationOnlyCoGm,
             invitedBy: $owner,
             status: CampaignInvitation::STATUS_ACCEPTED,
-            role: CampaignInvitation::ROLE_CO_GM,
-        );
-        $this->createInvitation(
-            campaign: $campaign,
-            user: $acceptedPlayer,
-            invitedBy: $owner,
-            status: CampaignInvitation::STATUS_ACCEPTED,
-            role: CampaignInvitation::ROLE_PLAYER,
-        );
-        $this->createInvitation(
-            campaign: $campaign,
-            user: $pendingCoGm,
-            invitedBy: $owner,
-            status: CampaignInvitation::STATUS_PENDING,
             role: CampaignInvitation::ROLE_CO_GM,
         );
 
         $this->assertTrue($resolver->canModerateCampaign($owner, $campaign));
         $this->assertTrue($resolver->canModerateCampaign($membershipGm, $campaign));
-        $this->assertTrue($resolver->canModerateCampaign($acceptedCoGm, $campaign));
+        $this->assertFalse($resolver->canModerateCampaign($membershipPlayer, $campaign));
+        $this->assertFalse($resolver->canModerateCampaign($acceptedInvitationOnlyCoGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($admin, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($globalGm, $campaign));
-        $this->assertFalse($resolver->canModerateCampaign($acceptedPlayer, $campaign));
-        $this->assertFalse($resolver->canModerateCampaign($pendingCoGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign(null, $campaign));
     }
 
-    public function test_is_participant_user_id_accepts_owner_and_accepted_invites_and_rejects_others(): void
+    public function test_is_participant_user_id_accepts_owner_and_memberships_and_rejects_others(): void
     {
         $resolver = app(CampaignParticipantResolver::class);
         $owner = User::factory()->gm()->create();
@@ -78,44 +68,36 @@ class CampaignParticipantResolverTest extends TestCase
             'owner_id' => $owner->id,
         ]);
 
-        $acceptedParticipant = User::factory()->create();
-        $pendingParticipant = User::factory()->create();
-        $declinedParticipant = User::factory()->create();
+        $memberParticipant = User::factory()->create();
+        $acceptedInvitationOnlyParticipant = User::factory()->create();
         $outsider = User::factory()->create();
+
+        $campaign->memberships()->create([
+            'user_id' => $memberParticipant->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now(),
+        ]);
 
         $this->createInvitation(
             campaign: $campaign,
-            user: $acceptedParticipant,
+            user: $acceptedInvitationOnlyParticipant,
             invitedBy: $owner,
             status: CampaignInvitation::STATUS_ACCEPTED,
-            role: CampaignInvitation::ROLE_PLAYER,
-        );
-        $this->createInvitation(
-            campaign: $campaign,
-            user: $pendingParticipant,
-            invitedBy: $owner,
-            status: CampaignInvitation::STATUS_PENDING,
-            role: CampaignInvitation::ROLE_PLAYER,
-        );
-        $this->createInvitation(
-            campaign: $campaign,
-            user: $declinedParticipant,
-            invitedBy: $owner,
-            status: CampaignInvitation::STATUS_DECLINED,
             role: CampaignInvitation::ROLE_PLAYER,
         );
 
         $participantUserIds = $resolver->participantUserIds($campaign);
 
         $this->assertTrue($resolver->isParticipantUserId($campaign, (int) $owner->id, $participantUserIds));
-        $this->assertTrue($resolver->isParticipantUserId($campaign, (int) $acceptedParticipant->id, $participantUserIds));
-        $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $pendingParticipant->id, $participantUserIds));
-        $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $declinedParticipant->id, $participantUserIds));
+        $this->assertTrue($resolver->isParticipantUserId($campaign, (int) $memberParticipant->id, $participantUserIds));
+        $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $acceptedInvitationOnlyParticipant->id, $participantUserIds));
         $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $outsider->id, $participantUserIds));
         $this->assertFalse($resolver->isParticipantUserId($campaign, 0, $participantUserIds));
 
-        $this->assertTrue($resolver->isParticipantUserId($campaign, (int) $acceptedParticipant->id));
+        $this->assertTrue($resolver->isParticipantUserId($campaign, (int) $memberParticipant->id));
         $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $outsider->id));
+        $this->assertFalse($resolver->isParticipantUserId($campaign, (int) $acceptedInvitationOnlyParticipant->id));
     }
 
     private function createInvitation(

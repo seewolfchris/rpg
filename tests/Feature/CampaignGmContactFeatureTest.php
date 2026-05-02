@@ -2,10 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignGmContactMessage;
 use App\Models\CampaignGmContactThread;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,8 +27,8 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $playerA, CampaignInvitation::ROLE_PLAYER, $owner);
-        $this->acceptInvitation($campaign, $playerB, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $playerA, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $playerB, CampaignMembershipRole::PLAYER, $owner);
 
         CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -65,8 +66,8 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $playerA, CampaignInvitation::ROLE_PLAYER, $owner);
-        $this->acceptInvitation($campaign, $playerB, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $playerA, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $playerB, CampaignMembershipRole::PLAYER, $owner);
 
         $thread = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -101,9 +102,9 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $playerA, CampaignInvitation::ROLE_PLAYER, $owner);
-        $this->acceptInvitation($campaign, $playerB, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $playerA, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $playerB, CampaignMembershipRole::PLAYER, $owner);
 
         CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -142,8 +143,8 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $this->actingAs($player)
             ->post(route('campaigns.gm-contacts.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
@@ -219,9 +220,9 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaignA, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaignA, $playerA, CampaignInvitation::ROLE_PLAYER, $owner);
-        $this->acceptInvitation($campaignB, $playerB, CampaignInvitation::ROLE_PLAYER, $foreignOwner);
+        $this->grantMembership($campaignA, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaignA, $playerA, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaignB, $playerB, CampaignMembershipRole::PLAYER, $foreignOwner);
 
         CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaignA->id,
@@ -283,8 +284,8 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $this->actingAs($owner)
             ->post(route('campaigns.gm-contacts.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
@@ -327,8 +328,8 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $this->actingAs($player)
             ->post(route('campaigns.gm-contacts.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
@@ -371,7 +372,7 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $thread = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -411,7 +412,7 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $participant, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $participant, CampaignMembershipRole::PLAYER, $owner);
 
         $thread = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -451,7 +452,7 @@ class CampaignGmContactFeatureTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $thread = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -518,17 +519,23 @@ class CampaignGmContactFeatureTest extends TestCase
         ]);
     }
 
-    private function acceptInvitation(Campaign $campaign, User $invitee, string $role, User $inviter): void
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner
+    ): void
     {
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $invitee->id,
-            'invited_by' => $inviter->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => $role,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ],
+        );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Dev;
 
+use App\Actions\Campaign\SyncCampaignMembershipFromInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Enums\UserRole;
@@ -18,6 +19,7 @@ class SeedTestflightQaAction
     public function __construct(
         private readonly DatabaseManager $db,
         private readonly UpsertCampaignInvitationAction $upsertCampaignInvitationAction,
+        private readonly SyncCampaignMembershipFromInvitationAction $syncCampaignMembershipFromInvitationAction,
     ) {}
 
     /**
@@ -243,6 +245,7 @@ class SeedTestflightQaAction
         );
 
         $invitation = $result->invitation;
+        $wasAccepted = (string) $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
         $invitation->role = $role;
         $invitation->status = $status;
         $invitation->invited_by = (int) $inviter->id;
@@ -257,5 +260,23 @@ class SeedTestflightQaAction
         }
 
         $invitation->save();
+
+        if ($status === CampaignInvitation::STATUS_ACCEPTED) {
+            $this->syncCampaignMembershipFromInvitationAction->syncAcceptedInvitation(
+                invitation: $invitation,
+                actorUserId: (int) $inviter->id,
+                source: 'testflight_seed_accepted',
+            );
+
+            return;
+        }
+
+        if ($wasAccepted || $invitation->status === CampaignInvitation::STATUS_PENDING) {
+            $this->syncCampaignMembershipFromInvitationAction->revokeForAcceptedInvitation(
+                invitation: $invitation,
+                actorUserId: (int) $inviter->id,
+                source: 'testflight_seed_non_accepted',
+            );
+        }
     }
 }

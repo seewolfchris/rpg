@@ -2,9 +2,11 @@
 
 namespace Tests\Unit\Policies;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignGmContactThread;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\User;
 use App\Policies\CampaignGmContactThreadPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,10 +33,9 @@ class CampaignGmContactThreadPolicyTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->attachInvitation($campaign, $acceptedCoGm, CampaignInvitation::ROLE_CO_GM, CampaignInvitation::STATUS_ACCEPTED, $owner);
-        $this->attachInvitation($campaign, $acceptedCreator, CampaignInvitation::ROLE_PLAYER, CampaignInvitation::STATUS_ACCEPTED, $owner);
-        $this->attachInvitation($campaign, $acceptedOtherPlayer, CampaignInvitation::ROLE_PLAYER, CampaignInvitation::STATUS_ACCEPTED, $owner);
-        $this->attachInvitation($campaign, $pendingCoGm, CampaignInvitation::ROLE_CO_GM, CampaignInvitation::STATUS_PENDING, $owner);
+        $this->grantMembership($campaign, $acceptedCoGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $acceptedCreator, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $acceptedOtherPlayer, CampaignMembershipRole::PLAYER, $owner);
 
         $thread = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaign->id,
@@ -77,23 +78,56 @@ class CampaignGmContactThreadPolicyTest extends TestCase
         $this->assertFalse($policy->updateStatus($acceptedOtherPlayer, $thread));
     }
 
-    private function attachInvitation(
-        Campaign $campaign,
-        User $invitee,
-        string $role,
-        string $status,
-        User $inviter
-    ): void {
+    public function test_accepted_invitation_without_membership_does_not_grant_gm_contact_access(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $legacyInvitee = User::factory()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => false,
+            'status' => 'active',
+        ]);
+
         CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $invitee->id,
-            'invited_by' => $inviter->id,
-            'status' => $status,
-            'role' => $role,
-            'accepted_at' => $status === CampaignInvitation::STATUS_ACCEPTED ? now() : null,
-            'responded_at' => $status === CampaignInvitation::STATUS_ACCEPTED ? now() : null,
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $legacyInvitee->id,
+            'invited_by' => (int) $owner->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+            'role' => CampaignInvitation::ROLE_CO_GM,
+            'accepted_at' => now(),
+            'responded_at' => now(),
             'created_at' => now(),
         ]);
+
+        $thread = CampaignGmContactThread::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'created_by' => (int) $owner->id,
+        ]);
+
+        $policy = app(CampaignGmContactThreadPolicy::class);
+
+        $this->assertFalse($policy->create($legacyInvitee, $campaign));
+        $this->assertFalse($policy->view($legacyInvitee, $thread));
+        $this->assertFalse($policy->reply($legacyInvitee, $thread));
+        $this->assertFalse($policy->updateStatus($legacyInvitee, $thread));
+    }
+
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner
+    ): void {
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ],
+        );
     }
 }
-

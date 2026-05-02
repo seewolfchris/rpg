@@ -2,9 +2,8 @@
 
 namespace App\Policies;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Enums\UserRole;
-use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +11,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class CharacterPolicy
 {
+    public function __construct(
+        private readonly CampaignAccess $campaignAccess,
+    ) {}
+
     public function view(User $user, Character $character): bool
     {
         if ($this->canManageCharacter($user, $character)) {
@@ -71,19 +74,7 @@ class CharacterPolicy
 
     private function hasAcceptedCoGmAccessForWorld(User $user, int $worldId): bool
     {
-        if ($worldId <= 0) {
-            return false;
-        }
-
-        return Campaign::query()
-            ->where('world_id', $worldId)
-            ->whereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                $invitationQuery
-                    ->where('user_id', (int) $user->id)
-                    ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                    ->where('role', CampaignInvitation::ROLE_CO_GM);
-            })
-            ->exists();
+        return $this->campaignAccess->hasAcceptedCoGmAccessForWorld($user, $worldId);
     }
 
     /**
@@ -91,18 +82,7 @@ class CharacterPolicy
      */
     private function applyParticipantCampaignConstraint(Builder $campaignQuery, User $user): void
     {
-        $campaignQuery->where(function (Builder $participantQuery) use ($user): void {
-            $participantQuery
-                ->where('campaigns.owner_id', (int) $user->id)
-                ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
-                    $membershipQuery->where('user_id', (int) $user->id);
-                })
-                ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                    $invitationQuery
-                        ->where('user_id', (int) $user->id)
-                        ->where('status', CampaignInvitation::STATUS_ACCEPTED);
-                });
-        });
+        $this->campaignAccess->applyParticipantCampaignConstraint($campaignQuery, $user);
     }
 
 }

@@ -1,10 +1,15 @@
 <?php
 
 use App\Actions\Dev\SeedTestflightQaAction;
+use App\Actions\Campaign\SyncCampaignMembershipFromInvitationAction;
+use App\Enums\CampaignMembershipRole;
+use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\World;
 use App\Support\Performance\PostsLatestByIdBenchmarker;
 use App\Support\Performance\WorldHotpathPerformanceReporter;
 use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -190,3 +195,134 @@ Artisan::command('dev:testflight:seed {--world=} {--campaign-slug=} {--password=
 
     return 0;
 })->purpose('Seed an idempotent testflight QA campaign with invitation matrix and test accounts');
+
+Artisan::command('campaigns:backfill-memberships-from-invitations {--dry-run}', function (SyncCampaignMembershipFromInvitationAction $syncMembershipFromInvitationAction): int {
+    $dryRun = (bool) $this->option('dry-run');
+    $source = $dryRun
+        ? 'campaigns:backfill-memberships-from-invitations:dry-run'
+        : 'campaigns:backfill-memberships-from-invitations';
+
+    $report = [
+        'mode' => $dryRun ? 'dry-run' : 'apply',
+        'scanned_invitations' => 0,
+        'accepted_invitations' => 0,
+        'touched_campaigns' => 0,
+        'touched_users' => 0,
+        'memberships_created' => 0,
+        'memberships_updated' => 0,
+        'memberships_unchanged' => 0,
+        'skipped_invalid_rows' => 0,
+        'skipped_errors' => 0,
+        'campaign_ids' => [],
+        'user_ids' => [],
+    ];
+
+    $membershipSnapshot = static function (int $campaignId, int $userId): ?array {
+        $membership = CampaignMembership::query()
+            ->where('campaign_id', $campaignId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (! $membership instanceof CampaignMembership) {
+            return null;
+        }
+
+        $role = $membership->role;
+        $roleValue = $role instanceof CampaignMembershipRole
+            ? $role->value
+            : (string) $role;
+
+        return [
+            'id' => (int) $membership->id,
+            'role' => $roleValue,
+        ];
+    };
+
+    $acceptedInvitations = CampaignInvitation::query()
+        ->where('status', CampaignInvitation::STATUS_ACCEPTED)
+        ->orderBy('id')
+        ->get();
+
+    foreach ($acceptedInvitations as $invitation) {
+        $report['scanned_invitations']++;
+
+        $campaignId = (int) $invitation->campaign_id;
+        $userId = (int) $invitation->user_id;
+
+        if ($campaignId <= 0 || $userId <= 0) {
+            $report['skipped_invalid_rows']++;
+
+            continue;
+        }
+
+        $report['accepted_invitations']++;
+        $report['campaign_ids'][$campaignId] = true;
+        $report['user_ids'][$userId] = true;
+
+        $before = $membershipSnapshot($campaignId, $userId);
+
+        if ($dryRun) {
+            DB::beginTransaction();
+        }
+
+        try {
+            $syncMembershipFromInvitationAction->syncAcceptedInvitation(
+                invitation: $invitation,
+                actorUserId: null,
+                source: $source,
+            );
+
+            $after = $membershipSnapshot($campaignId, $userId);
+
+            if ($dryRun) {
+                DB::rollBack();
+            }
+        } catch (\Throwable $throwable) {
+            if ($dryRun && DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            $report['skipped_errors']++;
+            report($throwable);
+
+            continue;
+        }
+
+        if ($before === null && $after !== null) {
+            $report['memberships_created']++;
+
+            continue;
+        }
+
+        if (
+            $before !== null
+            && $after !== null
+            && (string) ($before['role'] ?? '') !== (string) ($after['role'] ?? '')
+        ) {
+            $report['memberships_updated']++;
+
+            continue;
+        }
+
+        $report['memberships_unchanged']++;
+    }
+
+    $report['touched_campaigns'] = count($report['campaign_ids']);
+    $report['touched_users'] = count($report['user_ids']);
+    unset($report['campaign_ids'], $report['user_ids']);
+
+    $this->info('campaign_membership_backfill completed');
+    $this->line('mode: '.$report['mode']);
+    $this->line('scanned_invitations: '.$report['scanned_invitations']);
+    $this->line('accepted_invitations: '.$report['accepted_invitations']);
+    $this->line('touched_campaigns: '.$report['touched_campaigns']);
+    $this->line('touched_users: '.$report['touched_users']);
+    $this->line('memberships_created: '.$report['memberships_created']);
+    $this->line('memberships_updated: '.$report['memberships_updated']);
+    $this->line('memberships_unchanged: '.$report['memberships_unchanged']);
+    $this->line('skipped_invalid_rows: '.$report['skipped_invalid_rows']);
+    $this->line('skipped_errors: '.$report['skipped_errors']);
+    $this->line('report_json: '.json_encode($report, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+    return 0;
+})->purpose('Backfill campaign_memberships from accepted campaign_invitations');

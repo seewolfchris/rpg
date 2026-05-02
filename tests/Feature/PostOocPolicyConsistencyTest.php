@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -81,7 +82,7 @@ class PostOocPolicyConsistencyTest extends TestCase
             'allow_ooc' => false,
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
 
         $this->actingAs($owner)
             ->post(route('campaigns.scenes.posts.store', [
@@ -138,17 +139,23 @@ class PostOocPolicyConsistencyTest extends TestCase
         ]);
     }
 
-    private function acceptInvitation(Campaign $campaign, User $invitee, string $role, User $inviter): void
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner,
+    ): void
     {
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $invitee->id,
-            'invited_by' => $inviter->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => $role,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ]
+        );
     }
 }

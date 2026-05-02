@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 namespace App\Actions\Scene;
 
+use App\Domain\Scene\SceneThreadPostQuery;
 use App\Domain\Scene\SceneThreadReadStateService;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Support\CharacterViewPermissionResolver;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BuildSceneThreadPageDataAction
 {
     public function __construct(
         private readonly SceneThreadReadStateService $sceneThreadReadStateService,
+        private readonly SceneThreadPostQuery $sceneThreadPostQuery,
         private readonly CharacterViewPermissionResolver $characterViewPermissionResolver,
     ) {}
 
     public function execute(Scene $scene, Campaign $campaign, User $user): SceneThreadPageData
     {
-        $posts = $this->threadPostsPaginator($scene);
+        $posts = $this->sceneThreadPostQuery->paginate($scene);
         $viewableCharacterIds = $this->resolveViewableCharacterIds($posts, $user);
         $threadReadState = $this->sceneThreadReadStateService->resolveForThreadRender(
             scene: $scene,
@@ -39,31 +40,16 @@ class BuildSceneThreadPageDataAction
         );
     }
 
-    /**
-     * @return LengthAwarePaginator<int, Post>
-     */
-    private function threadPostsPaginator(Scene $scene): LengthAwarePaginator
-    {
-        return Post::query()
-            ->withTrashed()
-            ->where('scene_id', $scene->id)
-            ->with(Post::THREAD_PAGE_RELATIONS)
-            ->orderBy('created_at', 'asc')
-            ->orderBy('id', 'asc')
-            ->paginate(Post::THREAD_POSTS_PER_PAGE)
-            ->withQueryString();
-    }
-
     private function canModerateScene(User $user, Campaign $campaign): bool
     {
         return $campaign->canModeratePosts($user);
     }
 
     /**
-     * @param  LengthAwarePaginator<int, Post>  $posts
+     * @param  \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, Post>  $posts
      * @return list<int>
      */
-    private function resolveViewableCharacterIds(LengthAwarePaginator $posts, User $user): array
+    private function resolveViewableCharacterIds(\Illuminate\Contracts\Pagination\LengthAwarePaginator $posts, User $user): array
     {
         $characterIds = collect($posts->items())
             ->pluck('character_id')

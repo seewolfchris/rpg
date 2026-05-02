@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\AuthorizationWorldContext;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Character;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -192,16 +192,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
             'is_public' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $gm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $gm, CampaignMembershipRole::GM, $owner);
 
         $cases = [
             'owner' => [$owner, 302],

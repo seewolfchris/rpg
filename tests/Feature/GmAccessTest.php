@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Enums\UserRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -71,7 +72,7 @@ class GmAccessTest extends TestCase
         $response->assertDontSee('/gm/progression?world=', false);
     }
 
-    public function test_co_gm_with_active_invitation_can_access_gm_hub(): void
+    public function test_co_gm_with_membership_can_access_gm_hub(): void
     {
         $owner = User::factory()->gm()->create();
         $coGm = User::factory()->create([
@@ -83,15 +84,12 @@ class GmAccessTest extends TestCase
             'is_public' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $response = $this->actingAs($coGm)->get(route('gm.index'));

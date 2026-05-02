@@ -333,10 +333,7 @@ class User extends Authenticatable
             return true;
         }
 
-        return $this->campaignInvitations()
-            ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-            ->where('role', CampaignInvitation::ROLE_CO_GM)
-            ->exists();
+        return false;
     }
 
     public function canPostWithoutModeration(): bool

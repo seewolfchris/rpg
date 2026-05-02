@@ -4,7 +4,6 @@ namespace Tests\Feature\AuthorizationWorldContext;
 
 use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -610,8 +609,8 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
                 'status' => 'active',
                 'is_public' => false,
             ]);
-            $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-            $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+            $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+            $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
             $updatedTitle = 'A3 Campaign Update '.$suffix;
             $updatedSlug = 'a3-campaign-update-'.$suffix;
@@ -768,8 +767,8 @@ class AuthorizationWorldContextMutationCrudTest extends AuthorizationWorldContex
                 'status' => 'active',
                 'is_public' => false,
             ]);
-            $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-            $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+            $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+            $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
             $response = $this->actingAs($actor)->delete(route('campaigns.destroy', [
                 'world' => $world,

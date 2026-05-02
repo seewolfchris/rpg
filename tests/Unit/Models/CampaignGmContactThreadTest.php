@@ -2,9 +2,10 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignGmContactThread;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,9 +34,9 @@ class CampaignGmContactThreadTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->attachInvitation($campaignA, $coGmA, CampaignInvitation::ROLE_CO_GM, $ownerA);
-        $this->attachInvitation($campaignA, $playerA, CampaignInvitation::ROLE_PLAYER, $ownerA);
-        $this->attachInvitation($campaignB, $playerB, CampaignInvitation::ROLE_PLAYER, $ownerB);
+        $this->grantMembership($campaignA, $coGmA, CampaignMembershipRole::GM, $ownerA);
+        $this->grantMembership($campaignA, $playerA, CampaignMembershipRole::PLAYER, $ownerA);
+        $this->grantMembership($campaignB, $playerB, CampaignMembershipRole::PLAYER, $ownerB);
 
         $threadA = CampaignGmContactThread::factory()->create([
             'campaign_id' => $campaignA->id,
@@ -84,17 +85,23 @@ class CampaignGmContactThreadTest extends TestCase
         $this->assertSame('foo', CampaignGmContactThread::statusLabelFor('foo'));
     }
 
-    private function attachInvitation(Campaign $campaign, User $invitee, string $role, User $inviter): void
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner
+    ): void
     {
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $invitee->id,
-            'invited_by' => $inviter->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => $role,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ],
+        );
     }
 }

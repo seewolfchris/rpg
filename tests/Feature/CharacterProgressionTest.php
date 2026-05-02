@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\CharacterProgressionEvent;
 use App\Models\Scene;
@@ -109,24 +110,8 @@ class CharacterProgressionTest extends TestCase
             'world_id' => $campaign->world_id,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $character = Character::factory()->create([
             'user_id' => $player->id,
@@ -277,16 +262,7 @@ class CharacterProgressionTest extends TestCase
             'is_public' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $gm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $gm, CampaignMembershipRole::GM, $owner);
 
         $character = Character::factory()->create([
             'user_id' => $owner->id,
@@ -459,15 +435,7 @@ class CharacterProgressionTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $character = Character::factory()->create([
             'user_id' => $player->id,
@@ -478,5 +446,24 @@ class CharacterProgressionTest extends TestCase
         ]);
 
         return [$gm, $player, $campaign, $scene, $character];
+    }
+
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner,
+    ): void {
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ]
+        );
     }
 }

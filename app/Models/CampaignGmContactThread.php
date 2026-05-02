@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\UserRole;
+use App\Domain\Campaign\CampaignAccess;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -168,11 +168,11 @@ class CampaignGmContactThread extends Model
     {
         $query->where('campaign_id', (int) $campaign->id);
 
-        if (! self::hasCampaignContactAccess($campaign, $user)) {
+        if (! app(CampaignAccess::class)->hasCampaignContactAccess($campaign, $user)) {
             return $query->whereRaw('1 = 0');
         }
 
-        if (self::isGmSide($campaign, $user)) {
+        if (app(CampaignAccess::class)->isCampaignContactGmSide($campaign, $user)) {
             return $query;
         }
 
@@ -196,27 +196,11 @@ class CampaignGmContactThread extends Model
 
     public static function hasCampaignContactAccess(Campaign $campaign, User $user): bool
     {
-        if ($user->hasRole(UserRole::ADMIN)) {
-            return true;
-        }
-
-        if ((int) $campaign->owner_id === (int) $user->id) {
-            return true;
-        }
-
-        return $campaign->hasAcceptedInvitation($user);
+        return app(CampaignAccess::class)->hasCampaignContactAccess($campaign, $user);
     }
 
     public static function isGmSide(Campaign $campaign, User $user): bool
     {
-        if ($user->hasRole(UserRole::ADMIN)) {
-            return true;
-        }
-
-        if ((int) $campaign->owner_id === (int) $user->id) {
-            return true;
-        }
-
-        return $campaign->isCoGm($user);
+        return app(CampaignAccess::class)->isCampaignContactGmSide($campaign, $user);
     }
 }

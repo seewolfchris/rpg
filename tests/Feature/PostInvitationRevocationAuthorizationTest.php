@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -41,6 +43,13 @@ class PostInvitationRevocationAuthorizationTest extends TestCase
             'responded_at' => now(),
             'created_at' => now(),
         ]);
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
+        ]);
 
         $post = Post::factory()->create([
             'scene_id' => $scene->id,
@@ -64,6 +73,10 @@ class PostInvitationRevocationAuthorizationTest extends TestCase
 
         $this->assertDatabaseMissing('campaign_invitations', [
             'id' => $invitation->id,
+        ]);
+        $this->assertDatabaseMissing('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $player->id,
         ]);
 
         $this->actingAs($player)->patch(route('posts.update', [
@@ -90,4 +103,3 @@ class PostInvitationRevocationAuthorizationTest extends TestCase
         ]);
     }
 }
-

@@ -7,13 +7,13 @@ use App\Actions\Handout\RevealHandoutAction;
 use App\Actions\Handout\StoreHandoutAction;
 use App\Actions\Handout\UnrevealHandoutAction;
 use App\Actions\Handout\UpdateHandoutAction;
+use App\Domain\Campaign\CampaignSceneOptionsProvider;
 use App\Domain\Handout\HandoutMediaService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Handout\StoreHandoutRequest;
 use App\Http\Requests\Handout\UpdateHandoutRequest;
 use App\Models\Campaign;
 use App\Models\Handout;
-use App\Models\Scene;
 use App\Models\World;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +32,7 @@ class HandoutController extends Controller
         private readonly DeleteHandoutAction $deleteHandoutAction,
         private readonly RevealHandoutAction $revealHandoutAction,
         private readonly UnrevealHandoutAction $unrevealHandoutAction,
+        private readonly CampaignSceneOptionsProvider $campaignSceneOptionsProvider,
         private readonly HandoutMediaService $handoutMediaService,
     ) {}
 
@@ -66,7 +67,7 @@ class HandoutController extends Controller
         $this->authorize('create', [Handout::class, $campaign]);
 
         $handout = new Handout;
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
 
         return view('handouts.create', compact('world', 'campaign', 'handout', 'sceneOptions'));
     }
@@ -132,7 +133,7 @@ class HandoutController extends Controller
         $this->authorize('update', $handout);
 
         $handout->loadMissing(['scene', 'creator', 'updater', 'media']);
-        $sceneOptions = $this->sceneOptionsForCampaign($campaign);
+        $sceneOptions = $this->campaignSceneOptionsProvider->forCampaign($campaign);
 
         return view('handouts.edit', compact('world', 'campaign', 'handout', 'sceneOptions'));
     }
@@ -245,17 +246,4 @@ class HandoutController extends Controller
         ]);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Scene>
-     */
-    private function sceneOptionsForCampaign(Campaign $campaign): \Illuminate\Database\Eloquent\Collection
-    {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Scene> $scenes */
-        $scenes = $campaign->scenes()
-            ->orderBy('position')
-            ->orderBy('title')
-            ->get(['id', 'title', 'position']);
-
-        return $scenes;
-    }
 }

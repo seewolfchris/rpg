@@ -6,6 +6,7 @@ use App\Actions\CampaignGmContact\BuildCampaignGmContactPanelDataAction;
 use App\Actions\CampaignGmContact\StoreCampaignGmContactMessageAction;
 use App\Actions\CampaignGmContact\StoreCampaignGmContactThreadAction;
 use App\Actions\CampaignGmContact\UpdateCampaignGmContactThreadStatusAction;
+use App\Domain\Campaign\CampaignAccess;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignGmContact\StoreCampaignGmContactMessageRequest;
 use App\Http\Requests\CampaignGmContact\StoreCampaignGmContactThreadRequest;
@@ -27,6 +28,7 @@ class CampaignGmContactThreadController extends Controller
         private readonly StoreCampaignGmContactThreadAction $storeCampaignGmContactThreadAction,
         private readonly StoreCampaignGmContactMessageAction $storeCampaignGmContactMessageAction,
         private readonly UpdateCampaignGmContactThreadStatusAction $updateCampaignGmContactThreadStatusAction,
+        private readonly CampaignAccess $campaignAccess,
     ) {}
 
     public function store(
@@ -166,7 +168,7 @@ class CampaignGmContactThreadController extends Controller
             campaign: $campaign,
             user: $user,
             selectedThreadId: $selectedThreadId,
-            canManageCampaign: $this->canManageCampaign($campaign, $user),
+            canManageCampaign: $this->campaignAccess->gmContactManageCampaignPanel($campaign, $user),
         );
 
         return view('campaigns.partials.gm-contacts-panel', compact('world', 'campaign', 'gmContactPanelData'));
@@ -178,7 +180,7 @@ class CampaignGmContactThreadController extends Controller
             campaign: $campaign,
             user: $user,
             selectedThreadId: $selectedThreadId,
-            canManageCampaign: $this->canManageCampaign($campaign, $user),
+            canManageCampaign: $this->campaignAccess->gmContactManageCampaignPanel($campaign, $user),
         );
         $selectedThread = $gmContactPanelData->selectedThread;
 
@@ -198,10 +200,4 @@ class CampaignGmContactThreadController extends Controller
         return $request->header('HX-Request') === 'true';
     }
 
-    private function canManageCampaign(Campaign $campaign, User $user): bool
-    {
-        return (int) $campaign->owner_id === (int) $user->id
-            || $user->isAdmin()
-            || $campaign->isCoGm($user);
-    }
 }

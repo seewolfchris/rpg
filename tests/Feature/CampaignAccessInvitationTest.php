@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
@@ -611,26 +612,22 @@ class CampaignAccessInvitationTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        CampaignInvitation::query()->create([
+        CampaignMembership::query()->updateOrCreate([
             'campaign_id' => $campaign->id,
             'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        ], [
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $owner->id,
+            'source' => 'test_fixture',
         ]);
 
-        CampaignInvitation::query()->create([
+        CampaignMembership::query()->updateOrCreate([
             'campaign_id' => $campaign->id,
             'user_id' => $player->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        ], [
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $owner->id,
+            'source' => 'test_fixture',
         ]);
 
         $character = Character::factory()->create([

@@ -7,8 +7,9 @@ namespace Tests\Unit\Actions\Post;
 use App\Actions\Post\BulkModeratePostsAction;
 use App\Actions\Post\BulkModeratePostsInput;
 use App\Domain\Post\PostModerationService;
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
@@ -39,15 +40,12 @@ class BulkModeratePostsActionTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $post = Post::factory()->create([
@@ -100,15 +98,12 @@ class BulkModeratePostsActionTest extends TestCase
             'status' => 'active',
             'is_public' => true,
         ]);
-        CampaignInvitation::query()->create([
-            'campaign_id' => $ownCampaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $ownCampaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $foreignCampaign = Campaign::factory()->create([
@@ -251,15 +246,12 @@ class BulkModeratePostsActionTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $coGm->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_CO_GM,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $firstPost = Post::factory()->create([

@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\AuthorizationWorldContext;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,23 +35,25 @@ abstract class AuthorizationWorldContextMutationTestCase extends TestCase
             'is_public' => false,
         ]);
 
-        $this->acceptInvitation($campaign, $coGm, CampaignInvitation::ROLE_CO_GM, $owner);
-        $this->acceptInvitation($campaign, $player, CampaignInvitation::ROLE_PLAYER, $owner);
+        $this->grantMembership($campaign, $coGm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         return [$campaign, $owner, $coGm, $player, $outsider, $admin];
     }
 
-    protected function acceptInvitation(Campaign $campaign, User $user, string $role, User $inviter): void
+    protected function grantMembership(Campaign $campaign, User $user, CampaignMembershipRole $role, User $inviter): void
     {
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $user->id,
-            'invited_by' => $inviter->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => $role,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-        ]);
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $user->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $inviter->id,
+                'assigned_at' => now(),
+            ]
+        );
     }
 
     /**

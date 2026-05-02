@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\User;
@@ -56,14 +58,12 @@ class NavigationCountersTest extends TestCase
             'status' => 'active',
         ]);
 
-        $privateAcceptedCampaign->invitations()->create([
-            'user_id' => $target->id,
-            'invited_by' => $owner->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $privateAcceptedCampaign->id,
+            'user_id' => (int) $target->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
 
         $privatePendingCampaign->invitations()->create([

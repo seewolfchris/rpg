@@ -10,8 +10,8 @@ use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
 use App\Enums\UserRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
+use App\Models\CampaignMembership;
 use App\Models\DiceRoll;
 use App\Models\Post;
 use App\Models\Scene;
@@ -565,15 +565,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $playerCharacter = Character::factory()->create([
             'user_id' => $player->id,
@@ -674,15 +666,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $targetCharacter = Character::factory()->create([
@@ -750,15 +734,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $targetCharacter = Character::factory()->create([
@@ -841,15 +817,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $playerCharacter = Character::factory()->create([
@@ -911,15 +879,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $playerCharacter = Character::factory()->create([
@@ -1045,15 +1005,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $gmCharacter = Character::factory()->create(['user_id' => $gm->id]);
         $outsiderCharacter = Character::factory()->create(['user_id' => $outsider->id]);
@@ -1141,15 +1093,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $targetCharacter = Character::factory()->create([
             'user_id' => $player->id,
@@ -1234,15 +1178,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $targetCharacter = Character::factory()->create([
             'user_id' => $player->id,
@@ -1280,15 +1216,7 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $campaign->invitations()->create([
-            'user_id' => $player->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
-        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $targetCharacter = Character::factory()->create([
             'user_id' => $player->id,
@@ -1503,6 +1431,25 @@ class CampaignScenePostWorkflowTest extends TestCase
             );
             $lastPosition = (int) $position;
         }
+    }
+
+    private function grantMembership(
+        Campaign $campaign,
+        User $member,
+        CampaignMembershipRole $role,
+        User $assigner,
+    ): void {
+        CampaignMembership::query()->updateOrCreate(
+            [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $member->id,
+            ],
+            [
+                'role' => $role->value,
+                'assigned_by' => (int) $assigner->id,
+                'assigned_at' => now(),
+            ]
+        );
     }
 
 }

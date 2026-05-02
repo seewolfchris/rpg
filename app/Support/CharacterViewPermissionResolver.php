@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
 use App\Models\Character;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class CharacterViewPermissionResolver
 {
+    public function __construct(
+        private readonly CampaignAccess $campaignAccess,
+    ) {}
+
     /**
      * @param  array<int, int|string|null>  $characterIds
      * @return list<int>
@@ -40,19 +44,7 @@ class CharacterViewPermissionResolver
             return $this->normalizeCharacterIds($ownedCharacterIds);
         }
 
-        $coGmWorldIds = Campaign::query()
-            ->whereHas('invitations', function ($invitationQuery) use ($user): void {
-                $invitationQuery
-                    ->where('user_id', (int) $user->id)
-                    ->where('status', CampaignInvitation::STATUS_ACCEPTED)
-                    ->where('role', CampaignInvitation::ROLE_CO_GM);
-            })
-            ->pluck('world_id')
-            ->map(static fn (mixed $worldId): int => (int) $worldId)
-            ->filter(static fn (int $worldId): bool => $worldId > 0)
-            ->unique()
-            ->values()
-            ->all();
+        $coGmWorldIds = $this->campaignAccess->coGmWorldIds($user);
 
         $coGmWorldCharacterIds = [];
         if ($coGmWorldIds !== []) {
@@ -106,17 +98,6 @@ class CharacterViewPermissionResolver
      */
     private function applyParticipantCampaignConstraint(Builder $campaignQuery, User $user): void
     {
-        $campaignQuery->where(function (Builder $participantQuery) use ($user): void {
-            $participantQuery
-                ->where('campaigns.owner_id', (int) $user->id)
-                ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
-                    $membershipQuery->where('user_id', (int) $user->id);
-                })
-                ->orWhereHas('invitations', function (Builder $invitationQuery) use ($user): void {
-                    $invitationQuery
-                        ->where('user_id', (int) $user->id)
-                        ->where('status', CampaignInvitation::STATUS_ACCEPTED);
-                });
-        });
+        $this->campaignAccess->applyParticipantCampaignConstraint($campaignQuery, $user);
     }
 }

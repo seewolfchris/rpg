@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -172,26 +173,20 @@ class PostMentionNotificationFeatureTest extends TestCase
             'is_public' => false,
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $author->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $author->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
 
-        CampaignInvitation::query()->create([
-            'campaign_id' => $campaign->id,
-            'user_id' => $mentionedOwner->id,
-            'invited_by' => $gm->id,
-            'status' => CampaignInvitation::STATUS_ACCEPTED,
-            'role' => CampaignInvitation::ROLE_PLAYER,
-            'accepted_at' => now(),
-            'responded_at' => now(),
-            'created_at' => now(),
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $mentionedOwner->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
 
         $scene = Scene::factory()->create([

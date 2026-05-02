@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
-use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -116,12 +117,12 @@ class PostModerationDefaultBehaviorTest extends TestCase
         $this->assertNotNull($post->approved_at);
     }
 
-    public function test_trusted_player_invitation_role_bypasses_moderation_requirement(): void
+    public function test_trusted_player_membership_role_bypasses_moderation_requirement(): void
     {
         [$owner, $player, $campaign, $scene, $character] = $this->seedContext(
             isPublic: false,
             requiresModeration: true,
-            invitationRole: CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            membershipRole: CampaignMembershipRole::TRUSTED_PLAYER,
         );
 
         $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [
@@ -149,7 +150,7 @@ class PostModerationDefaultBehaviorTest extends TestCase
         bool $isPublic,
         bool $requiresModeration,
         bool $playerCanPostWithoutModeration = false,
-        string $invitationRole = CampaignInvitation::ROLE_PLAYER,
+        CampaignMembershipRole $membershipRole = CampaignMembershipRole::PLAYER,
     ): array {
         $owner = User::factory()->gm()->create();
         $player = User::factory()->create([
@@ -171,14 +172,12 @@ class PostModerationDefaultBehaviorTest extends TestCase
         ]);
 
         if (! $isPublic) {
-            $campaign->invitations()->create([
-                'user_id' => $player->id,
-                'invited_by' => $owner->id,
-                'status' => CampaignInvitation::STATUS_ACCEPTED,
-                'role' => $invitationRole,
-                'accepted_at' => now(),
-                'responded_at' => now(),
-                'created_at' => now(),
+            CampaignMembership::query()->create([
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $player->id,
+                'role' => $membershipRole->value,
+                'assigned_by' => (int) $owner->id,
+                'assigned_at' => now(),
             ]);
         }
 
