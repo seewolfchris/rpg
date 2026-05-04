@@ -20,7 +20,7 @@
 
         <section class="space-y-4">
             @foreach ($rulebookSections as $sectionKey => $sectionHtml)
-                <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-5" id="regelwerk-{{ $sectionKey }}">
+                <article class="knowledge-rulebook-article rounded-xl border border-stone-800 bg-neutral-900/65 p-5" id="regelwerk-{{ $sectionKey }}">
                     <div class="knowledge-content text-[#cccccc]">
                         {!! $sectionHtml !!}
                     </div>

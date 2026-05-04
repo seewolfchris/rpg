@@ -1272,6 +1272,16 @@
         margin: 1rem 0;
     }
 
+    .knowledge-rulebook-article {
+        width: 100%;
+        max-width: calc(var(--narrative-max-width) + 2.5rem);
+        margin-inline: auto;
+    }
+
+    .knowledge-rulebook-article > .knowledge-content {
+        margin-inline: auto;
+    }
+
     .line-clamp-2,
     .line-clamp-3,
     .line-clamp-4 {
