@@ -16,6 +16,11 @@ Alle nennenswerten Produktaenderungen an C76-RPG.
   - Kampagnenbereich verwaltet Teilnehmerrollen owner-only.
 - PHPStan-Folgefix: Membership-Typen (`assigned_at`, `membershipRoleValue`) konsistent gezogen.
 
+## v0.31-beta (2026-05-04)
+- Globales Regelwerk komplett überarbeitet: Spieler schreiben IC-Beiträge in Ich-Perspektive und Präsens; ausführlichere Regeln zu Spielfluss, IC/OOC-Trennung, Proben, Moderation, Safety und Fair Play.
+- Alle Dokumentationsdateien mit neuen Stand-Daten (2026-05-04) versehen.
+- Version defaults auf v0.31-beta aktualisiert.
+
 ## v0.30-beta (2026-04-21)
 - Privacy-first SL-Kontakt V1 eingefuehrt: kampagnengebundene Threads/Messages mit separatem Kontext (`CampaignGmContactThread`, `CampaignGmContactMessage`) statt Reuse des Post-/Scene-Write-Flows.
 - Sichtbarkeit und Antwortrechte policy-first gehaertet: nur Thread-Ersteller, Campaign-Owner, akzeptierte `co_gm` und `admin`; globale GM-Rolle ohne Kampagnenbezug bleibt ausgeschlossen.

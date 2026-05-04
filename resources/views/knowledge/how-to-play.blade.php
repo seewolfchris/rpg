@@ -41,7 +41,7 @@
                 </li>
                 <li>
                     <strong class="text-stone-100">5. Ersten IC-Post schreiben</strong><br>
-                    IC immer in Ich-Perspektive: <em>Ich hebe die Klinge und halte den Atem an.</em>
+                    IC-Beiträge immer in Ich-Perspektive und Präsens: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
                     <strong class="text-stone-100">6. GM-Probe anfragen</strong><br>
@@ -58,7 +58,7 @@
             <article class="rounded-xl border border-stone-800 bg-neutral-900/65 p-5">
                 <h2 class="font-heading text-xl text-stone-100">IC-Mindeststandard</h2>
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
-                    <li>1. Ich-Form statt Er-/Sie-Erzählung.</li>
+                    <li>1. Ich-Form und Präsens (Gegenwart).</li>
                     <li>2. Klarer Handlungsimpuls pro Post.</li>
                     <li>3. Nicht für andere Figuren entscheiden.</li>
                     <li>4. Dauerhaft lesbar: keine Textwände ohne Abschnitte.</li>

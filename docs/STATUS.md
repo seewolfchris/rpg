@@ -7,10 +7,10 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 
 ## Operativer Live-Status
 
-- Statusdatum: **2026-05-01**
+- Statusdatum: **2026-05-04**
 - Produktstatus: **Beta (aktiv entwickelt)**
-- Versionslinie: **`v0.30-beta`**
-- Letzter Release-Eintrag: **`v0.30-beta` am 2026-04-21** (Quelle: `CHANGELOG.md`)
+- Versionslinie: **`v0.31-beta`**
+- Letzter Release-Eintrag: **`v0.31-beta` am 2026-05-04** (Quelle: `CHANGELOG.md`)
 
 ## Integrationsstand (post-release)
 
@@ -25,7 +25,7 @@ Diese Datei ist die einzige kanonische Quelle fuer:
   - PR-5 Chronik / StoryLogEntry
   - UX-Fix Romanmodus: "beenden & antworten"-CTA
   - PR-6 Private Player Notes / Meine Notizen
-- Letzter dokumentierter Stabilisierungs-/Auditlauf: **2026-05-01**, Ergebnis **gruen**.
+- Letzter dokumentierter Stabilisierungs-/Auditlauf: **2026-05-04**, Ergebnis **gruen**.
 - Audit-Ergebnis: **kein Runtime-Diff erforderlich**.
 
 ## Verifikations- und Gate-Stand
@@ -40,7 +40,7 @@ Diese Datei ist die einzige kanonische Quelle fuer:
   - `npm run test:e2e`
   - `npm run build`
   - `composer analyse`
-- Letzter dokumentierter Stabilisierungs-/Auditlauf (2026-05-01):
+- Letzter dokumentierter Stabilisierungs-/Auditlauf (2026-05-04):
   - `composer validate --strict`
   - `composer analyse`
   - `php artisan test --without-tty --do-not-cache-result --filter=PostImmersiveImagesFeature`
