@@ -39,7 +39,7 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.global.rules'))
             ->assertOk()
             ->assertSeeText('Regelwerk')
-            ->assertSeeText('Prozentproben (d100)')
+            ->assertSeeText('Proben mit d100')
             ->assertSeeText('Glossar')
             ->assertSeeText('Abkürzungen');
 
@@ -66,7 +66,7 @@ class HelpPageTest extends TestCase
         $this->get(route('knowledge.rules', ['world' => $world]))
             ->assertOk()
             ->assertSeeText('Regelwerk')
-            ->assertSeeText('Prozentproben (d100)')
+            ->assertSeeText('Proben mit d100')
             ->assertSeeText('Glossar')
             ->assertSeeText('Abkürzungen');
 
@@ -76,14 +76,14 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Einträge sichtbar');
     }
 
-    public function test_rules_page_uses_gm_only_probe_wording_without_d20_legacy(): void
+    public function test_rules_page_uses_updated_d100_probe_wording_without_d20_legacy(): void
     {
         $response = $this->get(route('knowledge.global.rules'));
 
         $response->assertOk()
-            ->assertSeeText('Proben werden nur durch GM oder Co-GM ausgelöst.')
-            ->assertSeeText('Anlass, Ziel-Held, Probe-Eigenschaft und Modifikator')
-            ->assertSeeText('Die Rechnung bleibt klar')
+            ->assertSeeText('Proben werden nur durch die Spielleitung oder Co-Spielleitung ausgelöst.')
+            ->assertSeeText('Wurf + Modifikator <= Zielwert')
+            ->assertSeeText('Ein positiver Modifikator macht die Probe schwerer')
             ->assertDontSeeText('d20');
     }
 
