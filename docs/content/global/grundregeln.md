@@ -2,7 +2,7 @@
 
 Dieses Regelwerk beschreibt, wie im C76-RPG gespielt, geschrieben, gewürfelt und miteinander umgegangen wird.
 
-C76-RPG ist ein schriftliches, asynchrones Rollenspiel. Das bedeutet: Die Geschichte entsteht durch Beiträge der Spielenden und der Spielleitung, aber nicht alle müssen gleichzeitig online sein. Eine Szene entwickelt sich Schritt für Schritt, Beitrag für Beitrag.
+C76-RPG ist ein schriftliches, asynchrones Rollenspiel. Das bedeutet: Die Geschichte entsteht durch Beiträge der Spieler und der Spielleitung, aber nicht alle müssen gleichzeitig online sein. Eine Szene entwickelt sich Schritt für Schritt, Beitrag für Beitrag.
 
 Im Mittelpunkt stehen nicht Regeln um ihrer selbst willen, sondern gemeinsames Erzählen: Figuren treffen Entscheidungen, geraten in Gefahr, entdecken Hinweise, zweifeln, kämpfen, verhandeln, scheitern und wachsen an den Folgen.
 
@@ -20,11 +20,11 @@ C76-RPG ist ein Play-by-Post-Rollenspiel. Gespielt wird schriftlich in Szenen, T
 
 Eine Szene ist ein erzählerischer Abschnitt. Sie kann ein Gespräch in einer Hafenkneipe sein, eine Untersuchung an einem Tatort, eine Reise durch Nebel, ein Kampf, eine Verfolgung oder ein stiller Moment zwischen Figuren.
 
-Die Spielleitung beschreibt die Welt, setzt Situationen, spielt Nebenfiguren, fordert Proben an und entscheidet über Folgen. Die Spielenden beschreiben, was ihre eigenen Figuren wahrnehmen, denken, sagen und tun.
+Die Spielleitung beschreibt die Welt, setzt Situationen, spielt Nebenfiguren, fordert Proben an und entscheidet über Folgen. Die Spieler beschreiben, was ihre eigenen Figuren wahrnehmen, denken, sagen und tun.
 
 Wichtig ist dabei die Trennung der Zuständigkeiten.
 
-Spielende entscheiden über ihre eigene Figur.
+Spieler entscheiden über ihre eigene Figur.
 
 Die Spielleitung entscheidet über die Welt, die Umgebung, nicht gespielte Figuren, verborgene Informationen, Folgen von Handlungen und darüber, wann Regeln oder Proben nötig werden.
 
@@ -82,7 +82,7 @@ Nicht:
 > Thomas würde jetzt den Raum betreten.
 > Ich habe damals die Tür geöffnet.
 
-Die Ich-Perspektive bedeutet nicht, dass die reale spielende Person spricht. Das „Ich“ ist die Figur in der Spielwelt.
+Die Ich-Perspektive bedeutet nicht, dass der reale Spieler spricht. Das „Ich“ ist die Figur in der Spielwelt.
 
 Wenn ein Spieler schreibt:
 
@@ -122,7 +122,7 @@ Wenn die Spielleitung eine Nebenfigur spielt, kann sie deren Handlung ebenfalls 
 >
 > „Ihr hättet nicht hierherkommen sollen.“
 
-Die Spielleitung führt die Welt. Die Spielenden führen ihre eigenen Figuren.
+Die Spielleitung führt die Welt. Die Spieler führen ihre eigenen Figuren.
 
 ---
 
@@ -162,7 +162,7 @@ Die Figur reagiert hier auf ein Gefühl oder eine Wahrnehmung innerhalb der Szen
 
 # (6) Wissen der Figur und Wissen des Spielers
 
-Spielende wissen oft mehr als ihre Figuren. Das ist normal.
+Spieler wissen oft mehr als ihre Figuren. Das ist normal.
 
 Wichtig ist: Die Figur darf nur auf das reagieren, was sie in der Spielwelt wissen, sehen, hören, fühlen, riechen oder logisch erschließen kann.
 
@@ -300,7 +300,7 @@ Eine Szene muss nicht immer mit Kampf, Gefahr oder Drama beginnen. Auch leise Sz
 
 Die Spielleitung eröffnet eine Szene meistens mit einem Einstiegstext. Dieser beschreibt Ort, Lage, Stimmung und mögliche Ansatzpunkte.
 
-Spielende reagieren darauf mit ihren Figuren.
+Spieler reagieren darauf mit ihren Figuren.
 
 Dabei gilt: Nicht jede Figur muss in jedem Beitrag alles tun. Manchmal reicht eine klare Reaktion.
 
@@ -367,7 +367,7 @@ Beispiele für Proben:
 
 Proben werden nur durch die Spielleitung oder Co-Spielleitung ausgelöst.
 
-Spielende schreiben keine selbst erfundenen Würfelergebnisse als Tatsachen in die Szene.
+Spieler schreiben keine selbst erfundenen Würfelergebnisse als Tatsachen in die Szene.
 
 Nicht gut:
 
@@ -595,7 +595,7 @@ Besser:
 
 Eigene Innenwelt: ja.
 
-Fremde Innenwelt: nein, außer die andere spielende Person hat es selbst eindeutig ausgespielt.
+Fremde Innenwelt: nein, außer der andere Spieler hat es selbst eindeutig ausgespielt.
 
 ---
 
@@ -732,7 +732,7 @@ Eine Grenze muss nicht vor der gesamten Gruppe gerechtfertigt oder verteidigt we
 
 Safety bedeutet nicht, dass jede Szene harmlos sein muss.
 
-Safety bedeutet, dass Spielende einander nicht beschädigen, um eine Szene härter wirken zu lassen.
+Safety bedeutet, dass Spieler einander nicht beschädigen, um eine Szene härter wirken zu lassen.
 
 ---
 
@@ -744,7 +744,7 @@ Dazu gehört:
 
 - anderen Raum zum Reagieren lassen,
 - keine fremden Figuren kontrollieren,
-- keine Regeln gegen Mitspielende ausnutzen,
+- keine Regeln gegen Mitspieler ausnutzen,
 - keine OOC-Konflikte ins IC ziehen,
 - keine IC-Feindschaft persönlich nehmen,
 - Grenzen respektieren,
@@ -769,7 +769,7 @@ Konflikte können entstehen. Das ist normal.
 
 Wichtig ist, sie nicht im IC zu verstecken.
 
-Wenn ein Problem zwischen Spielenden entsteht, wird es OOC geklärt.
+Wenn ein Problem zwischen Spielern entsteht, wird es OOC geklärt.
 
 Nicht gut:
 
