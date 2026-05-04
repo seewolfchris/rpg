@@ -44,8 +44,8 @@
                     IC-Beiträge immer in Ich-Perspektive und Präsens: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
-                    <strong class="text-stone-100">6. GM-Probe anfragen</strong><br>
-                    Bei unklaren Aktionen führt der GM/Co-GM die Probe im Post aus: mit Anlass, Ziel-Held und Modifikator; das Ergebnis wird automatisch berechnet.
+                    <strong class="text-stone-100">6. Probe durch Spielleitung anfragen</strong><br>
+                    Bei unklaren Aktionen löst die Spielleitung oder Co-Spielleitung die Probe aus und nennt Anlass, Zielwert und Modifikator.
                 </li>
                 <li>
                     <strong class="text-stone-100">7. Thread weiterführen</strong><br>
@@ -70,7 +70,7 @@
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
                     <li>1. Zu lange Vorgeschichte statt aktueller Aktion.</li>
                     <li>2. OOC-Infos mitten im IC-Absatz.</li>
-                    <li>3. Eigene Probenergebnisse ohne GM-Freigabe im Freitext festlegen.</li>
+                    <li>3. Eigene Probenergebnisse ohne Freigabe durch Spielleitung oder Co-Spielleitung im Freitext festlegen.</li>
                     <li>4. Ohne Rückbezug auf die letzten zwei Posts schreiben.</li>
                 </ul>
             </article>
