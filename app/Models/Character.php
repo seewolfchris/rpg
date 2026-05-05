@@ -10,7 +10,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
+/**
+ * @phpstan-type CharacterAttributePool array{
+ *     key: string,
+ *     column: string,
+ *     base: int,
+ *     max: int,
+ *     current: int,
+ *     is_reduced: bool,
+ *     is_modified: bool
+ * }
+ */
 class Character extends Model
 {
     /** @use HasFactory<\Database\Factories\CharacterFactory> */
@@ -50,6 +62,14 @@ class Character extends Model
         'ge',
         'ko',
         'kk',
+        'mu_current',
+        'kl_current',
+        'in_current',
+        'ch_current',
+        'ff_current',
+        'ge_current',
+        'ko_current',
+        'kk_current',
         'mu_note',
         'kl_note',
         'in_note',
@@ -95,6 +115,14 @@ class Character extends Model
             'ge' => 'integer',
             'ko' => 'integer',
             'kk' => 'integer',
+            'mu_current' => 'integer',
+            'kl_current' => 'integer',
+            'in_current' => 'integer',
+            'ch_current' => 'integer',
+            'ff_current' => 'integer',
+            'ge_current' => 'integer',
+            'ko_current' => 'integer',
+            'kk_current' => 'integer',
             'mu_note' => 'string',
             'kl_note' => 'string',
             'in_note' => 'string',
@@ -328,6 +356,71 @@ class Character extends Model
         return (int) max(30, min(60, $converted));
     }
 
+    public function currentAttributeColumn(string $key): string
+    {
+        $this->assertKnownAttributeKey($key);
+
+        return $key.'_current';
+    }
+
+    public function effectiveAttributeMax(string $key): int
+    {
+        $this->assertKnownAttributeKey($key);
+        $effective = (array) ($this->effective_attributes ?? []);
+        $fallback = $this->resolveBaseAttributeValue($key, $this->getAttributes());
+
+        return max(0, (int) ($effective[$key] ?? $fallback));
+    }
+
+    public function currentAttributeValue(string $key): int
+    {
+        $column = $this->currentAttributeColumn($key);
+        $max = $this->effectiveAttributeMax($key);
+        $stored = $this->getAttributeValue($column);
+
+        if ($stored === null) {
+            return $max;
+        }
+
+        return max(0, min((int) $stored, $max));
+    }
+
+    /**
+     * @return CharacterAttributePool
+     */
+    public function attributePool(string $key): array
+    {
+        $this->assertKnownAttributeKey($key);
+
+        $base = $this->resolveBaseAttributeValue($key, $this->getAttributes());
+        $max = $this->effectiveAttributeMax($key);
+        $current = $this->currentAttributeValue($key);
+
+        return [
+            'key' => $key,
+            'column' => $this->currentAttributeColumn($key),
+            'base' => $base,
+            'max' => $max,
+            'current' => $current,
+            'is_reduced' => $current < $max,
+            'is_modified' => $max !== $base,
+        ];
+    }
+
+    /**
+     * @return array<string, CharacterAttributePool>
+     */
+    public function attributePools(): array
+    {
+        $pools = [];
+
+        foreach ($this->attributeKeys() as $key) {
+            $pools[$key] = $this->attributePool($key);
+        }
+
+        return $pools;
+    }
+
     /**
      * @return array<int, array{name: string, protection: int, equipped: bool}>
      */
@@ -400,5 +493,12 @@ class Character extends Model
             'protection' => max(0, min(99, $protection)),
             'equipped' => (bool) Arr::get($entry, 'equipped', false),
         ];
+    }
+
+    private function assertKnownAttributeKey(string $key): void
+    {
+        if (! in_array($key, $this->attributeKeys(), true)) {
+            throw new InvalidArgumentException('Unknown character attribute key: '.$key);
+        }
     }
 }

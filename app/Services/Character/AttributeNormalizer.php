@@ -49,6 +49,16 @@ use Illuminate\Validation\ValidationException;
  *     ko?: int,
  *     kk?: int
  * }
+ * @phpstan-type CharacterAttributeCurrentPayload array{
+ *     mu_current?: int|null,
+ *     kl_current?: int|null,
+ *     in_current?: int|null,
+ *     ch_current?: int|null,
+ *     ff_current?: int|null,
+ *     ge_current?: int|null,
+ *     ko_current?: int|null,
+ *     kk_current?: int|null
+ * }
  * @phpstan-type CharacterPoolPayload array{
  *     le_max?: int,
  *     le_current?: int,
@@ -229,6 +239,53 @@ class AttributeNormalizer
             $data[$currentKey] = $existingCurrent === null
                 ? $maxValue
                 : $this->clampInt((int) $existingCurrent, 0, $maxValue);
+        }
+
+        $data = $this->sanitizeAttributeCurrentState($data, $character);
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>&CharacterAttributeCurrentPayload
+     */
+    private function sanitizeAttributeCurrentState(array $data, ?Character $character = null): array
+    {
+        $characterWorldId = $character instanceof Character
+            ? (int) $character->world_id
+            : null;
+        $worldId = (int) ($data['world_id'] ?? $characterWorldId ?? World::resolveDefaultId());
+        $sheet = $this->sheetForWorldId($worldId);
+        /** @var list<string> $attributeKeys */
+        $attributeKeys = array_keys((array) Arr::get($sheet, 'attributes', []));
+
+        $characterSpecies = $character instanceof Character
+            ? (string) $character->species
+            : '';
+        $species = strtolower((string) ($data['species'] ?? $characterSpecies));
+        $speciesModifiers = (array) Arr::get($sheet, 'species.'.$species.'.modifiers', []);
+
+        foreach ($attributeKeys as $key) {
+            $currentKey = $key.'_current';
+            $characterBaseValue = $character instanceof Character
+                ? $character->{$key}
+                : null;
+            $baseValue = (int) ($data[$key] ?? $characterBaseValue ?? 40);
+            $effectiveMax = max(0, $baseValue + (int) ($speciesModifiers[$key] ?? 0));
+            $incomingCurrent = $data[$currentKey] ?? null;
+            $existingCurrent = $character?->{$currentKey};
+
+            if (! array_key_exists($currentKey, $data)) {
+                $incomingCurrent = $existingCurrent;
+            }
+
+            if ($incomingCurrent === null) {
+                $data[$currentKey] = null;
+                continue;
+            }
+
+            $data[$currentKey] = $this->clampInt((int) $incomingCurrent, 0, $effectiveMax);
         }
 
         return $data;

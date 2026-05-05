@@ -11,8 +11,7 @@
         $statusMeta = (array) data_get($statusConfig, $statusKey, data_get($statusConfig, 'active', []));
         $statusLabel = (string) ($statusMeta['label'] ?? ucfirst($statusKey));
         $statusBadgeClass = (string) ($statusMeta['badge_class'] ?? 'border-stone-600/80 bg-stone-900/35 text-stone-200');
-        $effectiveAttributes = (array) ($character->effective_attributes ?? []);
-        $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
+        $attributePools = $character->attributePools();
         $originLabel = (string) data_get($sheet, 'origins.'.$character->origin, $character->origin ?: '-');
         $speciesLabel = (string) data_get($sheet, 'species.'.$character->species.'.label', $character->species ?: '-');
         $callingLabel = (string) data_get($sheet, 'callings.'.$character->calling.'.label', $character->calling ?: '-');
@@ -61,28 +60,6 @@
         $hasAllocationErrors = $errorKeys->contains(
             static fn (string $key): bool => str_starts_with($key, 'attribute_allocations')
         );
-        $resolveBaseAttribute = function ($characterModel, string $attributeKey) use ($legacyMap): int {
-            $value = $characterModel->{$attributeKey};
-            if ($value !== null) {
-                return (int) $value;
-            }
-
-            $legacyColumn = array_search($attributeKey, $legacyMap, true);
-            if (! is_string($legacyColumn)) {
-                return 40;
-            }
-
-            $legacyValue = $characterModel->{$legacyColumn};
-            if ($legacyValue === null) {
-                return 40;
-            }
-
-            $percent = (int) $legacyValue <= 20
-                ? (int) round(((int) $legacyValue) * 5)
-                : (int) $legacyValue;
-
-            return max(30, min(60, $percent));
-        };
     @endphp
 
     <section class="character-living-document mx-auto w-full max-w-6xl space-y-6">
@@ -224,25 +201,33 @@
 
                 <section>
                     <h3 class="font-heading text-xl text-stone-100">Grundeigenschaften</h3>
+                    <p class="mt-1 text-xs text-stone-500">Anzeige: Max / Aktuell</p>
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                         @foreach ($attributeMeta as $key => $meta)
                             @php
                                 $label = (string) ($meta['label'] ?? strtoupper($key));
                                 $description = (string) ($meta['description'] ?? '');
-                                $baseValue = $resolveBaseAttribute($character, $key);
-                                $effectiveValue = (int) ($effectiveAttributes[$key] ?? $baseValue);
+                                $pool = $attributePools[$key] ?? $character->attributePool((string) $key);
+                                $baseValue = (int) ($pool['base'] ?? 0);
+                                $maxValue = (int) ($pool['max'] ?? $baseValue);
+                                $currentValue = (int) ($pool['current'] ?? $maxValue);
+                                $isReduced = (bool) ($pool['is_reduced'] ?? false);
+                                $isModified = (bool) ($pool['is_modified'] ?? false);
                                 $note = (string) ($character->{$key.'_note'} ?? '');
                             @endphp
-                            <article class="rounded-lg border border-stone-700/80 bg-black/30 p-3">
+                            <article class="rounded-lg border p-3 {{ $isReduced ? 'border-amber-600/80 bg-amber-950/20' : 'border-stone-700/80 bg-black/30' }}">
                                 <div class="flex items-center justify-between gap-2">
                                     <p class="text-xs font-semibold uppercase tracking-widest text-stone-300">{{ $label }}</p>
-                                    <p class="text-sm text-stone-100">
-                                        {{ $baseValue }} %
-                                        @if ($effectiveValue !== $baseValue)
-                                            <span class="text-xs text-amber-300">(effektiv {{ $effectiveValue }} %)</span>
-                                        @endif
+                                    <p class="text-sm {{ $isReduced ? 'text-amber-100' : 'text-stone-100' }}">
+                                        {{ $maxValue }} % / {{ $currentValue }} %
                                     </p>
                                 </div>
+                                @if ($isReduced)
+                                    <p class="mt-1 text-[11px] uppercase tracking-[0.08em] text-amber-300">Aktuell reduziert</p>
+                                @endif
+                                @if ($isModified)
+                                    <p class="mt-2 text-xs text-stone-400">Basis {{ $baseValue }} %, effektiv {{ $maxValue }} %.</p>
+                                @endif
                                 @if ($description !== '')
                                     <p class="mt-2 text-xs leading-relaxed text-stone-500">{{ $description }}</p>
                                 @endif
