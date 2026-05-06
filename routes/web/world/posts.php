@@ -3,6 +3,7 @@
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\SceneCombatActionController;
+use App\Http\Controllers\SceneCombatPhaseController;
 use App\Http\Controllers\SceneController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,18 @@ Route::post('/campaigns/{campaign}/scenes/{scene}/inventory-quick-action', [Scen
 Route::post('/campaigns/{campaign}/scenes/{scene}/combat/actions', [SceneCombatActionController::class, 'store'])
     ->middleware('throttle:writes')
     ->name('campaigns.scenes.combat.actions.store');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases', [SceneCombatPhaseController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.combat.phases.store');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases/{combatPhase}/actions', [SceneCombatPhaseController::class, 'storeAction'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.combat.phases.actions.store');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases/{combatPhase}/resolve', [SceneCombatPhaseController::class, 'resolve'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.combat.phases.resolve');
 
 Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
     ->withoutScopedBindings()

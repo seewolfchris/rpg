@@ -96,6 +96,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<CombatPhase, $this>
+     */
+    public function combatPhases(): HasMany
+    {
+        return $this->hasMany(CombatPhase::class, 'scene_id');
+    }
+
+    /**
      * @return HasMany<PlayerNote, $this>
      */
     public function playerNotes(): HasMany

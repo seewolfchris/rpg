@@ -174,6 +174,13 @@
                     @if ($canModerateScene)
                         @if ($combatToolsEnabled)
                             <a
+                                href="#combat-phase-tool"
+                                hx-boost="false"
+                                class="ui-btn ui-btn-accent"
+                            >
+                                Kampfphase verwalten
+                            </a>
+                            <a
                                 href="#combat-action-tool"
                                 hx-boost="false"
                                 class="ui-btn ui-btn-accent"
@@ -398,6 +405,13 @@
 
         @if ($canModerateScene)
             @if ($combatToolsEnabled)
+                @include('scenes.partials.combat-phase-panel', [
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                    'probeCharacters' => $probeCharacters,
+                    'openCombatPhase' => $openCombatPhase,
+                    'openCombatPhaseActions' => $openCombatPhaseActions,
+                ])
                 @include('scenes.partials.combat-action-form', ['campaign' => $campaign, 'scene' => $scene, 'probeCharacters' => $probeCharacters])
             @endif
 

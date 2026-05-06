@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Scene;
 
 use App\Models\Character;
+use App\Models\CombatPhase;
+use App\Models\CombatPhaseAction;
 use App\Models\Handout;
 use App\Models\Post;
 use App\Models\SceneBookmark;
@@ -21,6 +23,7 @@ final readonly class SceneShowData
      * @param  Collection<int, Character>  $characters
      * @param  Collection<int, Character>  $probeCharacters
      * @param  Collection<int, Handout>  $sceneHandouts
+     * @param  Collection<int, CombatPhaseAction>  $openCombatPhaseActions
      * @param  list<int>  $viewableCharacterIds
      */
     public function __construct(
@@ -30,6 +33,8 @@ final readonly class SceneShowData
         public Collection $characters,
         public Collection $probeCharacters,
         public Collection $sceneHandouts,
+        public ?CombatPhase $openCombatPhase,
+        public Collection $openCombatPhaseActions,
         public array $viewableCharacterIds,
         public int $sceneChronicleCount,
         public int $scenePlayerNotesCount,

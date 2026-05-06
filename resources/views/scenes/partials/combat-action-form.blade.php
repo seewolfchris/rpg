@@ -1,13 +1,24 @@
-<section id="combat-action-tool" class="ui-card border-amber-800/40 bg-amber-950/15 p-6 sm:p-8" data-reading-mode-chrome>
-    <h2 class="font-heading text-2xl text-amber-100">Kampfaktion (Spielleitung)</h2>
-    <p class="mt-2 text-sm text-amber-200/90">
-        Spieler schreiben Absichten im Thread. Die Spielleitung wertet hier eine einzelne Kampfaktion aus.
-    </p>
-    <p class="mt-2 text-xs uppercase tracking-[0.08em] text-amber-300/90">
-        V1: Einzelaktion, keine Kampfphasen und keine Spieler-Queue.
-    </p>
+@php
+    $sectionId = $sectionId ?? 'combat-action-tool';
+    $title = $title ?? 'Kampfaktion (Spielleitung)';
+    $description = $description ?? 'Spieler schreiben Absichten im Thread. Die Spielleitung wertet hier eine einzelne Kampfaktion aus.';
+    $hint = $hint ?? 'V1: Einzelaktion, keine Kampfphasen und keine Spieler-Queue.';
+    $formAction = $formAction ?? route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]);
+    $submitLabel = $submitLabel ?? 'Kampfaktion auswerten';
+@endphp
 
-    <form method="POST" action="{{ route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<section id="{{ $sectionId }}" class="ui-card border-amber-800/40 bg-amber-950/15 p-6 sm:p-8" data-reading-mode-chrome>
+    <h2 class="font-heading text-2xl text-amber-100">{{ $title }}</h2>
+    <p class="mt-2 text-sm text-amber-200/90">
+        {{ $description }}
+    </p>
+    @if (is_string($hint) && trim($hint) !== '')
+        <p class="mt-2 text-xs uppercase tracking-[0.08em] text-amber-300/90">
+            {{ $hint }}
+        </p>
+    @endif
+
+    <form method="POST" action="{{ $formAction }}" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         @csrf
 
         <div>
@@ -336,7 +347,7 @@
 
         <div class="md:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-3">
             <button type="submit" class="ui-btn ui-btn-accent">
-                Kampfaktion auswerten
+                {{ $submitLabel }}
             </button>
             <p class="text-xs text-stone-400">
                 Spieler nutzen weiterhin normale IC-Posts. Dieses Formular ist nur für Spielleitung und Co-Spielleitung.

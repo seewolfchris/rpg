@@ -103,6 +103,8 @@ class SceneController extends Controller
             'characters' => $showData->characters,
             'probeCharacters' => $showData->probeCharacters,
             'sceneHandouts' => $showData->sceneHandouts,
+            'openCombatPhase' => $showData->openCombatPhase,
+            'openCombatPhaseActions' => $showData->openCombatPhaseActions,
             'viewableCharacterIds' => $showData->viewableCharacterIds,
             'sceneChronicleCount' => $showData->sceneChronicleCount,
             'scenePlayerNotesCount' => $showData->scenePlayerNotesCount,
