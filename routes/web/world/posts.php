@@ -4,6 +4,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\SceneCombatActionController;
 use App\Http\Controllers\SceneCombatPhaseController;
+use App\Http\Controllers\SceneMagicActionController;
 use App\Http\Controllers\SceneController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,10 @@ Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases/{combatPhase}/ac
 Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases/{combatPhase}/resolve', [SceneCombatPhaseController::class, 'resolve'])
     ->middleware('throttle:writes')
     ->name('campaigns.scenes.combat.phases.resolve');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/magic/actions', [SceneMagicActionController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.magic.actions.store');
 
 Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
     ->withoutScopedBindings()
