@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'combat_tools_enabled' => envBool('COMBAT_TOOLS_ENABLED', false),
+
     'wave3' => [
         // Off-by-default fuer Phase A.
         // Aktivierung erfolgt erst in Phase B.

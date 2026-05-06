@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
+use App\Http\Controllers\SceneCombatActionController;
 use App\Http\Controllers\SceneController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,10 @@ Route::post('/posts/preview', [PostController::class, 'preview'])
 Route::post('/campaigns/{campaign}/scenes/{scene}/inventory-quick-action', [SceneController::class, 'inventoryQuickAction'])
     ->middleware('throttle:writes')
     ->name('campaigns.scenes.inventory-quick-action');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/combat/actions', [SceneCombatActionController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.combat.actions.store');
 
 Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
     ->withoutScopedBindings()

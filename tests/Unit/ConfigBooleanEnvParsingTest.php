@@ -9,6 +9,7 @@ class ConfigBooleanEnvParsingTest extends TestCase
     public function test_feature_flags_parse_string_booleans_consistently(): void
     {
         $config = $this->loadConfigWithEnv('config/features.php', [
+            'COMBAT_TOOLS_ENABLED' => 'yes',
             'FEATURE_WAVE3_EDITOR_PREVIEW' => 'off',
             'FEATURE_WAVE3_DRAFT_AUTOSAVE' => 'on',
             'FEATURE_WAVE4_MENTIONS' => 'no',
@@ -16,6 +17,7 @@ class ConfigBooleanEnvParsingTest extends TestCase
             'FEATURE_WAVE4_ACTIVE_CHARACTERS' => '0',
         ]);
 
+        $this->assertTrue($config['combat_tools_enabled']);
         $this->assertFalse($config['wave3']['editor_preview']);
         $this->assertTrue($config['wave3']['draft_autosave']);
         $this->assertFalse($config['wave4']['mentions']);

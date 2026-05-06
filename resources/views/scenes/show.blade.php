@@ -15,6 +15,7 @@
         $wave3EditorPreviewEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.editor_preview', false);
         $wave3DraftAutosaveEnabled = \App\Support\SensitiveFeatureGate::enabled('features.wave3.draft_autosave', false);
         $wave3EditorEnhancementsEnabled = $wave3EditorPreviewEnabled || $wave3DraftAutosaveEnabled;
+        $combatToolsEnabled = \App\Support\SensitiveFeatureGate::enabled('features.combat_tools_enabled', false);
 
         if (! empty($scene->header_image_path)) {
             $sceneHeaderStyle = "background-image: linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,.78)), url('".asset('storage/'.$scene->header_image_path)."'); background-size: cover; background-position: center;";
@@ -171,6 +172,15 @@
                         </a>
                     @endcan
                     @if ($canModerateScene)
+                        @if ($combatToolsEnabled)
+                            <a
+                                href="#combat-action-tool"
+                                hx-boost="false"
+                                class="ui-btn ui-btn-accent"
+                            >
+                                Kampfaktion auswerten
+                            </a>
+                        @endif
                         <a
                             href="#inventory-quick-action"
                             hx-boost="false"
@@ -387,6 +397,10 @@
         </div>
 
         @if ($canModerateScene)
+            @if ($combatToolsEnabled)
+                @include('scenes.partials.combat-action-form', ['campaign' => $campaign, 'scene' => $scene, 'probeCharacters' => $probeCharacters])
+            @endif
+
             <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8" data-reading-mode-chrome>
                 <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
                 <p class="mt-2 text-sm text-emerald-200/90">
