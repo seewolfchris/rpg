@@ -142,4 +142,84 @@ class CombatInvariantViolationException extends DomainInvariantViolationExceptio
             ],
         );
     }
+
+    public static function phaseAlreadyCollecting(int $sceneId, int $existingPhaseId): self
+    {
+        return new self(
+            reason: 'phase_already_collecting',
+            field: 'phase',
+            message: 'In dieser Szene existiert bereits eine offene Kampfphase.',
+            context: [
+                'scene_id' => $sceneId,
+                'existing_phase_id' => $existingPhaseId,
+            ],
+        );
+    }
+
+    public static function phaseNotCollecting(int $phaseId, string $status): self
+    {
+        return new self(
+            reason: 'phase_not_collecting',
+            field: 'phase',
+            message: 'Die Kampfphase ist nicht offen und kann nicht veraendert werden.',
+            context: [
+                'phase_id' => $phaseId,
+                'status' => $status,
+            ],
+        );
+    }
+
+    public static function phaseScopeMismatch(
+        int $phaseId,
+        int $phaseCampaignId,
+        int $phaseSceneId,
+        int $inputCampaignId,
+        int $inputSceneId,
+    ): self {
+        return new self(
+            reason: 'phase_scope_mismatch',
+            field: 'phase',
+            message: 'Die Kampfaktion passt nicht zum Kampagnen-/Szenenkontext der Kampfphase.',
+            context: [
+                'phase_id' => $phaseId,
+                'phase_campaign_id' => $phaseCampaignId,
+                'phase_scene_id' => $phaseSceneId,
+                'input_campaign_id' => $inputCampaignId,
+                'input_scene_id' => $inputSceneId,
+            ],
+        );
+    }
+
+    public static function phaseMissing(int $phaseId): self
+    {
+        return new self(
+            reason: 'phase_missing',
+            field: 'phase',
+            message: 'Die angegebene Kampfphase konnte nicht gefunden werden.',
+            context: ['phase_id' => $phaseId],
+        );
+    }
+
+    public static function phaseHasNoActions(int $phaseId): self
+    {
+        return new self(
+            reason: 'phase_has_no_actions',
+            field: 'phase',
+            message: 'Die Kampfphase enthaelt keine Aktionen und kann nicht ausgewertet werden.',
+            context: ['phase_id' => $phaseId],
+        );
+    }
+
+    public static function moderatorRequired(int $campaignId, int $userId): self
+    {
+        return new self(
+            reason: 'moderator_required',
+            field: 'actor_user_id',
+            message: 'Nur Spielleitung oder Co-Spielleitung duerfen Kampfphasen starten oder auswerten.',
+            context: [
+                'campaign_id' => $campaignId,
+                'user_id' => $userId,
+            ],
+        );
+    }
 }
