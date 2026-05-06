@@ -119,6 +119,8 @@ class SceneMagicActionTest extends TestCase
             ->assertSeeText('Zaubernder: Eldrin')
             ->assertSeeText('Ziel: Hafenräuber I')
             ->assertSeeText('Zauber: Flammenstoß')
+            ->assertSeeText('Zauberwurf: Wurf 31 + Mod 0 = 31 / Ziel 60 → Erfolg')
+            ->assertSeeText('Magieabwehr: Wurf 71 + Mod 0 = 71 / Ziel 45 → misslungen')
             ->assertSeeText('Kosten: 4 AE')
             ->assertSeeText('Wirkung: 9 LE Schaden')
             ->assertSeeText('LE: 21 / 30');
@@ -251,7 +253,7 @@ class SceneMagicActionTest extends TestCase
         $this->assertSame(18, (int) $targetCharacter->le_current);
 
         $magicPost = Post::query()->latest('id')->firstOrFail();
-        $this->assertStringContainsString('Zauberwurf: 95 / 60 -> misslungen', (string) $magicPost->content);
+        $this->assertStringContainsString('Zauberwurf: Wurf 95 + Mod 0 = 95 / Ziel 60 → misslungen', (string) $magicPost->content);
         $this->assertStringContainsString('Ergebnis: Der Zauber misslingt. Keine Wirkung.', (string) $magicPost->content);
     }
 
@@ -297,8 +299,43 @@ class SceneMagicActionTest extends TestCase
         $this->assertSame(25, (int) $targetCharacter->le_current);
 
         $magicPost = Post::query()->latest('id')->firstOrFail();
-        $this->assertStringContainsString('Magieabwehr: 22 / 45 -> Erfolg', (string) $magicPost->content);
+        $this->assertStringContainsString('Magieabwehr: Wurf 22 + Mod 0 = 22 / Ziel 45 → Erfolg', (string) $magicPost->content);
         $this->assertStringContainsString('Ergebnis: Die Wirkung wird abgewehrt. Kein Effekt.', (string) $magicPost->content);
+    }
+
+    public function test_advantage_roll_mode_renders_rolls_and_kept_roll_for_magic_action(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $casterUser = User::factory()->create();
+        $this->grantMembership($campaign, $casterUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $casterCharacter = $this->characterInCampaignWorld($casterUser, (int) $campaign->world_id, [
+            'name' => 'Lyra',
+            'ae_max' => 10,
+            'ae_current' => 10,
+        ]);
+
+        $this->bindProbeRoller([17, 64]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->magicPayload([
+                'actor_type' => 'character',
+                'actor_character_id' => $casterCharacter->id,
+                'target_type' => 'npc',
+                'target_name' => 'Nebelhund',
+                'spell_name' => 'Schattenfessel',
+                'spell_roll_mode' => 'advantage',
+                'spell_target_value' => 60,
+                'ae_cost' => 2,
+                'effect_type' => 'narrative',
+                'effect_amount' => 0,
+            ]))
+            ->assertRedirect();
+
+        $magicPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Zauberwurf: Würfe 17, 64 → behalten 17 + Mod 0 = 17 / Ziel 60 → Erfolg', (string) $magicPost->content);
     }
 
     public function test_attribute_delta_effect_updates_current_attribute_and_renders_result(): void

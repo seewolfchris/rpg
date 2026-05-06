@@ -26,12 +26,12 @@ class CombatPhasePostRenderer
             $actorName = (string) data_get($result, 'actor.name', 'Unbekannt');
             $targetName = (string) data_get($result, 'target.name', 'Unbekannt');
             $weaponName = trim((string) data_get($result, 'weapon_name', ''));
-            $attackTotal = (int) data_get($result, 'attack.total', 0);
-            $attackTarget = (int) data_get($result, 'attack.target_value', 0);
-            $attackSuccess = (bool) data_get($result, 'attack.is_success', false);
             $defenseAttempted = (bool) data_get($result, 'defense.attempted', false);
-            $defenseSuccess = (bool) data_get($result, 'defense.is_success', false);
             $outcome = (array) data_get($result, 'outcome', []);
+            /** @var array<string, mixed> $attack */
+            $attack = (array) data_get($result, 'attack', []);
+            /** @var array<string, mixed> $defense */
+            $defense = (array) data_get($result, 'defense', []);
 
             $headline = sprintf(
                 '%d) %s -> %s%s',
@@ -42,23 +42,13 @@ class CombatPhasePostRenderer
             );
             $lines[] = $headline;
 
-            $lines[] = sprintf(
-                '   Angriff: %d / %d -> %s',
-                $attackTotal,
-                $attackTarget,
-                $attackSuccess ? 'Erfolg' : 'misslungen'
-            );
+            $lines[] = '   '.$this->formatRollLine('Angriff', $attack);
 
             if ($defenseAttempted) {
-                $defenseLabel = trim((string) data_get($result, 'defense.label', ''));
-                $defenseTotal = (int) data_get($result, 'defense.total', 0);
-                $defenseTarget = (int) data_get($result, 'defense.target_value', 0);
-                $lines[] = sprintf(
-                    '   %s: %d / %d -> %s',
+                $defenseLabel = trim((string) data_get($defense, 'label', ''));
+                $lines[] = '   '.$this->formatRollLine(
                     $defenseLabel !== '' ? $defenseLabel : 'Verteidigung',
-                    $defenseTotal,
-                    $defenseTarget,
-                    $defenseSuccess ? 'Erfolg' : 'misslungen'
+                    $defense,
                 );
             }
 
@@ -91,5 +81,64 @@ class CombatPhasePostRenderer
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param  array<string, mixed>  $rollData
+     */
+    private function formatRollLine(string $label, array $rollData): string
+    {
+        $rolls = $this->normalizeRolls($rollData['rolls'] ?? []);
+        $modifier = (int) ($rollData['modifier'] ?? 0);
+        $total = (int) ($rollData['total'] ?? 0);
+        $target = (int) ($rollData['target_value'] ?? 0);
+        $isSuccess = (bool) ($rollData['is_success'] ?? false);
+        $keptRoll = is_int($rollData['kept_roll'] ?? null)
+            ? (int) $rollData['kept_roll']
+            : ($rolls !== [] ? $rolls[0] : $total - $modifier);
+        $outcome = $isSuccess ? 'Erfolg' : 'misslungen';
+
+        if (count($rolls) > 1) {
+            return sprintf(
+                '%s: Würfe %s → behalten %d + Mod %d = %d / Ziel %d → %s',
+                $label,
+                implode(', ', $rolls),
+                $keptRoll,
+                $modifier,
+                $total,
+                $target,
+                $outcome,
+            );
+        }
+
+        return sprintf(
+            '%s: Wurf %d + Mod %d = %d / Ziel %d → %s',
+            $label,
+            $keptRoll,
+            $modifier,
+            $total,
+            $target,
+            $outcome,
+        );
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function normalizeRolls(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $rolls = [];
+
+        foreach ($value as $roll) {
+            if (is_int($roll)) {
+                $rolls[] = $roll;
+            }
+        }
+
+        return $rolls;
     }
 }

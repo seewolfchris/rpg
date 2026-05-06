@@ -70,6 +70,31 @@ class SceneCombatPhaseTest extends TestCase
         $this->assertDatabaseCount('posts', 0);
     }
 
+    public function test_scene_show_uses_unique_combat_form_ids_when_both_forms_are_visible(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $this->openPhase($campaign, $scene, $owner);
+
+        $response = $this->actingAs($owner)
+            ->get(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertOk();
+
+        $html = (string) $response->getContent();
+
+        $this->assertSame(1, substr_count($html, 'id="combat_single_actor_type"'));
+        $this->assertSame(1, substr_count($html, 'id="combat_phase_action_actor_type"'));
+        $this->assertSame(1, substr_count($html, 'for="combat_single_actor_type"'));
+        $this->assertSame(1, substr_count($html, 'for="combat_phase_action_actor_type"'));
+        $this->assertSame(0, substr_count($html, 'id="combat_actor_type"'));
+        $this->assertSame(0, substr_count($html, 'for="combat_actor_type"'));
+    }
+
     public function test_spielleitung_can_start_queue_and_resolve_phase_with_gm_combat_block(): void
     {
         config(['features.combat_tools_enabled' => true]);
@@ -187,6 +212,8 @@ class SceneCombatPhaseTest extends TestCase
         $this->assertStringContainsString('[Kampfphase 1]', (string) $combatPost->content);
         $this->assertStringContainsString('Kampfphase 1 ausgewertet', (string) $combatPost->content);
         $this->assertStringContainsString('Vaelis -> Hafenwaechter', (string) $combatPost->content);
+        $this->assertStringContainsString('Angriff: Wurf 43 + Mod 0 = 43 / Ziel 60 → Erfolg', (string) $combatPost->content);
+        $this->assertStringContainsString('Parade: Wurf 71 + Mod 0 = 71 / Ziel 45 → misslungen', (string) $combatPost->content);
         $this->assertStringContainsString('LE: 24 / 33', (string) $combatPost->content);
         $this->assertSame(2, (int) data_get($combatPost->meta, 'combat_phase_result.action_count'));
     }

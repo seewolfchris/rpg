@@ -19,7 +19,7 @@
         <div class="mt-5 ui-card-soft border-amber-700/40 bg-black/25 p-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-sm font-semibold uppercase tracking-[0.08em] text-amber-200">
-                    Kampfphase {{ $openCombatPhase->phase_number }} - sammelt Aktionen
+                    Kampfphase {{ $openCombatPhase->phase_number }} · Aktionen sammeln
                 </p>
                 <span class="ui-badge !border-amber-700/70 !bg-amber-900/30 !text-amber-200">
                     {{ $openCombatPhaseActions->count() }} {{ $openCombatPhaseActions->count() === 1 ? 'Aktion' : 'Aktionen' }}
@@ -66,6 +66,7 @@
             'campaign' => $campaign,
             'scene' => $scene,
             'probeCharacters' => $probeCharacters,
+            'fieldPrefix' => 'combat_phase_action',
             'sectionId' => 'combat-phase-action-tool',
             'title' => 'Aktion zur offenen Kampfphase hinzufügen',
             'description' => 'Erfasse eine einzelne Aktion, die bei der Auswertung dieser offenen Kampfphase berücksichtigt wird.',

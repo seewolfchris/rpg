@@ -105,6 +105,8 @@ class SceneCombatActionTest extends TestCase
             ->assertSeeText('Kampfaktion')
             ->assertSeeText('Angreifer: Vaelis')
             ->assertSeeText('Ziel: Hafenwaechter')
+            ->assertSeeText('Angriff: Wurf 43 + Mod 0 = 43 / Ziel 60 → Erfolg')
+            ->assertSeeText('Parade: Wurf 71 + Mod 0 = 71 / Ziel 45 → misslungen')
             ->assertSeeText('Schaden: 12 - RS 3 = 9')
             ->assertSeeText('LE: 24 / 33');
     }
@@ -222,8 +224,44 @@ class SceneCombatActionTest extends TestCase
         $this->actingAs($owner)
             ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertOk()
+            ->assertSeeText('Angriff: Wurf 31 + Mod 0 = 31 / Ziel 60 → Erfolg')
+            ->assertSeeText('Parade: Wurf 22 + Mod 0 = 22 / Ziel 45 → Erfolg')
             ->assertSeeText('Ergebnis: Der Treffer wird abgewehrt. Kein Schaden.')
             ->assertSeeText('LE: 22 / 22');
+    }
+
+    public function test_advantage_roll_mode_renders_rolls_and_kept_roll_in_combat_block(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $attackerUser = User::factory()->create();
+        $this->grantMembership($campaign, $attackerUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $actorCharacter = $this->characterInCampaignWorld($attackerUser, (int) $campaign->world_id, [
+            'name' => 'Serin',
+        ]);
+
+        $this->bindProbeRoller([17, 64]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_type' => 'character',
+                'actor_character_id' => $actorCharacter->id,
+                'target_type' => 'npc',
+                'target_name' => 'Trainingspuppe',
+                'attack_roll_mode' => 'advantage',
+                'attack_target_value' => 60,
+                'damage' => 0,
+                'armor_protection' => 0,
+            ]),
+        )->assertRedirect();
+
+        $this->actingAs($owner)
+            ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->assertOk()
+            ->assertSeeText('Angriff: Würfe 17, 64 → behalten 17 + Mod 0 = 17 / Ziel 60 → Erfolg');
     }
 
     public function test_validation_errors_redirect_back_to_combat_form_without_state_changes(): void

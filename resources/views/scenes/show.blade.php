@@ -173,27 +173,30 @@
                     @endcan
                     @if ($canModerateScene)
                         @if ($combatToolsEnabled)
-                            <a
-                                href="#combat-phase-tool"
-                                hx-boost="false"
-                                class="ui-btn ui-btn-accent"
-                            >
-                                Kampfphase verwalten
-                            </a>
-                            <a
-                                href="#combat-action-tool"
-                                hx-boost="false"
-                                class="ui-btn ui-btn-accent"
-                            >
-                                Kampfaktion auswerten
-                            </a>
-                            <a
-                                href="#magic-action-tool"
-                                hx-boost="false"
-                                class="ui-btn ui-btn-accent"
-                            >
-                                Magieaktion auswerten
-                            </a>
+                            <div class="ui-card-soft flex flex-wrap items-center gap-2 border-amber-700/50 bg-amber-950/20 px-3 py-2">
+                                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-amber-200">Konfliktwerkzeuge:</span>
+                                <a
+                                    href="#combat-phase-tool"
+                                    hx-boost="false"
+                                    class="ui-btn ui-btn-accent !px-2.5 !py-1.5 !text-[0.68rem]"
+                                >
+                                    Kampfphase
+                                </a>
+                                <a
+                                    href="#combat-action-tool"
+                                    hx-boost="false"
+                                    class="ui-btn ui-btn-accent !px-2.5 !py-1.5 !text-[0.68rem]"
+                                >
+                                    Kampfaktion
+                                </a>
+                                <a
+                                    href="#magic-action-tool"
+                                    hx-boost="false"
+                                    class="ui-btn ui-btn-accent !px-2.5 !py-1.5 !text-[0.68rem]"
+                                >
+                                    Magieaktion
+                                </a>
+                            </div>
                         @endif
                         <a
                             href="#inventory-quick-action"
@@ -419,7 +422,12 @@
                     'openCombatPhase' => $openCombatPhase,
                     'openCombatPhaseActions' => $openCombatPhaseActions,
                 ])
-                @include('scenes.partials.combat-action-form', ['campaign' => $campaign, 'scene' => $scene, 'probeCharacters' => $probeCharacters])
+                @include('scenes.partials.combat-action-form', [
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                    'probeCharacters' => $probeCharacters,
+                    'fieldPrefix' => 'combat_single',
+                ])
                 @include('scenes.partials.magic-action-form', ['campaign' => $campaign, 'scene' => $scene, 'probeCharacters' => $probeCharacters])
             @endif
 

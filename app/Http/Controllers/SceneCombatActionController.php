@@ -221,22 +221,11 @@ class SceneCombatActionController extends Controller
         }
 
         $lines[] = '';
-        $lines[] = sprintf(
-            'Angriff: %d / %d -> %s',
-            (int) ($attack['total'] ?? 0),
-            (int) ($attack['target_value'] ?? 0),
-            (bool) ($attack['is_success'] ?? false) ? 'Erfolg' : 'misslungen'
-        );
+        $lines[] = $this->formatRollLine('Angriff', $attack);
 
         if ((bool) ($defense['attempted'] ?? false)) {
             $defenseLabel = $this->nullableString($defense['label'] ?? null) ?? 'Verteidigung';
-            $lines[] = sprintf(
-                '%s: %d / %d -> %s',
-                $defenseLabel,
-                (int) ($defense['total'] ?? 0),
-                (int) ($defense['target_value'] ?? 0),
-                (bool) ($defense['is_success'] ?? false) ? 'Erfolg' : 'misslungen'
-            );
+            $lines[] = $this->formatRollLine($defenseLabel, $defense);
         }
 
         if (! (bool) ($outcome['attack_hit'] ?? false)) {
@@ -281,6 +270,65 @@ class SceneCombatActionController extends Controller
         $trimmed = trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    /**
+     * @param  array<string, mixed>  $rollData
+     */
+    private function formatRollLine(string $label, array $rollData): string
+    {
+        $rolls = $this->normalizeRolls($rollData['rolls'] ?? []);
+        $modifier = (int) ($rollData['modifier'] ?? 0);
+        $total = (int) ($rollData['total'] ?? 0);
+        $target = (int) ($rollData['target_value'] ?? 0);
+        $isSuccess = (bool) ($rollData['is_success'] ?? false);
+        $keptRoll = is_int($rollData['kept_roll'] ?? null)
+            ? (int) $rollData['kept_roll']
+            : ($rolls !== [] ? $rolls[0] : $total - $modifier);
+        $outcome = $isSuccess ? 'Erfolg' : 'misslungen';
+
+        if (count($rolls) > 1) {
+            return sprintf(
+                '%s: Würfe %s → behalten %d + Mod %d = %d / Ziel %d → %s',
+                $label,
+                implode(', ', $rolls),
+                $keptRoll,
+                $modifier,
+                $total,
+                $target,
+                $outcome,
+            );
+        }
+
+        return sprintf(
+            '%s: Wurf %d + Mod %d = %d / Ziel %d → %s',
+            $label,
+            $keptRoll,
+            $modifier,
+            $total,
+            $target,
+            $outcome,
+        );
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function normalizeRolls(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $rolls = [];
+
+        foreach ($value as $roll) {
+            if (is_int($roll)) {
+                $rolls[] = $roll;
+            }
+        }
+
+        return $rolls;
     }
 
     private function errorFieldFromInvariant(string $field): string
