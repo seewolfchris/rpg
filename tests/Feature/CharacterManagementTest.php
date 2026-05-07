@@ -223,6 +223,150 @@ class CharacterManagementTest extends TestCase
         $response->assertRedirect();
     }
 
+    public function test_character_index_shows_associated_player_name_on_character_card(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Spieler Eins',
+        ]);
+
+        Character::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Index Sichtbarkeit',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('characters.index'));
+
+        $response->assertOk();
+        $response->assertSeeText('Spieler:');
+        $response->assertSeeText('Spieler Eins');
+        $response->assertSeeText('Index Sichtbarkeit');
+    }
+
+    public function test_character_show_displays_associated_player_name(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Spieler Detail',
+        ]);
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Detail Sichtbarkeit',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('characters.show', $character));
+
+        $response->assertOk();
+        $response->assertSeeText('Spieler:');
+        $response->assertSeeText('Spieler Detail');
+        $response->assertSeeText('Detail Sichtbarkeit');
+    }
+
+    public function test_character_show_normalizes_unicode_escape_sequences_for_visible_character_data(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            'concept' => 'Gr\\u00f6\\u00dfe Verantwortung',
+            'world_connection' => 'Schlu00fcsselbund',
+            'gm_secret' => 'Gru00f6\\u00dfer Plan',
+            'gm_note' => 'T\u00fcr bleibt offen',
+            'advantages' => ['Schlu00fcsselblick'],
+            'disadvantages' => ['Gru00f6ssenwahn'],
+            'inventory' => [[
+                'name' => 'Schlu00fcssel',
+                'quantity' => 1,
+                'equipped' => false,
+            ]],
+            'weapons' => [[
+                'name' => 'Schl\\u00fcsselklinge',
+                'attack' => 48,
+                'parry' => 40,
+                'damage' => 12,
+                'equipped' => true,
+            ]],
+            'armors' => [[
+                'name' => 'Stu00e4hlerner Mantel',
+                'protection' => 3,
+                'equipped' => true,
+            ]],
+            ...$this->persistedAttributes(),
+        ]);
+
+        CharacterInventoryLog::query()->create([
+            'character_id' => $character->id,
+            'actor_user_id' => $user->id,
+            'source' => 'character_sheet_update',
+            'action' => 'add',
+            'item_name' => 'Schl\\u00fcsselbund',
+            'quantity' => 1,
+            'equipped' => false,
+            'note' => 'Gru00f6\\u00dfer Fund',
+            'context' => ['test' => true],
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('characters.show', $character));
+
+        $response->assertOk();
+        $response->assertSeeText('Schlüssel');
+        $response->assertSeeText('Schlüsselklinge');
+        $response->assertSeeText('Stählerner Mantel');
+        $response->assertSeeText('Größe Verantwortung');
+        $response->assertSeeText('Schlüsselbund');
+        $response->assertDontSeeText('Schlu00fcssel');
+        $response->assertDontSeeText('Schl\\u00fcssel');
+    }
+
+    public function test_character_store_normalizes_unicode_escape_sequences_before_persisting(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('characters.store'), $this->characterPayload([
+            'name' => 'Unicode Save',
+            'concept' => 'Gro\\u00dfe Pflicht',
+            'world_connection' => 'Schlu00fcsselbund',
+            'gm_secret' => 'Gru00f6\\u00dfer Plan',
+            'gm_note' => 'T\u00fcr bleibt offen',
+            'advantages' => ['Schlu00fcsselblick'],
+            'disadvantages' => ['Gru00f6ssenwahn'],
+            'inventory' => [[
+                'name' => 'Schlu00fcssel',
+                'quantity' => 2,
+                'equipped' => false,
+            ]],
+            'weapons' => [[
+                'name' => 'Schl\\u00fcsselklinge',
+                'attack' => 48,
+                'parry' => 41,
+                'damage' => 12,
+            ]],
+            'armors' => [[
+                'name' => 'Stu00e4hlerner Mantel',
+                'protection' => 4,
+                'equipped' => true,
+            ]],
+        ]));
+
+        $response->assertRedirect();
+
+        $character = Character::query()
+            ->where('user_id', $user->id)
+            ->where('name', 'Unicode Save')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertSame('Große Pflicht', (string) $character->concept);
+        $this->assertSame('Schlüsselbund', (string) $character->world_connection);
+        $this->assertSame('Größer Plan', (string) $character->gm_secret);
+        $this->assertSame('Tür bleibt offen', (string) $character->gm_note);
+        $this->assertSame(['Schlüsselblick'], $character->advantages);
+        $this->assertSame(['Grössenwahn'], $character->disadvantages);
+        $this->assertSame('Schlüssel', (string) data_get($character->inventory, '0.name'));
+        $this->assertSame('Schlüsselklinge', (string) data_get($character->weapons, '0.name'));
+        $this->assertSame('Stählerner Mantel', (string) data_get($character->armors, '0.name'));
+    }
+
     public function test_real_world_beginner_must_use_mensch_species(): void
     {
         $user = User::factory()->create();

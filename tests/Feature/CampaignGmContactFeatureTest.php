@@ -54,6 +54,27 @@ class CampaignGmContactFeatureTest extends TestCase
             ->assertDontSee('P2-Fremd-Thread');
     }
 
+    public function test_gm_contact_modal_uses_high_layer_classes_and_scrollable_overlay(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => false,
+            'status' => 'active',
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
+
+        $this->actingAs($player)
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertOk()
+            ->assertSee('fixed inset-0 z-[1000]', false)
+            ->assertSee('overflow-y-auto', false)
+            ->assertSee('relative z-[1001] w-full max-w-2xl', false);
+    }
+
     public function test_other_players_cannot_view_foreign_threads(): void
     {
         $owner = User::factory()->gm()->create();

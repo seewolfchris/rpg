@@ -4,6 +4,8 @@
 
 @section('content')
     @php
+        $textNormalizer = app(\App\Support\Text\UnicodeEscapeNormalizer::class);
+        $normalizeVisible = static fn (?string $value): string => $textNormalizer->normalizeVisibleText($value);
         $sheet = (array) config('character_sheet', []);
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
         $statusConfig = (array) config('characters.statuses', []);
@@ -16,10 +18,10 @@
         $speciesLabel = (string) data_get($sheet, 'species.'.$character->species.'.label', $character->species ?: '-');
         $callingLabel = (string) data_get($sheet, 'callings.'.$character->calling.'.label', $character->calling ?: '-');
         $inventoryEntries = collect(is_array($character->inventory) ? $character->inventory : [])
-            ->map(static function ($entry): array {
+            ->map(function ($entry) use ($normalizeVisible): array {
                 if (is_string($entry)) {
                     return [
-                        'name' => trim($entry),
+                        'name' => trim($normalizeVisible($entry)),
                         'quantity' => 1,
                         'equipped' => false,
                     ];
@@ -34,14 +36,20 @@
                 }
 
                 return [
-                    'name' => trim((string) ($entry['name'] ?? $entry['item'] ?? '')),
+                    'name' => trim($normalizeVisible((string) ($entry['name'] ?? $entry['item'] ?? ''))),
                     'quantity' => max(1, min(999, (int) ($entry['quantity'] ?? $entry['qty'] ?? 1))),
                     'equipped' => (bool) ($entry['equipped'] ?? false),
                 ];
             })
             ->filter(static fn (array $entry): bool => $entry['name'] !== '')
             ->values();
-        $weaponEntries = collect($character->normalizedWeapons());
+        $weaponEntries = collect($character->normalizedWeapons())
+            ->map(fn (array $weapon): array => [
+                ...$weapon,
+                'name' => trim($normalizeVisible((string) ($weapon['name'] ?? ''))),
+            ])
+            ->filter(static fn (array $weapon): bool => ($weapon['name'] ?? '') !== '')
+            ->values();
         $activeWeaponIndex = null;
         foreach ($weaponEntries as $weaponIndex => $weaponEntry) {
             if ((bool) ($weaponEntry['equipped'] ?? false)) {
@@ -52,12 +60,25 @@
         if ($activeWeaponIndex === null && $weaponEntries->isNotEmpty()) {
             $activeWeaponIndex = 0;
         }
-        $armorEntries = collect($character->normalizedArmors());
+        $armorEntries = collect($character->normalizedArmors())
+            ->map(fn (array $armor): array => [
+                ...$armor,
+                'name' => trim($normalizeVisible((string) ($armor['name'] ?? ''))),
+            ])
+            ->filter(static fn (array $armor): bool => ($armor['name'] ?? '') !== '')
+            ->values();
         $equippedArmorEntries = $armorEntries->where('equipped', true);
         $effectiveArmorEntries = $equippedArmorEntries->isNotEmpty() ? $equippedArmorEntries->values() : $armorEntries;
         $totalArmorProtection = $effectiveArmorEntries
             ->sum(static fn (array $armor): int => max(0, (int) ($armor['protection'] ?? 0)));
-        $inventoryLogs = isset($inventoryLogs) ? collect($inventoryLogs) : collect();
+        $inventoryLogs = isset($inventoryLogs)
+            ? collect($inventoryLogs)->map(function ($logEntry) use ($normalizeVisible) {
+                $logEntry->item_name = $normalizeVisible((string) ($logEntry->item_name ?? ''));
+                $logEntry->note = $normalizeVisible((string) ($logEntry->note ?? ''));
+
+                return $logEntry;
+            })
+            : collect();
         $progressionState = is_array($progressionState ?? null) ? $progressionState : [];
         $progressionEvents = isset($progressionEvents) ? collect($progressionEvents) : collect();
         $currentLevel = max(1, (int) ($progressionState['level'] ?? 1));
@@ -67,6 +88,9 @@
         $progressPercent = (float) ($progressionState['progress_percent'] ?? 0);
         $attributePointsUnspent = max(0, (int) ($progressionState['attribute_points_unspent'] ?? 0));
         $canSpendAttributePoints = auth()->id() === (int) $character->user_id || auth()->user()->isGmOrAdmin();
+        $playerName = trim((string) data_get($character, 'user.name', ''));
+        $playerEmail = trim((string) data_get($character, 'user.email', ''));
+        $showPlayerEmail = auth()->user()->isAdmin() || auth()->user()->hasAnyCoGmCampaignAccess();
         $errorKeys = collect($errors->getMessages())->keys();
         $hasAllocationErrors = $errorKeys->contains(
             static fn (string $key): bool => str_starts_with($key, 'attribute_allocations')
@@ -81,6 +105,12 @@
                 <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">{{ $character->name }}</h1>
                 @if ($character->epithet)
                     <p class="mt-1 break-words text-lg text-amber-300/90">{{ $character->epithet }}</p>
+                @endif
+                <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-400">
+                    Spieler: <span class="text-stone-200">{{ $playerName !== '' ? $playerName : 'Unbekannt' }}</span>
+                </p>
+                @if ($showPlayerEmail && $playerEmail !== '')
+                    <p class="text-[0.65rem] text-stone-500">{{ $playerEmail }}</p>
                 @endif
             </div>
 
@@ -256,7 +286,7 @@
                         @if (is_array($character->advantages) && count($character->advantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-emerald-100/90">
                                 @foreach ($character->advantages as $advantage)
-                                    <li class="break-words">- {{ $advantage }}</li>
+                                    <li class="break-words">- {{ $normalizeVisible((string) $advantage) }}</li>
                                 @endforeach
                             </ul>
                         @else
@@ -269,7 +299,7 @@
                         @if (is_array($character->disadvantages) && count($character->disadvantages) > 0)
                             <ul class="mt-2 space-y-1 text-sm text-red-100/90">
                                 @foreach ($character->disadvantages as $disadvantage)
-                                    <li class="break-words">- {{ $disadvantage }}</li>
+                                    <li class="break-words">- {{ $normalizeVisible((string) $disadvantage) }}</li>
                                 @endforeach
                             </ul>
                         @else
@@ -278,7 +308,7 @@
                     </article>
                 </section>
 
-                <section class="grid gap-3 lg:grid-cols-3">
+                <section class="grid gap-3 xl:grid-cols-2">
                     <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/10 p-3">
                         <h4 class="text-xs font-semibold uppercase tracking-widest text-emerald-200">Inventar</h4>
                         @if ($inventoryEntries->isNotEmpty())

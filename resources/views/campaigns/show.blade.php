@@ -294,31 +294,90 @@
                     Pending Invitations sind getrennt von aktiven Memberships.
                 </p>
 
-                <form method="POST" action="{{ route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
-                    @csrf
-                    <input
-                        type="email"
-                        name="email"
-                        value="{{ old('email') }}"
-                        required
-                        placeholder="spieler@beispiel.de"
-                        class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    >
-                    <select
-                        name="role"
-                        class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    >
-                        <option value="player" @selected(old('role') === 'player')>Player</option>
-                        <option value="trusted_player" @selected(old('role') === 'trusted_player')>Trusted Player</option>
-                        <option value="co_gm" @selected(old('role') === 'co_gm')>Co-GM</option>
-                    </select>
-                    <button
-                        type="submit"
-                        class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
-                    >
-                        Einladen
-                    </button>
-                </form>
+                <section class="mt-5 rounded-xl border border-stone-800 bg-neutral-900/45 p-4">
+                    <h3 class="font-heading text-lg text-stone-100">Registrierte Spieler einladen</h3>
+
+                    @if ($registeredInviteCandidates->isEmpty())
+                        <p class="mt-3 text-sm text-stone-400">Keine registrierten User verfügbar, die eingeladen werden können.</p>
+                    @else
+                        <form method="POST" action="{{ route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-3 space-y-3">
+                            @csrf
+                            @php($selectedUserIds = collect(old('user_ids', []))->map(static fn ($value) => (int) $value)->filter(static fn (int $value): bool => $value > 0)->all())
+                            <div class="max-h-72 space-y-2 overflow-y-auto pr-1">
+                                @foreach ($registeredInviteCandidates as $candidate)
+                                    <label class="flex items-start gap-3 rounded border border-stone-700/80 bg-black/25 px-3 py-2 text-sm text-stone-200">
+                                        <input
+                                            type="checkbox"
+                                            name="user_ids[]"
+                                            value="{{ $candidate->id }}"
+                                            @checked(in_array((int) $candidate->id, $selectedUserIds, true))
+                                            class="mt-0.5 h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                                        >
+                                        <span class="min-w-0">
+                                            <span class="block break-words">{{ $candidate->name }}</span>
+                                            <span class="block break-words text-[0.7rem] uppercase tracking-[0.08em] text-stone-500">{{ $candidate->email }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            <div class="grid gap-3 md:grid-cols-[auto_1fr] md:items-center">
+                                <label for="registered-role" class="text-xs uppercase tracking-[0.08em] text-stone-400">Rolle</label>
+                                <select
+                                    id="registered-role"
+                                    name="role"
+                                    class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                                >
+                                    <option value="player" @selected(old('role', 'player') === 'player')>Player</option>
+                                    <option value="trusted_player" @selected(old('role', 'player') === 'trusted_player')>Trusted Player</option>
+                                    <option value="co_gm" @selected(old('role', 'player') === 'co_gm')>Co-GM</option>
+                                </select>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
+                            >
+                                Ausgewählte einladen
+                            </button>
+                        </form>
+                    @endif
+                </section>
+
+                <section class="mt-4 rounded-xl border border-stone-800 bg-neutral-900/45 p-4">
+                    <h3 class="font-heading text-lg text-stone-100">Per E-Mail einladen</h3>
+
+                    <form method="POST" action="{{ route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]) }}" class="mt-3 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+                        @csrf
+                        <input
+                            type="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="spieler@beispiel.de"
+                            class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        >
+                        <select
+                            name="role"
+                            class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+                        >
+                            <option value="player" @selected(old('role', 'player') === 'player')>Player</option>
+                            <option value="trusted_player" @selected(old('role', 'player') === 'trusted_player')>Trusted Player</option>
+                            <option value="co_gm" @selected(old('role', 'player') === 'co_gm')>Co-GM</option>
+                        </select>
+                        <button
+                            type="submit"
+                            class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
+                        >
+                            Einladen
+                        </button>
+                    </form>
+                </section>
+                @error('user_ids')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+                @error('user_ids.*')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
                 @error('email')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
                 @enderror

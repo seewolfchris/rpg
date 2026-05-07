@@ -24,11 +24,13 @@ class CampaignMembershipManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Aktive Teilnehmer')
             ->assertSee('Rolle setzen')
+            ->assertSee('Registrierte Spieler einladen')
             ->assertSee((string) $playerMembership->user->email);
 
         $this->actingAs($gmMember)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
+            ->assertSee('Registrierte Spieler einladen')
             ->assertDontSee('Rolle setzen');
     }
 
@@ -158,6 +160,8 @@ class CampaignMembershipManagementTest extends TestCase
             ->assertOk()
             ->assertSee('Aktive Teilnehmer')
             ->assertSee('Offene Einladungen')
+            ->assertSee('Per E-Mail einladen')
+            ->assertSee('Registrierte Spieler einladen')
             ->assertSee((string) $playerMembership->user->email)
             ->assertSee((string) $pendingInvitee->email);
 

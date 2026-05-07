@@ -12,6 +12,7 @@ use App\Http\Requests\Campaign\StoreCampaignRequest;
 use App\Http\Requests\Campaign\UpdateCampaignRequest;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\User;
 use App\Models\World;
 use App\Support\Navigation\SafeReturnUrl;
 use Illuminate\Http\RedirectResponse;
@@ -149,7 +150,8 @@ class CampaignController extends Controller
             ->values();
 
         $pendingInvitations = collect();
-        $canManageInvitations = $campaign->isOwnedBy($user);
+        $registeredInviteCandidates = collect();
+        $canManageInvitations = $campaign->canManageCampaign($user);
         $canManageMembershipRoles = $campaign->isOwnedBy($user);
 
         if ($canManageInvitations) {
@@ -157,6 +159,30 @@ class CampaignController extends Controller
                 ->with(['user', 'inviter'])
                 ->where('status', CampaignInvitation::STATUS_PENDING)
                 ->latest('created_at')
+                ->get();
+
+            $membershipUserIds = $campaign->memberships()
+                ->pluck('user_id')
+                ->map(static fn ($userId): int => (int) $userId);
+            $pendingInvitationUserIds = $pendingInvitations
+                ->pluck('user_id')
+                ->map(static fn ($userId): int => (int) $userId);
+
+            $excludedUserIds = $membershipUserIds
+                ->merge($pendingInvitationUserIds)
+                ->push((int) $campaign->owner_id)
+                ->filter(static fn (int $userId): bool => $userId > 0)
+                ->unique()
+                ->values();
+
+            $registeredInviteCandidates = User::query()
+                ->select(['id', 'name', 'email'])
+                ->when(
+                    $excludedUserIds->isNotEmpty(),
+                    fn ($query) => $query->whereNotIn('id', $excludedUserIds->all()),
+                )
+                ->orderByRaw('LOWER(name)')
+                ->orderBy('email')
                 ->get();
         }
 
@@ -185,6 +211,7 @@ class CampaignController extends Controller
             'memberships',
             'pendingInvitations',
             'canManageInvitations',
+            'registeredInviteCandidates',
             'canManageMembershipRoles',
             'canManageCampaign',
             'gmContactPanelData',

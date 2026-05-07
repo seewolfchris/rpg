@@ -803,7 +803,7 @@
             </div>
         </section>
 
-        <section class="grid gap-6 xl:grid-cols-3">
+        <section class="space-y-6">
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <div class="flex items-center justify-between gap-3">
                     <div>

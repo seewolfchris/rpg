@@ -27,10 +27,10 @@
                 <div
                     x-show="open"
                     x-cloak
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+                    class="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-6 sm:items-center"
                     @keydown.escape.window="open = false"
                 >
-                    <div class="w-full max-w-2xl rounded-xl border border-stone-700 bg-neutral-900 p-5 shadow-2xl">
+                    <div class="relative z-[1001] w-full max-w-2xl rounded-xl border border-stone-700 bg-neutral-900 p-5 shadow-2xl">
                         <div class="flex items-start justify-between gap-3">
                             <h3 class="font-heading text-xl text-stone-100">Neuer SL-Kontakt</h3>
                             <button

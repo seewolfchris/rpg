@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\CharacterSheetResolver;
+use App\Support\Text\UnicodeEscapeNormalizer;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -536,7 +537,7 @@ class Character extends Model
     private function normalizeWeaponEntry(mixed $entry): ?array
     {
         if (is_string($entry)) {
-            $name = trim($entry);
+            $name = trim($this->normalizeVisibleText($entry));
             if ($name === '') {
                 return null;
             }
@@ -554,7 +555,7 @@ class Character extends Model
             return null;
         }
 
-        $name = trim((string) Arr::get($entry, 'name', Arr::get($entry, 'item', '')));
+        $name = trim($this->normalizeVisibleText((string) Arr::get($entry, 'name', Arr::get($entry, 'item', ''))));
         if ($name === '') {
             return null;
         }
@@ -578,7 +579,7 @@ class Character extends Model
     private function normalizeArmorEntry(mixed $entry): ?array
     {
         if (is_string($entry)) {
-            $name = trim($entry);
+            $name = trim($this->normalizeVisibleText($entry));
             if ($name === '') {
                 return null;
             }
@@ -594,7 +595,7 @@ class Character extends Model
             return null;
         }
 
-        $name = trim((string) Arr::get($entry, 'name', Arr::get($entry, 'item', '')));
+        $name = trim($this->normalizeVisibleText((string) Arr::get($entry, 'name', Arr::get($entry, 'item', ''))));
         if ($name === '') {
             return null;
         }
@@ -613,5 +614,10 @@ class Character extends Model
         if (! in_array($key, $this->attributeKeys(), true)) {
             throw new InvalidArgumentException('Unknown character attribute key: '.$key);
         }
+    }
+
+    private function normalizeVisibleText(string $value): string
+    {
+        return app(UnicodeEscapeNormalizer::class)->normalizeVisibleText($value);
     }
 }

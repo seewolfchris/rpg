@@ -4,9 +4,14 @@ namespace App\Support;
 
 use App\Models\Character;
 use App\Models\CharacterInventoryLog;
+use App\Support\Text\UnicodeEscapeNormalizer;
 
 class CharacterInventoryService
 {
+    public function __construct(
+        private readonly UnicodeEscapeNormalizer $unicodeEscapeNormalizer,
+    ) {}
+
     /**
      * @return array<int, array{name: string, quantity: int, equipped: bool}>
      */
@@ -21,11 +26,11 @@ class CharacterInventoryService
 
         foreach ($entries as $entry) {
             if (is_string($entry)) {
-                $name = trim($entry);
+                $name = trim($this->unicodeEscapeNormalizer->normalizeVisibleText($entry));
                 $quantity = 1;
                 $equipped = false;
             } elseif (is_array($entry)) {
-                $name = trim((string) ($entry['name'] ?? $entry['item'] ?? ''));
+                $name = trim($this->unicodeEscapeNormalizer->normalizeVisibleText((string) ($entry['name'] ?? $entry['item'] ?? '')));
                 $rawQuantity = $entry['quantity'] ?? $entry['qty'] ?? 1;
                 $quantity = is_numeric($rawQuantity) ? (int) $rawQuantity : 1;
                 $equipped = (bool) ($entry['equipped'] ?? false);
@@ -71,7 +76,7 @@ class CharacterInventoryService
     public function add(array $inventory, string $name, int $quantity = 1, bool $equipped = false): array
     {
         $current = $this->normalize($inventory);
-        $normalizedName = trim($name);
+        $normalizedName = trim($this->unicodeEscapeNormalizer->normalizeVisibleText($name));
         if ($normalizedName === '') {
             return $current;
         }
@@ -106,7 +111,7 @@ class CharacterInventoryService
     public function remove(array $inventory, string $name, int $quantity = 1): array
     {
         $current = $this->normalize($inventory);
-        $normalizedName = trim($name);
+        $normalizedName = trim($this->unicodeEscapeNormalizer->normalizeVisibleText($name));
         if ($normalizedName === '') {
             return [
                 'inventory' => $current,
@@ -221,7 +226,7 @@ class CharacterInventoryService
         }
 
         foreach ($operations as $operation) {
-            $itemName = trim((string) ($operation['item_name'] ?? ''));
+            $itemName = trim($this->unicodeEscapeNormalizer->normalizeVisibleText((string) ($operation['item_name'] ?? '')));
             if ($itemName === '') {
                 continue;
             }

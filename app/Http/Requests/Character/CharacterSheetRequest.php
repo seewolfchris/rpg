@@ -5,6 +5,7 @@ namespace App\Http\Requests\Character;
 use App\Models\World;
 use App\Support\CharacterInventoryService;
 use App\Support\CharacterSheetResolver;
+use App\Support\Text\UnicodeEscapeNormalizer;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
@@ -152,6 +153,9 @@ abstract class CharacterSheetRequest extends FormRequest
     {
         $merged = [
             'world_id' => $this->resolveInputWorldId(),
+            'name' => trim($this->normalizeVisibleText((string) $this->input('name', ''))),
+            'epithet' => trim($this->normalizeVisibleText((string) $this->input('epithet', ''))),
+            'bio' => trim($this->normalizeVisibleText((string) $this->input('bio', ''))),
             'status' => Str::lower(trim((string) $this->input('status', (string) config('characters.default_status', 'active')))),
             'species' => Str::lower(trim((string) $this->input('species', ''))),
             'calling' => Str::lower(trim((string) $this->input('calling', ''))),
@@ -162,17 +166,17 @@ abstract class CharacterSheetRequest extends FormRequest
             'weapons' => $this->normalizeWeaponInput($this->input('weapons')),
             'weapons_equipped_index' => $this->filled('weapons_equipped_index') ? (int) $this->input('weapons_equipped_index') : null,
             'armors' => $this->normalizeArmorInput($this->input('armors')),
-            'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
-            'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
-            'concept' => $this->nullIfEmpty((string) $this->input('concept', '')),
-            'gm_secret' => $this->nullIfEmpty((string) $this->input('gm_secret', '')),
-            'world_connection' => $this->nullIfEmpty((string) $this->input('world_connection', '')),
-            'gm_note' => trim((string) $this->input('gm_note', '')),
+            'calling_custom_name' => trim($this->normalizeVisibleText((string) $this->input('calling_custom_name', ''))),
+            'calling_custom_description' => trim($this->normalizeVisibleText((string) $this->input('calling_custom_description', ''))),
+            'concept' => $this->nullIfEmpty($this->normalizeVisibleText((string) $this->input('concept', ''))),
+            'gm_secret' => $this->nullIfEmpty($this->normalizeVisibleText((string) $this->input('gm_secret', ''))),
+            'world_connection' => $this->nullIfEmpty($this->normalizeVisibleText((string) $this->input('world_connection', ''))),
+            'gm_note' => trim($this->normalizeVisibleText((string) $this->input('gm_note', ''))),
         ];
 
         foreach ($this->attributeKeys() as $key) {
             $merged[$key] = (int) $this->input($key);
-            $merged[$key.'_note'] = trim((string) $this->input($key.'_note', ''));
+            $merged[$key.'_note'] = trim($this->normalizeVisibleText((string) $this->input($key.'_note', '')));
         }
 
         // Rückwärtskompatibilität: Falls nur alte Werte geliefert werden, in Prozent umrechnen.
@@ -290,7 +294,7 @@ abstract class CharacterSheetRequest extends FormRequest
     {
         if (is_array($input)) {
             return array_values(array_filter(array_map(
-                fn ($value): string => trim((string) $value),
+                fn ($value): string => trim($this->normalizeVisibleText((string) $value)),
                 $input
             ), fn (string $value): bool => $value !== ''));
         }
@@ -299,7 +303,7 @@ abstract class CharacterSheetRequest extends FormRequest
             $parts = preg_split('/[\r\n,]+/', $input) ?: [];
 
             return array_values(array_filter(array_map(
-                fn (string $value): string => trim($value),
+                fn (string $value): string => trim($this->normalizeVisibleText($value)),
                 $parts
             ), fn (string $value): bool => $value !== ''));
         }
@@ -342,7 +346,7 @@ abstract class CharacterSheetRequest extends FormRequest
                 continue;
             }
 
-            $name = trim((string) ($entry['name'] ?? ''));
+            $name = trim($this->normalizeVisibleText((string) ($entry['name'] ?? '')));
             $isEquipped = (bool) ($entry['equipped'] ?? false);
 
             $rawAttack = $entry['attack'] ?? ($entry['ang'] ?? null);
@@ -418,11 +422,11 @@ abstract class CharacterSheetRequest extends FormRequest
 
         foreach ($input as $entry) {
             if (is_string($entry)) {
-                $name = trim($entry);
+                $name = trim($this->normalizeVisibleText($entry));
                 $protection = 0;
                 $equipped = false;
             } elseif (is_array($entry)) {
-                $name = trim((string) ($entry['name'] ?? $entry['item'] ?? ''));
+                $name = trim($this->normalizeVisibleText((string) ($entry['name'] ?? $entry['item'] ?? '')));
                 $protection = (int) ($entry['protection'] ?? $entry['rs'] ?? 0);
                 $equipped = (bool) ($entry['equipped'] ?? false);
             } else {
@@ -479,6 +483,11 @@ abstract class CharacterSheetRequest extends FormRequest
         $trimmed = trim($value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    protected function normalizeVisibleText(string $value): string
+    {
+        return app(UnicodeEscapeNormalizer::class)->normalizeVisibleText($value);
     }
 
     protected function convertLegacyValueToPercent(int $legacyValue): int

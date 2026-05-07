@@ -15,6 +15,8 @@ class BuildCharacterShowDataAction
 
     public function execute(Character $character): CharacterShowData
     {
+        $character->loadMissing('user');
+
         $inventoryLogs = $character->inventoryLogs()
             ->with('actor:id,name')
             ->limit(25)

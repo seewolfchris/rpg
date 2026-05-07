@@ -2,6 +2,8 @@
     $statusOptions = (array) config('characters.statuses', []);
     $canManageCharacter = auth()->user()?->can('update', $character) ?? false;
     $canInlineEdit = $canManageCharacter;
+    $textNormalizer = app(\App\Support\Text\UnicodeEscapeNormalizer::class);
+    $normalizeVisible = static fn (?string $value): string => $textNormalizer->normalizeVisibleText($value);
     $hasVisibleNarrativeMeta = $character->concept
         || $character->world_connection
         || ($canManageCharacter && ($character->gm_secret || $character->gm_note));
@@ -31,22 +33,22 @@
 
         <section class="mt-4">
             <h3 class="text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Biografie</h3>
-            <div class="character-manuscript-text mt-2 whitespace-pre-line leading-relaxed text-stone-300">{{ $character->bio }}</div>
+            <div class="character-manuscript-text mt-2 whitespace-pre-line leading-relaxed text-stone-300">{{ $normalizeVisible((string) $character->bio) }}</div>
         </section>
 
         @if ($hasVisibleNarrativeMeta)
             <section class="mt-4 space-y-2">
                 @if ($character->concept)
-                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Konzept:</span> {{ $character->concept }}</p>
+                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Konzept:</span> {{ $normalizeVisible((string) $character->concept) }}</p>
                 @endif
                 @if ($character->world_connection)
-                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Weltbezug:</span> {{ $character->world_connection }}</p>
+                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Weltbezug:</span> {{ $normalizeVisible((string) $character->world_connection) }}</p>
                 @endif
                 @if ($canManageCharacter && $character->gm_secret)
-                    <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (GM):</span> {{ $character->gm_secret }}</p>
+                    <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (GM):</span> {{ $normalizeVisible((string) $character->gm_secret) }}</p>
                 @endif
                 @if ($canManageCharacter && $character->gm_note)
-                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">GM-Notiz:</span> {{ $character->gm_note }}</p>
+                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">GM-Notiz:</span> {{ $normalizeVisible((string) $character->gm_note) }}</p>
                 @endif
             </section>
         @endif
@@ -74,7 +76,7 @@
                         type="text"
                         name="epithet"
                         maxlength="120"
-                        value="{{ old('epithet', (string) $character->epithet) }}"
+                        value="{{ old('epithet', $normalizeVisible((string) $character->epithet)) }}"
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                 </div>
@@ -102,7 +104,7 @@
                     rows="6"
                     maxlength="12000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >{{ old('bio', (string) $character->bio) }}</textarea>
+                >{{ old('bio', $normalizeVisible((string) $character->bio)) }}</textarea>
             </div>
 
             <div>
@@ -113,7 +115,7 @@
                     rows="2"
                     maxlength="180"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >{{ old('concept', (string) $character->concept) }}</textarea>
+                >{{ old('concept', $normalizeVisible((string) $character->concept)) }}</textarea>
             </div>
 
             <div>
@@ -124,7 +126,7 @@
                     rows="3"
                     maxlength="2000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >{{ old('world_connection', (string) $character->world_connection) }}</textarea>
+                >{{ old('world_connection', $normalizeVisible((string) $character->world_connection)) }}</textarea>
             </div>
 
             <div>
@@ -135,7 +137,7 @@
                     rows="3"
                     maxlength="3000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >{{ old('gm_secret', (string) $character->gm_secret) }}</textarea>
+                >{{ old('gm_secret', $normalizeVisible((string) $character->gm_secret)) }}</textarea>
             </div>
 
             <div>
@@ -146,7 +148,7 @@
                     rows="3"
                     maxlength="2000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                >{{ old('gm_note', (string) $character->gm_note) }}</textarea>
+                >{{ old('gm_note', $normalizeVisible((string) $character->gm_note)) }}</textarea>
             </div>
 
             @if ($errors->any())

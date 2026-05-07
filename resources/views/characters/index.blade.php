@@ -7,6 +7,7 @@
         $returnTo = request()->getRequestUri();
         $sheet = (array) config('character_sheet', []);
         $isGmView = auth()->user()->isGmOrAdmin();
+        $showPlayerEmail = auth()->user()->isAdmin() || auth()->user()->hasAnyCoGmCampaignAccess();
         $attributeMeta = (array) data_get($sheet, 'attributes', []);
         $legacyMap = (array) data_get($sheet, 'legacy_column_map', []);
         $characterStatuses = (array) ($characterStatuses ?? config('characters.statuses', []));
@@ -126,8 +127,13 @@
                                 @if ($character->epithet)
                                     <p class="break-words text-sm leading-relaxed text-amber-300/90">{{ $character->epithet }}</p>
                                 @endif
-                                @if ($isGmView && $character->relationLoaded('user') && $character->user)
-                                    <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">Spieler: <span class="text-stone-200">{{ $character->user->name }}</span></p>
+                                @php($playerName = trim((string) data_get($character, 'user.name', '')))
+                                @php($playerEmail = trim((string) data_get($character, 'user.email', '')))
+                                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-400">
+                                    Spieler: <span class="text-stone-200">{{ $playerName !== '' ? $playerName : 'Unbekannt' }}</span>
+                                </p>
+                                @if ($showPlayerEmail && $playerEmail !== '')
+                                    <p class="text-[0.65rem] text-stone-500">{{ $playerEmail }}</p>
                                 @endif
                             </div>
 

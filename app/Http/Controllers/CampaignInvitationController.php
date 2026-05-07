@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Campaign\DeleteCampaignInvitationAction;
+use App\Actions\Campaign\InviteRegisteredCampaignUsersAction;
 use App\Actions\Campaign\RespondToCampaignInvitationAction;
 use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
@@ -13,6 +14,7 @@ use App\Models\CampaignInvitation;
 use App\Models\User;
 use App\Models\World;
 use App\Notifications\CampaignInvitationNotification;
+use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,6 +26,7 @@ class CampaignInvitationController extends Controller
     private const INVITATION_STORE_STATUS = 'Falls ein passender Account existiert, wurde die Einladung verarbeitet.';
 
     public function __construct(
+        private readonly InviteRegisteredCampaignUsersAction $inviteRegisteredCampaignUsersAction,
         private readonly UpsertCampaignInvitationAction $upsertCampaignInvitationAction,
         private readonly RespondToCampaignInvitationAction $respondToCampaignInvitationAction,
         private readonly DeleteCampaignInvitationAction $deleteCampaignInvitationAction,
@@ -76,6 +79,55 @@ class CampaignInvitationController extends Controller
             abort(403);
         }
 
+        $requestedRole = (string) $request->validated('role');
+        $validatedUserIds = $request->validated('user_ids');
+        if (! is_array($validatedUserIds)) {
+            $validatedUserIds = [];
+        }
+
+        /** @var list<int> $selectedUserIds */
+        $selectedUserIds = collect($validatedUserIds)
+            ->map(static fn (mixed $userId): int => (int) $userId)
+            ->filter(static fn (int $userId): bool => $userId > 0)
+            ->values()
+            ->all();
+
+        if ($selectedUserIds !== []) {
+            $invalidUserIds = $this->invalidInviteeUserIds(
+                campaign: $campaign,
+                selectedUserIds: collect($selectedUserIds),
+            );
+
+            if ($invalidUserIds !== []) {
+                return back()->withErrors([
+                    'user_ids' => 'Mindestens ein ausgewählter User ist nicht einladbar.',
+                ])->withInput();
+            }
+
+            try {
+                $pendingNotifications = $this->inviteRegisteredCampaignUsersAction->execute(
+                    campaign: $campaign,
+                    inviter: $user,
+                    selectedUserIds: $selectedUserIds,
+                    requestedRole: $requestedRole,
+                );
+            } catch (\RuntimeException) {
+                return back()->withErrors([
+                    'user_ids' => 'Mindestens ein ausgewählter User ist nicht mehr verfügbar.',
+                ])->withInput();
+            }
+
+            foreach ($pendingNotifications as $notificationPayload) {
+                $invitation = $notificationPayload['invitation'];
+                $invitation->loadMissing(['campaign.owner', 'inviter']);
+                $notificationPayload['invitee']->notify(new CampaignInvitationNotification($invitation));
+            }
+
+            return redirect()
+                ->route('campaigns.show', ['world' => $world, 'campaign' => $campaign])
+                ->with('status', self::INVITATION_STORE_STATUS);
+        }
+
         $invitee = User::query()
             ->where('email', $request->validated('email'))
             ->first();
@@ -91,8 +143,6 @@ class CampaignInvitationController extends Controller
                 'email' => 'Der Kampagnenleiter benötigt keine Einladung.',
             ]);
         }
-
-        $requestedRole = (string) $request->validated('role');
 
         $result = $this->upsertCampaignInvitationAction->execute(
             new UpsertCampaignInvitationInput(
@@ -243,11 +293,50 @@ class CampaignInvitationController extends Controller
 
     private function canManageInvitations(User $user, Campaign $campaign): bool
     {
-        return $campaign->isOwnedBy($user);
+        return $campaign->canManageCampaign($user);
     }
 
     private function ensureInvitationBelongsToCampaign(Campaign $campaign, CampaignInvitation $invitation): void
     {
         abort_unless((int) $invitation->campaign_id === (int) $campaign->id, 404);
+    }
+
+    /**
+     * @param  Collection<int, int>  $selectedUserIds
+     * @return list<int>
+     */
+    private function invalidInviteeUserIds(Campaign $campaign, Collection $selectedUserIds): array
+    {
+        $candidateIds = $selectedUserIds
+            ->map(static fn (int $userId): int => (int) $userId)
+            ->filter(static fn (int $userId): bool => $userId > 0)
+            ->unique()
+            ->values();
+
+        if ($candidateIds->isEmpty()) {
+            return [];
+        }
+
+        $membershipIds = $campaign->memberships()
+            ->whereIn('user_id', $candidateIds->all())
+            ->pluck('user_id')
+            ->map(static fn ($userId): int => (int) $userId);
+
+        $pendingInvitationIds = $campaign->invitations()
+            ->where('status', CampaignInvitation::STATUS_PENDING)
+            ->whereIn('user_id', $candidateIds->all())
+            ->pluck('user_id')
+            ->map(static fn ($userId): int => (int) $userId);
+
+        /** @var list<int> $invalidUserIds */
+        $invalidUserIds = $candidateIds
+            ->filter(fn (int $userId): bool => $userId === (int) $campaign->owner_id
+                || $membershipIds->contains($userId)
+                || $pendingInvitationIds->contains($userId))
+            ->unique()
+            ->values()
+            ->all();
+
+        return $invalidUserIds;
     }
 }

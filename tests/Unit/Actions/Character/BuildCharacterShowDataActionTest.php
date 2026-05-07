@@ -91,6 +91,7 @@ class BuildCharacterShowDataActionTest extends TestCase
         $result = app(BuildCharacterShowDataAction::class)->execute($character);
 
         $this->assertSame((int) $character->id, (int) $result->character->id);
+        $this->assertTrue($result->character->relationLoaded('user'));
         $this->assertCount(25, $result->inventoryLogs);
         $this->assertCount(20, $result->progressionEvents);
         $this->assertSame($expectedProgressionState, $result->progressionState);
