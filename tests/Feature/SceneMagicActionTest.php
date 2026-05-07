@@ -10,6 +10,7 @@ use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Models\User;
 use App\Models\World;
 use App\Support\ProbeRoller;
@@ -476,6 +477,319 @@ class SceneMagicActionTest extends TestCase
         $this->assertStringContainsString('LE: 10 / 20', (string) $magicPost->content);
     }
 
+    public function test_magic_action_can_use_scene_conflict_actors_and_updates_npc_scene_values(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcCaster = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Tempelhexe',
+            'ae_current' => 10,
+            'ae_max' => 10,
+            'spell_value' => 55,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenräuber I',
+            'le_current' => 20,
+            'le_max' => 20,
+            'ae_current' => 12,
+            'ae_max' => 12,
+            'defense_value' => 30,
+        ]);
+
+        $this->bindProbeRoller([31]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $npcCaster->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'spell_name' => 'Flammenstoß',
+                'spell_target_value' => null,
+                'ae_cost' => 4,
+                'effect_type' => 'le_damage',
+                'effect_amount' => 9,
+                'defense_target_value' => null,
+            ]))
+            ->assertRedirect();
+
+        $npcCaster->refresh();
+        $npcTarget->refresh();
+        $this->assertSame(6, (int) $npcCaster->ae_current);
+        $this->assertSame(11, (int) $npcTarget->le_current);
+        $this->assertSame(12, (int) $npcTarget->ae_current);
+
+        /** @var Post $firstPost */
+        $firstPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Magieabwehr: Wurf 50 + Mod 0 = 50 / Ziel 30 → misslungen', (string) $firstPost->content);
+
+        $this->bindProbeRoller([24]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $npcCaster->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'spell_name' => 'Leerenhauch',
+                'spell_target_value' => null,
+                'ae_cost' => 2,
+                'effect_type' => 'ae_damage',
+                'effect_amount' => 4,
+                'defense_target_value' => null,
+            ]))
+            ->assertRedirect();
+
+        $npcCaster->refresh();
+        $npcTarget->refresh();
+        $this->assertSame(4, (int) $npcCaster->ae_current);
+        $this->assertSame(11, (int) $npcTarget->le_current);
+        $this->assertSame(8, (int) $npcTarget->ae_current);
+    }
+
+    public function test_explicit_zero_values_override_magic_conflict_actor_defaults(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcCaster = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Nebelhexe',
+            'ae_current' => 10,
+            'ae_max' => 10,
+            'spell_value' => 55,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Wache',
+            'le_current' => 20,
+            'le_max' => 20,
+            'defense_value' => 30,
+        ]);
+
+        $this->bindProbeRoller([5]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $npcCaster->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'spell_name' => 'Nullstoß',
+                'spell_target_value' => 0,
+                'defense_label' => 'Magieabwehr',
+                'defense_target_value' => 0,
+                'ae_cost' => 3,
+                'effect_type' => 'le_damage',
+                'effect_amount' => 7,
+            ]),
+        )->assertRedirect();
+
+        $npcCaster->refresh();
+        $npcTarget->refresh();
+        $this->assertSame(7, (int) $npcCaster->ae_current);
+        $this->assertSame(20, (int) $npcTarget->le_current);
+
+        $magicPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Zauberwurf: Wurf 5 + Mod 0 = 5 / Ziel 0 → misslungen', (string) $magicPost->content);
+    }
+
+    public function test_explicit_zero_defense_target_overrides_magic_conflict_actor_default(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcCaster = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Nebelhexe',
+            'ae_current' => 10,
+            'ae_max' => 10,
+            'spell_value' => 55,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Wache',
+            'le_current' => 20,
+            'le_max' => 20,
+            'defense_value' => 30,
+        ]);
+
+        $this->bindProbeRoller([20, 10]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $npcCaster->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'spell_name' => 'Sengender Hauch',
+                'spell_target_value' => null,
+                'defense_label' => 'Magieabwehr',
+                'defense_target_value' => 0,
+                'ae_cost' => 2,
+                'effect_type' => 'le_damage',
+                'effect_amount' => 6,
+            ]),
+        )->assertRedirect();
+
+        $npcTarget->refresh();
+        $this->assertSame(14, (int) $npcTarget->le_current);
+
+        $magicPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Magieabwehr: Wurf 10 + Mod 0 = 10 / Ziel 0 → misslungen', (string) $magicPost->content);
+    }
+
+    public function test_cross_scene_conflict_actor_ids_are_rejected_for_magic_action(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $otherScene = Scene::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'created_by' => (int) $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $localActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Lokale Hexe',
+            'spell_value' => 55,
+            'ae_current' => 10,
+            'ae_max' => 10,
+        ]);
+        $foreignActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremde Hexe',
+            'spell_value' => 50,
+            'ae_current' => 10,
+            'ae_max' => 10,
+        ]);
+        $foreignTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremde Wache',
+            'le_current' => 20,
+            'le_max' => 20,
+        ]);
+
+        $actorResponse = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $foreignActor->id,
+                'target_type' => 'npc',
+                'target_name' => 'Wache',
+            ]));
+
+        $actorResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $actorResponse->assertSessionHasErrors(['actor_conflict_actor_id']);
+
+        $targetResponse = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $localActor->id,
+                'target_conflict_actor_id' => (int) $foreignTarget->id,
+                'target_type' => 'npc',
+                'target_name' => null,
+            ]));
+
+        $targetResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $targetResponse->assertSessionHasErrors(['target_conflict_actor_id']);
+        $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_character_conflict_actor_uses_character_as_source_of_truth_in_magic(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $targetUser = User::factory()->create();
+        $this->grantMembership($campaign, $targetUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $targetCharacter = $this->characterInCampaignWorld($targetUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'le_max' => 30,
+            'le_current' => 30,
+        ]);
+
+        $targetCharacterActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $targetCharacter->id,
+            'name' => 'Vaelis',
+            'le_current' => 30,
+            'le_max' => 30,
+        ]);
+
+        $npcCaster = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Tempelhexe',
+            'ae_current' => 10,
+            'ae_max' => 10,
+            'spell_value' => 55,
+        ]);
+
+        $this->bindProbeRoller([31]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->magicPayload([
+                'actor_conflict_actor_id' => (int) $npcCaster->id,
+                'target_conflict_actor_id' => (int) $targetCharacterActor->id,
+                'actor_type' => 'npc',
+                'target_type' => 'character',
+                'actor_name' => null,
+                'target_character_id' => null,
+                'spell_name' => 'Flammenstoß',
+                'spell_target_value' => null,
+                'ae_cost' => 3,
+                'effect_type' => 'le_damage',
+                'effect_amount' => 8,
+            ]),
+        )->assertRedirect();
+
+        $targetCharacter->refresh();
+        $targetCharacterActor->refresh();
+        $this->assertSame(22, (int) $targetCharacter->le_current);
+        $this->assertSame(30, (int) $targetCharacterActor->le_current);
+    }
+
     public function test_world_campaign_scene_guard_blocks_foreign_world_context(): void
     {
         config(['features.combat_tools_enabled' => true]);
@@ -523,10 +837,12 @@ class SceneMagicActionTest extends TestCase
     private function magicPayload(array $overrides = []): array
     {
         return array_merge([
+            'actor_conflict_actor_id' => null,
             'actor_type' => 'npc',
             'actor_name' => 'Hexer',
             'actor_ae_current' => null,
             'actor_ae_max' => null,
+            'target_conflict_actor_id' => null,
             'target_type' => 'npc',
             'target_name' => 'Wache',
             'target_le_current' => null,

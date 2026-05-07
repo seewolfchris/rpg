@@ -13,12 +13,14 @@ use App\Domain\Magic\Exceptions\MagicInvariantViolationException;
 use App\Domain\Magic\MagicResultPostRenderer;
 use App\Domain\Magic\MagicService;
 use App\Domain\Post\StorePostService;
+use App\Domain\SceneConflict\SceneConflictActorInputMapper;
+use App\Domain\SceneConflict\SceneConflictActorResultApplier;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Scene\StoreSceneMagicActionRequest;
 use App\Models\Campaign;
-use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Models\User;
 use App\Models\World;
 use App\Support\SensitiveFeatureGate;
@@ -33,6 +35,8 @@ class SceneMagicActionController extends Controller
         private readonly StorePostService $storePostService,
         private readonly MagicResultPostRenderer $magicResultPostRenderer,
         private readonly AttachMagicResultMetaAction $attachMagicResultMetaAction,
+        private readonly SceneConflictActorInputMapper $sceneConflictActorInputMapper,
+        private readonly SceneConflictActorResultApplier $sceneConflictActorResultApplier,
     ) {}
 
     public function store(
@@ -51,21 +55,37 @@ class SceneMagicActionController extends Controller
         $data = $request->validated();
 
         try {
+            $mappedActor = $this->sceneConflictActorInputMapper->mapMagicActor($scene, $data);
+            $mappedTarget = $this->sceneConflictActorInputMapper->mapMagicTarget($scene, $data);
+
+            /** @var MagicActor $magicActor */
+            $magicActor = $mappedActor['actor'];
+            /** @var MagicTarget $magicTarget */
+            $magicTarget = $mappedTarget['actor'];
+
             $magicResult = $this->magicService->resolveSingleAction(
                 new MagicActionInput(
                     campaign: $campaign,
                     scene: $scene,
-                    actor: $this->buildActor($data),
-                    target: $this->buildTarget($data),
+                    actor: $magicActor,
+                    target: $magicTarget,
                     spellName: (string) ($data['spell_name'] ?? ''),
-                    spellTargetValue: (int) ($data['spell_target_value'] ?? 0),
+                    spellTargetValue: $this->resolvedInt(
+                        primary: $data['spell_target_value'] ?? null,
+                        fallback: $mappedActor['defaults']['spell_target_value'] ?? null,
+                        minimum: 0,
+                        maximum: 100,
+                    ),
                     spellRollMode: (string) ($data['spell_roll_mode'] ?? 'normal'),
                     spellModifier: (int) ($data['spell_modifier'] ?? 0),
                     aeCost: (int) ($data['ae_cost'] ?? 0),
                     defenseLabel: $this->nullableString($data['defense_label'] ?? null),
-                    defenseTargetValue: array_key_exists('defense_target_value', $data) && $data['defense_target_value'] !== null
-                        ? (int) $data['defense_target_value']
-                        : null,
+                    defenseTargetValue: $this->resolvedNullableInt(
+                        primary: $data['defense_target_value'] ?? null,
+                        fallback: $mappedTarget['defaults']['defense_target_value'] ?? null,
+                        minimum: 0,
+                        maximum: 100,
+                    ),
                     defenseRollMode: (string) ($data['defense_roll_mode'] ?? 'normal'),
                     defenseModifier: (int) ($data['defense_modifier'] ?? 0),
                     effectType: (string) ($data['effect_type'] ?? MagicService::EFFECT_NARRATIVE),
@@ -74,6 +94,17 @@ class SceneMagicActionController extends Controller
                     intentText: $this->nullableString($data['intent_text'] ?? null),
                     resolutionNote: $this->nullableString($data['resolution_note'] ?? null),
                 ),
+            );
+
+            /** @var SceneConflictActor|null $actorConflictActor */
+            $actorConflictActor = $mappedActor['conflict_actor'];
+            /** @var SceneConflictActor|null $targetConflictActor */
+            $targetConflictActor = $mappedTarget['conflict_actor'];
+
+            $this->sceneConflictActorResultApplier->applyMagicSingleAction(
+                actorConflictActor: $actorConflictActor,
+                targetConflictActor: $targetConflictActor,
+                result: $magicResult,
             );
         } catch (MagicInvariantViolationException $exception) {
             report($exception);
@@ -95,82 +126,6 @@ class SceneMagicActionController extends Controller
         return redirect()
             ->to($this->sceneUrl($world, $campaign, $scene, '#post-'.$post->id))
             ->with('status', 'Magieaktion ausgewertet und im Thread protokolliert.');
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     *
-     * @throws MagicInvariantViolationException
-     */
-    private function buildActor(array $data): MagicActor
-    {
-        $type = (string) ($data['actor_type'] ?? '');
-
-        if ($type === MagicActor::TYPE_CHARACTER) {
-            $characterId = (int) ($data['actor_character_id'] ?? 0);
-            $character = Character::query()->find($characterId);
-
-            if (! $character instanceof Character) {
-                throw MagicInvariantViolationException::actorCharacterMissing();
-            }
-
-            return MagicActor::character($character);
-        }
-
-        $name = $this->nullableString($data['actor_name'] ?? null) ?? '';
-        $snapshot = [
-            'name' => $name,
-        ];
-
-        if (array_key_exists('actor_ae_current', $data) && $data['actor_ae_current'] !== null) {
-            $snapshot['ae_current'] = (int) $data['actor_ae_current'];
-        }
-        if (array_key_exists('actor_ae_max', $data) && $data['actor_ae_max'] !== null) {
-            $snapshot['ae_max'] = (int) $data['actor_ae_max'];
-        }
-
-        return MagicActor::npc($name, $snapshot);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     *
-     * @throws MagicInvariantViolationException
-     */
-    private function buildTarget(array $data): MagicTarget
-    {
-        $type = (string) ($data['target_type'] ?? '');
-
-        if ($type === MagicTarget::TYPE_CHARACTER) {
-            $characterId = (int) ($data['target_character_id'] ?? 0);
-            $character = Character::query()->find($characterId);
-
-            if (! $character instanceof Character) {
-                throw MagicInvariantViolationException::targetCharacterMissing();
-            }
-
-            return MagicTarget::character($character);
-        }
-
-        $name = $this->nullableString($data['target_name'] ?? null) ?? '';
-        $snapshot = [
-            'name' => $name,
-        ];
-
-        if (array_key_exists('target_le_current', $data) && $data['target_le_current'] !== null) {
-            $snapshot['le_current'] = (int) $data['target_le_current'];
-        }
-        if (array_key_exists('target_le_max', $data) && $data['target_le_max'] !== null) {
-            $snapshot['le_max'] = (int) $data['target_le_max'];
-        }
-        if (array_key_exists('target_ae_current', $data) && $data['target_ae_current'] !== null) {
-            $snapshot['ae_current'] = (int) $data['target_ae_current'];
-        }
-        if (array_key_exists('target_ae_max', $data) && $data['target_ae_max'] !== null) {
-            $snapshot['ae_max'] = (int) $data['target_ae_max'];
-        }
-
-        return MagicTarget::npc($name, $snapshot);
     }
 
     private function storeMagicPost(Scene $scene, User $actor, MagicActionResult $result): Post
@@ -222,5 +177,38 @@ class SceneMagicActionController extends Controller
             'target' => 'target_type',
             default => $field,
         };
+    }
+
+    private function resolvedInt(mixed $primary, mixed $fallback, int $minimum, int $maximum): int
+    {
+        $resolved = $this->resolvedNullableInt($primary, $fallback, $minimum, $maximum);
+        if ($resolved === null) {
+            return $minimum;
+        }
+
+        return $resolved;
+    }
+
+    private function resolvedNullableInt(mixed $primary, mixed $fallback, int $minimum, int $maximum): ?int
+    {
+        $value = $this->nullableInt($primary);
+        if ($value === null) {
+            $value = $this->nullableInt($fallback);
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        return max($minimum, min($maximum, $value));
+    }
+
+    private function nullableInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return is_int($value) || is_numeric($value) ? (int) $value : null;
     }
 }

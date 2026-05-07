@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Support\SensitiveFeatureGate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -40,22 +41,32 @@ class StoreSceneMagicActionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'actor_conflict_actor_id' => ['nullable', 'integer', 'exists:scene_conflict_actors,id'],
             'actor_type' => ['required', Rule::in(['character', 'npc'])],
-            'actor_character_id' => ['nullable', 'integer', 'required_if:actor_type,character', 'exists:characters,id'],
-            'actor_name' => ['nullable', 'string', 'max:120', 'required_if:actor_type,npc'],
+            'actor_character_id' => ['nullable', 'integer', 'exists:characters,id', Rule::requiredIf(function (): bool {
+                return ! $this->filled('actor_conflict_actor_id') && (string) $this->input('actor_type') === 'character';
+            })],
+            'actor_name' => ['nullable', 'string', 'max:120', Rule::requiredIf(function (): bool {
+                return ! $this->filled('actor_conflict_actor_id') && (string) $this->input('actor_type') === 'npc';
+            })],
             'actor_ae_current' => ['nullable', 'integer', 'between:0,999'],
             'actor_ae_max' => ['nullable', 'integer', 'between:0,999'],
 
+            'target_conflict_actor_id' => ['nullable', 'integer', 'exists:scene_conflict_actors,id'],
             'target_type' => ['required', Rule::in(['character', 'npc'])],
-            'target_character_id' => ['nullable', 'integer', 'required_if:target_type,character', 'exists:characters,id'],
-            'target_name' => ['nullable', 'string', 'max:120', 'required_if:target_type,npc'],
+            'target_character_id' => ['nullable', 'integer', 'exists:characters,id', Rule::requiredIf(function (): bool {
+                return ! $this->filled('target_conflict_actor_id') && (string) $this->input('target_type') === 'character';
+            })],
+            'target_name' => ['nullable', 'string', 'max:120', Rule::requiredIf(function (): bool {
+                return ! $this->filled('target_conflict_actor_id') && (string) $this->input('target_type') === 'npc';
+            })],
             'target_le_current' => ['nullable', 'integer', 'between:0,999'],
             'target_le_max' => ['nullable', 'integer', 'between:0,999'],
             'target_ae_current' => ['nullable', 'integer', 'between:0,999'],
             'target_ae_max' => ['nullable', 'integer', 'between:0,999'],
 
             'spell_name' => ['required', 'string', 'max:120'],
-            'spell_target_value' => ['required', 'integer', 'between:0,100'],
+            'spell_target_value' => ['nullable', 'integer', 'between:0,100'],
             'spell_roll_mode' => ['nullable', Rule::in(DiceRoll::ALLOWED_MODES)],
             'spell_modifier' => ['nullable', 'integer', 'between:-100,100'],
             'ae_cost' => ['required', 'integer', 'between:0,999'],
@@ -99,6 +110,8 @@ class StoreSceneMagicActionRequest extends FormRequest
             'actor_type' => $actorType,
             'target_type' => $targetType,
             'effect_type' => $effectType,
+            'actor_conflict_actor_id' => $this->filled('actor_conflict_actor_id') ? (int) $this->input('actor_conflict_actor_id') : null,
+            'target_conflict_actor_id' => $this->filled('target_conflict_actor_id') ? (int) $this->input('target_conflict_actor_id') : null,
             'actor_name' => $this->nullIfBlank($this->input('actor_name')),
             'target_name' => $this->nullIfBlank($this->input('target_name')),
             'spell_name' => $this->nullIfBlank($this->input('spell_name')),
@@ -136,6 +149,16 @@ class StoreSceneMagicActionRequest extends FormRequest
             $campaign = $scene->campaign;
             $resolver = $this->campaignParticipantResolver();
             $participantUserIds = $resolver->participantUserIds($campaign);
+            $actorConflictActor = $this->resolveConflictActor(
+                validator: $validator,
+                scene: $scene,
+                field: 'actor_conflict_actor_id',
+            );
+            $this->resolveConflictActor(
+                validator: $validator,
+                scene: $scene,
+                field: 'target_conflict_actor_id',
+            );
 
             $this->validateCharacterContext(
                 validator: $validator,
@@ -150,6 +173,10 @@ class StoreSceneMagicActionRequest extends FormRequest
                 participantUserIds: $participantUserIds,
                 fieldPrefix: 'target',
             );
+
+            if (! $this->filled('spell_target_value') && (! $actorConflictActor instanceof SceneConflictActor || $actorConflictActor->spell_value === null)) {
+                $validator->errors()->add('spell_target_value', 'Der Zauberwert ist erforderlich.');
+            }
         });
     }
 
@@ -160,9 +187,11 @@ class StoreSceneMagicActionRequest extends FormRequest
     {
         return [
             'actor_type' => 'Zaubernder-Typ',
+            'actor_conflict_actor_id' => 'Zaubernder aus Szenenbeteiligten',
             'actor_character_id' => 'Zaubernder-Charakter',
             'actor_name' => 'Zaubernder-NPC Name',
             'target_type' => 'Ziel-Typ',
+            'target_conflict_actor_id' => 'Ziel aus Szenenbeteiligten',
             'target_character_id' => 'Ziel-Charakter',
             'target_name' => 'Ziel-NPC Name',
             'spell_name' => 'Zaubername',
@@ -192,6 +221,10 @@ class StoreSceneMagicActionRequest extends FormRequest
         string $fieldPrefix,
     ): void {
         $type = (string) $this->input($fieldPrefix.'_type', '');
+        if ($this->filled($fieldPrefix.'_conflict_actor_id')) {
+            return;
+        }
+
         if ($type !== 'character') {
             return;
         }
@@ -240,6 +273,27 @@ class StoreSceneMagicActionRequest extends FormRequest
                     : 'Der Ziel-Charakter muss ein aktiver Teilnehmer dieser Kampagne sein.'
             );
         }
+    }
+
+    private function resolveConflictActor(Validator $validator, Scene $scene, string $field): ?SceneConflictActor
+    {
+        $actorId = $this->filled($field) ? (int) $this->input($field) : 0;
+        if ($actorId <= 0) {
+            return null;
+        }
+
+        /** @var SceneConflictActor|null $conflictActor */
+        $conflictActor = SceneConflictActor::query()
+            ->select(['id', 'scene_id', 'campaign_id', 'actor_type', 'spell_value', 'defense_value'])
+            ->find($actorId);
+
+        if (! $conflictActor instanceof SceneConflictActor || (int) $conflictActor->scene_id !== (int) $scene->id) {
+            $validator->errors()->add($field, 'Der gewählte Szenenbeteiligte gehört nicht zu dieser Szene.');
+
+            return null;
+        }
+
+        return $conflictActor;
     }
 
     private function resolveRollMode(string $field): string

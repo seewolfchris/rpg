@@ -9,6 +9,7 @@ use App\Models\Campaign;
 use App\Models\Character;
 use App\Models\DiceRoll;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Support\SensitiveFeatureGate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -39,20 +40,30 @@ class StoreSceneCombatActionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'actor_conflict_actor_id' => ['nullable', 'integer', 'exists:scene_conflict_actors,id'],
             'actor_type' => ['required', Rule::in(['character', 'npc'])],
-            'actor_character_id' => ['nullable', 'integer', 'required_if:actor_type,character', 'exists:characters,id'],
-            'actor_name' => ['nullable', 'string', 'max:120', 'required_if:actor_type,npc'],
+            'actor_character_id' => ['nullable', 'integer', 'exists:characters,id', Rule::requiredIf(function (): bool {
+                return ! $this->filled('actor_conflict_actor_id') && (string) $this->input('actor_type') === 'character';
+            })],
+            'actor_name' => ['nullable', 'string', 'max:120', Rule::requiredIf(function (): bool {
+                return ! $this->filled('actor_conflict_actor_id') && (string) $this->input('actor_type') === 'npc';
+            })],
             'actor_le_current' => ['nullable', 'integer', 'min:0'],
             'actor_le_max' => ['nullable', 'integer', 'min:0'],
 
+            'target_conflict_actor_id' => ['nullable', 'integer', 'exists:scene_conflict_actors,id'],
             'target_type' => ['required', Rule::in(['character', 'npc'])],
-            'target_character_id' => ['nullable', 'integer', 'required_if:target_type,character', 'exists:characters,id'],
-            'target_name' => ['nullable', 'string', 'max:120', 'required_if:target_type,npc'],
+            'target_character_id' => ['nullable', 'integer', 'exists:characters,id', Rule::requiredIf(function (): bool {
+                return ! $this->filled('target_conflict_actor_id') && (string) $this->input('target_type') === 'character';
+            })],
+            'target_name' => ['nullable', 'string', 'max:120', Rule::requiredIf(function (): bool {
+                return ! $this->filled('target_conflict_actor_id') && (string) $this->input('target_type') === 'npc';
+            })],
             'target_le_current' => ['nullable', 'integer', 'min:0'],
             'target_le_max' => ['nullable', 'integer', 'min:0'],
 
             'weapon_name' => ['nullable', 'string', 'max:120'],
-            'attack_target_value' => ['required', 'integer', 'between:0,100'],
+            'attack_target_value' => ['nullable', 'integer', 'between:0,100'],
             'attack_roll_mode' => ['nullable', Rule::in(DiceRoll::ALLOWED_MODES)],
             'attack_modifier' => ['nullable', 'integer', 'between:-100,100'],
 
@@ -61,7 +72,7 @@ class StoreSceneCombatActionRequest extends FormRequest
             'defense_roll_mode' => ['nullable', Rule::in(DiceRoll::ALLOWED_MODES)],
             'defense_modifier' => ['nullable', 'integer', 'between:-100,100'],
 
-            'damage' => ['required', 'integer', 'between:0,999'],
+            'damage' => ['nullable', 'integer', 'between:0,999'],
             'armor_protection' => ['nullable', 'integer', 'between:0,99'],
 
             'intent_text' => ['nullable', 'string', 'max:500'],
@@ -77,6 +88,8 @@ class StoreSceneCombatActionRequest extends FormRequest
         $this->merge([
             'actor_type' => $actorType,
             'target_type' => $targetType,
+            'actor_conflict_actor_id' => $this->filled('actor_conflict_actor_id') ? (int) $this->input('actor_conflict_actor_id') : null,
+            'target_conflict_actor_id' => $this->filled('target_conflict_actor_id') ? (int) $this->input('target_conflict_actor_id') : null,
             'actor_name' => $this->nullIfBlank($this->input('actor_name')),
             'target_name' => $this->nullIfBlank($this->input('target_name')),
             'weapon_name' => $this->nullIfBlank($this->input('weapon_name')),
@@ -111,6 +124,16 @@ class StoreSceneCombatActionRequest extends FormRequest
             $campaign = $scene->campaign;
             $resolver = $this->campaignParticipantResolver();
             $participantUserIds = $resolver->participantUserIds($campaign);
+            $actorConflictActor = $this->resolveConflictActor(
+                validator: $validator,
+                scene: $scene,
+                field: 'actor_conflict_actor_id',
+            );
+            $this->resolveConflictActor(
+                validator: $validator,
+                scene: $scene,
+                field: 'target_conflict_actor_id',
+            );
 
             $this->validateCharacterContext(
                 validator: $validator,
@@ -125,6 +148,14 @@ class StoreSceneCombatActionRequest extends FormRequest
                 participantUserIds: $participantUserIds,
                 fieldPrefix: 'target',
             );
+
+            if (! $this->filled('attack_target_value') && (! $actorConflictActor instanceof SceneConflictActor || $actorConflictActor->attack_value === null)) {
+                $validator->errors()->add('attack_target_value', 'Der Angriffswert ist erforderlich.');
+            }
+
+            if (! $this->filled('damage') && (! $actorConflictActor instanceof SceneConflictActor || $actorConflictActor->damage_value === null)) {
+                $validator->errors()->add('damage', 'Der Schaden ist erforderlich.');
+            }
         });
     }
 
@@ -135,9 +166,11 @@ class StoreSceneCombatActionRequest extends FormRequest
     {
         return [
             'actor_type' => 'Angreifer-Typ',
+            'actor_conflict_actor_id' => 'Angreifer aus Szenenbeteiligten',
             'actor_character_id' => 'Angreifer-Charakter',
             'actor_name' => 'Angreifer-Name',
             'target_type' => 'Ziel-Typ',
+            'target_conflict_actor_id' => 'Ziel aus Szenenbeteiligten',
             'target_character_id' => 'Ziel-Charakter',
             'target_name' => 'Ziel-Name',
             'weapon_name' => 'Waffe',
@@ -165,6 +198,10 @@ class StoreSceneCombatActionRequest extends FormRequest
         string $fieldPrefix,
     ): void {
         $type = (string) $this->input($fieldPrefix.'_type', '');
+        if ($this->filled($fieldPrefix.'_conflict_actor_id')) {
+            return;
+        }
+
         if ($type !== 'character') {
             return;
         }
@@ -224,6 +261,27 @@ class StoreSceneCombatActionRequest extends FormRequest
                     : 'Der Ziel-Charakter muss ein aktiver Teilnehmer dieser Kampagne sein.'
             );
         }
+    }
+
+    private function resolveConflictActor(Validator $validator, Scene $scene, string $field): ?SceneConflictActor
+    {
+        $actorId = $this->filled($field) ? (int) $this->input($field) : 0;
+        if ($actorId <= 0) {
+            return null;
+        }
+
+        /** @var SceneConflictActor|null $conflictActor */
+        $conflictActor = SceneConflictActor::query()
+            ->select(['id', 'scene_id', 'campaign_id', 'actor_type', 'attack_value', 'damage_value'])
+            ->find($actorId);
+
+        if (! $conflictActor instanceof SceneConflictActor || (int) $conflictActor->scene_id !== (int) $scene->id) {
+            $validator->errors()->add($field, 'Der gewählte Szenenbeteiligte gehört nicht zu dieser Szene.');
+
+            return null;
+        }
+
+        return $conflictActor;
     }
 
     private function resolveRollMode(string $field): string

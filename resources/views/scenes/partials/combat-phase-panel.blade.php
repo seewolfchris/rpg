@@ -66,6 +66,7 @@
             'campaign' => $campaign,
             'scene' => $scene,
             'probeCharacters' => $probeCharacters,
+            'conflictActors' => $conflictActors,
             'fieldPrefix' => 'combat_phase_action',
             'sectionId' => 'combat-phase-action-tool',
             'title' => 'Aktion zur offenen Kampfphase hinzufügen',

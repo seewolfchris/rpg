@@ -3,6 +3,9 @@
     <p class="mt-2 text-sm text-amber-200/90">
         Pflege hier die Konfliktbeteiligten dieser Szene. Diese Liste ist die Grundlage für spätere Auto-Fill-Aktionen.
     </p>
+    <p class="mt-1 text-xs text-amber-300/90">
+        Diese Beteiligten können in Kampf- und Magieformularen ausgewählt werden.
+    </p>
 
     @error('conflict_actor')
         <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
@@ -233,4 +236,3 @@
         </form>
     </div>
 </section>
-

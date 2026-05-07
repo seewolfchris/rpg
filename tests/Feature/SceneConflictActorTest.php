@@ -65,7 +65,8 @@ class SceneConflictActorTest extends TestCase
         $this->actingAs($owner)
             ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
             ->assertOk()
-            ->assertSeeText('Beteiligte (Spielleitung)');
+            ->assertSeeText('Beteiligte (Spielleitung)')
+            ->assertSeeText('Diese Beteiligten können in Kampf- und Magieformularen ausgewählt werden.');
 
         $this->actingAs($player)
             ->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))

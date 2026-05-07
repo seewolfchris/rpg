@@ -5,6 +5,7 @@
     $hint = $hint ?? 'V1: Einzelaktion, keine Magie in Kampfphasen und keine Spieler-Queue.';
     $formAction = $formAction ?? route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]);
     $submitLabel = $submitLabel ?? 'Magieaktion auswerten';
+    $conflictActors = $conflictActors ?? collect();
 
     $actorNpcDetailsOpen = $errors->hasAny(['actor_ae_current', 'actor_ae_max']);
     $targetNpcDetailsOpen = $errors->hasAny(['target_le_current', 'target_le_max', 'target_ae_current', 'target_ae_max']);
@@ -27,6 +28,38 @@
         <fieldset class="ui-card-soft border-stone-700/70 bg-black/20 p-4">
             <legend class="px-2 text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">1. Beteiligte</legend>
             <div class="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="md:col-span-2 xl:col-span-2">
+                    <label for="magic_actor_conflict_actor_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Zaubernder aus Szenenbeteiligten</label>
+                    <select id="magic_actor_conflict_actor_id" name="actor_conflict_actor_id" class="w-full px-4 py-2.5 text-sm text-stone-100">
+                        <option value="">Manuell eingeben</option>
+                        @foreach ($conflictActors as $conflictActorOption)
+                            <option value="{{ $conflictActorOption->id }}" @selected((string) old('actor_conflict_actor_id') === (string) $conflictActorOption->id)>
+                                {{ $conflictActorOption->displayName() }} ({{ $conflictActorOption->isCharacter() ? 'Charakter' : 'NPC' }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('actor_conflict_actor_id')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-stone-500">Wenn gewählt, wird der Zauberwert nach Möglichkeit aus dem Beteiligten übernommen.</p>
+                </div>
+
+                <div class="md:col-span-2 xl:col-span-2">
+                    <label for="magic_target_conflict_actor_id" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Ziel aus Szenenbeteiligten</label>
+                    <select id="magic_target_conflict_actor_id" name="target_conflict_actor_id" class="w-full px-4 py-2.5 text-sm text-stone-100">
+                        <option value="">Manuell eingeben</option>
+                        @foreach ($conflictActors as $conflictActorOption)
+                            <option value="{{ $conflictActorOption->id }}" @selected((string) old('target_conflict_actor_id') === (string) $conflictActorOption->id)>
+                                {{ $conflictActorOption->displayName() }} ({{ $conflictActorOption->isCharacter() ? 'Charakter' : 'NPC' }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('target_conflict_actor_id')
+                        <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-stone-500">Wenn gewählt, wird Magieabwehr nach Möglichkeit aus dem Beteiligten übernommen.</p>
+                </div>
+
                 <div>
                     <label for="magic_actor_type" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Zaubernder-Typ</label>
                     <select id="magic_actor_type" name="actor_type" class="w-full px-4 py-2.5 text-sm text-stone-100">

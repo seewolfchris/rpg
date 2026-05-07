@@ -11,12 +11,14 @@ use App\Domain\Combat\Data\CombatActor;
 use App\Domain\Combat\Data\CombatTarget;
 use App\Domain\Combat\Exceptions\CombatInvariantViolationException;
 use App\Domain\Post\StorePostService;
+use App\Domain\SceneConflict\SceneConflictActorInputMapper;
+use App\Domain\SceneConflict\SceneConflictActorResultApplier;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Scene\StoreSceneCombatActionRequest;
 use App\Models\Campaign;
-use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Models\User;
 use App\Models\World;
 use App\Support\SensitiveFeatureGate;
@@ -29,6 +31,8 @@ class SceneCombatActionController extends Controller
     public function __construct(
         private readonly CombatService $combatService,
         private readonly StorePostService $storePostService,
+        private readonly SceneConflictActorInputMapper $sceneConflictActorInputMapper,
+        private readonly SceneConflictActorResultApplier $sceneConflictActorResultApplier,
     ) {}
 
     public function store(
@@ -47,29 +51,60 @@ class SceneCombatActionController extends Controller
         $data = $request->validated();
 
         try {
+            $mappedActor = $this->sceneConflictActorInputMapper->mapCombatActor($scene, $data);
+            $mappedTarget = $this->sceneConflictActorInputMapper->mapCombatTarget($scene, $data);
+
+            /** @var CombatActor $combatActor */
+            $combatActor = $mappedActor['actor'];
+            /** @var CombatTarget $combatTarget */
+            $combatTarget = $mappedTarget['actor'];
+
             $combatResult = $this->combatService->resolveSingleAction(
                 new CombatActionInput(
                     campaign: $campaign,
                     scene: $scene,
-                    actor: $this->buildActor($data),
-                    target: $this->buildTarget($data),
+                    actor: $combatActor,
+                    target: $combatTarget,
                     weaponName: $this->nullableString($data['weapon_name'] ?? null),
-                    attackTargetValue: (int) $data['attack_target_value'],
+                    attackTargetValue: $this->resolvedInt(
+                        primary: $data['attack_target_value'] ?? null,
+                        fallback: $mappedActor['defaults']['attack_target_value'] ?? null,
+                        minimum: 0,
+                        maximum: 100,
+                    ),
                     attackRollMode: (string) ($data['attack_roll_mode'] ?? 'normal'),
                     attackModifier: (int) ($data['attack_modifier'] ?? 0),
                     defenseLabel: $this->nullableString($data['defense_label'] ?? null),
-                    defenseTargetValue: array_key_exists('defense_target_value', $data) && $data['defense_target_value'] !== null
-                        ? (int) $data['defense_target_value']
-                        : null,
+                    defenseTargetValue: $this->resolvedNullableInt(
+                        primary: $data['defense_target_value'] ?? null,
+                        fallback: $mappedTarget['defaults']['defense_target_value'] ?? null,
+                        minimum: 0,
+                        maximum: 100,
+                    ),
                     defenseRollMode: (string) ($data['defense_roll_mode'] ?? 'normal'),
                     defenseModifier: (int) ($data['defense_modifier'] ?? 0),
-                    damage: (int) $data['damage'],
-                    armorProtection: array_key_exists('armor_protection', $data) && $data['armor_protection'] !== null
-                        ? (int) $data['armor_protection']
-                        : null,
+                    damage: $this->resolvedInt(
+                        primary: $data['damage'] ?? null,
+                        fallback: $mappedActor['defaults']['damage'] ?? null,
+                        minimum: 0,
+                        maximum: 999,
+                    ),
+                    armorProtection: $this->resolvedNullableInt(
+                        primary: $data['armor_protection'] ?? null,
+                        fallback: $mappedTarget['defaults']['armor_protection'] ?? null,
+                        minimum: 0,
+                        maximum: 99,
+                    ),
                     intentText: $this->nullableString($data['intent_text'] ?? null),
                     resolutionNote: $this->nullableString($data['resolution_note'] ?? null),
                 ),
+            );
+
+            /** @var SceneConflictActor|null $targetConflictActor */
+            $targetConflictActor = $mappedTarget['conflict_actor'];
+            $this->sceneConflictActorResultApplier->applyCombatSingleAction(
+                targetConflictActor: $targetConflictActor,
+                result: $combatResult,
             );
         } catch (CombatInvariantViolationException $exception) {
             report($exception);
@@ -101,77 +136,6 @@ class SceneCombatActionController extends Controller
                 'scene' => $scene,
             ]).'#post-'.$post->id)
             ->with('status', 'Kampfaktion ausgewertet und im Thread protokolliert.');
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     *
-     * @throws CombatInvariantViolationException
-     */
-    private function buildActor(array $data): CombatActor
-    {
-        $type = (string) ($data['actor_type'] ?? '');
-
-        if ($type === CombatActor::TYPE_CHARACTER) {
-            $characterId = (int) ($data['actor_character_id'] ?? 0);
-            $character = Character::query()->find($characterId);
-
-            if (! $character instanceof Character) {
-                throw CombatInvariantViolationException::actorCharacterMissing();
-            }
-
-            return CombatActor::character($character);
-        }
-
-        $name = $this->nullableString($data['actor_name'] ?? null) ?? '';
-        $snapshot = [
-            'name' => $name,
-        ];
-        if (array_key_exists('actor_le_current', $data) && $data['actor_le_current'] !== null) {
-            $snapshot['le_current'] = (int) $data['actor_le_current'];
-        }
-        if (array_key_exists('actor_le_max', $data) && $data['actor_le_max'] !== null) {
-            $snapshot['le_max'] = (int) $data['actor_le_max'];
-        }
-
-        return CombatActor::npc($name, $snapshot);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     *
-     * @throws CombatInvariantViolationException
-     */
-    private function buildTarget(array $data): CombatTarget
-    {
-        $type = (string) ($data['target_type'] ?? '');
-
-        if ($type === CombatTarget::TYPE_CHARACTER) {
-            $characterId = (int) ($data['target_character_id'] ?? 0);
-            $character = Character::query()->find($characterId);
-
-            if (! $character instanceof Character) {
-                throw CombatInvariantViolationException::targetCharacterMissing();
-            }
-
-            return CombatTarget::character($character);
-        }
-
-        $name = $this->nullableString($data['target_name'] ?? null) ?? '';
-        $snapshot = [
-            'name' => $name,
-        ];
-        if (array_key_exists('target_le_current', $data) && $data['target_le_current'] !== null) {
-            $snapshot['le_current'] = (int) $data['target_le_current'];
-        }
-        if (array_key_exists('target_le_max', $data) && $data['target_le_max'] !== null) {
-            $snapshot['le_max'] = (int) $data['target_le_max'];
-        }
-        if (array_key_exists('armor_protection', $data) && $data['armor_protection'] !== null) {
-            $snapshot['armor_protection'] = (int) $data['armor_protection'];
-        }
-
-        return CombatTarget::npc($name, $snapshot);
     }
 
     private function storeCombatPost(
@@ -338,5 +302,38 @@ class SceneCombatActionController extends Controller
             'target' => 'target_type',
             default => $field,
         };
+    }
+
+    private function resolvedInt(mixed $primary, mixed $fallback, int $minimum, int $maximum): int
+    {
+        $resolved = $this->resolvedNullableInt($primary, $fallback, $minimum, $maximum);
+        if ($resolved === null) {
+            return $minimum;
+        }
+
+        return $resolved;
+    }
+
+    private function resolvedNullableInt(mixed $primary, mixed $fallback, int $minimum, int $maximum): ?int
+    {
+        $value = $this->nullableInt($primary);
+        if ($value === null) {
+            $value = $this->nullableInt($fallback);
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        return max($minimum, min($maximum, $value));
+    }
+
+    private function nullableInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return is_int($value) || is_numeric($value) ? (int) $value : null;
     }
 }

@@ -432,6 +432,7 @@
                     'campaign' => $campaign,
                     'scene' => $scene,
                     'probeCharacters' => $probeCharacters,
+                    'conflictActors' => $conflictActors,
                     'openCombatPhase' => $openCombatPhase,
                     'openCombatPhaseActions' => $openCombatPhaseActions,
                 ])
@@ -439,9 +440,15 @@
                     'campaign' => $campaign,
                     'scene' => $scene,
                     'probeCharacters' => $probeCharacters,
+                    'conflictActors' => $conflictActors,
                     'fieldPrefix' => 'combat_single',
                 ])
-                @include('scenes.partials.magic-action-form', ['campaign' => $campaign, 'scene' => $scene, 'probeCharacters' => $probeCharacters])
+                @include('scenes.partials.magic-action-form', [
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                    'probeCharacters' => $probeCharacters,
+                    'conflictActors' => $conflictActors,
+                ])
             @endif
 
             <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8" data-reading-mode-chrome>

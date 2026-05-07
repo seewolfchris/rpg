@@ -10,6 +10,7 @@ use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Models\User;
 use App\Models\World;
 use App\Support\ProbeRoller;
@@ -185,6 +186,239 @@ class SceneCombatActionTest extends TestCase
             ->assertSeeText('LE: 13 / 20');
     }
 
+    public function test_spielleitung_can_resolve_action_with_scene_conflict_actors_and_updates_npc_scene_state(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcAttacker = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenräuber I',
+            'attack_value' => 50,
+            'damage_value' => 8,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenwache',
+            'le_current' => 20,
+            'le_max' => 20,
+            'defense_value' => 35,
+            'armor_protection' => 2,
+        ]);
+
+        $this->bindProbeRoller([43, 71]);
+
+        $response = $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $npcAttacker->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'attack_target_value' => null,
+                'damage' => null,
+                'defense_target_value' => null,
+                'armor_protection' => null,
+            ]),
+        );
+
+        $response->assertRedirect();
+
+        $npcTarget->refresh();
+        $this->assertSame(14, (int) $npcTarget->le_current);
+        $this->assertSame(20, (int) $npcTarget->le_max);
+
+        $showResponse = $this->actingAs($owner)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $showResponse->assertOk()
+            ->assertSeeText('Angreifer: Hafenräuber I')
+            ->assertSeeText('Ziel: Hafenwache')
+            ->assertSeeText('Angriff: Wurf 43 + Mod 0 = 43 / Ziel 50 → Erfolg')
+            ->assertSeeText('Verteidigung: Wurf 71 + Mod 0 = 71 / Ziel 35 → misslungen')
+            ->assertSeeText('Schaden: 8 - RS 2 = 6')
+            ->assertSeeText('LE: 14 / 20');
+    }
+
+    public function test_explicit_zero_values_override_conflict_actor_defaults_for_combat(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcAttacker = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenräuber I',
+            'attack_value' => 50,
+            'damage_value' => 8,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenwache',
+            'le_current' => 20,
+            'le_max' => 20,
+            'defense_value' => 35,
+            'armor_protection' => 2,
+        ]);
+
+        $this->bindProbeRoller([20, 20]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $npcAttacker->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'attack_target_value' => null,
+                'damage' => 0,
+                'defense_target_value' => 0,
+                'armor_protection' => 0,
+            ]),
+        )->assertRedirect();
+
+        $npcTarget->refresh();
+        $this->assertSame(20, (int) $npcTarget->le_current);
+
+        /** @var Post $combatPost */
+        $combatPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Verteidigung: Wurf 20 + Mod 0 = 20 / Ziel 0 → misslungen', (string) $combatPost->content);
+        $this->assertStringContainsString('Schaden: 0 - RS 0 = 0', (string) $combatPost->content);
+    }
+
+    public function test_cross_scene_conflict_actor_ids_are_rejected_for_combat_action(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $otherScene = Scene::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'created_by' => (int) $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $localActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Lokaler Räuber',
+            'attack_value' => 55,
+            'damage_value' => 9,
+        ]);
+        $foreignActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremder Räuber',
+            'attack_value' => 55,
+            'damage_value' => 9,
+        ]);
+        $foreignTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremde Wache',
+            'le_current' => 20,
+            'le_max' => 20,
+        ]);
+
+        $actorResponse = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $foreignActor->id,
+                'target_type' => 'npc',
+                'target_name' => 'Wache',
+            ]));
+
+        $actorResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $actorResponse->assertSessionHasErrors(['actor_conflict_actor_id']);
+
+        $targetResponse = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $localActor->id,
+                'target_conflict_actor_id' => (int) $foreignTarget->id,
+                'target_type' => 'npc',
+                'target_name' => null,
+            ]));
+
+        $targetResponse->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $targetResponse->assertSessionHasErrors(['target_conflict_actor_id']);
+        $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_character_conflict_actor_uses_character_as_source_of_truth_in_combat(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $targetUser = User::factory()->create();
+        $this->grantMembership($campaign, $targetUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $targetCharacter = $this->characterInCampaignWorld($targetUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'le_max' => 30,
+            'le_current' => 30,
+        ]);
+
+        $targetCharacterActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $targetCharacter->id,
+            'name' => 'Vaelis',
+            'le_current' => 30,
+            'le_max' => 30,
+        ]);
+
+        $npcAttacker = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenräuber I',
+            'attack_value' => 50,
+            'damage_value' => 8,
+        ]);
+
+        $this->bindProbeRoller([20]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $npcAttacker->id,
+                'target_conflict_actor_id' => (int) $targetCharacterActor->id,
+                'actor_type' => 'npc',
+                'target_type' => 'character',
+                'actor_name' => null,
+                'target_character_id' => null,
+                'damage' => null,
+                'attack_target_value' => null,
+            ]),
+        )->assertRedirect();
+
+        $targetCharacter->refresh();
+        $targetCharacterActor->refresh();
+        $this->assertSame(22, (int) $targetCharacter->le_current);
+        $this->assertSame(30, (int) $targetCharacterActor->le_current);
+    }
+
     public function test_defense_success_is_rendered_and_le_stays_unchanged(): void
     {
         config(['features.combat_tools_enabled' => true]);
@@ -314,8 +548,10 @@ class SceneCombatActionTest extends TestCase
     private function combatPayload(array $overrides = []): array
     {
         return array_merge([
+            'actor_conflict_actor_id' => null,
             'actor_type' => 'npc',
             'actor_name' => 'Bandit',
+            'target_conflict_actor_id' => null,
             'target_type' => 'npc',
             'target_name' => 'Wache',
             'attack_target_value' => 60,

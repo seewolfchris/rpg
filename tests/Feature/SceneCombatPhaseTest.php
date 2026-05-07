@@ -12,6 +12,7 @@ use App\Models\CombatPhase;
 use App\Models\CombatPhaseAction;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneConflictActor;
 use App\Models\User;
 use App\Models\World;
 use App\Support\ProbeRoller;
@@ -328,6 +329,199 @@ class SceneCombatPhaseTest extends TestCase
         $this->assertSame(5, (int) data_get($action->result, 'outcome.effective_damage'));
     }
 
+    public function test_phase_actions_can_use_scene_conflict_actors_and_resolve_updates_npc_scene_state(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+
+        $npcAttacker = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Hafenräuber I',
+            'attack_value' => 50,
+            'damage_value' => 8,
+        ]);
+        $npcTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Wache',
+            'le_current' => 20,
+            'le_max' => 20,
+            'defense_value' => 35,
+            'armor_protection' => 2,
+        ]);
+
+        $this->bindProbeRoller([43, 71]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertRedirect();
+
+        $phase = CombatPhase::query()
+            ->where('scene_id', (int) $scene->id)
+            ->where('status', CombatPhase::STATUS_COLLECTING)
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.actions.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]), $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $npcAttacker->id,
+                'target_conflict_actor_id' => (int) $npcTarget->id,
+                'actor_type' => 'npc',
+                'target_type' => 'npc',
+                'actor_name' => null,
+                'target_name' => null,
+                'attack_target_value' => null,
+                'damage' => null,
+                'defense_target_value' => null,
+                'armor_protection' => null,
+            ]))
+            ->assertRedirect();
+
+        $queuedAction = CombatPhaseAction::query()
+            ->where('combat_phase_id', (int) $phase->id)
+            ->orderBy('position')
+            ->firstOrFail();
+        $this->assertSame((int) $npcAttacker->id, (int) data_get($queuedAction->actor_snapshot, 'scene_conflict_actor_id'));
+        $this->assertSame((int) $npcTarget->id, (int) data_get($queuedAction->target_snapshot, 'scene_conflict_actor_id'));
+
+        $npcTarget->refresh();
+        $this->assertSame(20, (int) $npcTarget->le_current);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.resolve', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]))
+            ->assertRedirect();
+
+        $npcTarget->refresh();
+        $this->assertSame(14, (int) $npcTarget->le_current);
+
+        $resolvedAction = CombatPhaseAction::query()
+            ->where('combat_phase_id', (int) $phase->id)
+            ->orderBy('position')
+            ->firstOrFail();
+        $this->assertSame((int) $npcTarget->id, (int) data_get($resolvedAction->result, 'snapshots.target_snapshot_after.scene_conflict_actor_id'));
+    }
+
+    public function test_cross_scene_conflict_actor_ids_are_rejected_for_phase_action_queueing(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $otherScene = Scene::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'created_by' => (int) $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $foreignActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremder Räuber',
+            'attack_value' => 55,
+            'damage_value' => 9,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertRedirect();
+
+        $phase = CombatPhase::query()
+            ->where('scene_id', (int) $scene->id)
+            ->where('status', CombatPhase::STATUS_COLLECTING)
+            ->firstOrFail();
+
+        $response = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.combat.phases.actions.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]), $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $foreignActor->id,
+                'target_type' => 'npc',
+                'target_name' => 'Wache',
+            ]));
+
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $response->assertSessionHasErrors(['actor_conflict_actor_id']);
+        $this->assertDatabaseCount('combat_phase_actions', 0);
+    }
+
+    public function test_cross_scene_target_conflict_actor_id_is_rejected_for_phase_action_queueing(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $otherScene = Scene::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'created_by' => (int) $owner->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $foreignTarget = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $otherScene->id,
+            'actor_type' => SceneConflictActor::TYPE_NPC,
+            'name' => 'Fremde Wache',
+            'defense_value' => 35,
+            'armor_protection' => 2,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertRedirect();
+
+        $phase = CombatPhase::query()
+            ->where('scene_id', (int) $scene->id)
+            ->where('status', CombatPhase::STATUS_COLLECTING)
+            ->firstOrFail();
+
+        $response = $this->actingAs($owner)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.combat.phases.actions.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]), $this->combatPayload([
+                'target_conflict_actor_id' => (int) $foreignTarget->id,
+                'target_type' => 'npc',
+                'target_name' => null,
+            ]));
+
+        $response->assertRedirect(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
+        $response->assertSessionHasErrors(['target_conflict_actor_id']);
+        $this->assertDatabaseCount('combat_phase_actions', 0);
+    }
+
     public function test_defense_success_in_phase_prevents_damage(): void
     {
         config(['features.combat_tools_enabled' => true]);
@@ -591,8 +785,10 @@ class SceneCombatPhaseTest extends TestCase
     private function combatPayload(array $overrides = []): array
     {
         return array_merge([
+            'actor_conflict_actor_id' => null,
             'actor_type' => 'npc',
             'actor_name' => 'Bandit',
+            'target_conflict_actor_id' => null,
             'target_type' => 'npc',
             'target_name' => 'Wache',
             'attack_target_value' => 60,
