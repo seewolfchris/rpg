@@ -104,6 +104,14 @@ class Scene extends Model
     }
 
     /**
+     * @return HasMany<SceneConflictActor, $this>
+     */
+    public function sceneConflictActors(): HasMany
+    {
+        return $this->hasMany(SceneConflictActor::class, 'scene_id');
+    }
+
+    /**
      * @return HasMany<PlayerNote, $this>
      */
     public function playerNotes(): HasMany

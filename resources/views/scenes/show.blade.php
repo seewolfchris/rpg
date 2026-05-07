@@ -176,6 +176,13 @@
                             <div class="ui-card-soft flex flex-wrap items-center gap-2 border-amber-700/50 bg-amber-950/20 px-3 py-2">
                                 <span class="text-xs font-semibold uppercase tracking-[0.08em] text-amber-200">Konfliktwerkzeuge:</span>
                                 <a
+                                    href="#conflict-actors-tool"
+                                    hx-boost="false"
+                                    class="ui-btn ui-btn-accent !px-2.5 !py-1.5 !text-[0.68rem]"
+                                >
+                                    Beteiligte
+                                </a>
+                                <a
                                     href="#combat-phase-tool"
                                     hx-boost="false"
                                     class="ui-btn ui-btn-accent !px-2.5 !py-1.5 !text-[0.68rem]"
@@ -415,6 +422,12 @@
 
         @if ($canModerateScene)
             @if ($combatToolsEnabled)
+                @include('scenes.partials.conflict-actors-panel', [
+                    'campaign' => $campaign,
+                    'scene' => $scene,
+                    'probeCharacters' => $probeCharacters,
+                    'conflictActors' => $conflictActors,
+                ])
                 @include('scenes.partials.combat-phase-panel', [
                     'campaign' => $campaign,
                     'scene' => $scene,

@@ -4,6 +4,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostReactionController;
 use App\Http\Controllers\SceneCombatActionController;
 use App\Http\Controllers\SceneCombatPhaseController;
+use App\Http\Controllers\SceneConflictActorController;
 use App\Http\Controllers\SceneMagicActionController;
 use App\Http\Controllers\SceneController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,18 @@ Route::post('/campaigns/{campaign}/scenes/{scene}/combat/phases/{combatPhase}/re
 Route::post('/campaigns/{campaign}/scenes/{scene}/magic/actions', [SceneMagicActionController::class, 'store'])
     ->middleware('throttle:writes')
     ->name('campaigns.scenes.magic.actions.store');
+
+Route::post('/campaigns/{campaign}/scenes/{scene}/conflict-actors', [SceneConflictActorController::class, 'store'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.conflict-actors.store');
+
+Route::match(['put', 'patch'], '/campaigns/{campaign}/scenes/{scene}/conflict-actors/{sceneConflictActor}', [SceneConflictActorController::class, 'update'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.conflict-actors.update');
+
+Route::delete('/campaigns/{campaign}/scenes/{scene}/conflict-actors/{sceneConflictActor}', [SceneConflictActorController::class, 'destroy'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.conflict-actors.destroy');
 
 Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
     ->withoutScopedBindings()

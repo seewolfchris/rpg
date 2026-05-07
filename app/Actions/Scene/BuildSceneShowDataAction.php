@@ -48,6 +48,7 @@ class BuildSceneShowDataAction
             characters: $panelData['characters'],
             probeCharacters: $panelData['probeCharacters'],
             sceneHandouts: $panelData['sceneHandouts'],
+            conflictActors: $panelData['conflictActors'],
             openCombatPhase: $panelData['openCombatPhase'],
             openCombatPhaseActions: $panelData['openCombatPhaseActions'],
             viewableCharacterIds: $threadData['viewableCharacterIds'],

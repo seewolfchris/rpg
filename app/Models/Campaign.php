@@ -80,6 +80,14 @@ class Campaign extends Model
     }
 
     /**
+     * @return HasMany<SceneConflictActor, $this>
+     */
+    public function sceneConflictActors(): HasMany
+    {
+        return $this->hasMany(SceneConflictActor::class, 'campaign_id');
+    }
+
+    /**
      * @return HasMany<CampaignGmContactThread, $this>
      */
     public function gmContactThreads(): HasMany

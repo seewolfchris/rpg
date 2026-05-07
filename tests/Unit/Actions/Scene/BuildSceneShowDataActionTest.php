@@ -89,6 +89,7 @@ class BuildSceneShowDataActionTest extends TestCase
         $this->assertFalse($result->hasUnreadPosts);
         $this->assertFalse($result->canModerateScene);
         $this->assertCount(0, $result->probeCharacters);
+        $this->assertCount(0, $result->conflictActors);
 
         $characterIds = $result->characters
             ->map(static fn (Character $character): int => (int) $character->id)
@@ -134,6 +135,7 @@ class BuildSceneShowDataActionTest extends TestCase
         );
 
         $this->assertTrue($result->canModerateScene);
+        $this->assertCount(0, $result->conflictActors);
 
         $probeIds = $result->probeCharacters
             ->map(static fn (Character $character): int => (int) $character->id)

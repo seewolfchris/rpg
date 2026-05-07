@@ -10,6 +10,7 @@ use App\Models\Character;
 use App\Models\CombatPhase;
 use App\Models\CombatPhaseAction;
 use App\Models\Handout;
+use App\Models\SceneConflictActor;
 use App\Models\PlayerNote;
 use App\Models\Scene;
 use App\Models\StoryLogEntry;
@@ -28,6 +29,7 @@ class BuildSceneShowPanelDataAction
      *     characters: \Illuminate\Database\Eloquent\Collection<int, Character>,
      *     probeCharacters: Collection<int, Character>,
      *     sceneHandouts: Collection<int, Handout>,
+     *     conflictActors: Collection<int, SceneConflictActor>,
      *     openCombatPhase: CombatPhase|null,
      *     openCombatPhaseActions: Collection<int, CombatPhaseAction>,
      *     sceneChronicleCount: int,
@@ -48,6 +50,10 @@ class BuildSceneShowPanelDataAction
         $probeCharacters = $canModerateScene
             ? $this->campaignParticipantResolver->probeCharacters($campaign)
             : collect();
+        $conflictActors = $this->conflictActorsData(
+            scene: $scene,
+            canModerateScene: $canModerateScene,
+        );
         [$openCombatPhase, $openCombatPhaseActions] = $this->openCombatPhaseData(
             scene: $scene,
             canModerateScene: $canModerateScene,
@@ -60,6 +66,7 @@ class BuildSceneShowPanelDataAction
             'characters' => $characters,
             'probeCharacters' => $probeCharacters,
             'sceneHandouts' => $sceneHandouts,
+            'conflictActors' => $conflictActors,
             'openCombatPhase' => $openCombatPhase,
             'openCombatPhaseActions' => $openCombatPhaseActions,
             'sceneChronicleCount' => $sceneChronicleCount,
@@ -100,6 +107,27 @@ class BuildSceneShowPanelDataAction
         $actions = $openPhase->actions;
 
         return [$openPhase, $actions];
+    }
+
+    /**
+     * @return Collection<int, SceneConflictActor>
+     */
+    private function conflictActorsData(Scene $scene, bool $canModerateScene): Collection
+    {
+        if (! $canModerateScene || ! SensitiveFeatureGate::enabled('features.combat_tools_enabled', false)) {
+            return collect();
+        }
+
+        /** @var Collection<int, SceneConflictActor> $actors */
+        $actors = SceneConflictActor::query()
+            ->where('scene_id', (int) $scene->id)
+            ->orderByRaw('sort_order IS NULL')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->with('character:id,name,le_current,le_max,ae_current,ae_max')
+            ->get();
+
+        return $actors;
     }
 
     /**

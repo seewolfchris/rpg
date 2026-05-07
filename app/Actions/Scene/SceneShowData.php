@@ -9,6 +9,7 @@ use App\Models\CombatPhase;
 use App\Models\CombatPhaseAction;
 use App\Models\Handout;
 use App\Models\Post;
+use App\Models\SceneConflictActor;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -23,6 +24,7 @@ final readonly class SceneShowData
      * @param  Collection<int, Character>  $characters
      * @param  Collection<int, Character>  $probeCharacters
      * @param  Collection<int, Handout>  $sceneHandouts
+     * @param  Collection<int, SceneConflictActor>  $conflictActors
      * @param  Collection<int, CombatPhaseAction>  $openCombatPhaseActions
      * @param  list<int>  $viewableCharacterIds
      */
@@ -33,6 +35,7 @@ final readonly class SceneShowData
         public Collection $characters,
         public Collection $probeCharacters,
         public Collection $sceneHandouts,
+        public Collection $conflictActors,
         public ?CombatPhase $openCombatPhase,
         public Collection $openCombatPhaseActions,
         public array $viewableCharacterIds,
