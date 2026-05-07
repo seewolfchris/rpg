@@ -253,7 +253,6 @@
                         value="{{ old('attack_target_value') }}"
                         min="0"
                         max="100"
-                        required
                         class="w-full px-4 py-2.5 text-sm text-stone-100"
                     >
                     @error('attack_target_value')
@@ -370,7 +369,6 @@
                         value="{{ old('damage') }}"
                         min="0"
                         max="999"
-                        required
                         class="w-full px-4 py-2.5 text-sm text-stone-100"
                     >
                     @error('damage')

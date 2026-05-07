@@ -79,7 +79,8 @@ use Illuminate\Validation\ValidationException;
  *     name: string,
  *     attack: int,
  *     parry: int,
- *     damage: int
+ *     damage: int,
+ *     equipped: bool
  * }
  */
 class AttributeNormalizer
@@ -487,7 +488,7 @@ class AttributeNormalizer
     }
 
     /**
-     * @return array<int, array{name: string, attack: int, parry: int, damage: int}>
+     * @return array<int, array{name: string, attack: int, parry: int, damage: int, equipped: bool}>
      */
     private function sanitizeWeapons(mixed $weapons): array
     {
@@ -496,6 +497,7 @@ class AttributeNormalizer
         }
 
         $normalized = [];
+        $equippedAssigned = false;
 
         foreach ($weapons as $weapon) {
             if (! is_array($weapon)) {
@@ -503,12 +505,21 @@ class AttributeNormalizer
             }
 
             $name = trim((string) ($weapon['name'] ?? ''));
-            $damage = $this->normalizeWeaponDamageValue($weapon['damage'] ?? null);
-            $attack = (int) ($weapon['attack'] ?? 0);
-            $parry = (int) ($weapon['parry'] ?? 0);
+            $damage = $this->normalizeWeaponDamageValue($weapon['damage'] ?? ($weapon['tp'] ?? null));
+            $attack = (int) ($weapon['attack'] ?? ($weapon['ang'] ?? 0));
+            $parry = (int) ($weapon['parry'] ?? ($weapon['par'] ?? 0));
 
-            if ($name === '' || $damage <= 0) {
+            if ($name === '') {
                 continue;
+            }
+
+            $equipped = (bool) ($weapon['equipped'] ?? false);
+            if ($equipped && $equippedAssigned) {
+                $equipped = false;
+            }
+
+            if ($equipped) {
+                $equippedAssigned = true;
             }
 
             $normalized[] = [
@@ -516,6 +527,7 @@ class AttributeNormalizer
                 'attack' => max(0, min(100, $attack)),
                 'parry' => max(0, min(100, $parry)),
                 'damage' => $damage,
+                'equipped' => $equipped,
             ];
         }
 
@@ -569,7 +581,7 @@ class AttributeNormalizer
         }
 
         if (is_numeric($value)) {
-            return max(1, min(999, (int) $value));
+            return max(0, min(999, (int) $value));
         }
 
         $raw = trim((string) $value);
@@ -583,11 +595,11 @@ class AttributeNormalizer
             $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
             $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
 
-            return max(1, min(999, $estimated));
+            return max(0, min(999, $estimated));
         }
 
         if (preg_match('/-?\d+/', $raw, $matches) === 1) {
-            return max(1, min(999, (int) $matches[0]));
+            return max(0, min(999, (int) $matches[0]));
         }
 
         return 0;

@@ -422,6 +422,77 @@ class Character extends Model
     }
 
     /**
+     * @return array<int, array{name: string, attack: int, parry: int, damage: int, equipped: bool}>
+     */
+    public function normalizedWeapons(): array
+    {
+        $entries = $this->weapons;
+        if (! is_array($entries)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($entries as $entry) {
+            $normalizedEntry = $this->normalizeWeaponEntry($entry);
+            if ($normalizedEntry === null) {
+                continue;
+            }
+
+            $normalized[] = $normalizedEntry;
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @return array{name: string, attack: int, parry: int, damage: int, equipped: bool}|null
+     */
+    public function activeWeapon(): ?array
+    {
+        $weapons = $this->normalizedWeapons();
+        if ($weapons === []) {
+            return null;
+        }
+
+        foreach ($weapons as $weapon) {
+            if ($weapon['equipped']) {
+                return $weapon;
+            }
+        }
+
+        return $weapons[0] ?? null;
+    }
+
+    public function activeWeaponName(): ?string
+    {
+        $weapon = $this->activeWeapon();
+
+        return $weapon !== null ? $weapon['name'] : null;
+    }
+
+    public function activeWeaponAttackValue(): ?int
+    {
+        $weapon = $this->activeWeapon();
+
+        return $weapon !== null ? $weapon['attack'] : null;
+    }
+
+    public function activeWeaponDefenseValue(): ?int
+    {
+        $weapon = $this->activeWeapon();
+
+        return $weapon !== null ? $weapon['parry'] : null;
+    }
+
+    public function activeWeaponEffectValue(): ?int
+    {
+        $weapon = $this->activeWeapon();
+
+        return $weapon !== null ? $weapon['damage'] : null;
+    }
+
+    /**
      * @return array<int, array{name: string, protection: int, equipped: bool}>
      */
     public function normalizedArmors(): array
@@ -457,6 +528,48 @@ class Character extends Model
         }
 
         return $protection;
+    }
+
+    /**
+     * @return array{name: string, attack: int, parry: int, damage: int, equipped: bool}|null
+     */
+    private function normalizeWeaponEntry(mixed $entry): ?array
+    {
+        if (is_string($entry)) {
+            $name = trim($entry);
+            if ($name === '') {
+                return null;
+            }
+
+            return [
+                'name' => $name,
+                'attack' => 0,
+                'parry' => 0,
+                'damage' => 0,
+                'equipped' => false,
+            ];
+        }
+
+        if (! is_array($entry)) {
+            return null;
+        }
+
+        $name = trim((string) Arr::get($entry, 'name', Arr::get($entry, 'item', '')));
+        if ($name === '') {
+            return null;
+        }
+
+        $attack = (int) Arr::get($entry, 'attack', Arr::get($entry, 'ang', 0));
+        $parry = (int) Arr::get($entry, 'parry', Arr::get($entry, 'par', 0));
+        $damage = (int) Arr::get($entry, 'damage', Arr::get($entry, 'tp', 0));
+
+        return [
+            'name' => $name,
+            'attack' => max(0, min(100, $attack)),
+            'parry' => max(0, min(100, $parry)),
+            'damage' => max(0, min(999, $damage)),
+            'equipped' => (bool) Arr::get($entry, 'equipped', false),
+        ];
     }
 
     /**

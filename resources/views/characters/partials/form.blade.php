@@ -206,6 +206,7 @@
                     'attack' => '',
                     'parry' => '',
                     'damage' => '',
+                    'equipped' => false,
                 ];
             }
 
@@ -214,6 +215,7 @@
                 'attack' => ($weapon['attack'] ?? '') === '' ? '' : (int) $weapon['attack'],
                 'parry' => ($weapon['parry'] ?? '') === '' ? '' : (int) $weapon['parry'],
                 'damage' => $legacyWeaponDamageToInt($weapon['damage'] ?? ''),
+                'equipped' => (bool) ($weapon['equipped'] ?? false),
             ];
         }, $initialWeapons))
         : [];
@@ -223,6 +225,7 @@
             'attack' => '',
             'parry' => '',
             'damage' => '',
+            'equipped' => false,
         ]];
     }
 
@@ -896,6 +899,19 @@
                                         placeholder="z. B. Krummschwert"
                                     >
                                 </div>
+                                <div class="sm:col-span-2">
+                                    <label class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-stone-300">
+                                        <input
+                                            type="radio"
+                                            name="weapons_equipped_index"
+                                            :value="index"
+                                            :checked="Boolean(weapon.equipped)"
+                                            @change="setActiveWeapon(index)"
+                                            class="h-4 w-4 border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                                        >
+                                        Aktive Waffe (im Kampf verwenden)
+                                    </label>
+                                </div>
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-stone-400">Angriff (%)</label>
                                     <input
@@ -929,7 +945,7 @@
                                         :value="weapon.damage"
                                         @input="setWeaponField(index, 'damage', $event.target.value)"
                                         type="number"
-                                        min="1"
+                                        min="0"
                                         max="999"
                                         step="1"
                                         class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30"

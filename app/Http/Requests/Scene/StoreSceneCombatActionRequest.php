@@ -149,11 +149,14 @@ class StoreSceneCombatActionRequest extends FormRequest
                 fieldPrefix: 'target',
             );
 
-            if (! $this->filled('attack_target_value') && (! $actorConflictActor instanceof SceneConflictActor || $actorConflictActor->attack_value === null)) {
+            $actorDefaultAttack = $this->resolveActorAttackDefault($actorConflictActor);
+            $actorDefaultDamage = $this->resolveActorDamageDefault($actorConflictActor);
+
+            if (! $this->filled('attack_target_value') && $actorDefaultAttack === null) {
                 $validator->errors()->add('attack_target_value', 'Der Angriffswert ist erforderlich.');
             }
 
-            if (! $this->filled('damage') && (! $actorConflictActor instanceof SceneConflictActor || $actorConflictActor->damage_value === null)) {
+            if (! $this->filled('damage') && $actorDefaultDamage === null) {
                 $validator->errors()->add('damage', 'Der Schaden ist erforderlich.');
             }
         });
@@ -272,7 +275,8 @@ class StoreSceneCombatActionRequest extends FormRequest
 
         /** @var SceneConflictActor|null $conflictActor */
         $conflictActor = SceneConflictActor::query()
-            ->select(['id', 'scene_id', 'campaign_id', 'actor_type', 'attack_value', 'damage_value'])
+            ->with('character')
+            ->select(['id', 'scene_id', 'campaign_id', 'actor_type', 'character_id', 'attack_value', 'damage_value'])
             ->find($actorId);
 
         if (! $conflictActor instanceof SceneConflictActor || (int) $conflictActor->scene_id !== (int) $scene->id) {
@@ -282,6 +286,36 @@ class StoreSceneCombatActionRequest extends FormRequest
         }
 
         return $conflictActor;
+    }
+
+    private function resolveActorAttackDefault(?SceneConflictActor $conflictActor): ?int
+    {
+        if (! $conflictActor instanceof SceneConflictActor) {
+            return null;
+        }
+
+        if ($conflictActor->isCharacter() && $conflictActor->character instanceof Character) {
+            return $conflictActor->character->activeWeaponAttackValue();
+        }
+
+        return $conflictActor->attack_value !== null
+            ? (int) $conflictActor->attack_value
+            : null;
+    }
+
+    private function resolveActorDamageDefault(?SceneConflictActor $conflictActor): ?int
+    {
+        if (! $conflictActor instanceof SceneConflictActor) {
+            return null;
+        }
+
+        if ($conflictActor->isCharacter() && $conflictActor->character instanceof Character) {
+            return $conflictActor->character->activeWeaponEffectValue();
+        }
+
+        return $conflictActor->damage_value !== null
+            ? (int) $conflictActor->damage_value
+            : null;
     }
 
     private function resolveRollMode(string $field): string

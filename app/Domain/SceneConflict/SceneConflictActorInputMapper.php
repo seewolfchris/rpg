@@ -22,7 +22,8 @@ use App\Models\SceneConflictActor;
  *         attack_target_value: int|null,
  *         damage: int|null,
  *         defense_target_value: int|null,
- *         armor_protection: int|null
+ *         armor_protection: int|null,
+ *         weapon_name: string|null
  *     }
  * }
  * @phpstan-type MagicMappedEntity array{
@@ -51,14 +52,25 @@ class SceneConflictActorInputMapper
         );
 
         if ($conflictActor instanceof SceneConflictActor) {
+            $attackDefault = $this->nullableInt($conflictActor->attack_value);
+            $damageDefault = $this->nullableInt($conflictActor->damage_value);
+            $weaponNameDefault = null;
+
+            if ($conflictActor->isCharacter() && $conflictActor->character instanceof Character) {
+                $attackDefault = $conflictActor->character->activeWeaponAttackValue();
+                $damageDefault = $conflictActor->character->activeWeaponEffectValue();
+                $weaponNameDefault = $conflictActor->character->activeWeaponName();
+            }
+
             return [
                 'conflict_actor' => $conflictActor,
                 'actor' => $this->combatActorFromConflictActor($conflictActor, true),
                 'defaults' => [
-                    'attack_target_value' => $this->nullableInt($conflictActor->attack_value),
-                    'damage' => $this->nullableInt($conflictActor->damage_value),
+                    'attack_target_value' => $attackDefault,
+                    'damage' => $damageDefault,
                     'defense_target_value' => null,
                     'armor_protection' => null,
+                    'weapon_name' => $weaponNameDefault,
                 ],
             ];
         }
@@ -71,6 +83,7 @@ class SceneConflictActorInputMapper
                 'damage' => null,
                 'defense_target_value' => null,
                 'armor_protection' => null,
+                'weapon_name' => null,
             ],
         ];
     }
@@ -90,14 +103,23 @@ class SceneConflictActorInputMapper
         );
 
         if ($conflictActor instanceof SceneConflictActor) {
+            $defenseDefault = $this->nullableInt($conflictActor->defense_value);
+            $armorDefault = $this->nullableInt($conflictActor->armor_protection);
+
+            if ($conflictActor->isCharacter() && $conflictActor->character instanceof Character) {
+                $defenseDefault = $conflictActor->character->activeWeaponDefenseValue();
+                $armorDefault = $conflictActor->character->armorProtectionValue();
+            }
+
             return [
                 'conflict_actor' => $conflictActor,
                 'actor' => $this->combatTargetFromConflictActor($conflictActor, false),
                 'defaults' => [
                     'attack_target_value' => null,
                     'damage' => null,
-                    'defense_target_value' => $this->nullableInt($conflictActor->defense_value),
-                    'armor_protection' => $this->nullableInt($conflictActor->armor_protection),
+                    'defense_target_value' => $defenseDefault,
+                    'armor_protection' => $armorDefault,
+                    'weapon_name' => null,
                 ],
             ];
         }
@@ -110,6 +132,7 @@ class SceneConflictActorInputMapper
                 'damage' => null,
                 'defense_target_value' => null,
                 'armor_protection' => null,
+                'weapon_name' => null,
             ],
         ];
     }

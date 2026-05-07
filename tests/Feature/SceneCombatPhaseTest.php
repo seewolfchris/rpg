@@ -418,6 +418,119 @@ class SceneCombatPhaseTest extends TestCase
         $this->assertSame((int) $npcTarget->id, (int) data_get($resolvedAction->result, 'snapshots.target_snapshot_after.scene_conflict_actor_id'));
     }
 
+    public function test_phase_actions_with_character_conflict_actors_use_active_weapon_defaults(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $attackerUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+        $this->grantMembership($campaign, $attackerUser, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $targetUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $attackerCharacter = $this->characterInCampaignWorld($attackerUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'weapons' => [[
+                'name' => 'Langschwert',
+                'attack' => 58,
+                'parry' => 42,
+                'damage' => 10,
+                'equipped' => true,
+            ]],
+        ]);
+        $targetCharacter = $this->characterInCampaignWorld($targetUser, (int) $campaign->world_id, [
+            'name' => 'Mara',
+            'le_max' => 30,
+            'le_current' => 30,
+            'weapons' => [[
+                'name' => 'Speer',
+                'attack' => 50,
+                'parry' => 44,
+                'damage' => 8,
+                'equipped' => true,
+            ]],
+            'armors' => [[
+                'name' => 'Kettenweste',
+                'protection' => 3,
+                'equipped' => true,
+            ]],
+        ]);
+
+        $attackerConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $attackerCharacter->id,
+            'name' => 'Vaelis',
+        ]);
+        $targetConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $targetCharacter->id,
+            'name' => 'Mara',
+        ]);
+
+        $this->bindProbeRoller([31, 80]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->assertRedirect();
+
+        $phase = CombatPhase::query()
+            ->where('scene_id', (int) $scene->id)
+            ->where('status', CombatPhase::STATUS_COLLECTING)
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.actions.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]), $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $attackerConflictActor->id,
+                'target_conflict_actor_id' => (int) $targetConflictActor->id,
+                'actor_type' => 'character',
+                'target_type' => 'character',
+                'actor_character_id' => null,
+                'target_character_id' => null,
+                'weapon_name' => null,
+                'attack_target_value' => null,
+                'damage' => null,
+                'defense_target_value' => null,
+                'armor_protection' => null,
+            ]))
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.scenes.combat.phases.resolve', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+                'combatPhase' => $phase,
+            ]))
+            ->assertRedirect();
+
+        $targetCharacter->refresh();
+        $this->assertSame(23, (int) $targetCharacter->le_current);
+
+        $resolvedAction = CombatPhaseAction::query()
+            ->where('combat_phase_id', (int) $phase->id)
+            ->orderBy('position')
+            ->firstOrFail();
+        $this->assertSame('Langschwert', (string) data_get($resolvedAction->result, 'weapon_name'));
+
+        $combatPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Angriff: Wurf 31 + Mod 0 = 31 / Ziel 58 → Erfolg', (string) $combatPost->content);
+        $this->assertStringContainsString('Verteidigung: Wurf 80 + Mod 0 = 80 / Ziel 44 → misslungen', (string) $combatPost->content);
+        $this->assertStringContainsString('Schaden: 10 - RS 3 = 7', (string) $combatPost->content);
+    }
+
     public function test_cross_scene_conflict_actor_ids_are_rejected_for_phase_action_queueing(): void
     {
         config(['features.combat_tools_enabled' => true]);

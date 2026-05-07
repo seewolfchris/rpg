@@ -212,6 +212,7 @@ class CharacterManagementTest extends TestCase
             'attack' => 48,
             'parry' => 41,
             'damage' => 12,
+            'equipped' => false,
         ]], $character->weapons);
         $this->assertSame([[
             'name' => 'Lederruestung',
@@ -471,6 +472,7 @@ class CharacterManagementTest extends TestCase
             'attack' => 42,
             'parry' => 35,
             'damage' => 9,
+            'equipped' => false,
         ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
@@ -703,9 +705,61 @@ class CharacterManagementTest extends TestCase
             'attack' => 53,
             'parry' => 47,
             'damage' => 12,
+            'equipped' => false,
         ]], $character->weapons);
 
         $response->assertRedirect(route('characters.show', $character));
+    }
+
+    public function test_weapon_update_keeps_only_first_equipped_weapon_as_active(): void
+    {
+        $user = User::factory()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $user->id,
+            ...$this->persistedAttributes(),
+        ]);
+
+        $response = $this->actingAs($user)->put(route('characters.update', $character), [
+            ...$this->characterPayload([
+                'name' => $character->name,
+                'weapons' => [[
+                    'name' => 'Messer',
+                    'attack' => 44,
+                    'parry' => 31,
+                    'damage' => 7,
+                    'equipped' => true,
+                ], [
+                    'name' => 'Speer',
+                    'attack' => 52,
+                    'parry' => 39,
+                    'damage' => 11,
+                    'equipped' => true,
+                ]],
+            ]),
+        ]);
+
+        $response->assertRedirect(route('characters.show', $character));
+
+        $character->refresh();
+        $this->assertSame([[
+            'name' => 'Messer',
+            'attack' => 44,
+            'parry' => 31,
+            'damage' => 7,
+            'equipped' => true,
+        ], [
+            'name' => 'Speer',
+            'attack' => 52,
+            'parry' => 39,
+            'damage' => 11,
+            'equipped' => false,
+        ]], $character->weapons);
+
+        $showResponse = $this->actingAs($user)->get(route('characters.show', $character));
+        $showResponse->assertOk()->assertSeeText('Aktive Waffe');
+
+        $this->assertSame(1, substr_count((string) $showResponse->getContent(), 'Aktive Waffe'));
     }
 
     public function test_user_cannot_change_attributes_directly_after_creation(): void

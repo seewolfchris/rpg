@@ -73,6 +73,7 @@ const emptyWeaponEntry = () => ({
     attack: '',
     parry: '',
     damage: '',
+    equipped: false,
 });
 
 const emptyArmorEntry = () => ({
@@ -99,6 +100,7 @@ const normalizeWeaponEntries = (values) => {
             attack: rawAttack === '' || rawAttack === null ? '' : toInt(rawAttack, 0),
             parry: rawParry === '' || rawParry === null ? '' : toInt(rawParry, 0),
             damage: entry.damage === '' || entry.damage === null ? '' : clamp(toInt(entry.damage, 0), 0, 999),
+            equipped: Boolean(entry.equipped ?? false),
         };
     });
 };
@@ -186,6 +188,7 @@ export function characterSheetForm(payload = {}) {
             this.inventory = withMinimumInventoryRows(payload.initial?.inventory ?? [], this.inventoryMin);
             this.weapons = withMinimumWeaponRows(payload.initial?.weapons ?? [], this.weaponsMin);
             this.armors = withMinimumArmorRows(payload.initial?.armors ?? [], this.armorsMin);
+            this.normalizeActiveWeaponSelection();
 
             if (!this.origin) {
                 this.origin = Object.keys(this.originOptions)[0] ?? '';
@@ -628,11 +631,33 @@ export function characterSheetForm(payload = {}) {
                     entry.parry = clamp(toInt(value, 0), 0, 100);
                     break;
                 case 'damage':
-                    entry.damage = clamp(toInt(value, 1), 1, 999);
+                    entry.damage = clamp(toInt(value, 0), 0, 999);
+                    break;
+                case 'equipped':
+                    this.setActiveWeapon(index);
                     break;
                 default:
                     break;
             }
+        },
+
+        setActiveWeapon(activeIndex) {
+            this.weapons.forEach((weapon, index) => {
+                if (!weapon || typeof weapon !== 'object') {
+                    return;
+                }
+
+                weapon.equipped = index === activeIndex;
+            });
+        },
+
+        normalizeActiveWeaponSelection() {
+            const firstEquippedIndex = this.weapons.findIndex((weapon) => Boolean(weapon?.equipped));
+            if (firstEquippedIndex < 0) {
+                return;
+            }
+
+            this.setActiveWeapon(firstEquippedIndex);
         },
 
         setArmorField(index, field, value) {
@@ -725,7 +750,12 @@ export function characterSheetForm(payload = {}) {
                 return;
             }
 
+            const removedWasActive = Boolean(this.weapons[index]?.equipped);
             this.weapons.splice(index, 1);
+
+            if (removedWasActive && this.weapons.length > 0) {
+                this.setActiveWeapon(0);
+            }
         },
 
         addArmor() {

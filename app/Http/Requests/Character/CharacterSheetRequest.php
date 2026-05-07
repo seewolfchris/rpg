@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * @phpstan-type NormalizedInventoryItem array{name: string, quantity: int, equipped: bool}
- * @phpstan-type NormalizedWeaponItem array{name: string, attack: int|string, parry: int|string, damage: int|string}
+ * @phpstan-type NormalizedWeaponItem array{name: string, attack: int|string, parry: int|string, damage: int|string, equipped: bool}
  * @phpstan-type NormalizedArmorItem array{name: string, protection: int, equipped: bool}
  * @phpstan-type DerivedPools array{le_max: int, le_current: int, ae_max: int, ae_current: int}
  * @phpstan-type CharacterValidatedPayload array<string, mixed>&array{
@@ -81,7 +81,9 @@ abstract class CharacterSheetRequest extends FormRequest
             'weapons.*.name' => ['required', 'string', 'min:2', 'max:120'],
             'weapons.*.attack' => ['required', 'integer', 'between:0,100'],
             'weapons.*.parry' => ['required', 'integer', 'between:0,100'],
-            'weapons.*.damage' => ['required', 'integer', 'between:1,999'],
+            'weapons.*.damage' => ['required', 'integer', 'between:0,999'],
+            'weapons.*.equipped' => ['nullable', 'boolean'],
+            'weapons_equipped_index' => ['nullable', 'integer', 'min:0'],
             'armors' => ['nullable', 'array', 'max:12'],
             'armors.*.name' => ['required', 'string', 'min:2', 'max:120'],
             'armors.*.protection' => ['required', 'integer', 'between:0,99'],
@@ -158,6 +160,7 @@ abstract class CharacterSheetRequest extends FormRequest
             'disadvantages' => $this->normalizeTraitInput($this->input('disadvantages')),
             'inventory' => $this->normalizeInventoryInput($this->input('inventory')),
             'weapons' => $this->normalizeWeaponInput($this->input('weapons')),
+            'weapons_equipped_index' => $this->filled('weapons_equipped_index') ? (int) $this->input('weapons_equipped_index') : null,
             'armors' => $this->normalizeArmorInput($this->input('armors')),
             'calling_custom_name' => trim((string) $this->input('calling_custom_name', '')),
             'calling_custom_description' => trim((string) $this->input('calling_custom_description', '')),
@@ -330,18 +333,21 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         $normalized = [];
+        $selectedEquippedIndex = $this->filled('weapons_equipped_index')
+            ? (int) $this->input('weapons_equipped_index')
+            : null;
 
-        foreach ($input as $entry) {
+        foreach ($input as $sourceIndex => $entry) {
             if (! is_array($entry)) {
                 continue;
             }
 
             $name = trim((string) ($entry['name'] ?? ''));
-            $damage = trim((string) ($entry['damage'] ?? ''));
+            $isEquipped = (bool) ($entry['equipped'] ?? false);
 
-            $rawAttack = $entry['attack'] ?? null;
-            $rawParry = $entry['parry'] ?? null;
-            $rawDamage = $entry['damage'] ?? null;
+            $rawAttack = $entry['attack'] ?? ($entry['ang'] ?? null);
+            $rawParry = $entry['parry'] ?? ($entry['par'] ?? null);
+            $rawDamage = $entry['damage'] ?? ($entry['tp'] ?? null);
 
             $attack = $rawAttack === null || $rawAttack === ''
                 ? ''
@@ -356,14 +362,47 @@ abstract class CharacterSheetRequest extends FormRequest
             }
 
             $normalized[] = [
+                'source_index' => is_int($sourceIndex) ? $sourceIndex : count($normalized),
                 'name' => $name,
                 'attack' => $attack,
                 'parry' => $parry,
                 'damage' => $damage,
+                'equipped' => $isEquipped,
             ];
         }
 
-        return $normalized;
+        $activeIndex = null;
+
+        if ($selectedEquippedIndex !== null) {
+            foreach ($normalized as $index => $entry) {
+                if ((int) $entry['source_index'] === $selectedEquippedIndex) {
+                    $activeIndex = $index;
+                    break;
+                }
+            }
+        }
+
+        if ($activeIndex === null) {
+            foreach ($normalized as $index => $entry) {
+                if ((bool) $entry['equipped']) {
+                    $activeIndex = $index;
+                    break;
+                }
+            }
+        }
+
+        $resolved = [];
+        foreach ($normalized as $index => $entry) {
+            $resolved[] = [
+                'name' => $entry['name'],
+                'attack' => $entry['attack'],
+                'parry' => $entry['parry'],
+                'damage' => $entry['damage'],
+                'equipped' => $activeIndex !== null && $index === $activeIndex,
+            ];
+        }
+
+        return $resolved;
     }
 
     /**
@@ -411,7 +450,7 @@ abstract class CharacterSheetRequest extends FormRequest
         }
 
         if (is_numeric($value)) {
-            return max(1, min(999, (int) $value));
+            return max(0, min(999, (int) $value));
         }
 
         $raw = trim((string) $value);
@@ -425,11 +464,11 @@ abstract class CharacterSheetRequest extends FormRequest
             $bonus = (int) str_replace(' ', '', (string) ($matches[3] ?? '0'));
             $estimated = (int) round(($count * (($faces + 1) / 2)) + $bonus);
 
-            return max(1, min(999, $estimated));
+            return max(0, min(999, $estimated));
         }
 
         if (preg_match('/-?\d+/', $raw, $matches) === 1) {
-            return max(1, min(999, (int) $matches[0]));
+            return max(0, min(999, (int) $matches[0]));
         }
 
         return '';
@@ -777,6 +816,8 @@ abstract class CharacterSheetRequest extends FormRequest
             'weapons.*.attack' => 'Angriffswert',
             'weapons.*.parry' => 'Paradewert',
             'weapons.*.damage' => 'Schadenspunkte',
+            'weapons.*.equipped' => 'Aktive Waffe',
+            'weapons_equipped_index' => 'Aktive Waffe',
             'armors' => 'Rüstungen',
             'armors.*.name' => 'Rüstungsname',
             'armors.*.protection' => 'Rüstungsschutz',

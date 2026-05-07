@@ -419,6 +419,223 @@ class SceneCombatActionTest extends TestCase
         $this->assertSame(30, (int) $targetCharacterActor->le_current);
     }
 
+    public function test_character_conflict_actor_defaults_use_active_weapon_and_armor_values(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $attackerUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+        $this->grantMembership($campaign, $attackerUser, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $targetUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $attackerCharacter = $this->characterInCampaignWorld($attackerUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'weapons' => [[
+                'name' => 'Dolch',
+                'attack' => 46,
+                'parry' => 30,
+                'damage' => 7,
+                'equipped' => false,
+            ], [
+                'name' => 'Langschwert',
+                'attack' => 58,
+                'parry' => 42,
+                'damage' => 10,
+                'equipped' => true,
+            ]],
+        ]);
+        $targetCharacter = $this->characterInCampaignWorld($targetUser, (int) $campaign->world_id, [
+            'name' => 'Mara',
+            'le_max' => 34,
+            'le_current' => 34,
+            'weapons' => [[
+                'name' => 'Speer',
+                'attack' => 50,
+                'parry' => 44,
+                'damage' => 9,
+                'equipped' => true,
+            ]],
+            'armors' => [[
+                'name' => 'Kettenweste',
+                'protection' => 3,
+                'equipped' => true,
+            ]],
+        ]);
+
+        $attackerConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $attackerCharacter->id,
+            'name' => 'Vaelis',
+        ]);
+        $targetConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $targetCharacter->id,
+            'name' => 'Mara',
+        ]);
+
+        $this->bindProbeRoller([31, 80]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $attackerConflictActor->id,
+                'target_conflict_actor_id' => (int) $targetConflictActor->id,
+                'actor_type' => 'character',
+                'target_type' => 'character',
+                'actor_character_id' => null,
+                'target_character_id' => null,
+                'weapon_name' => null,
+                'attack_target_value' => null,
+                'damage' => null,
+                'defense_target_value' => null,
+                'armor_protection' => null,
+            ]),
+        )->assertRedirect();
+
+        $targetCharacter->refresh();
+        $this->assertSame(27, (int) $targetCharacter->le_current);
+
+        $combatPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Waffe: Langschwert', (string) $combatPost->content);
+        $this->assertStringContainsString('Angriff: Wurf 31 + Mod 0 = 31 / Ziel 58 → Erfolg', (string) $combatPost->content);
+        $this->assertStringContainsString('Verteidigung: Wurf 80 + Mod 0 = 80 / Ziel 44 → misslungen', (string) $combatPost->content);
+        $this->assertStringContainsString('Schaden: 10 - RS 3 = 7', (string) $combatPost->content);
+    }
+
+    public function test_explicit_zero_values_override_character_conflict_actor_combat_defaults(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $attackerUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+        $this->grantMembership($campaign, $attackerUser, CampaignMembershipRole::PLAYER, $owner);
+        $this->grantMembership($campaign, $targetUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $attackerCharacter = $this->characterInCampaignWorld($attackerUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'weapons' => [[
+                'name' => 'Langschwert',
+                'attack' => 58,
+                'parry' => 42,
+                'damage' => 10,
+                'equipped' => true,
+            ]],
+        ]);
+        $targetCharacter = $this->characterInCampaignWorld($targetUser, (int) $campaign->world_id, [
+            'name' => 'Mara',
+            'le_max' => 34,
+            'le_current' => 34,
+            'weapons' => [[
+                'name' => 'Speer',
+                'attack' => 50,
+                'parry' => 44,
+                'damage' => 9,
+                'equipped' => true,
+            ]],
+            'armors' => [[
+                'name' => 'Kettenweste',
+                'protection' => 3,
+                'equipped' => true,
+            ]],
+        ]);
+
+        $attackerConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $attackerCharacter->id,
+            'name' => 'Vaelis',
+        ]);
+        $targetConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $targetCharacter->id,
+            'name' => 'Mara',
+        ]);
+
+        $this->bindProbeRoller([20, 20]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $attackerConflictActor->id,
+                'target_conflict_actor_id' => (int) $targetConflictActor->id,
+                'actor_type' => 'character',
+                'target_type' => 'character',
+                'actor_character_id' => null,
+                'target_character_id' => null,
+                'attack_target_value' => null,
+                'damage' => 0,
+                'defense_target_value' => 0,
+                'armor_protection' => 0,
+            ]),
+        )->assertRedirect();
+
+        $targetCharacter->refresh();
+        $this->assertSame(34, (int) $targetCharacter->le_current);
+
+        $combatPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Angriff: Wurf 20 + Mod 0 = 20 / Ziel 58 → Erfolg', (string) $combatPost->content);
+        $this->assertStringContainsString('Verteidigung: Wurf 20 + Mod 0 = 20 / Ziel 0 → misslungen', (string) $combatPost->content);
+        $this->assertStringContainsString('Schaden: 0 - RS 0 = 0', (string) $combatPost->content);
+    }
+
+    public function test_character_conflict_actor_default_damage_can_be_zero_without_forcing_one(): void
+    {
+        config(['features.combat_tools_enabled' => true]);
+
+        [$owner, $campaign, $scene] = $this->campaignContext();
+        $attackerUser = User::factory()->create();
+        $this->grantMembership($campaign, $attackerUser, CampaignMembershipRole::PLAYER, $owner);
+
+        $attackerCharacter = $this->characterInCampaignWorld($attackerUser, (int) $campaign->world_id, [
+            'name' => 'Vaelis',
+            'weapons' => [[
+                'name' => 'Stumpfer Stock',
+                'attack' => 58,
+                'parry' => 42,
+                'damage' => 0,
+                'equipped' => true,
+            ]],
+        ]);
+
+        $attackerConflictActor = SceneConflictActor::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'actor_type' => SceneConflictActor::TYPE_CHARACTER,
+            'character_id' => (int) $attackerCharacter->id,
+            'name' => 'Vaelis',
+        ]);
+
+        $this->bindProbeRoller([20]);
+
+        $this->actingAs($owner)->post(
+            route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]),
+            $this->combatPayload([
+                'actor_conflict_actor_id' => (int) $attackerConflictActor->id,
+                'actor_type' => 'character',
+                'actor_character_id' => null,
+                'target_type' => 'npc',
+                'target_name' => 'Trainingspuppe',
+                'weapon_name' => null,
+                'attack_target_value' => null,
+                'damage' => null,
+                'armor_protection' => 0,
+            ]),
+        )->assertRedirect();
+
+        $combatPost = Post::query()->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Waffe: Stumpfer Stock', (string) $combatPost->content);
+        $this->assertStringContainsString('Schaden: 0 - RS 0 = 0', (string) $combatPost->content);
+    }
+
     public function test_defense_success_is_rendered_and_le_stays_unchanged(): void
     {
         config(['features.combat_tools_enabled' => true]);

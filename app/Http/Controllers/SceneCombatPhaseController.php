@@ -102,7 +102,10 @@ class SceneCombatPhaseController extends Controller
                     scene: $scene,
                     actor: $combatActor,
                     target: $combatTarget,
-                    weaponName: $this->nullableString($data['weapon_name'] ?? null),
+                    weaponName: $this->resolvedString(
+                        primary: $data['weapon_name'] ?? null,
+                        fallback: $mappedActor['defaults']['weapon_name'] ?? null,
+                    ),
                     attackTargetValue: $this->resolvedInt(
                         primary: $data['attack_target_value'] ?? null,
                         fallback: $mappedActor['defaults']['attack_target_value'] ?? null,
@@ -284,5 +287,15 @@ class SceneCombatPhaseController extends Controller
         }
 
         return is_int($value) || is_numeric($value) ? (int) $value : null;
+    }
+
+    private function resolvedString(mixed $primary, mixed $fallback): ?string
+    {
+        $value = $this->nullableString($primary);
+        if ($value !== null) {
+            return $value;
+        }
+
+        return $this->nullableString($fallback);
     }
 }

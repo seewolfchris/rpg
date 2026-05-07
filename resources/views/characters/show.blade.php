@@ -41,6 +41,17 @@
             })
             ->filter(static fn (array $entry): bool => $entry['name'] !== '')
             ->values();
+        $weaponEntries = collect($character->normalizedWeapons());
+        $activeWeaponIndex = null;
+        foreach ($weaponEntries as $weaponIndex => $weaponEntry) {
+            if ((bool) ($weaponEntry['equipped'] ?? false)) {
+                $activeWeaponIndex = (int) $weaponIndex;
+                break;
+            }
+        }
+        if ($activeWeaponIndex === null && $weaponEntries->isNotEmpty()) {
+            $activeWeaponIndex = 0;
+        }
         $armorEntries = collect($character->normalizedArmors());
         $equippedArmorEntries = $armorEntries->where('equipped', true);
         $effectiveArmorEntries = $equippedArmorEntries->isNotEmpty() ? $equippedArmorEntries->values() : $armorEntries;
@@ -288,7 +299,7 @@
 
                     <article class="rounded-lg border border-amber-700/50 bg-amber-950/10 p-3">
                         <h4 class="text-xs font-semibold uppercase tracking-widest text-amber-200">Waffen</h4>
-                        @if (is_array($character->weapons) && count($character->weapons) > 0)
+                        @if ($weaponEntries->isNotEmpty())
                             <div class="mt-2 overflow-x-auto">
                                 <table class="min-w-full border-collapse text-sm text-stone-200">
                                     <thead>
@@ -300,9 +311,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($character->weapons as $weapon)
+                                        @foreach ($weaponEntries as $weaponIndex => $weapon)
                                             <tr>
-                                                <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'name', '-') }}</td>
+                                                <td class="border-b border-stone-800/60 px-2 py-1">
+                                                    {{ data_get($weapon, 'name', '-') }}
+                                                    @if ($activeWeaponIndex !== null && (int) $weaponIndex === (int) $activeWeaponIndex)
+                                                        <span class="ml-1 text-xs uppercase tracking-[0.08em] text-amber-300">(Aktive Waffe)</span>
+                                                    @endif
+                                                </td>
                                                 <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'attack', 0) }}</td>
                                                 <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'parry', 0) }}</td>
                                                 <td class="border-b border-stone-800/60 px-2 py-1">{{ data_get($weapon, 'damage', '-') }}</td>
