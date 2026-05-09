@@ -157,6 +157,61 @@ class StoryLogVisibilityTest extends TestCase
         $response->assertDontSee('Kapitel Verborgen');
     }
 
+    public function test_player_visibility_updates_when_gm_reveals_and_unreveals_entry(): void
+    {
+        [$campaign, $owner, $gm, $player] = $this->seedPrivateCampaignContext();
+        $entry = $this->createStoryLogEntry($campaign, $owner, false, 'Umschaltbare Sichtbarkeit');
+
+        $this->actingAs($player)
+            ->get(route('campaigns.story-log.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]))
+            ->assertForbidden();
+
+        $this->actingAs($gm)
+            ->patch(route('campaigns.story-log.reveal', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]))
+            ->assertRedirect(route('campaigns.story-log.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]));
+
+        $this->actingAs($player)
+            ->get(route('campaigns.story-log.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]))
+            ->assertOk()
+            ->assertSee('Umschaltbare Sichtbarkeit');
+
+        $this->actingAs($gm)
+            ->patch(route('campaigns.story-log.unreveal', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]))
+            ->assertRedirect(route('campaigns.story-log.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]));
+
+        $this->actingAs($player)
+            ->get(route('campaigns.story-log.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'storyLogEntry' => $entry,
+            ]))
+            ->assertForbidden();
+    }
+
     /**
      * @return array{0: Campaign, 1: User, 2: User, 3: User}
      */

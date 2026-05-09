@@ -220,6 +220,50 @@ class StoryLogManagementTest extends TestCase
         $this->assertNull($storyLogEntry->fresh()->revealed_at);
     }
 
+    public function test_owner_can_reveal_unreveal_and_delete_story_log_entry(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+        $owner = User::query()->findOrFail((int) $campaign->owner_id);
+        $storyLogEntry = $this->createStoryLogEntry($campaign, $gm, $scene, false, 'Owner verwaltet Eintrag');
+
+        $this->actingAs($owner)->patch(route('campaigns.story-log.reveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertRedirect(route('campaigns.story-log.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]));
+
+        $this->assertNotNull($storyLogEntry->fresh()->revealed_at);
+
+        $this->actingAs($owner)->patch(route('campaigns.story-log.unreveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertRedirect(route('campaigns.story-log.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]));
+
+        $this->assertNull($storyLogEntry->fresh()->revealed_at);
+
+        $this->actingAs($owner)->delete(route('campaigns.story-log.destroy', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertRedirect(route('campaigns.story-log.index', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]));
+
+        $this->assertDatabaseMissing('story_log_entries', [
+            'id' => $storyLogEntry->id,
+        ]);
+    }
+
     public function test_player_cannot_reveal_or_unreveal_story_log_entry(): void
     {
         [$campaign, $scene, $player, $gm] = $this->seedCampaignContext();
@@ -236,6 +280,64 @@ class StoryLogManagementTest extends TestCase
             'campaign' => $campaign,
             'storyLogEntry' => $storyLogEntry,
         ]))->assertForbidden();
+    }
+
+    public function test_outsider_cannot_reveal_unreveal_or_delete_story_log_entry(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+        $outsider = User::factory()->create();
+        $storyLogEntry = $this->createStoryLogEntry($campaign, $gm, $scene, false);
+
+        $this->actingAs($outsider)->patch(route('campaigns.story-log.reveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertForbidden();
+
+        $this->actingAs($outsider)->patch(route('campaigns.story-log.unreveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertForbidden();
+
+        $this->actingAs($outsider)->delete(route('campaigns.story-log.destroy', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]))->assertForbidden();
+    }
+
+    public function test_reveal_and_unreveal_redirect_to_show_without_return_to_passthrough(): void
+    {
+        [$campaign, $scene, , $gm] = $this->seedCampaignContext();
+        $storyLogEntry = $this->createStoryLogEntry($campaign, $gm, $scene, false);
+        $sceneUrl = route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]);
+
+        $this->actingAs($gm)->patch(route('campaigns.story-log.reveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+            'return_to' => $sceneUrl,
+        ]))->assertRedirect(route('campaigns.story-log.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]));
+
+        $this->actingAs($gm)->patch(route('campaigns.story-log.unreveal', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+            'return_to' => $sceneUrl,
+        ]))->assertRedirect(route('campaigns.story-log.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'storyLogEntry' => $storyLogEntry,
+        ]));
     }
 
     public function test_store_rejects_scene_id_from_other_campaign(): void
@@ -368,6 +470,18 @@ class StoryLogManagementTest extends TestCase
             'storyLogEntry' => $storyLogEntryB,
         ]))->assertNotFound();
 
+        $this->actingAs($gm)->patch(route('campaigns.story-log.reveal', [
+            'world' => $campaignA->world,
+            'campaign' => $campaignA,
+            'storyLogEntry' => $storyLogEntryB,
+        ]))->assertNotFound();
+
+        $this->actingAs($gm)->patch(route('campaigns.story-log.unreveal', [
+            'world' => $campaignA->world,
+            'campaign' => $campaignA,
+            'storyLogEntry' => $storyLogEntryB,
+        ]))->assertNotFound();
+
         $foreignWorld = \App\Models\World::factory()->create([
             'slug' => 'fremde-chronik-welt',
             'is_active' => true,
@@ -375,6 +489,24 @@ class StoryLogManagementTest extends TestCase
         ]);
 
         $this->actingAs($gm)->get(route('campaigns.story-log.show', [
+            'world' => $foreignWorld,
+            'campaign' => $campaignA,
+            'storyLogEntry' => $storyLogEntryA,
+        ]))->assertNotFound();
+
+        $this->actingAs($gm)->delete(route('campaigns.story-log.destroy', [
+            'world' => $foreignWorld,
+            'campaign' => $campaignA,
+            'storyLogEntry' => $storyLogEntryA,
+        ]))->assertNotFound();
+
+        $this->actingAs($gm)->patch(route('campaigns.story-log.reveal', [
+            'world' => $foreignWorld,
+            'campaign' => $campaignA,
+            'storyLogEntry' => $storyLogEntryA,
+        ]))->assertNotFound();
+
+        $this->actingAs($gm)->patch(route('campaigns.story-log.unreveal', [
             'world' => $foreignWorld,
             'campaign' => $campaignA,
             'storyLogEntry' => $storyLogEntryA,
