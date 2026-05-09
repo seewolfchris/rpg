@@ -109,3 +109,10 @@ Policy:
 - Scene bookmark toggle path is covered by transaction-based race/idempotence tests.
 - WebPush upsert/delete path is covered by duplicate-key concurrency tests in `tests/Feature/MySqlConcurrency/`.
 - UpdatePost mutation flow is split into focused internal responsibilities (normalization, moderation semantics, revision/update orchestration) while preserving behavior.
+
+## Role Model (Authorization Semantics)
+- Platform roles are `admin` and `player` (`UserRole`); global GM platform semantics were removed.
+- Campaign roles are `gm`, `trusted_player`, `player` (`CampaignMembershipRole`) via `campaign_memberships`.
+- Campaign owner semantics are separate and derived from `campaigns.owner_id`.
+- `User::isGmOrAdmin()` is a legacy compatibility bridge, deprecated, and currently equivalent to `isAdmin()`.
+- Prefer campaign-scoped checks through `CampaignAccess` and policies instead of user-level helper semantics.

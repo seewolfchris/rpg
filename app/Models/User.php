@@ -315,6 +315,14 @@ class User extends Authenticatable
         return $this->hasRole(UserRole::ADMIN);
     }
 
+    /**
+     * @deprecated Global GM semantics were removed from platform roles.
+     *             This legacy bridge remains for compatibility and currently
+     *             delegates to {@see self::isAdmin()} without behavior changes.
+     *             For platform permissions use {@see self::isAdmin()}.
+     *             For campaign-scoped permissions use CampaignAccess, policies,
+     *             and membership roles on `campaign_memberships`.
+     */
     public function isGmOrAdmin(): bool
     {
         return $this->isAdmin();

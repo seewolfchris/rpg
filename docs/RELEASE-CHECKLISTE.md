@@ -22,6 +22,9 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
   - `composer validate --strict`
 - Statische Analyse:
   - `composer analyse`
+- Config-Drift-Report (warn-only, nicht blockierend):
+  - `bash scripts/check_config_drift.sh`
+  - Der Check schreibt keine Konfiguration, endet immer mit Exit-Code `0` und macht nur Drift zwischen lokalen/prod Env-Beispielen sowie Ops-Leitplanken sichtbar.
 - Tests:
   - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
   - Optional lokal bei verfügbarem MySQL:
