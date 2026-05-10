@@ -2,19 +2,17 @@
 
 namespace App\Actions\Handout;
 
+use App\Domain\Handout\HandoutMutationService;
 use App\Models\Handout;
-use Illuminate\Database\DatabaseManager;
 
 class DeleteHandoutAction
 {
     public function __construct(
-        private readonly DatabaseManager $db,
+        private readonly HandoutMutationService $mutationService,
     ) {}
 
     public function execute(Handout $handout): void
     {
-        $this->db->transaction(function () use ($handout): void {
-            $handout->delete();
-        });
+        $this->mutationService->delete($handout);
     }
 }

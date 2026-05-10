@@ -2,25 +2,18 @@
 
 namespace App\Actions\Handout;
 
+use App\Domain\Handout\HandoutMutationService;
 use App\Models\Handout;
 use App\Models\User;
-use Illuminate\Database\DatabaseManager;
 
 class RevealHandoutAction
 {
     public function __construct(
-        private readonly DatabaseManager $db,
+        private readonly HandoutMutationService $mutationService,
     ) {}
 
     public function execute(Handout $handout, User $actor): Handout
     {
-        $this->db->transaction(function () use ($handout, $actor): void {
-            $handout->update([
-                'revealed_at' => now(),
-                'updated_by' => (int) $actor->id,
-            ]);
-        });
-
-        return $handout;
+        return $this->mutationService->reveal($handout, $actor);
     }
 }
