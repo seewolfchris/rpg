@@ -2,19 +2,17 @@
 
 namespace App\Actions\StoryLog;
 
+use App\Domain\StoryLog\StoryLogEntryMutationService;
 use App\Models\StoryLogEntry;
-use Illuminate\Database\DatabaseManager;
 
 class DeleteStoryLogEntryAction
 {
     public function __construct(
-        private readonly DatabaseManager $db,
+        private readonly StoryLogEntryMutationService $mutationService,
     ) {}
 
     public function execute(StoryLogEntry $storyLogEntry): void
     {
-        $this->db->transaction(function () use ($storyLogEntry): void {
-            $storyLogEntry->delete();
-        });
+        $this->mutationService->delete($storyLogEntry);
     }
 }
