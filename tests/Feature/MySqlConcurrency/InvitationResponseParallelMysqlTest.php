@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\MySqlConcurrency;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
+use App\Models\CampaignRoleEvent;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
@@ -95,6 +98,31 @@ class InvitationResponseParallelMysqlTest extends TestCase
 
         $invitation->refresh();
 
+        $this->assertSame(
+            1,
+            CampaignInvitation::query()
+                ->where('campaign_id', (int) $campaign->id)
+                ->where('user_id', (int) $invitee->id)
+                ->count()
+        );
+
+        $membershipCount = CampaignMembership::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where('user_id', (int) $invitee->id)
+            ->count();
+        $this->assertLessThanOrEqual(1, $membershipCount);
+
+        $relevantRoleEventCount = CampaignRoleEvent::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where('target_user_id', (int) $invitee->id)
+            ->whereIn('event_type', [
+                CampaignRoleEvent::EVENT_MEMBERSHIP_GRANTED,
+                CampaignRoleEvent::EVENT_MEMBERSHIP_ROLE_CHANGED,
+                CampaignRoleEvent::EVENT_MEMBERSHIP_REVOKED,
+            ])
+            ->count();
+        $this->assertLessThanOrEqual(1, $relevantRoleEventCount);
+
         $this->assertContains($invitation->status, [
             CampaignInvitation::STATUS_ACCEPTED,
             CampaignInvitation::STATUS_DECLINED,
@@ -103,8 +131,32 @@ class InvitationResponseParallelMysqlTest extends TestCase
 
         if ($invitation->status === CampaignInvitation::STATUS_ACCEPTED) {
             $this->assertNotNull($invitation->accepted_at);
+
+            $this->assertDatabaseHas('campaign_memberships', [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $invitee->id,
+                'role' => CampaignMembershipRole::PLAYER->value,
+            ]);
+            $this->assertSame(1, $membershipCount);
+
+            $this->assertDatabaseHas('campaign_role_events', [
+                'campaign_id' => (int) $campaign->id,
+                'target_user_id' => (int) $invitee->id,
+                'event_type' => CampaignRoleEvent::EVENT_MEMBERSHIP_GRANTED,
+                'old_role' => null,
+                'new_role' => CampaignMembershipRole::PLAYER->value,
+                'source' => 'invitation_accept',
+            ]);
+            $this->assertSame(1, $relevantRoleEventCount);
         } else {
             $this->assertNull($invitation->accepted_at);
+            $this->assertSame(0, $membershipCount);
+            $this->assertSame(0, $relevantRoleEventCount);
+
+            $this->assertDatabaseMissing('campaign_memberships', [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $invitee->id,
+            ]);
         }
     }
 
