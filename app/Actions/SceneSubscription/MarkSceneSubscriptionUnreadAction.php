@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace App\Actions\SceneSubscription;
 
+use App\Domain\Scene\SceneSubscriptionMutationService;
 use App\Models\Scene;
-use App\Models\SceneSubscription;
 use App\Models\User;
 
 final class MarkSceneSubscriptionUnreadAction
 {
+    public function __construct(
+        private readonly SceneSubscriptionMutationService $mutationService,
+    ) {}
+
     public function execute(User $user, Scene $scene): MarkSceneSubscriptionUnreadResult
     {
-        $subscription = SceneSubscription::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $user->id)
-            ->first();
+        $subscription = $this->mutationService->markUnread($user, $scene);
 
-        if (! $subscription instanceof SceneSubscription) {
+        if ($subscription === null) {
             return new MarkSceneSubscriptionUnreadResult(
                 subscription: null,
                 statusMessage: 'Szene ist nicht abonniert.',
