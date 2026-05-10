@@ -23,7 +23,9 @@ $inviteeUserId = (int) ($argv[2] ?? 0);
 $inviterUserId = (int) ($argv[3] ?? 0);
 $requestedRole = (string) ($argv[4] ?? CampaignInvitation::ROLE_PLAYER);
 $injectDuplicate = ((int) ($argv[5] ?? 0)) === 1;
+$holdMillis = max(0, (int) ($argv[6] ?? 0));
 $duplicateInjected = false;
+$startedAt = microtime(true);
 
 if ($injectDuplicate) {
     CampaignInvitation::creating(function (CampaignInvitation $invitation) use (&$duplicateInjected): void {
@@ -51,6 +53,10 @@ try {
     /** @var UpsertCampaignInvitationAction $action */
     $action = $app->make(UpsertCampaignInvitationAction::class);
 
+    if ($holdMillis > 0) {
+        usleep($holdMillis * 1000);
+    }
+
     $result = $action->execute(new UpsertCampaignInvitationInput(
         campaign: $campaign,
         inviteeUserId: $inviteeUserId,
@@ -63,6 +69,8 @@ try {
         'duplicate_injected' => $duplicateInjected,
         'is_new' => $result->isNew,
         'was_accepted' => $result->wasAccepted,
+        'started_at' => $startedAt,
+        'finished_at' => microtime(true),
     ], JSON_THROW_ON_ERROR);
 
     exit(0);
@@ -72,8 +80,9 @@ try {
         'duplicate_injected' => $duplicateInjected,
         'message' => $exception->getMessage(),
         'class' => $exception::class,
+        'started_at' => $startedAt,
+        'finished_at' => microtime(true),
     ], JSON_THROW_ON_ERROR);
 
     exit(99);
 }
-
