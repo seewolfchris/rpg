@@ -102,7 +102,15 @@ Policy:
   - `Auth/RegisteredUserController`
   - `Auth/NewPasswordController`
 - Current whitelist size in `phpstan.neon.dist`: `0` controllers.
-- Standard is now full Actions-first coverage for controller mutations.
+- Controller mutations remain mediated through explicit actions; selected thin actions may delegate to domain services.
+
+## Consolidation Pilot Pattern (2026)
+- Validated pilot pattern: characterization tests first, then internal domain-service consolidation.
+- Applied pilot domains so far: StoryLog, SceneSubscription, Handout (Reveal/Unreveal/Delete slices).
+- Existing action classes stay as adapters during consolidation slices.
+- Controllers, routes, policies, views, and public HTTP contracts stay unchanged per pilot.
+- High-risk exclusions remain separate (invitation/membership lifecycle, post hotpath, WebPush delivery, media streaming/storage authorization).
+- For current project live status and release/gate state, use `docs/STATUS.md` as source of truth.
 
 ## Concurrency Hardening Status
 - Post reactions are protected by DB constraints plus idempotent create/delete actions.

@@ -273,3 +273,11 @@ Pilot Slice B (PR-07):
 3. PR-03 Config-Drift Warnmodus
 - Drift-Check im Warnmodus (nicht blockierend), fokussiert auf kritische Schluessel.
 - Keine neuen CI-Hard-Gates.
+
+## Fortschritt / Zwischenbilanz
+
+Die Zwischenbilanz nach den Pilot-Slices ist in einer separaten Datei dokumentiert:
+- `docs/audits/2026-05-consolidation-progress.md`
+
+Hinweis zu Live-Statusdaten:
+- Fuer aktuellen Release-/Gate-/Versionsstatus ist `docs/STATUS.md` die kanonische Quelle.
