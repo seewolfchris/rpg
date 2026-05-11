@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountStatusController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CampaignInvitationController;
 use App\Http\Controllers\CharacterController;
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', DashboardController::class)
     ->name('dashboard');
+
+Route::get('/account/status', AccountStatusController::class)
+    ->name('account.status');
 
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])
     ->name('leaderboard.index');

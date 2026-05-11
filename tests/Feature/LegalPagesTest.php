@@ -31,4 +31,12 @@ class LegalPagesTest extends TestCase
             ->assertSee('https://c76.org/datenschutz/')
             ->assertSeeText('©2026 copyright by C. Sieber | all rights reserved');
     }
+
+    public function test_closed_beta_terms_page_is_publicly_reachable(): void
+    {
+        $this->get(route('terms.closed-beta'))
+            ->assertOk()
+            ->assertSeeText('Nutzungsbedingungen für den geschlossenen Testbetrieb')
+            ->assertSee('https://c76.org/datenschutz/');
+    }
 }

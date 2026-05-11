@@ -23,9 +23,39 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'terms_accepted' => '1',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect('/dashboard');
+        $this->assertGuest();
+        $response->assertRedirect('/login');
+        $response->assertSessionHas('status', 'Account wurde erstellt und wartet auf Freischaltung.');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'status' => 'pending',
+            'terms_version' => '2026-05-testflight',
+        ]);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'test@example.com',
+            'terms_accepted_at' => null,
+        ]);
+    }
+
+    public function test_registration_requires_terms_acceptance(): void
+    {
+        $response = $this->from('/register')->post('/register', [
+            'name' => 'No Terms',
+            'email' => 'no-terms@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response
+            ->assertRedirect('/register')
+            ->assertSessionHasErrors('terms_accepted');
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'no-terms@example.com',
+        ]);
     }
 }

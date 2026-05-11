@@ -29,6 +29,7 @@ class RegisterRequest extends FormRequest
                 Rule::unique('users', 'email'),
             ],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'terms_accepted' => ['required', 'accepted'],
         ];
     }
 }

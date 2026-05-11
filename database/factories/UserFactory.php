@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,6 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::PLAYER->value,
+            'status' => UserStatus::ACTIVE->value,
             'can_post_without_moderation' => false,
             'can_create_campaigns' => false,
             'offline_queue_enabled' => true,
@@ -59,6 +61,27 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::ADMIN->value,
+        ]);
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => UserStatus::PENDING->value,
+        ]);
+    }
+
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => UserStatus::ACTIVE->value,
+        ]);
+    }
+
+    public function suspended(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => UserStatus::SUSPENDED->value,
         ]);
     }
 

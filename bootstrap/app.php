@@ -3,6 +3,7 @@
 use App\Http\Middleware\ApplyWorldContext;
 use App\Http\Middleware\ApplySecurityHeaders;
 use App\Http\Middleware\AttachRequestId;
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ProtectAgainstCrawlers;
 use Illuminate\Http\Middleware\TrustProxies;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo('/dashboard');
         $middleware->alias([
             'role' => EnsureRole::class,
+            'active-account' => EnsureActiveAccount::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -17,6 +17,18 @@ Route::prefix('/admin')
             ->name('admin.users.moderation.update')
             ->middleware('throttle:moderation');
 
+        Route::patch('users/{user}/approve', [AdminUserModerationController::class, 'approve'])
+            ->name('admin.users.moderation.approve')
+            ->middleware('throttle:moderation');
+
+        Route::patch('users/{user}/suspend', [AdminUserModerationController::class, 'suspend'])
+            ->name('admin.users.moderation.suspend')
+            ->middleware('throttle:moderation');
+
+        Route::patch('users/{user}/reactivate', [AdminUserModerationController::class, 'reactivate'])
+            ->name('admin.users.moderation.reactivate')
+            ->middleware('throttle:moderation');
+
         Route::patch('worlds/{world}/toggle-active', [WorldAdminController::class, 'toggleActive'])
             ->name('admin.worlds.toggle-active')
             ->middleware('throttle:moderation');

@@ -48,4 +48,38 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_pending_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->pending()->create();
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response
+            ->assertRedirect('/login')
+            ->assertSessionHasErrors([
+                'email' => 'Account wartet auf Freischaltung.',
+            ]);
+    }
+
+    public function test_suspended_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->suspended()->create();
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response
+            ->assertRedirect('/login')
+            ->assertSessionHasErrors([
+                'email' => 'Account ist gesperrt.',
+            ]);
+    }
 }

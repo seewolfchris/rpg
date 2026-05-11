@@ -2,7 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Admin\ApproveUserAction;
+use App\Actions\Admin\ReactivateUserAction;
+use App\Actions\Admin\SuspendUserAction;
 use App\Actions\Admin\UpdateUserModerationPermissionAction;
+use App\Http\Requests\Admin\ApproveUserRequest;
+use App\Http\Requests\Admin\ReactivateUserRequest;
+use App\Http\Requests\Admin\SuspendUserRequest;
 use App\Http\Requests\Admin\UpdateUserModerationRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +20,9 @@ class AdminUserModerationController extends Controller
 {
     public function __construct(
         private readonly UpdateUserModerationPermissionAction $updateUserModerationPermissionAction,
+        private readonly ApproveUserAction $approveUserAction,
+        private readonly SuspendUserAction $suspendUserAction,
+        private readonly ReactivateUserAction $reactivateUserAction,
     ) {}
 
     public function index(Request $request): View
@@ -58,6 +67,58 @@ class AdminUserModerationController extends Controller
             ->with('status', 'Plattformrechte für '.$user->name.' aktualisiert.');
     }
 
+    public function approve(ApproveUserRequest $request, User $user): RedirectResponse
+    {
+        $actor = $this->authenticatedUser($request);
+
+        try {
+            $this->approveUserAction->execute($actor, $user);
+        } catch (ValidationException $exception) {
+            return back()->withErrors([
+                'user' => $this->firstValidationMessage($exception),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.users.moderation.index', ['q' => $request->query('q')])
+            ->with('status', 'Account für '.$user->name.' freigeschaltet.');
+    }
+
+    public function suspend(SuspendUserRequest $request, User $user): RedirectResponse
+    {
+        $actor = $this->authenticatedUser($request);
+        $validated = $request->validated();
+
+        try {
+            $this->suspendUserAction->execute($actor, $user, (string) ($validated['status_reason'] ?? ''));
+        } catch (ValidationException $exception) {
+            return back()->withErrors([
+                'user' => $this->firstValidationMessage($exception),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.users.moderation.index', ['q' => $request->query('q')])
+            ->with('status', 'Account für '.$user->name.' gesperrt.');
+    }
+
+    public function reactivate(ReactivateUserRequest $request, User $user): RedirectResponse
+    {
+        $actor = $this->authenticatedUser($request);
+
+        try {
+            $this->reactivateUserAction->execute($actor, $user);
+        } catch (ValidationException $exception) {
+            return back()->withErrors([
+                'user' => $this->firstValidationMessage($exception),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.users.moderation.index', ['q' => $request->query('q')])
+            ->with('status', 'Account für '.$user->name.' reaktiviert.');
+    }
+
     private function firstValidationMessage(ValidationException $exception): string
     {
         foreach ($exception->errors() as $messages) {
@@ -68,6 +129,6 @@ class AdminUserModerationController extends Controller
             }
         }
 
-        return 'Moderationsrecht konnte nicht aktualisiert werden.';
+        return 'Benutzerverwaltung konnte nicht aktualisiert werden.';
     }
 }

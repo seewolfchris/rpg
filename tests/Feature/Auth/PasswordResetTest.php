@@ -83,4 +83,60 @@ class PasswordResetTest extends TestCase
             'email' => $user->email,
         ])->assertStatus(429);
     }
+
+    public function test_pending_user_can_reset_password_but_cannot_login_until_approved(): void
+    {
+        $user = User::factory()->pending()->create();
+        $token = Password::createToken($user);
+
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+            'password_confirmation' => 'neues-passwort-123',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('login'));
+
+        $loginResponse = $this->from(route('login'))->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+        ]);
+
+        $this->assertGuest();
+        $loginResponse
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Account wartet auf Freischaltung.',
+            ]);
+    }
+
+    public function test_suspended_user_can_reset_password_but_cannot_login_while_suspended(): void
+    {
+        $user = User::factory()->suspended()->create();
+        $token = Password::createToken($user);
+
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+            'password_confirmation' => 'neues-passwort-123',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('login'));
+
+        $loginResponse = $this->from(route('login'))->post(route('login'), [
+            'email' => $user->email,
+            'password' => 'neues-passwort-123',
+        ]);
+
+        $this->assertGuest();
+        $loginResponse
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Account ist gesperrt.',
+            ]);
+    }
 }

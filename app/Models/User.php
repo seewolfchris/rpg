@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CampaignMembershipRole;
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Notifications\Auth\ResetPasswordNotification;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
@@ -55,6 +56,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'status',
+        'terms_accepted_at',
+        'terms_version',
         'can_post_without_moderation',
         'can_create_campaigns',
         'offline_queue_enabled',
@@ -81,11 +85,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'status' => UserStatus::class,
             'points' => 'integer',
             'notification_preferences' => 'array',
             'can_post_without_moderation' => 'boolean',
             'can_create_campaigns' => 'boolean',
             'offline_queue_enabled' => 'boolean',
+            'approved_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
         ];
     }
 
@@ -315,6 +323,26 @@ class User extends Authenticatable
         return $this->hasRole(UserRole::ADMIN);
     }
 
+    public function isPending(): bool
+    {
+        return $this->resolvedStatus() === UserStatus::PENDING;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->resolvedStatus() === UserStatus::ACTIVE;
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->resolvedStatus() === UserStatus::SUSPENDED;
+    }
+
+    public function canAccessPlatform(): bool
+    {
+        return $this->isActive();
+    }
+
     /**
      * @deprecated Global GM semantics were removed from platform roles.
      *             This legacy bridge remains for compatibility and currently
@@ -356,6 +384,25 @@ class User extends Authenticatable
         }
 
         return (bool) $this->can_create_campaigns;
+    }
+
+    private function resolvedStatus(): UserStatus
+    {
+        $status = $this->status;
+
+        if ($status instanceof UserStatus) {
+            return $status;
+        }
+
+        if (is_string($status)) {
+            $parsedStatus = UserStatus::tryFrom($status);
+
+            if ($parsedStatus instanceof UserStatus) {
+                return $parsedStatus;
+            }
+        }
+
+        return UserStatus::ACTIVE;
     }
 
     /**

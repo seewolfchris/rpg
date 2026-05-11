@@ -148,11 +148,94 @@ class AdminUserModerationControllerTest extends TestCase
             ])
             ->assertForbidden();
 
+        $this->actingAs($player)
+            ->patch(route('admin.users.moderation.suspend', ['user' => $target]), [
+                'status_reason' => 'non-admin attempt',
+            ])
+            ->assertForbidden();
+
         $this->assertDatabaseHas('users', [
             'id' => $target->id,
             'role' => UserRole::PLAYER->value,
             'can_create_campaigns' => false,
             'can_post_without_moderation' => false,
+        ]);
+    }
+
+    public function test_admin_can_approve_pending_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $pendingUser = User::factory()->pending()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation.approve', ['user' => $pendingUser]))
+            ->assertRedirect(route('admin.users.moderation.index', ['q' => null]));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $pendingUser->id,
+            'status' => 'active',
+            'approved_by' => $admin->id,
+            'suspended_at' => null,
+            'suspended_by' => null,
+        ]);
+    }
+
+    public function test_admin_can_suspend_active_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $activeUser = User::factory()->active()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation.suspend', ['user' => $activeUser]), [
+                'status_reason' => 'Regelverstoß',
+            ])
+            ->assertRedirect(route('admin.users.moderation.index', ['q' => null]));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $activeUser->id,
+            'status' => 'suspended',
+            'suspended_by' => $admin->id,
+            'status_reason' => 'Regelverstoß',
+        ]);
+    }
+
+    public function test_admin_can_reactivate_suspended_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $suspendedUser = User::factory()->suspended()->create([
+            'suspended_at' => now(),
+            'suspended_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation.reactivate', ['user' => $suspendedUser]))
+            ->assertRedirect(route('admin.users.moderation.index', ['q' => null]));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $suspendedUser->id,
+            'status' => 'active',
+            'suspended_at' => null,
+            'suspended_by' => null,
+            'status_reason' => null,
+        ]);
+    }
+
+    public function test_admin_cannot_suspend_self(): void
+    {
+        $admin = User::factory()->admin()->create();
+        User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->from(route('admin.users.moderation.index'))
+            ->patch(route('admin.users.moderation.suspend', ['user' => $admin]), [
+                'status_reason' => 'self suspend',
+            ])
+            ->assertRedirect(route('admin.users.moderation.index'))
+            ->assertSessionHasErrors('user');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'status' => 'active',
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -43,6 +44,24 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        $user = Auth::user();
+
+        if (! $user instanceof User || $user->canAccessPlatform()) {
+            return;
+        }
+
+        Auth::guard('web')->logout();
+        $this->session()->invalidate();
+        $this->session()->regenerateToken();
+
+        $message = $user->isSuspended()
+            ? 'Account ist gesperrt.'
+            : 'Account wartet auf Freischaltung.';
+
+        throw ValidationException::withMessages([
+            'email' => $message,
+        ]);
     }
 
     /**

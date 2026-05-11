@@ -21,12 +21,16 @@ class AuthActionsTest extends TestCase
             'name' => 'Unit User',
             'email' => 'unit-user@example.com',
             'password' => 'plaintext-password',
+            'terms_accepted' => true,
         ]);
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'email' => 'unit-user@example.com',
+            'status' => 'pending',
+            'terms_version' => '2026-05-testflight',
         ]);
+        $this->assertNotNull($user->fresh()?->terms_accepted_at);
         $this->assertTrue(Hash::check('plaintext-password', (string) $user->fresh()?->password));
     }
 

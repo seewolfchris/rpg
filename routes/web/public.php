@@ -65,3 +65,6 @@ Route::get('/wissen/enzyklopaedie/{categorySlug}/{entrySlug}', function (
 Route::get('/hilfe', function () {
     return redirect()->route('knowledge.global.index', [], 302);
 })->name('help.index');
+
+Route::view('/nutzungsbedingungen/testbetrieb', 'legal.closed-beta-terms')
+    ->name('terms.closed-beta');
