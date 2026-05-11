@@ -215,6 +215,19 @@ class PostSceneNotificationIdempotencyTest extends TestCase
             'status' => PostSceneNotificationDelivery::STATUS_SENT,
             'attempt_count' => 2,
         ]);
+
+        $thirdResult = $service->notifySceneParticipants($post, $author);
+
+        $this->assertSame(0, $thirdResult['in_app_recipients']);
+        $this->assertSame(0, $thirdResult['webpush_recipients']);
+        $this->assertFalse((bool) ($thirdResult['has_failures'] ?? true));
+        $this->assertDatabaseHas('post_scene_notification_deliveries', [
+            'post_id' => $post->id,
+            'recipient_user_id' => $recipient->id,
+            'channel' => PostSceneNotificationDelivery::CHANNEL_WEBPUSH,
+            'status' => PostSceneNotificationDelivery::STATUS_SENT,
+            'attempt_count' => 2,
+        ]);
     }
 
     public function test_ledger_claim_recovers_from_duplicate_key_conflict_and_keeps_single_row(): void
