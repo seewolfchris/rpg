@@ -684,7 +684,10 @@ class EncyclopediaManagementTest extends TestCase
             ->assertOk()
             ->assertSeeText('Bilder, Karten & Pläne')
             ->assertSeeText($mediaItem->file_name)
-            ->assertSee($mediaItem->getUrl(), false);
+            ->assertSee('Original öffnen')
+            ->assertSee('href="'.$mediaItem->getUrl().'"', false)
+            ->assertSee('target="_blank"', false)
+            ->assertSee('rel="noopener noreferrer"', false);
     }
 
     public function test_store_rejects_invalid_media_type_for_entry_uploads(): void

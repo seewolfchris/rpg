@@ -124,15 +124,32 @@
                 <p class="mt-1 text-sm text-stone-300">Visuelle Anhänge zu diesem Enzyklopädie-Eintrag.</p>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($entryMedia as $mediaItem)
-                        <figure class="overflow-hidden rounded-lg border border-stone-700/80 bg-black/35">
-                            <img
-                                src="{{ $mediaItem->getUrl() }}"
-                                alt="{{ $entry->title }} – {{ $mediaItem->file_name }}"
-                                loading="lazy"
-                                class="h-52 w-full object-cover"
+                        <figure class="overflow-hidden rounded-lg border border-stone-700/80 bg-black/35 transition hover:border-amber-500/70">
+                            <a
+                                href="{{ $mediaItem->getUrl() }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="group block cursor-zoom-in"
                             >
-                            <figcaption class="truncate px-3 py-2 text-xs text-stone-300" title="{{ $mediaItem->file_name }}">
-                                {{ $mediaItem->file_name }}
+                                <img
+                                    src="{{ $mediaItem->getUrl() }}"
+                                    alt="{{ $entry->title }} – {{ $mediaItem->file_name }}"
+                                    loading="lazy"
+                                    class="h-52 w-full object-cover transition group-hover:brightness-110"
+                                >
+                            </a>
+                            <figcaption class="px-3 py-2">
+                                <p class="truncate text-xs text-stone-300" title="{{ $mediaItem->file_name }}">
+                                    {{ $mediaItem->file_name }}
+                                </p>
+                                <a
+                                    href="{{ $mediaItem->getUrl() }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="mt-1 inline-flex text-xs font-semibold text-amber-300 transition hover:text-amber-100"
+                                >
+                                    Original öffnen
+                                </a>
                             </figcaption>
                         </figure>
                     @endforeach
