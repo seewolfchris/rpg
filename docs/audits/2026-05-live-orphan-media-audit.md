@@ -35,3 +35,14 @@ php artisan rpg:audit-orphan-media --json
 ## Betriebshinweis bis zur Klärung
 
 Bis zur vollständigen Klärung möglicher Orphans: Kampagnen mit Medien nicht hart löschen.
+
+## Cleanup-Command
+
+```bash
+php artisan rpg:cleanup-orphan-media --dry-run
+php artisan rpg:cleanup-orphan-media --execute
+```
+
+- Zuerst immer `--dry-run` ausführen.
+- `--execute` nur ausführen, wenn die Liste aus dem Dry-Run exakt geprüft wurde.
+- Der Command löscht ausschließlich erkannte Post-/Handout-Orphan-Media über Spatie Media Library.
