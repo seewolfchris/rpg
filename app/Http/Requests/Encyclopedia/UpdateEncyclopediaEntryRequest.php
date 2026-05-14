@@ -5,8 +5,11 @@ namespace App\Http\Requests\Encyclopedia;
 use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class UpdateEncyclopediaEntryRequest extends FormRequest
 {
@@ -70,6 +73,17 @@ class UpdateEncyclopediaEntryRequest extends FormRequest
             'game_relevance_ae' => ['nullable', 'string', 'max:1000'],
             'game_relevance_probe' => ['nullable', 'string', 'max:1000'],
             'game_relevance_real_world' => ['nullable', 'string', 'max:1000'],
+            'media_files' => ['nullable', 'array'],
+            'media_files.*' => [
+                'bail',
+                'file',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:4096',
+            ],
+            'remove_media_ids' => ['nullable', 'array'],
+            'remove_media_ids.*' => ['integer', 'distinct'],
         ];
     }
 
@@ -98,7 +112,94 @@ class UpdateEncyclopediaEntryRequest extends FormRequest
             unset($validated[$inputField]);
         }
 
+        unset($validated['media_files'], $validated['remove_media_ids']);
+
         return $key === null ? $validated : data_get($validated, $key, $default);
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $entry = $this->route('encyclopediaEntry');
+            $removeMediaIds = $this->removeMediaIds();
+
+            if (! $entry instanceof EncyclopediaEntry || $removeMediaIds === []) {
+                return;
+            }
+
+            $mediaItems = Media::query()
+                ->whereIn('id', $removeMediaIds)
+                ->get(['id', 'model_type', 'model_id', 'collection_name']);
+
+            if ($mediaItems->count() !== count($removeMediaIds)) {
+                $validator->errors()->add(
+                    'remove_media_ids',
+                    'Es können nur bestehende Medien dieses Enzyklopädie-Eintrags entfernt werden.'
+                );
+
+                return;
+            }
+
+            foreach ($mediaItems as $mediaItem) {
+                if (
+                    $mediaItem->model_type !== EncyclopediaEntry::class
+                    || (int) $mediaItem->model_id !== (int) $entry->id
+                    || (string) $mediaItem->collection_name !== EncyclopediaEntry::ENTRY_MEDIA_COLLECTION
+                ) {
+                    $validator->errors()->add(
+                        'remove_media_ids',
+                        'Es können nur bestehende Medien dieses Enzyklopädie-Eintrags entfernt werden.'
+                    );
+
+                    return;
+                }
+            }
+        });
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    public function uploadedMediaFiles(): array
+    {
+        $rawFiles = $this->file('media_files', []);
+        $files = $rawFiles instanceof UploadedFile
+            ? [$rawFiles]
+            : (is_array($rawFiles) ? $rawFiles : []);
+
+        $uploadedFiles = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $uploadedFiles[] = $file;
+        }
+
+        return $uploadedFiles;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function removeMediaIds(): array
+    {
+        $rawIds = $this->input('remove_media_ids', []);
+        $ids = is_array($rawIds) ? $rawIds : [];
+        $normalizedIds = [];
+
+        foreach ($ids as $id) {
+            $normalizedId = is_numeric($id) ? (int) $id : 0;
+
+            if ($normalizedId <= 0) {
+                continue;
+            }
+
+            $normalizedIds[] = $normalizedId;
+        }
+
+        return array_values(array_unique($normalizedIds));
     }
 
     /**

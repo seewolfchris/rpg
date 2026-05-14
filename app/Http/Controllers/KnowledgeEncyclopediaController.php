@@ -117,6 +117,7 @@ class KnowledgeEncyclopediaController extends Controller
                 ->select('id'))
             ->with([
                 'category:id,world_id,name,slug,summary',
+                'media',
             ])
             ->firstOrFail();
 

@@ -8,7 +8,7 @@
         <h1 class="font-heading text-3xl text-stone-100">Eintrag bearbeiten</h1>
         <p class="mt-2 text-stone-300">Kategorie: {{ $category->name }}</p>
 
-        <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.update', ['world' => $world, 'encyclopediaCategory' => $category, 'encyclopediaEntry' => $entry]) }}" class="mt-8">
+        <form method="POST" action="{{ route('knowledge.admin.kategorien.eintraege.update', ['world' => $world, 'encyclopediaCategory' => $category, 'encyclopediaEntry' => $entry]) }}" enctype="multipart/form-data" class="mt-8">
             @csrf
             @method('PUT')
             @include('knowledge.admin.entries._form', [

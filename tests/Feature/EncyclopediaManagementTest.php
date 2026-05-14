@@ -7,11 +7,21 @@ use App\Models\EncyclopediaEntry;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class EncyclopediaManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('public');
+        config(['media-library.disk_name' => 'public']);
+    }
 
     private function defaultWorld(): World
     {
@@ -515,6 +525,387 @@ class EncyclopediaManagementTest extends TestCase
         ]))
             ->assertOk()
             ->assertDontSeeText('Spielrelevanz');
+    }
+
+    public function test_admin_can_upload_media_when_creating_entry(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+
+        $this->actingAs($admin)
+            ->post(route('knowledge.admin.kategorien.eintraege.store', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]), [
+                'title' => 'Kartenknoten',
+                'slug' => 'kartenknoten',
+                'excerpt' => 'Testeintrag mit Karte.',
+                'content' => 'Eintrag mit visuellen Anhängen.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 90,
+                'media_files' => [
+                    UploadedFile::fake()->image('stadtplan.jpg', 1600, 900),
+                ],
+            ])
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]));
+
+        $entry = EncyclopediaEntry::query()
+            ->where('encyclopedia_category_id', $category->id)
+            ->where('slug', 'kartenknoten')
+            ->first();
+        $this->assertNotNull($entry);
+
+        if (! $entry instanceof EncyclopediaEntry) {
+            return;
+        }
+
+        $media = $entry->getMedia(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+        $this->assertCount(1, $media);
+        $mediaItem = $media->first();
+        $this->assertNotNull($mediaItem);
+
+        if ($mediaItem === null) {
+            return;
+        }
+
+        $this->assertDatabaseHas('media', [
+            'id' => (int) $mediaItem->id,
+            'model_type' => EncyclopediaEntry::class,
+            'model_id' => (int) $entry->id,
+            'collection_name' => EncyclopediaEntry::ENTRY_MEDIA_COLLECTION,
+            'disk' => 'public',
+        ]);
+        Storage::disk('public')->assertExists($mediaItem->getPathRelativeToRoot());
+        $this->assertArrayNotHasKey('media_files', $entry->getAttributes());
+        $this->assertArrayNotHasKey('remove_media_ids', $entry->getAttributes());
+    }
+
+    public function test_admin_can_add_more_media_when_updating_entry(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+        $entry = $fixture['regionEntry'];
+
+        $entry
+            ->addMedia(UploadedFile::fake()->image('existing.jpg', 1200, 700))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+
+        $this->actingAs($admin)
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $entry,
+            ]), [
+                'title' => $entry->title,
+                'slug' => $entry->slug,
+                'excerpt' => $entry->excerpt,
+                'content' => $entry->content,
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => $entry->position,
+                'media_files' => [
+                    UploadedFile::fake()->image('new-map.webp', 1400, 900),
+                ],
+            ])
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]));
+
+        $entry->refresh();
+        $this->assertCount(2, $entry->getMedia(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION));
+    }
+
+    public function test_admin_can_remove_existing_media_when_updating_entry(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+        $entry = $fixture['regionEntry'];
+
+        $firstMedia = $entry
+            ->addMedia(UploadedFile::fake()->image('remove-a.jpg', 1200, 700))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+        $entry
+            ->addMedia(UploadedFile::fake()->image('remove-b.jpg', 1200, 700))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+
+        $this->actingAs($admin)
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $entry,
+            ]), [
+                'title' => $entry->title,
+                'slug' => $entry->slug,
+                'excerpt' => $entry->excerpt,
+                'content' => $entry->content,
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => $entry->position,
+                'remove_media_ids' => [(int) $firstMedia->id],
+            ])
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]));
+
+        $entry->refresh();
+        $this->assertCount(1, $entry->getMedia(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION));
+        $this->assertDatabaseMissing('media', ['id' => (int) $firstMedia->id]);
+    }
+
+    public function test_public_entry_detail_renders_media_gallery_for_entry_media(): void
+    {
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $entry = $fixture['regionEntry']->fresh('category');
+        $this->assertNotNull($entry);
+
+        if (! $entry instanceof EncyclopediaEntry) {
+            return;
+        }
+
+        $mediaItem = $entry
+            ->addMedia(UploadedFile::fake()->image('entry-gallery.png', 1400, 900))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+
+        $this->get(route('knowledge.encyclopedia.entry', [
+            'world' => $entry->category->world,
+            'categorySlug' => $entry->category->slug,
+            'entrySlug' => $entry->slug,
+        ]))
+            ->assertOk()
+            ->assertSeeText('Bilder, Karten & Pläne')
+            ->assertSeeText($mediaItem->file_name)
+            ->assertSee($mediaItem->getUrl(), false);
+    }
+
+    public function test_store_rejects_invalid_media_type_for_entry_uploads(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+
+        $response = $this->actingAs($admin)
+            ->from(route('knowledge.admin.kategorien.eintraege.create', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]))
+            ->post(route('knowledge.admin.kategorien.eintraege.store', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]), [
+                'title' => 'Ungültige Datei',
+                'slug' => 'ungueltige-datei',
+                'excerpt' => 'Soll fehlschlagen.',
+                'content' => 'Dieser Upload ist nicht erlaubt.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 12,
+                'media_files' => [
+                    UploadedFile::fake()->createWithContent(
+                        'invalid.svg',
+                        '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'
+                    ),
+                ],
+            ]);
+
+        $response->assertRedirect(route('knowledge.admin.kategorien.eintraege.create', [
+            'world' => $world,
+            'encyclopediaCategory' => $category,
+        ]));
+        $response->assertSessionHasErrors('media_files.0');
+        $this->assertDatabaseMissing('encyclopedia_entries', [
+            'encyclopedia_category_id' => $category->id,
+            'slug' => 'ungueltige-datei',
+        ]);
+    }
+
+    public function test_store_rejects_too_large_media_file_for_entry_uploads(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+
+        $response = $this->actingAs($admin)
+            ->from(route('knowledge.admin.kategorien.eintraege.create', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]))
+            ->post(route('knowledge.admin.kategorien.eintraege.store', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]), [
+                'title' => 'Zu große Datei',
+                'slug' => 'zu-grosse-datei',
+                'excerpt' => 'Soll fehlschlagen.',
+                'content' => 'Dieser Upload ist zu groß.',
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => 13,
+                'media_files' => [
+                    UploadedFile::fake()->image('too-large.jpg', 1800, 1200)->size(5000),
+                ],
+            ]);
+
+        $response->assertRedirect(route('knowledge.admin.kategorien.eintraege.create', [
+            'world' => $world,
+            'encyclopediaCategory' => $category,
+        ]));
+        $response->assertSessionHasErrors('media_files.0');
+        $this->assertDatabaseMissing('encyclopedia_entries', [
+            'encyclopedia_category_id' => $category->id,
+            'slug' => 'zu-grosse-datei',
+        ]);
+    }
+
+    public function test_update_rejects_manipulated_remove_media_ids_from_other_entry(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+        $targetEntry = $fixture['regionEntry'];
+
+        $otherEntry = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Fremder Medienknoten',
+            'slug' => 'fremder-medienknoten',
+            'excerpt' => 'Hat eigene Medien.',
+            'content' => 'Dieser Eintrag besitzt eigene Medien.',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 333,
+            'published_at' => now(),
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
+        ]);
+
+        $otherMedia = $otherEntry
+            ->addMedia(UploadedFile::fake()->image('other-entry.jpg', 1200, 700))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+
+        $response = $this->actingAs($admin)
+            ->from(route('knowledge.admin.kategorien.eintraege.edit', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $targetEntry,
+            ]))
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $targetEntry,
+            ]), [
+                'title' => $targetEntry->title,
+                'slug' => $targetEntry->slug,
+                'excerpt' => $targetEntry->excerpt,
+                'content' => $targetEntry->content,
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => $targetEntry->position,
+                'remove_media_ids' => [(int) $otherMedia->id],
+            ]);
+
+        $response->assertRedirect(route('knowledge.admin.kategorien.eintraege.edit', [
+            'world' => $world,
+            'encyclopediaCategory' => $category,
+            'encyclopediaEntry' => $targetEntry,
+        ]));
+        $response->assertSessionHasErrors('remove_media_ids');
+        $this->assertDatabaseHas('media', [
+            'id' => (int) $otherMedia->id,
+            'model_type' => EncyclopediaEntry::class,
+            'model_id' => (int) $otherEntry->id,
+            'collection_name' => EncyclopediaEntry::ENTRY_MEDIA_COLLECTION,
+        ]);
+    }
+
+    public function test_world_and_category_mismatch_stays_protected_on_update_with_media_payload(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $categoryA = $fixture['chroniken'];
+        $categoryB = $fixture['machtbloecke'];
+
+        $entry = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $categoryA->id,
+            'title' => 'Mismatch Entry',
+            'slug' => 'mismatch-entry',
+            'excerpt' => 'Testet Mismatch-Schutz.',
+            'content' => 'Falscher Kategoriepfad darf nicht funktionieren.',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 88,
+            'published_at' => now(),
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('knowledge.admin.kategorien.eintraege.update', [
+                'world' => $world,
+                'encyclopediaCategory' => $categoryB,
+                'encyclopediaEntry' => $entry,
+            ]), [
+                'title' => $entry->title,
+                'slug' => $entry->slug,
+                'excerpt' => $entry->excerpt,
+                'content' => $entry->content,
+                'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+                'position' => $entry->position,
+                'media_files' => [
+                    UploadedFile::fake()->image('blocked.jpg', 1200, 700),
+                ],
+            ])
+            ->assertNotFound();
+    }
+
+    public function test_deleting_entry_cleans_up_media_row_and_file(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $world = $this->defaultWorld();
+        $fixture = $this->encyclopediaFixture($world);
+        $category = $fixture['regionen'];
+        $entry = EncyclopediaEntry::query()->create([
+            'encyclopedia_category_id' => $category->id,
+            'title' => 'Löschbarer Medienknoten',
+            'slug' => 'loeschbarer-medienknoten',
+            'excerpt' => 'Mit Bilddatei.',
+            'content' => 'Dieser Eintrag wird inklusive Medien gelöscht.',
+            'status' => EncyclopediaEntry::STATUS_PUBLISHED,
+            'position' => 404,
+            'published_at' => now(),
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
+        ]);
+
+        $media = $entry
+            ->addMedia(UploadedFile::fake()->image('delete-target.jpg', 1200, 700))
+            ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+
+        $mediaId = (int) $media->id;
+        $mediaPath = $media->getPathRelativeToRoot();
+        Storage::disk('public')->assertExists($mediaPath);
+
+        $this->actingAs($admin)
+            ->delete(route('knowledge.admin.kategorien.eintraege.destroy', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+                'encyclopediaEntry' => $entry,
+            ]))
+            ->assertRedirect(route('knowledge.admin.kategorien.edit', [
+                'world' => $world,
+                'encyclopediaCategory' => $category,
+            ]));
+
+        $this->assertDatabaseMissing('encyclopedia_entries', ['id' => (int) $entry->id]);
+        $this->assertDatabaseMissing('media', ['id' => $mediaId]);
+        Storage::disk('public')->assertMissing($mediaPath);
     }
 
     public function test_entry_edit_route_returns_404_for_category_mismatch(): void

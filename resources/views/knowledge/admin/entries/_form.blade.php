@@ -9,6 +9,32 @@
     $gameRelevance = is_array(old('game_relevance'))
         ? old('game_relevance')
         : (is_array($entry->game_relevance ?? null) ? $entry->game_relevance : []);
+    $editingEntry = isset($entry) && $entry->exists;
+    $existingEntryMedia = $editingEntry
+        ? ($entry->relationLoaded('media')
+            ? $entry->media->where('collection_name', \App\Models\EncyclopediaEntry::ENTRY_MEDIA_COLLECTION)->values()
+            : $entry->media()->where('collection_name', \App\Models\EncyclopediaEntry::ENTRY_MEDIA_COLLECTION)->get())
+        : collect();
+    $selectedRemoveMediaIds = collect((array) old('remove_media_ids', []))
+        ->map(static fn ($id) => is_numeric($id) ? (int) $id : 0)
+        ->filter(static fn (int $id): bool => $id > 0)
+        ->all();
+    $formatBytes = static function (mixed $bytes): string {
+        $size = is_numeric($bytes) ? (int) $bytes : -1;
+        if ($size < 0) {
+            return 'Größe unbekannt';
+        }
+
+        if ($size < 1024) {
+            return $size.' B';
+        }
+
+        if ($size < (1024 * 1024)) {
+            return number_format($size / 1024, 1, ',', '.').' KB';
+        }
+
+        return number_format($size / (1024 * 1024), 2, ',', '.').' MB';
+    };
 @endphp
 
 <div class="space-y-5">
@@ -158,6 +184,70 @@
                 @enderror
             </div>
         </div>
+    </section>
+
+    <section class="rounded-xl border border-stone-700/70 bg-black/30 p-4">
+        <h3 class="font-heading text-lg text-stone-100">Bilder, Karten &amp; Pläne</h3>
+        <p class="mt-1 text-xs text-stone-400">
+            Optional: Bilder, Karten, Stadtpläne oder Illustrationen. JPG, PNG oder WebP. Mehrere Dateien möglich, jeweils bis 4 MB.
+        </p>
+
+        <div class="mt-4">
+            <label for="media_files" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Dateien hochladen</label>
+            <input
+                id="media_files"
+                type="file"
+                name="media_files[]"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 file:mr-4 file:rounded-md file:border-0 file:bg-amber-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:uppercase file:tracking-[0.08em] file:text-amber-100 hover:file:bg-amber-500/35 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+            >
+            @error('media_files')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('media_files.*')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+        </div>
+
+        @if ($editingEntry && $existingEntryMedia->isNotEmpty())
+            <div class="mt-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Bestehende Medien</p>
+                <p class="mt-1 text-xs text-stone-500">Bestehende Dateien bleiben erhalten, sofern sie nicht explizit markiert werden.</p>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($existingEntryMedia as $entryMedia)
+                        <label class="rounded-lg border border-stone-700/80 bg-black/35 p-3">
+                            <img
+                                src="{{ $entryMedia->getUrl() }}"
+                                alt="Vorschau {{ $entry->title }} {{ $entryMedia->file_name }}"
+                                loading="lazy"
+                                class="h-36 w-full rounded-md object-cover"
+                            >
+                            <p class="mt-3 truncate text-xs font-semibold text-stone-200" title="{{ $entryMedia->file_name }}">{{ $entryMedia->file_name }}</p>
+                            <p class="mt-1 text-xs text-stone-400">{{ $formatBytes($entryMedia->size ?? null) }}</p>
+                            <span class="mt-3 inline-flex items-center gap-2 text-xs text-stone-300">
+                                <input
+                                    type="checkbox"
+                                    name="remove_media_ids[]"
+                                    value="{{ $entryMedia->id }}"
+                                    @checked(in_array((int) $entryMedia->id, $selectedRemoveMediaIds, true))
+                                    class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                                >
+                                Entfernen
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+
+                @error('remove_media_ids')
+                    <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+                @error('remove_media_ids.*')
+                    <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+        @endif
     </section>
 
     <div class="grid gap-4 sm:grid-cols-3">

@@ -9,7 +9,9 @@ use App\Models\EncyclopediaEntry;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Throwable;
 
 final class CreateEncyclopediaEntryAction
 {
@@ -19,9 +21,15 @@ final class CreateEncyclopediaEntryAction
 
     /**
      * @param  array<string, mixed>  $data
+     * @param  list<UploadedFile>  $mediaFiles
      */
-    public function execute(World $world, EncyclopediaCategory $category, User $actor, array $data): EncyclopediaEntry
-    {
+    public function execute(
+        World $world,
+        EncyclopediaCategory $category,
+        User $actor,
+        array $data,
+        array $mediaFiles = [],
+    ): EncyclopediaEntry {
         /** @var EncyclopediaEntry $entry */
         $entry = $this->db->transaction(function () use ($world, $category, $actor, $data): EncyclopediaEntry {
             $lockedCategory = $this->lockAndVerifyContext($world, $category);
@@ -32,6 +40,8 @@ final class CreateEncyclopediaEntryAction
 
             return $this->persistEntry($lockedCategory, $actor, $data, $normalizedPublishedAt);
         }, 3);
+
+        $this->attachMediaAfterCommit($entry, $mediaFiles);
 
         return $entry;
     }
@@ -89,5 +99,29 @@ final class CreateEncyclopediaEntryAction
         ]));
 
         return $entry;
+    }
+
+    /**
+     * @param  list<UploadedFile>  $mediaFiles
+     */
+    private function attachMediaAfterCommit(EncyclopediaEntry $entry, array $mediaFiles): void
+    {
+        if ($mediaFiles === []) {
+            return;
+        }
+
+        try {
+            foreach ($mediaFiles as $mediaFile) {
+                if (! $mediaFile instanceof UploadedFile) {
+                    continue;
+                }
+
+                $entry
+                    ->addMedia($mediaFile)
+                    ->toMediaCollection(EncyclopediaEntry::ENTRY_MEDIA_COLLECTION);
+            }
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
     }
 }

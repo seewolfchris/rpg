@@ -7,11 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class EncyclopediaEntry extends Model
+class EncyclopediaEntry extends Model implements HasMedia
 {
     /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
+    use InteractsWithMedia;
 
     public const STATUS_DRAFT = 'draft';
 
@@ -22,6 +25,8 @@ class EncyclopediaEntry extends Model
     public const STATUS_REJECTED = 'rejected';
 
     public const STATUS_ARCHIVED = 'archived';
+
+    public const ENTRY_MEDIA_COLLECTION = 'entry_media';
 
     /**
      * @var list<string>
@@ -102,5 +107,17 @@ class EncyclopediaEntry extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection(self::ENTRY_MEDIA_COLLECTION)
+            ->useDisk('public')
+            ->acceptsMimeTypes([
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ]);
     }
 }

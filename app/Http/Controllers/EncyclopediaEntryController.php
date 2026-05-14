@@ -50,6 +50,7 @@ class EncyclopediaEntryController extends Controller
             category: $encyclopediaCategory,
             actor: $this->authenticatedUser($request),
             data: $request->validated(),
+            mediaFiles: $request->uploadedMediaFiles(),
         );
 
         return redirect()
@@ -73,6 +74,7 @@ class EncyclopediaEntryController extends Controller
 
         $category = $encyclopediaCategory;
         $entry = $encyclopediaEntry;
+        $entry->loadMissing('media');
 
         return view('knowledge.admin.entries.edit', compact('world', 'category', 'entry'));
     }
@@ -92,6 +94,8 @@ class EncyclopediaEntryController extends Controller
             entry: $encyclopediaEntry,
             actor: $this->authenticatedUser($request),
             data: $request->validated(),
+            mediaFiles: $request->uploadedMediaFiles(),
+            removeMediaIds: $request->removeMediaIds(),
         );
 
         return redirect()

@@ -5,6 +5,7 @@ namespace App\Http\Requests\Encyclopedia;
 use App\Models\EncyclopediaCategory;
 use App\Models\EncyclopediaEntry;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -66,6 +67,15 @@ class StoreEncyclopediaEntryRequest extends FormRequest
             'game_relevance_ae' => ['nullable', 'string', 'max:1000'],
             'game_relevance_probe' => ['nullable', 'string', 'max:1000'],
             'game_relevance_real_world' => ['nullable', 'string', 'max:1000'],
+            'media_files' => ['nullable', 'array'],
+            'media_files.*' => [
+                'bail',
+                'file',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:4096',
+            ],
         ];
     }
 
@@ -94,7 +104,32 @@ class StoreEncyclopediaEntryRequest extends FormRequest
             unset($validated[$inputField]);
         }
 
+        unset($validated['media_files']);
+
         return $key === null ? $validated : data_get($validated, $key, $default);
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    public function uploadedMediaFiles(): array
+    {
+        $rawFiles = $this->file('media_files', []);
+        $files = $rawFiles instanceof UploadedFile
+            ? [$rawFiles]
+            : (is_array($rawFiles) ? $rawFiles : []);
+
+        $uploadedFiles = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $uploadedFiles[] = $file;
+        }
+
+        return $uploadedFiles;
     }
 
     /**
