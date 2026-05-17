@@ -1282,14 +1282,24 @@
         margin-inline: auto;
     }
 
+    .knowledge-rulebook-page {
+        width: 100%;
+    }
+
     .knowledge-rulebook-page .knowledge-rulebook-article {
+        width: 100%;
         max-width: none;
         margin-inline: 0;
     }
 
     .knowledge-rulebook-page .knowledge-rulebook-article > .knowledge-content {
+        width: 100%;
         max-width: none;
         margin-inline: 0;
+    }
+
+    .knowledge-rulebook-page .knowledge-content > * {
+        max-width: none;
     }
 
     .knowledge-rulebook-page .knowledge-content :where(table, pre) {
