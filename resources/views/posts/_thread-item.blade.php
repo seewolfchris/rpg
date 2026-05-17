@@ -288,7 +288,7 @@
         @php($probeAttributeConfig = (array) config('character_sheet.attributes', []))
         @php($probeAttributeKey = (string) ($post->diceRoll->probe_attribute_key ?? ''))
         @php($probeAttributeLabel = $probeAttributeKey !== '' ? (string) data_get($probeAttributeConfig, $probeAttributeKey.'.label', strtoupper($probeAttributeKey)) : null)
-        @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Bestanden' : 'Nicht bestanden'))
+        @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Erfolg' : 'Misserfolg'))
         <section class="dice-roll-visual mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
             <p class="text-xs uppercase tracking-widest text-amber-300">GM-Probe</p>
             <p class="mt-2 text-sm text-stone-200">{{ $post->diceRoll->label }}</p>

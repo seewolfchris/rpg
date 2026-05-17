@@ -636,7 +636,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame(27, (int) $playerCharacter->fresh()->ae_current);
 
         $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
-        $expectedOutcomeLabel = $expectedSuccess ? 'Bestanden' : 'Nicht bestanden';
+        $expectedOutcomeLabel = $expectedSuccess ? 'Erfolg' : 'Misserfolg';
         $sceneResponse->assertOk()
             ->assertSeeText('GM-Probe')
             ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
@@ -859,6 +859,173 @@ class CampaignScenePostWorkflowTest extends TestCase
         // Mit MU=30 und Modifikator +40 ist die Probe immer nicht bestanden.
         $this->assertFalse(((int) $roll->total) <= 30);
         $this->assertSame(0, (int) $roll->probe_is_success);
+    }
+
+    public function test_editing_post_content_does_not_reroll_existing_probe(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 44,
+        ]);
+
+        $storeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Der Spielleiter setzt die Szene unter Druck. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $playerCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Standhafter Widerstand gegen die Brandung',
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $originalRoll = DB::table('dice_rolls')
+            ->where('post_id', (int) $post->id)
+            ->first();
+
+        $this->assertNotNull($originalRoll);
+
+        $updateResponse = $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Der Spielleiter reagiert direkt auf den Wurf. ', 2),
+        ]);
+
+        $updateResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $updatedRoll = DB::table('dice_rolls')
+            ->where('post_id', (int) $post->id)
+            ->first();
+
+        $this->assertNotNull($updatedRoll);
+        $this->assertSame((int) $originalRoll->id, (int) $updatedRoll->id);
+        $this->assertSame((int) $originalRoll->kept_roll, (int) $updatedRoll->kept_roll);
+        $this->assertSame((int) $originalRoll->total, (int) $updatedRoll->total);
+        $this->assertSame((int) $originalRoll->probe_is_success, (int) $updatedRoll->probe_is_success);
+        $this->assertDatabaseCount('dice_rolls', 1);
+    }
+
+    public function test_client_cannot_set_probe_roll_values_directly(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 45,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Manipulationsversuch für Probe-Daten. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $playerCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Wurf muss serverseitig erzeugt werden',
+            // Diese Felder dürfen nicht aus dem Request in dice_rolls übernommen werden.
+            'rolls' => [999],
+            'kept_roll' => 999,
+            'total' => 999,
+            'probe_is_success' => 1,
+            'is_critical_success' => 1,
+            'is_critical_failure' => 1,
+            'created_at' => '1900-01-01 00:00:00',
+        ]);
+
+        $post = DB::table('posts')
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($post);
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $roll = DB::table('dice_rolls')
+            ->where('post_id', (int) $post->id)
+            ->first();
+
+        $this->assertNotNull($roll);
+        $this->assertGreaterThanOrEqual(1, (int) $roll->kept_roll);
+        $this->assertLessThanOrEqual(100, (int) $roll->kept_roll);
+        $this->assertSame(45, (int) $roll->probe_target_value);
+        $this->assertNotSame(999, (int) $roll->kept_roll);
+        $this->assertNotSame(999, (int) $roll->total);
+        $this->assertNotSame('1900-01-01 00:00:00', (string) $roll->created_at);
+        $this->assertSame(((int) $roll->total <= 45) ? 1 : 0, (int) $roll->probe_is_success);
     }
 
     public function test_gm_can_add_inventory_item_to_character_from_post(): void
