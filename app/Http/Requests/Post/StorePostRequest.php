@@ -47,6 +47,7 @@ class StorePostRequest extends FormRequest
                 'max:4096',
             ],
             'probe_enabled' => ['nullable', 'boolean'],
+            'probe_roll_token' => ['nullable', 'string', 'max:255'],
             'probe_character_id' => ['nullable', 'integer', 'required_if:probe_enabled,1', 'exists:characters,id'],
             'probe_roll_mode' => ['nullable', 'required_if:probe_enabled,1', Rule::in(DiceRoll::ALLOWED_MODES)],
             'probe_modifier' => ['nullable', 'required_if:probe_enabled,1', 'integer', 'between:-40,40'],
@@ -85,6 +86,7 @@ class StorePostRequest extends FormRequest
             'inventory_award_item' => trim((string) $this->input('inventory_award_item', '')),
             'inventory_award_quantity' => (int) $this->input('inventory_award_quantity', 1),
             'inventory_award_equipped' => $this->boolean('inventory_award_equipped'),
+            'probe_roll_token' => ($probeRollToken = trim((string) $this->input('probe_roll_token', ''))) !== '' ? $probeRollToken : null,
         ];
 
         if ($postType !== 'ic') {
@@ -311,6 +313,7 @@ class StorePostRequest extends FormRequest
             'probe_attribute_key' => 'Probe-Eigenschaft',
             'probe_character_id' => 'Ziel-Held',
             'probe_explanation' => 'Erklärung / Anlass',
+            'probe_roll_token' => 'Vorabwurf-Token',
             'post_mode' => 'Beitragsmodus',
             'ic_quote' => 'IC-Zitat',
             'inventory_award_character_id' => 'Ziel-Held (Inventar-Fund)',

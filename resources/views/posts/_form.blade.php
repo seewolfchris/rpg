@@ -27,6 +27,7 @@
     $currentProbeLeDelta = old('probe_le_delta', 0);
     $currentProbeAeDelta = old('probe_ae_delta', 0);
     $currentProbeExplanation = old('probe_explanation');
+    $currentProbeRollToken = (string) old('probe_roll_token', '');
     $currentInventoryAwardEnabled = (bool) old('inventory_award_enabled', false);
     $currentInventoryAwardCharacter = old('inventory_award_character_id');
     $currentInventoryAwardItem = old('inventory_award_item');
@@ -48,6 +49,9 @@
         $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
             ? $cancelUrl
             : (isset($post) ? route('campaigns.scenes.show', ['world' => $post->scene->campaign->world, 'campaign' => $post->scene->campaign, 'scene' => $post->scene]) : null);
+        $probePreviewUrl = isset($scene, $campaign)
+            ? route('campaigns.scenes.posts.probe-preview', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene])
+            : null;
     @endphp
 
 <div
@@ -297,7 +301,7 @@
                 <div>
                     <h3 class="font-heading text-lg text-amber-100">GM-Probe für diesen Beitrag</h3>
                     <p class="mt-1 text-xs leading-relaxed text-amber-200/80">
-                        Eine Probe wird beim Speichern direkt ausgeführt und als Ergebnisblock im Beitrag angezeigt.
+                        Würfle die Probe vor dem Veröffentlichen. Das Ergebnis wird beim Speichern unverändert in den Beitrag übernommen.
                     </p>
                 </div>
                 <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-200">
@@ -305,6 +309,7 @@
                         type="checkbox"
                         name="probe_enabled"
                         value="1"
+                        data-probe-toggle
                         x-model="probeEnabled"
                         @checked($currentProbeEnabled)
                         class="h-4 w-4 rounded border-amber-600/70 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
@@ -324,6 +329,7 @@
                         id="probe_explanation"
                         type="text"
                         name="probe_explanation"
+                        data-probe-param-field
                         value="{{ $currentProbeExplanation }}"
                         maxlength="180"
                         placeholder="z. B. Klettern am Ascheturm unter Zeitdruck"
@@ -339,6 +345,7 @@
                     <select
                         id="probe_character_id"
                         name="probe_character_id"
+                        data-probe-param-field
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                         <option value="">Held wählen</option>
@@ -361,6 +368,7 @@
                     <select
                         id="probe_roll_mode"
                         name="probe_roll_mode"
+                        data-probe-param-field
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                         <option value="normal" @selected($currentProbeMode === 'normal')>Normal</option>
@@ -377,6 +385,7 @@
                     <select
                         id="probe_attribute_key"
                         name="probe_attribute_key"
+                        data-probe-param-field
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
                         @foreach ($probeAttributeOptions as $attributeKey => $meta)
@@ -398,6 +407,7 @@
                         id="probe_modifier"
                         type="number"
                         name="probe_modifier"
+                        data-probe-param-field
                         value="{{ $currentProbeModifier }}"
                         min="-40"
                         max="40"
@@ -415,6 +425,7 @@
                         id="probe_le_delta"
                         type="number"
                         name="probe_le_delta"
+                        data-probe-param-field
                         value="{{ $currentProbeLeDelta }}"
                         min="-200"
                         max="200"
@@ -434,6 +445,7 @@
                         id="probe_ae_delta"
                         type="number"
                         name="probe_ae_delta"
+                        data-probe-param-field
                         value="{{ $currentProbeAeDelta }}"
                         min="-200"
                         max="200"
@@ -449,6 +461,33 @@
             <p class="mt-3 text-xs uppercase tracking-[0.08em] text-stone-400">
                 Probe-Ergebnis wird automatisch berechnet: (Wurf + Modifikator) <= Eigenschaftswert.
             </p>
+            @error('probe_roll_token')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                    type="button"
+                    hx-post="{{ $probePreviewUrl }}"
+                    hx-include="[name='probe_enabled'], [name='probe_character_id'], [name='probe_roll_mode'], [name='probe_modifier'], [name='probe_attribute_key'], [name='probe_explanation'], [name='probe_le_delta'], [name='probe_ae_delta']"
+                    hx-target="[data-probe-preview-result]"
+                    hx-swap="innerHTML"
+                    class="rounded-md border border-amber-600/70 bg-amber-900/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-900/45"
+                    data-probe-preview-trigger
+                >
+                    Probe würfeln
+                </button>
+                <p class="text-xs text-stone-400">
+                    Nach dem Vorabwurf kannst du im selben Beitrag direkt auf das Ergebnis reagieren.
+                </p>
+            </div>
+
+            <p class="mt-3 hidden text-xs text-amber-200/90" data-probe-preview-token-status></p>
+            <div class="mt-3 space-y-3" data-probe-preview-result>
+                @if ($currentProbeRollToken !== '')
+                    <input type="hidden" name="probe_roll_token" value="{{ $currentProbeRollToken }}">
+                @endif
+            </div>
 
             <div class="mt-5 rounded-md border border-stone-700/80 bg-black/25 p-4">
                 <div class="flex items-start justify-between gap-3">

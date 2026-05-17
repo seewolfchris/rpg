@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain\Post\PostMentionNotificationService;
 use App\Domain\Post\PostProbeService;
 use App\Domain\Post\ScenePostNotificationService;
+use App\Domain\Post\Contracts\ProbeRollTokenStore;
 use App\Enums\CampaignMembershipRole;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Jobs\Post\RetryScenePostNotificationsJob;
@@ -646,6 +647,653 @@ class CampaignScenePostWorkflowTest extends TestCase
             ->assertSeeText('Ergebnis: '.$expectedOutcomeLabel)
             ->assertSeeText('LE: -10')
             ->assertSeeText('AE: -3');
+    }
+
+    public function test_gm_can_preview_probe_in_composer_without_creating_post_or_dice_roll(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 44,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => -2,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Vorabwurf für Brandungsprobe',
+            'probe_le_delta' => -4,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $response->assertOk()
+            ->assertSeeText('GM-Probe (Vorabwurf)')
+            ->assertSeeText('Vorabwurf für Brandungsprobe')
+            ->assertSeeText('Ergebnis:')
+            ->assertSee('name="probe_roll_token"', false);
+
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_final_submit_with_valid_probe_token_persists_exact_preview_roll_values(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'species' => 'mensch',
+            'mu' => 46,
+            'le_max' => 45,
+            'le_current' => 45,
+            'ae_max' => 30,
+            'ae_current' => 30,
+        ]);
+
+        $previewPayload = [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => -3,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Vorabwurf im Sturm',
+            'probe_le_delta' => -6,
+            'probe_ae_delta' => -1,
+        ];
+
+        $previewResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), $previewPayload);
+
+        $previewResponse->assertOk();
+        $token = $this->extractProbeRollTokenFromResponse($previewResponse->getContent());
+        $this->assertNotNull($token);
+
+        /** @var ProbeRollTokenStore $tokenStore */
+        $tokenStore = app(ProbeRollTokenStore::class);
+        $tokenPayload = $tokenStore->read($token);
+        $this->assertIsArray($tokenPayload);
+
+        $storeResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Klaus hält sich am Wrackteil fest. ', 2),
+            'probe_enabled' => '1',
+            'probe_roll_token' => $token,
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => -3,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Vorabwurf im Sturm',
+            'probe_le_delta' => -6,
+            'probe_ae_delta' => -1,
+            // Manipulationsversuch muss ignoriert werden.
+            'rolls' => [999],
+            'kept_roll' => 999,
+            'total' => 999,
+            'probe_is_success' => 1,
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $roll = DiceRoll::query()
+            ->where('post_id', $post->id)
+            ->firstOrFail();
+
+        $this->assertSame((int) $tokenPayload['kept_roll'], (int) $roll->kept_roll);
+        $this->assertSame((int) $tokenPayload['total'], (int) $roll->total);
+        $this->assertSame((int) $tokenPayload['probe_modifier'], (int) $roll->modifier);
+        $this->assertSame((string) $tokenPayload['probe_roll_mode'], (string) $roll->roll_mode);
+        $this->assertSame((string) $tokenPayload['probe_attribute_key'], (string) $roll->probe_attribute_key);
+        $this->assertSame((string) $tokenPayload['probe_explanation'], (string) $roll->label);
+        $this->assertSame((int) $tokenPayload['character_id'], (int) $roll->character_id);
+        $this->assertSame((int) $tokenPayload['probe_target_value'], (int) $roll->probe_target_value);
+        $this->assertSame((bool) $tokenPayload['probe_is_success'], (bool) $roll->probe_is_success);
+        $this->assertSame((bool) $tokenPayload['is_critical_success'], (bool) $roll->is_critical_success);
+        $this->assertSame((bool) $tokenPayload['is_critical_failure'], (bool) $roll->is_critical_failure);
+        $this->assertNotSame(999, (int) $roll->kept_roll);
+        $this->assertNotSame(999, (int) $roll->total);
+    }
+
+    public function test_player_cannot_preview_probe_in_composer(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+        ]);
+
+        $response = $this->actingAs($player)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'probe_character_id' => $character->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Spieler darf nicht würfeln',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_probe_token_from_other_user_is_rejected_on_store(): void
+    {
+        $gmA = User::factory()->gm()->create();
+        $gmB = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gmA->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gmA->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $gmB, CampaignMembershipRole::GM, $gmA);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gmA);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 40,
+        ]);
+
+        $previewResponse = $this->actingAs($gmA)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Token nur für GM A',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $previewResponse->assertOk();
+        $token = $this->extractProbeRollTokenFromResponse($previewResponse->getContent());
+        $this->assertNotNull($token);
+
+        $storeResponse = $this->actingAs($gmB)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Token-Missbrauch muss scheitern. ', 2),
+                'probe_enabled' => '1',
+                'probe_roll_token' => $token,
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 0,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Token nur für GM A',
+                'probe_le_delta' => 0,
+                'probe_ae_delta' => 0,
+            ]);
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $storeResponse->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_probe_token_from_other_scene_is_rejected_on_store(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $sceneA = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $sceneB = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 42,
+        ]);
+
+        $previewResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $sceneA,
+        ]), [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 1,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Token gilt nur Szene A',
+            'probe_le_delta' => -2,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $previewResponse->assertOk();
+        $token = $this->extractProbeRollTokenFromResponse($previewResponse->getContent());
+        $this->assertNotNull($token);
+
+        $storeResponse = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $sceneB]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $sceneB,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Szenenwechsel darf Token nicht übernehmen. ', 2),
+                'probe_enabled' => '1',
+                'probe_roll_token' => $token,
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 1,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Token gilt nur Szene A',
+                'probe_le_delta' => -2,
+                'probe_ae_delta' => 0,
+            ]);
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $sceneB,
+        ]));
+        $storeResponse->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_probe_token_parameter_mismatch_is_rejected_on_store(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 50,
+        ]);
+
+        $previewResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Parameter müssen identisch sein',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $previewResponse->assertOk();
+        $token = $this->extractProbeRollTokenFromResponse($previewResponse->getContent());
+        $this->assertNotNull($token);
+
+        $storeResponse = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Abweichende Parameter müssen fehlschlagen. ', 2),
+                'probe_enabled' => '1',
+                'probe_roll_token' => $token,
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                // Mismatch zum Token.
+                'probe_modifier' => 2,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Parameter müssen identisch sein',
+                'probe_le_delta' => 0,
+                'probe_ae_delta' => 0,
+            ]);
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $storeResponse->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_invalid_existing_probe_token_does_not_fallback_to_legacy_roll(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 48,
+        ]);
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Ungültiger Token darf keinen Legacy-Wurf auslösen. ', 2),
+                'probe_enabled' => '1',
+                'probe_roll_token' => str_repeat('a', 64),
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 0,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Ungültiger Token',
+                'probe_le_delta' => 0,
+                'probe_ae_delta' => 0,
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $response->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+    }
+
+    public function test_legacy_probe_fallback_still_works_when_token_is_missing(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 45,
+        ]);
+
+        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'content' => str_repeat('Legacy-Fallback ohne Token bleibt vorerst aktiv. ', 2),
+            'probe_enabled' => '1',
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Legacy-Fallback-Test',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $gm->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+        $this->assertDatabaseHas('dice_rolls', [
+            'post_id' => $post->id,
+            'character_id' => $targetCharacter->id,
+        ]);
+    }
+
+    public function test_probe_token_is_single_use(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 44,
+        ]);
+
+        $previewResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.probe-preview', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Single-Use-Token',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ]);
+
+        $previewResponse->assertOk();
+        $token = $this->extractProbeRollTokenFromResponse($previewResponse->getContent());
+        $this->assertNotNull($token);
+
+        $baseStorePayload = [
+            'post_type' => 'ic',
+            'post_mode' => 'gm',
+            'content_format' => 'markdown',
+            'probe_enabled' => '1',
+            'probe_roll_token' => $token,
+            'probe_character_id' => $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Single-Use-Token',
+            'probe_le_delta' => 0,
+            'probe_ae_delta' => 0,
+        ];
+
+        $firstResponse = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            ...$baseStorePayload,
+            'content' => str_repeat('Erster Post mit Token. ', 2),
+        ]);
+
+        $firstResponse->assertRedirect();
+        $this->assertDatabaseCount('posts', 1);
+        $this->assertDatabaseCount('dice_rolls', 1);
+
+        $secondResponse = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                ...$baseStorePayload,
+                'content' => str_repeat('Zweiter Post darf Token nicht wiederverwenden. ', 2),
+            ]);
+
+        $secondResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $secondResponse->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 1);
+        $this->assertDatabaseCount('dice_rolls', 1);
     }
 
     public function test_multiple_gm_probes_apply_pool_changes_incrementally(): void
@@ -1598,6 +2246,15 @@ class CampaignScenePostWorkflowTest extends TestCase
             );
             $lastPosition = (int) $position;
         }
+    }
+
+    private function extractProbeRollTokenFromResponse(string $html): ?string
+    {
+        if (preg_match('/name=\"probe_roll_token\"\\s+value=\"([a-f0-9]{64})\"/i', $html, $matches) !== 1) {
+            return null;
+        }
+
+        return (string) ($matches[1] ?? '');
     }
 
     private function grantMembership(

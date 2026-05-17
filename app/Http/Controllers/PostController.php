@@ -9,9 +9,11 @@ use App\Actions\Post\ApplyPostModerationTransitionAction;
 use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
 use App\Domain\Post\PostPinStateService;
+use App\Domain\Post\PostProbeService;
 use App\Domain\Post\StorePostService;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\Post\ModeratePostRequest;
+use App\Http\Requests\Post\PreviewProbeRollRequest;
 use App\Http\Requests\Post\PreviewPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
@@ -33,6 +35,7 @@ class PostController extends Controller
     use EnsuresWorldContext;
 
     public function __construct(
+        private readonly PostProbeService $postProbeService,
         private readonly StorePostService $storePostService,
         private readonly UpdatePostAction $updatePostAction,
         private readonly DeletePostAction $deletePostAction,
@@ -267,6 +270,38 @@ class PostController extends Controller
         return response()->json([
             'status' => 'ok',
             'html' => $html,
+        ]);
+    }
+
+    public function previewProbe(
+        PreviewProbeRollRequest $request,
+        World $world,
+        Campaign $campaign,
+        Scene $scene
+    ): View {
+        $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
+        $this->authorize('create', [Post::class, $scene]);
+
+        $user = $this->authenticatedUser($request);
+
+        if (! $campaign->canModeratePosts($user)) {
+            abort(403);
+        }
+
+        $preview = $this->postProbeService->previewForComposer(
+            data: $request->validated(),
+            user: $user,
+            scene: $scene,
+            isModerator: true,
+        );
+
+        return view('posts.partials.probe-preview-result', [
+            'preview' => $preview,
+            'attributeLabel' => (string) data_get(
+                (array) config('character_sheet.attributes', []),
+                (string) $preview['probe_attribute_key'].'.label',
+                strtoupper((string) $preview['probe_attribute_key'])
+            ),
         ]);
     }
 

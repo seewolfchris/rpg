@@ -83,4 +83,43 @@ class PostProbeInvariantViolationException extends DomainInvariantViolationExcep
             ],
         );
     }
+
+    public static function previewTokenMissingOrExpired(): self
+    {
+        return new self(
+            reason: 'preview_token_missing_or_expired',
+            field: 'probe_roll_token',
+            message: 'Die vorab gewürfelte Probe ist ungültig oder abgelaufen. Bitte würfle erneut.',
+        );
+    }
+
+    /**
+     * @param  scalar|null  $expected
+     * @param  scalar|null  $actual
+     */
+    public static function previewTokenScopeMismatch(string $scopeField, string|int|float|bool|null $expected, string|int|float|bool|null $actual): self
+    {
+        return new self(
+            reason: 'preview_token_scope_mismatch',
+            field: 'probe_roll_token',
+            message: 'Die vorab gewürfelte Probe passt nicht zu den aktuellen Eingaben. Bitte würfle erneut.',
+            context: [
+                'scope_field' => $scopeField,
+                'expected' => $expected,
+                'actual' => $actual,
+            ],
+        );
+    }
+
+    public static function previewTokenPayloadInvalid(string $field): self
+    {
+        return new self(
+            reason: 'preview_token_payload_invalid',
+            field: 'probe_roll_token',
+            message: 'Die vorab gewürfelte Probe ist ungültig. Bitte würfle erneut.',
+            context: [
+                'payload_field' => $field,
+            ],
+        );
+    }
 }

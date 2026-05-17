@@ -13,6 +13,10 @@ Route::post('/campaigns/{campaign}/scenes/{scene}/posts', [PostController::class
     ->middleware('throttle:writes')
     ->name('campaigns.scenes.posts.store');
 
+Route::post('/campaigns/{campaign}/scenes/{scene}/posts/probe-preview', [PostController::class, 'previewProbe'])
+    ->middleware('throttle:writes')
+    ->name('campaigns.scenes.posts.probe-preview');
+
 Route::post('/posts/preview', [PostController::class, 'preview'])
     ->middleware('throttle:writes')
     ->name('posts.preview');

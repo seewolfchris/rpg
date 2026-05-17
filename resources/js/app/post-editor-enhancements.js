@@ -87,6 +87,11 @@ export function setupPostEditorEnhancements() {
         const postTypeField = formNode.querySelector('select[name="post_type"]');
         const characterField = formNode.querySelector('select[name="character_id"]');
         const icQuoteField = formNode.querySelector('input[name="ic_quote"]');
+        const probeToggleField = formNode.querySelector('[data-probe-toggle]');
+        const probeParamFields = formNode.querySelectorAll('[data-probe-param-field]');
+        const probePreviewTrigger = formNode.querySelector('[data-probe-preview-trigger]');
+        const probePreviewResultNode = formNode.querySelector('[data-probe-preview-result]');
+        const probePreviewTokenStatusNode = formNode.querySelector('[data-probe-preview-token-status]');
         const previewRoot = formNode.querySelector('[data-post-preview]');
         const previewStatusNode = formNode.querySelector('[data-post-preview-status]');
         const previewOutputNode = formNode.querySelector('[data-post-preview-output]');
@@ -97,6 +102,37 @@ export function setupPostEditorEnhancements() {
         if (!(contentField instanceof HTMLTextAreaElement) || !(formatField instanceof HTMLSelectElement)) {
             return;
         }
+
+        const hasActiveProbeToken = () => {
+            const tokenField = formNode.querySelector('input[name="probe_roll_token"]');
+
+            return tokenField instanceof HTMLInputElement
+                && tokenField.value.trim() !== '';
+        };
+
+        const clearProbePreviewResult = (statusMessage = '') => {
+            if (!hasActiveProbeToken()) {
+                return;
+            }
+
+            if (probePreviewResultNode instanceof HTMLElement) {
+                probePreviewResultNode.innerHTML = '';
+            }
+
+            if (probePreviewTokenStatusNode instanceof HTMLElement) {
+                probePreviewTokenStatusNode.textContent = statusMessage;
+                probePreviewTokenStatusNode.classList.toggle('hidden', statusMessage.trim() === '');
+            }
+        };
+
+        const setProbePreviewStatus = (statusMessage) => {
+            if (!(probePreviewTokenStatusNode instanceof HTMLElement)) {
+                return;
+            }
+
+            probePreviewTokenStatusNode.textContent = statusMessage;
+            probePreviewTokenStatusNode.classList.toggle('hidden', statusMessage.trim() === '');
+        };
 
         const restoreDraftIfNeeded = () => {
             if (!storageKey || contentField.value.trim() !== '') {
@@ -267,6 +303,72 @@ export function setupPostEditorEnhancements() {
 
         if (icQuoteField instanceof HTMLInputElement) {
             icQuoteField.addEventListener('input', persistDraft);
+        }
+
+        if (probeParamFields.length > 0) {
+            const invalidateProbeToken = () => {
+                clearProbePreviewResult('Probeparameter geändert – bitte neu würfeln.');
+            };
+
+            probeParamFields.forEach((probeParamField) => {
+                if (!(probeParamField instanceof HTMLInputElement || probeParamField instanceof HTMLSelectElement || probeParamField instanceof HTMLTextAreaElement)) {
+                    return;
+                }
+
+                const eventName = probeParamField instanceof HTMLInputElement
+                    && (probeParamField.type === 'text' || probeParamField.type === 'number')
+                    ? 'input'
+                    : 'change';
+
+                probeParamField.addEventListener(eventName, invalidateProbeToken);
+            });
+        }
+
+        if (probeToggleField instanceof HTMLInputElement) {
+            probeToggleField.addEventListener('change', () => {
+                if (!probeToggleField.checked) {
+                    clearProbePreviewResult('');
+                    setProbePreviewStatus('');
+                    return;
+                }
+
+                if (hasActiveProbeToken()) {
+                    setProbePreviewStatus('Vorabwurf aktiv. Das Ergebnis wird beim Speichern unverändert übernommen.');
+                }
+            });
+        }
+
+        if (probePreviewTrigger instanceof HTMLElement) {
+            probePreviewTrigger.addEventListener('click', () => {
+                setProbePreviewStatus('Probe wird serverseitig gewürfelt ...');
+            });
+        }
+
+        formNode.addEventListener('htmx:afterSwap', (event) => {
+            const target = event.detail?.target;
+
+            if (!(target instanceof HTMLElement) || target !== probePreviewResultNode) {
+                return;
+            }
+
+            const tokenField = target.querySelector('input[name="probe_roll_token"]');
+            if (tokenField instanceof HTMLInputElement && tokenField.value.trim() !== '') {
+                setProbePreviewStatus('Vorabwurf aktiv. Das Ergebnis wird beim Speichern unverändert übernommen.');
+            } else {
+                setProbePreviewStatus('');
+            }
+        });
+
+        formNode.addEventListener('htmx:responseError', (event) => {
+            const target = event.detail?.target;
+
+            if (target instanceof HTMLElement && target === probePreviewResultNode) {
+                setProbePreviewStatus('Probe konnte nicht gewürfelt werden. Bitte Eingaben prüfen.');
+            }
+        });
+
+        if (hasActiveProbeToken()) {
+            setProbePreviewStatus('Vorabwurf aktiv. Das Ergebnis wird beim Speichern unverändert übernommen.');
         }
 
         formNode.addEventListener('submit', () => {

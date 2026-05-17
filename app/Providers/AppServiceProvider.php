@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Post\Cache\CacheProbeRollTokenStore;
+use App\Domain\Post\Contracts\ProbeRollTokenStore;
 use App\Support\NavigationCounters;
 use App\Support\PushNarrativeTextResolver;
 use App\Support\WorldThemeResolver;
@@ -15,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(ProbeRollTokenStore::class, CacheProbeRollTokenStore::class);
         $this->app->scoped(NavigationCounters::class);
         $this->app->scoped(PushNarrativeTextResolver::class);
         $this->app->scoped(WorldThemeResolver::class);
