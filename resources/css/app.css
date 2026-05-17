@@ -1282,6 +1282,20 @@
         margin-inline: auto;
     }
 
+    .knowledge-rulebook-page .knowledge-rulebook-article {
+        max-width: none;
+        margin-inline: 0;
+    }
+
+    .knowledge-rulebook-page .knowledge-rulebook-article > .knowledge-content {
+        max-width: none;
+        margin-inline: 0;
+    }
+
+    .knowledge-rulebook-page .knowledge-content :where(table, pre) {
+        max-width: 100%;
+    }
+
     .line-clamp-2,
     .line-clamp-3,
     .line-clamp-4 {
