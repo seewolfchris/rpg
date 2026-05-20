@@ -38,12 +38,12 @@
   - `php artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md`
 - Bei Bedarf separates Materialized-/Denormalized-Sortfeld für `status=all` prüfen.
 
-## Umsetzungshilfe für Plesk (MariaDB/MySQL)
+## Umsetzungshilfe für Zielumgebung (MariaDB/MySQL)
 Auf dem Server im Projektverzeichnis:
 
 ```bash
-cd /var/www/vhosts/c76.org/rpg.c76.org
-PHP_BIN=/opt/plesk/php/8.5/bin/php
+cd /var/www/<app>
+PHP_BIN=php
 $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md
 ```
 

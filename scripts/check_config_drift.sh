@@ -10,7 +10,7 @@ INFO_COUNT=0
 OK_COUNT=0
 
 ENV_LOCAL=".env.example"
-ENV_PLESK=".env.plesk.example"
+ENV_PRODUCTION=".env.production.example"
 
 CRITICAL_KEYS=(
   APP_ENV
@@ -182,7 +182,7 @@ check_local_profile() {
   fi
 }
 
-check_plesk_profile() {
+check_production_profile() {
   local file="$1"
   local value=""
 
@@ -258,7 +258,7 @@ check_plesk_profile() {
 }
 
 echo "[config-drift][INFO] Starte Config-Drift-Check (warn-only/report-only)"
-echo "[config-drift][INFO] Scope: .env.example vs .env.plesk.example + dokumentierte Ops/Release-Leitplanken"
+echo "[config-drift][INFO] Scope: .env.example vs .env.production.example + dokumentierte Ops/Release-Leitplanken"
 
 if check_file_exists "$ENV_LOCAL"; then
   check_required_keys "$ENV_LOCAL"
@@ -266,10 +266,10 @@ if check_file_exists "$ENV_LOCAL"; then
   check_local_profile "$ENV_LOCAL"
 fi
 
-if check_file_exists "$ENV_PLESK"; then
-  check_required_keys "$ENV_PLESK"
-  check_optional_keys "$ENV_PLESK"
-  check_plesk_profile "$ENV_PLESK"
+if check_file_exists "$ENV_PRODUCTION"; then
+  check_required_keys "$ENV_PRODUCTION"
+  check_optional_keys "$ENV_PRODUCTION"
+  check_production_profile "$ENV_PRODUCTION"
 fi
 
 echo "[config-drift][INFO] Zusammenfassung: WARN=${WARN_COUNT}, OK=${OK_COUNT}, INFO=${INFO_COUNT}"

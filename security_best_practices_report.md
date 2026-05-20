@@ -23,7 +23,7 @@ Die kritischsten Risiken liegen in der **Frontend-Supply-Chain (npm advisories)*
 2. **[F-02]** Service-Worker cached private HTML-Seiten (Szenen/Charaktere) zu aggressiv; keine harte `no-store`-Barriere -> Datenrest-Risiko auf Shared Devices.
 3. **[F-03]** Sicherheitsheader werden nur für Laravel-Responses gesetzt; statische Dateien (`offline.html`, SW/JS, Manifest) sind nicht gleichwertig gehärtet.
 4. **[F-04]** `X-Request-Id` wird ungefiltert übernommen/gespiegelt -> schwache Log-Integrität/Trace-Kontamination.
-5. **[F-05]** Dotfiles im Public-Webroot (`.php-ini`, `.php-version`, `.DS_Store`) -> unnötige Info-Disclosure bei fehlender Server-Dotfile-Blockade.
+5. **[F-05]** Dotfiles im Public-Webroot (`.php-version`, `.DS_Store`) -> unnötige Info-Disclosure bei fehlender Server-Dotfile-Blockade.
 
 ---
 
@@ -193,7 +193,6 @@ Empfohlen ergänzend: invaliden Input explizit verwerfen und optional in separat
 
 ### [F-05] Dotfiles im Public-Webroot (Info Disclosure Surface)
 - **Datei/Zeilen:**
-  - `public/.php-ini:1`
   - `public/.php-version:1`
   - `public/.DS_Store`
 - **Schweregrad:** **Low**
@@ -208,7 +207,7 @@ Empfohlen ergänzend: invaliden Input explizit verwerfen und optional in separat
 @@
      RewriteEngine On
 +
-+    # Deny direct access to dotfiles (e.g. .php-version, .php-ini, .env-like files)
++    # Deny direct access to dotfiles (e.g. .php-version, .env-like files)
 +    RewriteRule "(^|/)\." - [F,L]
 *** End Patch
 ```

@@ -19,8 +19,7 @@ Stand: 2026-04-23
 - `OPERATIONS_RUNBOOK.md`
 - `IMMERSION-ARCHITEKTUR.md`
 - `ARCHITECTURE.md`
-- `PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
-- `GITHUB_PLESK_SETUP.md`
+- `DEPLOYMENT.md`
 - `adr/*`
 
 ## Generierte Reports (regelmäßig aufräumen)
@@ -37,4 +36,4 @@ Stand: 2026-04-23
    - die Baseline, auf die `LATEST` aktuell verweist.
 3. Ältere datierte Reports entweder löschen oder in einen Archivpfad verschieben.
 4. Bei inhaltlichen Änderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
-5. Bei CI-Workflow-Änderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `PLESK_DEPLOYMENT_FUER_ANFAENGER.md` synchronisieren.
+5. Bei CI-Workflow-Änderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `DEPLOYMENT.md` synchronisieren.

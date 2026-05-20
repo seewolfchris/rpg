@@ -20,8 +20,7 @@ Repository-Branch: `main`
 - Smoke-Report lokal (Hardening): `docs/SMOKE-PASS-2026-04-02.md`
 - Smoke-Report Staging/Prod: `docs/SMOKE-PASS-STAGING-PROD.md`
 - Architekturentscheidungen (ADR): `docs/adr/`
-- Plesk Deployment: `docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md`
-- GitHub + Plesk Setup: `docs/GITHUB_PLESK_SETUP.md`
+- Deployment: `docs/DEPLOYMENT.md`
 
 ## 1) Executive Summary
 - Plattformname: **C76-RPG**.

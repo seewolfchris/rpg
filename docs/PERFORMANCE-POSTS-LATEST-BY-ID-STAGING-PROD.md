@@ -14,8 +14,8 @@ Generated at (report): `2026-03-09T22:05:27+00:00`
 ## Ausgeführter Command
 
 ```bash
-cd /var/www/vhosts/c76.org/rpg.c76.org
-/opt/plesk/php/8.5/bin/php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md
+cd /var/www/<app>
+php artisan perf:posts-latest-by-id-benchmark --world=chroniken-der-asche --iterations=400 --out=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md
 ```
 
 ## Ergebnis

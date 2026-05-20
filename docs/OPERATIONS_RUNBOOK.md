@@ -16,7 +16,7 @@ Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` ges
 Schnellcheck auf dem Zielhost:
 
 ```bash
-cd /var/www/vhosts/c76.org/rpg.c76.org
+cd /var/www/<app>
 grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
 ```
 

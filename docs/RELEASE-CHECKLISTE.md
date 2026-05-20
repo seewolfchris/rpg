@@ -91,16 +91,16 @@ git push origin main
 Wichtig:
 - Temporäre Dateien wie `.goutputstream-*` nicht committen.
 
-## 5. Deploy auf Plesk
+## 5. Deploy auf Zielumgebung
 
 Wenn Git-Webhook aktiv ist: Deployment startet automatisch.  
-Wenn manuell nötig: In Plesk Git auf `Bereitstellen` klicken.
+Wenn manuell nötig: Deploy im jeweiligen Hosting-/CI-Setup auslösen.
 
 Post-Deploy muss mit PHP 8.5 laufen:
 
 ```bash
-cd /var/www/vhosts/c76.org/rpg.c76.org
-PHP_BIN=/opt/plesk/php/8.5/bin/php /bin/bash scripts/plesk_post_deploy.sh
+cd /var/www/<app>
+PHP_BIN=php /bin/bash scripts/post_deploy.sh
 ```
 
 Queue-Retry in Produktion sicherstellen:
@@ -116,7 +116,7 @@ TRUSTED_PROXIES=<proxy-ip/cidr,...>
 SECURITY_HSTS_MAX_AGE=31536000
 
 # Worker (Scheduled Task/Prozess)
-PHP_BIN=/opt/plesk/php/8.5/bin/php
+PHP_BIN=php
 $PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
 ```
 
@@ -129,7 +129,7 @@ grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRU
 Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:
 
 ```bash
-PHP_BIN=/opt/plesk/php/8.5/bin/php
+PHP_BIN=php
 $PHP_BIN artisan optimize:clear
 $PHP_BIN artisan config:cache
 ```
@@ -161,11 +161,11 @@ $PHP_BIN artisan config:cache
 Die Phase-A-Rollout-Skripte sind nach `ops/archive/release_phase_a/` verschoben und nicht mehr Teil des Standard-Release-Pfads.
 
 - One-Command Deploy-Flow (empfohlen):
-  - `PHP_BIN=/opt/plesk/php/8.5/bin/php ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+  - `PHP_BIN=php ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
   - Enthalten: `migrate --force`, `optimize:clear`, `config:cache`, `release_phase_a_smoke.sh` als hartes Go/No-Go-Gate.
   - Deploy-sicherer Default: keine Testausführung auf der Zielumgebung (`--run-test-gates 0`).
 - Verbindlicher Gate-Run für DB + Welle 1/2:
-  - `PHP_BIN=/opt/plesk/php/8.5/bin/php PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" ops/archive/release_phase_a/release_phase_a_smoke.sh`
+  - `PHP_BIN=php PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" ops/archive/release_phase_a/release_phase_a_smoke.sh`
 - Hinweis: `<world-slug>` ist eine aktive Welt (`/w/<world-slug>/...`) oder kommt aus `WORLD_DEFAULT_SLUG`.
 - Das Skript prüft:
   - Basis-HTTP-Smoke (`scripts/release_smoke.sh`)

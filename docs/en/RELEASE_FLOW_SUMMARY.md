@@ -13,7 +13,7 @@ This document is a summary only, not a second source of truth.
 2. Run local quality checks before release tagging.
 3. Update `APP_VERSION`/build metadata (scripted path preferred).
 4. Commit and push release changes.
-5. Deploy to target environment (Plesk flow).
+5. Deploy to target environment (generic host flow).
 6. Run smoke checks.
 7. Update project docs/status notes.
 8. Record release protocol (version, commit, deploy time, smoke result, follow-ups).

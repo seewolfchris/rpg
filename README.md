@@ -119,7 +119,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 - Webroot muss auf `public/` zeigen
 - Deploy-Basis: `php artisan migrate --force` und `npm run build`
 - Queue-Worker in Produktion aktiv betreiben
-- Vollständige Betriebs-/Deploy-Schritte stehen in [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) und [docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md](docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md)
+- Vollständige Betriebs-/Deploy-Schritte stehen in [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md) und [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ## Projektstatus
 
@@ -138,8 +138,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 - Roadmap: [ROADMAP.md](ROADMAP.md)
 - Release-Flow und Quality-Gates: [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md)
 - Betrieb/Incidents: [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
-- Deployment (Plesk): [docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md](docs/PLESK_DEPLOYMENT_FUER_ANFAENGER.md)
-- GitHub->Plesk Setup: [docs/GITHUB_PLESK_SETUP.md](docs/GITHUB_PLESK_SETUP.md)
+- Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - PWA/Offline-Details: [docs/PWA_OFFLINE.md](docs/PWA_OFFLINE.md)
 - Security-Hardening (technisch): [docs/SECURITY.md](docs/SECURITY.md)
 - Security-Disclosure: [SECURITY.md](SECURITY.md)

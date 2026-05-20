@@ -6,7 +6,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
-class PleskPostDeploySecurityGuardTest extends TestCase
+class PostDeploySecurityGuardTest extends TestCase
 {
     public function test_deploy_guard_fails_when_queue_after_commit_is_empty(): void
     {
@@ -129,7 +129,7 @@ class PleskPostDeploySecurityGuardTest extends TestCase
 
         try {
             $process = new Process(
-                ['/bin/bash', 'scripts/plesk_post_deploy.sh'],
+                ['/bin/bash', 'scripts/post_deploy.sh'],
                 $projectRoot,
                 [
                     'PHP_BIN' => $projectRoot.'/php-stub.sh',
@@ -153,15 +153,15 @@ class PleskPostDeploySecurityGuardTest extends TestCase
      */
     private function createStubProjectRoot(array $envLines): string
     {
-        $projectRoot = sys_get_temp_dir().'/c76-plesk-guard-'.bin2hex(random_bytes(6));
+        $projectRoot = sys_get_temp_dir().'/c76-post-deploy-guard-'.bin2hex(random_bytes(6));
         $scriptsDir = $projectRoot.'/scripts';
         $buildDir = $projectRoot.'/public/build';
 
         mkdir($scriptsDir, 0777, true);
         mkdir($buildDir, 0777, true);
 
-        copy(base_path('scripts/plesk_post_deploy.sh'), $scriptsDir.'/plesk_post_deploy.sh');
-        chmod($scriptsDir.'/plesk_post_deploy.sh', 0755);
+        copy(base_path('scripts/post_deploy.sh'), $scriptsDir.'/post_deploy.sh');
+        chmod($scriptsDir.'/post_deploy.sh', 0755);
 
         file_put_contents($projectRoot.'/.env', implode(PHP_EOL, $envLines).PHP_EOL);
         file_put_contents($buildDir.'/manifest.json', '{}');

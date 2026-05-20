@@ -17,7 +17,7 @@ Das Repository ist funktional weit und testseitig breit abgesichert, aber ohne N
 
 ## Dateibezogene Findings
 Die technischen Findings und Priorisierungen sind im Zuge des Stabilisierungspakets in folgende Schwerpunkte aufgeteilt:
-- `config/session.php`, `.env.example`, `scripts/plesk_post_deploy.sh`
+- `config/session.php`, `.env.example`, `scripts/post_deploy.sh`
 - `config/queue.php`
 - `config/trustedproxy.php`, `bootstrap/app.php`, `app/Http/Middleware/ApplySecurityHeaders.php`
 - `app/Http/Controllers/CampaignInvitationController.php`

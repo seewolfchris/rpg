@@ -3,12 +3,12 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
-echo "=== PLESK POST-DEPLOY START $(date '+%Y-%m-%d %H:%M:%S') ==="
-trap 'echo "=== PLESK POST-DEPLOY FAILED WITH CODE $? ==="' ERR
+echo "=== POST-DEPLOY START $(date '+%Y-%m-%d %H:%M:%S') ==="
+trap 'echo "=== POST-DEPLOY FAILED WITH CODE $? ==="' ERR
 
 if [[ ! -f .env ]]; then
   echo "ERROR: .env fehlt im Projektordner ($PROJECT_ROOT)."
-  echo "Bitte zuerst .env in Plesk setzen/erstellen."
+  echo "Bitte zuerst .env im Zielsystem setzen/erstellen."
   exit 1
 fi
 
@@ -44,32 +44,17 @@ is_empty_or_falsy_env() {
   is_falsy_env "$value"
 }
 
-# Use a Plesk PHP binary >= 8.5 so composer/artisan match the project lockfile.
-PHP_BIN="${PHP_BIN:-}"
-if [[ -z "$PHP_BIN" ]]; then
-  for candidate in /opt/plesk/php/8.5/bin/php; do
-    if [[ -x "$candidate" ]]; then
-      PHP_BIN="$candidate"
-      break
-    fi
-  done
-fi
 PHP_BIN="${PHP_BIN:-php}"
 
 if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'; then
   echo "ERROR: Falsche PHP-CLI Version ($("$PHP_BIN" -r 'echo PHP_VERSION;')). Benötigt >= 8.5."
-  echo "Setze in Plesk/CLI PHP 8.5+ oder exportiere PHP_BIN=/opt/plesk/php/8.5/bin/php."
+  echo "Setze PHP_BIN auf ein PHP 8.5+ Binary (z. B. export PHP_BIN=/usr/bin/php)."
   exit 1
 fi
 
-COMPOSER_PHAR_DEFAULT="/opt/psa/var/modules/composer/composer.phar"
 COMPOSER_PATH="${COMPOSER_PATH:-}"
 if [[ -z "$COMPOSER_PATH" ]]; then
-  if [[ -f "$COMPOSER_PHAR_DEFAULT" ]]; then
-    COMPOSER_PATH="$COMPOSER_PHAR_DEFAULT"
-  else
-    COMPOSER_PATH="$(command -v composer || true)"
-  fi
+  COMPOSER_PATH="$(command -v composer || true)"
 fi
 
 if [[ -z "$COMPOSER_PATH" ]]; then
@@ -81,7 +66,7 @@ echo "Using PHP binary: $PHP_BIN ($("$PHP_BIN" -r 'echo PHP_VERSION;'))"
 echo "Using Composer: $COMPOSER_PATH"
 
 echo "[1/10] Composer dependencies installieren (production)..."
-if [[ "$COMPOSER_PATH" == *.phar ]] || [[ "$COMPOSER_PATH" == "$COMPOSER_PHAR_DEFAULT" ]]; then
+if [[ "$COMPOSER_PATH" == *.phar ]]; then
   "$PHP_BIN" "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 else
   "$COMPOSER_PATH" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -115,7 +100,7 @@ echo "[5/10] APP_KEY prüfen..."
 app_key="$(read_env_var_from_dotenv "APP_KEY")"
 if [[ -z "$app_key" || "$app_key" != base64:* ]]; then
   echo "ERROR: APP_KEY fehlt oder ist ungueltig."
-  echo "Setze APP_KEY in Plesk (.env), aber rotiere ihn nicht automatisch im Deploy."
+  echo "Setze APP_KEY in .env, aber rotiere ihn nicht automatisch im Deploy."
   exit 1
 fi
 

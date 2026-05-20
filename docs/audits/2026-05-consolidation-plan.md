@@ -24,7 +24,7 @@ Nicht-Ziele in PR-01:
 - Tests: `tests/Feature/MySqlConcurrency`, `tests/Feature/MySqlCritical`, `tests/e2e`, `tests/js`
 - Doku/Runbooks: `README.md`, `docs/README.md`, `docs/ARCHITECTURE.md`, `docs/OPERATIONS_RUNBOOK.md`, `docs/RELEASE-CHECKLISTE.md`
 - CI: `.github/workflows/ci.yml`
-- Env-Beispiele: `.env.example`, `.env.plesk.example`
+- Env-Beispiele: `.env.example`, `.env.production.example`
 
 ### 2.2 Reproduzierbare Kommandos
 
@@ -219,7 +219,7 @@ Low-Risk:
 - `tests/js/**`
 - `config/**`
 - `.env.example`
-- `.env.plesk.example`
+- `.env.production.example`
 - `phpunit.xml`
 - `.github/workflows/ci.yml`
 - `scripts/**`

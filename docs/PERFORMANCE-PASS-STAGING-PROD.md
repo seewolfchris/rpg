@@ -13,8 +13,8 @@ Generated at (report): `2026-03-09T18:20:30+00:00`
 ## Ausgeführter Command
 
 ```bash
-cd /var/www/vhosts/c76.org/rpg.c76.org
-PHP_BIN=/opt/plesk/php/8.5/bin/php
+cd /var/www/<app>
+PHP_BIN=php
 $PHP_BIN artisan perf:world-hotpaths --world=chroniken-der-asche --out=docs/PERFORMANCE-PASS-STAGING-PROD.md
 ```
 

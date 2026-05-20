@@ -13,7 +13,7 @@
 
     RewriteEngine On
 
-    # Deny direct access to dotfiles (e.g. .php-version, .php-ini, .env-like files)
+    # Deny direct access to dotfiles (e.g. .php-version, .env-like files)
     RewriteRule "(^|/)\." - [F,L]
 
     # Block known search and AI crawler user agents before PHP/Laravel.

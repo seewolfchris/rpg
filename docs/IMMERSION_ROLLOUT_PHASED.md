@@ -49,7 +49,7 @@ Konfiguration in `config/features.php`:
    - `PHASE_A_BASE_URL="https://rpg.c76.org" PHASE_A_WORLD_SLUG="<world-slug>" PHASE_A_REPORT_OUT="docs/SMOKE-PHASE-A.md" ops/archive/release_phase_a/release_phase_a_smoke.sh`
 
 One-Command-Variante:
-- `PHP_BIN=/opt/plesk/php/8.5/bin/php ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
+- `PHP_BIN=php ops/archive/release_phase_a/release_phase_a_flow.sh --base-url "https://rpg.c76.org" --world-slug "<world-slug>" --report-out "docs/SMOKE-PHASE-A.md"`
 - Das Skript führt `migrate --force`, Cache-Refresh und danach das Phase-A-Gate in fixer Reihenfolge aus.
 - Standard ist deploy-sicher: keine `artisan test`-Ausführung im Post-Deploy-Flow (`--run-test-gates` default `0`).
 - `<world-slug>` entspricht einer aktiven Welt aus `/w/<world-slug>/...` oder kommt aus `WORLD_DEFAULT_SLUG`.
