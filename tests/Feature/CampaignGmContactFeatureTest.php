@@ -70,6 +70,7 @@ class CampaignGmContactFeatureTest extends TestCase
         $this->actingAs($player)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
+            ->assertSee('x-teleport="body"', false)
             ->assertSee('fixed inset-0 z-[1000]', false)
             ->assertSee('overflow-y-auto', false)
             ->assertSee('relative z-[1001] w-full max-w-2xl', false);
