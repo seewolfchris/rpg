@@ -15,6 +15,8 @@ Alle nennenswerten Produktaenderungen an C76-RPG.
   - Admin-Bereich verwaltet nur globale Plattformrechte.
   - Kampagnenbereich verwaltet Teilnehmerrollen owner-only.
 - PHPStan-Folgefix: Membership-Typen (`assigned_at`, `membershipRoleValue`) konsistent gezogen.
+- UI-Fix SL-Kontakte: "Spielleitung kontaktieren"-Formular oeffnet als echter viewportweiter Modal ueber `x-teleport="body"` statt innerhalb des Panel-Containers.
+- Feature-Test fuer den SL-Kontakt-Modal erweitert (`x-teleport="body"` explizit abgesichert).
 
 ## v0.31-beta (2026-05-04)
 - Globales Regelwerk komplett überarbeitet: Spieler schreiben IC-Beiträge in Ich-Perspektive und Präsens; ausführlichere Regeln zu Spielfluss, IC/OOC-Trennung, Proben, Moderation, Safety und Fair Play.

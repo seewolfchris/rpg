@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Übersicht
 
-Stand: 2026-04-23  
+Stand: 2026-05-28  
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -39,7 +39,7 @@ Repository-Branch: `main`
 | GM-Proben + Persistenz | Stabil | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
 | Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation |
 | Kampagnen-Einladungen | Stabil | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
-| SL-Kontakt (privacy-first) | Stabil | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow |
+| SL-Kontakt (privacy-first) | Stabil | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow; Kontaktformular als viewportweiter Modal (`x-teleport="body"`) |
 | Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
 | PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
