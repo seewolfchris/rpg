@@ -40,6 +40,7 @@
                 <a
                     href="{{ route('knowledge.world-overview', ['world' => $world]) }}"
                     class="{{ $isMarkdownOverview ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-200 hover:border-stone-500/80 hover:text-stone-100' }} rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-widest transition"
+                    @if ($isMarkdownOverview) aria-current="page" @endif
                 >
                     Weltüberblick MD
                 </a>
@@ -47,6 +48,7 @@
                 <a
                     href="{{ route('knowledge.lore', ['world' => $world]) }}"
                     class="{{ $isMarkdownLore ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-200 hover:border-stone-500/80 hover:text-stone-100' }} rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-widest transition"
+                    @if ($isMarkdownLore) aria-current="page" @endif
                 >
                     Lore MD
                 </a>

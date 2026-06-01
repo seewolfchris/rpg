@@ -4,17 +4,38 @@
     'pendingCampaignInvitationsCount' => 0,
 ])
 
+@php
+    $standardLinkBase = 'rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-widest transition';
+    $standardLinkInactive = 'border-stone-600/70 text-stone-200 hover:border-stone-400 hover:text-stone-100';
+    $standardLinkActive = 'border-amber-500/70 bg-amber-500/20 text-amber-100';
+
+    $isWorldsCurrent = request()->routeIs('worlds.*');
+    $isKnowledgeCurrent = request()->routeIs('knowledge.*');
+    $isDashboardCurrent = request()->routeIs('dashboard');
+    $isLeaderboardCurrent = request()->routeIs('leaderboard.*');
+    $isCampaignsCurrent = request()->routeIs('campaigns.*');
+    $isCharactersCurrent = request()->routeIs('characters.*');
+    $isNotificationsCurrent = request()->routeIs('notifications.*');
+    $isSubscriptionsCurrent = request()->routeIs('scene-subscriptions.*');
+    $isBookmarksCurrent = request()->routeIs('bookmarks.*');
+    $isInvitationsCurrent = request()->routeIs('campaign-invitations.*');
+    $isGmCurrent = request()->routeIs('gm.*');
+    $isAdminCurrent = request()->routeIs('admin.*');
+@endphp
+
 <nav class="app-nav" aria-label="Hauptnavigation">
     @include('partials.pwa-install-button')
     <a
         href="{{ route('worlds.index') }}"
-        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+        class="{{ $standardLinkBase }} {{ $isWorldsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+        @if ($isWorldsCurrent) aria-current="page" @endif
     >
         Welten
     </a>
     <a
         href="{{ route('knowledge.global.index') }}"
-        class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+        class="{{ $standardLinkBase }} {{ $isKnowledgeCurrent ? $standardLinkActive : $standardLinkInactive }}"
+        @if ($isKnowledgeCurrent) aria-current="page" @endif
     >
         Wissen
     </a>
@@ -30,31 +51,36 @@
         </span>
         <a
             href="{{ route('dashboard') }}"
-            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="{{ $standardLinkBase }} {{ $isDashboardCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isDashboardCurrent) aria-current="page" @endif
         >
             Dashboard
         </a>
         <a
             href="{{ route('leaderboard.index') }}"
-            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="{{ $standardLinkBase }} {{ $isLeaderboardCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isLeaderboardCurrent) aria-current="page" @endif
         >
             Rangliste
         </a>
         <a
             href="{{ route('campaigns.index') }}"
-            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="{{ $standardLinkBase }} {{ $isCampaignsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isCampaignsCurrent) aria-current="page" @endif
         >
             Kampagnen
         </a>
         <a
             href="{{ route('characters.index') }}"
-            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="{{ $standardLinkBase }} {{ $isCharactersCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isCharactersCurrent) aria-current="page" @endif
         >
             Charaktere
         </a>
         <a
             href="{{ route('notifications.index') }}"
-            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="relative {{ $standardLinkBase }} {{ $isNotificationsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isNotificationsCurrent) aria-current="page" @endif
         >
             Mitteilungen
             @if ($unreadNotificationsCount > 0)
@@ -67,13 +93,15 @@
         </a>
         <a
             href="{{ route('scene-subscriptions.index') }}"
-            class="rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="{{ $standardLinkBase }} {{ $isSubscriptionsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isSubscriptionsCurrent) aria-current="page" @endif
         >
             Abos
         </a>
         <a
             href="{{ route('bookmarks.index') }}"
-            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="relative {{ $standardLinkBase }} {{ $isBookmarksCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isBookmarksCurrent) aria-current="page" @endif
         >
             Lesezeichen
             @if ($bookmarkCount > 0)
@@ -86,7 +114,8 @@
         </a>
         <a
             href="{{ route('campaign-invitations.index') }}"
-            class="relative rounded-md border border-stone-600/70 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+            class="relative {{ $standardLinkBase }} {{ $isInvitationsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            @if ($isInvitationsCurrent) aria-current="page" @endif
         >
             Einladungen
             @if ($pendingCampaignInvitationsCount > 0)
@@ -98,7 +127,8 @@
         @if (auth()->user()->isGmOrAdmin() || auth()->user()->hasAnyCoGmCampaignAccess())
             <a
                 href="{{ route('gm.index') }}"
-                class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
+                class="rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition {{ $isGmCurrent ? 'border-amber-400/80 bg-amber-500/25' : 'border-amber-500/60 hover:bg-amber-500/20' }}"
+                @if ($isGmCurrent) aria-current="page" @endif
             >
                 GM-Bereich
             </a>
@@ -106,7 +136,8 @@
         @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
             <a
                 href="{{ route('admin.users.moderation.index') }}"
-                class="rounded-md border border-amber-500/60 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/20"
+                class="rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition {{ $isAdminCurrent ? 'border-amber-400/80 bg-amber-500/25' : 'border-amber-500/60 hover:bg-amber-500/20' }}"
+                @if ($isAdminCurrent) aria-current="page" @endif
             >
                 Benutzerverwaltung
             </a>
