@@ -4,6 +4,11 @@ return [
     'default' => [
         'theme_key' => 'default',
         'label' => 'Standardwelt',
+        'marker_label' => 'STD',
+        'marker_symbol' => 'WELT',
+        'marker_bg' => 'rgba(245, 158, 11, 0.16)',
+        'marker_fg' => 'rgb(254, 243, 199)',
+        'marker_border' => 'rgba(217, 119, 6, 0.62)',
         'theme_color' => '#0f0f14',
         'classes' => [
             'html' => 'world-theme-default',
@@ -30,6 +35,11 @@ return [
         'chroniken-der-asche' => [
             'theme_key' => 'chroniken-der-asche',
             'label' => 'Chroniken der Asche',
+            'marker_label' => 'CA',
+            'marker_symbol' => 'ASCHE',
+            'marker_bg' => 'rgba(188, 104, 52, 0.24)',
+            'marker_fg' => 'rgb(255, 237, 213)',
+            'marker_border' => 'rgba(188, 104, 52, 0.68)',
             'theme_color' => '#18110f',
             'classes' => [
                 'html' => 'world-theme-chroniken-der-asche',

@@ -84,17 +84,32 @@
             </div>
 
             <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-none">
-                    @php($isHomeCurrent = request()->routeIs('home'))
-                    <a
-                        href="{{ route('home') }}"
-                        class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]"
-                        @if ($isHomeCurrent) aria-current="page" @endif
-                    >
-                        C76-RPG
-                    </a>
+                @php($routeWorld = request()->route('world'))
+                @php($headerWorldName = $routeWorld instanceof \App\Models\World ? $routeWorld->name : (string) data_get($activeWorldTheme ?? [], 'label', 'Standardwelt'))
 
-                    <x-navigation.mobile-sheet />
+                <div class="w-full sm:w-auto sm:flex-none">
+                    <div class="flex items-center justify-between gap-3">
+                        @php($isHomeCurrent = request()->routeIs('home'))
+                        <a
+                            href="{{ route('home') }}"
+                            class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]"
+                            @if ($isHomeCurrent) aria-current="page" @endif
+                        >
+                            C76-RPG
+                        </a>
+
+                        <x-navigation.mobile-sheet />
+                    </div>
+
+                    <x-world-marker
+                        class="app-header-world-marker mt-2"
+                        :world-name="$headerWorldName"
+                        :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+                        :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
+                        :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
+                        :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
+                        :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
+                    />
                 </div>
 
                 <x-navigation.global

@@ -11,6 +11,11 @@ class WorldThemeResolver
      *   world_slug: string,
      *   theme_key: string,
      *   label: string,
+     *   marker_label: string,
+     *   marker_symbol: string,
+     *   marker_bg: string,
+     *   marker_fg: string,
+     *   marker_border: string,
      *   theme_color: string,
      *   html_class: string,
      *   body_class: string,
@@ -26,12 +31,32 @@ class WorldThemeResolver
         $profile = (array) ($worldProfiles[$resolvedSlug] ?? []);
         $merged = $this->mergeProfile($default, $profile);
 
+        $worldLabel = $this->normalizeMarkerText((string) ($merged['label'] ?? ''));
+        if ($worldLabel === '') {
+            $worldLabel = 'Standardwelt';
+        }
+
+        $markerLabel = $this->normalizeMarkerText((string) ($merged['marker_label'] ?? ''));
+        if ($markerLabel === '') {
+            $markerLabel = $this->buildShortLabel($worldLabel);
+        }
+
+        $markerSymbol = $this->normalizeMarkerText((string) ($merged['marker_symbol'] ?? ''));
+        if ($markerSymbol === '') {
+            $markerSymbol = 'WELT';
+        }
+
         $cssVariables = $this->normalizeCssVariables((array) ($merged['css_variables'] ?? []));
 
         return [
             'world_slug' => $resolvedSlug,
             'theme_key' => (string) ($merged['theme_key'] ?? 'default'),
-            'label' => (string) ($merged['label'] ?? 'Standardwelt'),
+            'label' => $worldLabel,
+            'marker_label' => $markerLabel,
+            'marker_symbol' => $markerSymbol,
+            'marker_bg' => $this->normalizeVisualToken((string) ($merged['marker_bg'] ?? ''), 'rgba(245, 158, 11, 0.16)'),
+            'marker_fg' => $this->normalizeVisualToken((string) ($merged['marker_fg'] ?? ''), 'rgb(254, 243, 199)'),
+            'marker_border' => $this->normalizeVisualToken((string) ($merged['marker_border'] ?? ''), 'rgba(217, 119, 6, 0.62)'),
             'theme_color' => (string) ($merged['theme_color'] ?? '#0f0f14'),
             'html_class' => (string) data_get($merged, 'classes.html', ''),
             'body_class' => (string) data_get($merged, 'classes.body', ''),
@@ -107,6 +132,56 @@ class WorldThemeResolver
         }
 
         return $candidate;
+    }
+
+    private function normalizeMarkerText(string $value): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($value));
+
+        if (! is_string($normalized)) {
+            return '';
+        }
+
+        return $normalized;
+    }
+
+    private function buildShortLabel(string $label): string
+    {
+        $parts = preg_split('/[\s\-]+/u', trim($label), 3, PREG_SPLIT_NO_EMPTY);
+
+        if (! is_array($parts) || $parts === []) {
+            return 'STD';
+        }
+
+        $acronym = '';
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $acronym .= mb_substr($part, 0, 1);
+
+            if (mb_strlen($acronym) >= 3) {
+                break;
+            }
+        }
+
+        $normalized = strtoupper((string) preg_replace('/[^A-Z0-9]/u', '', (string) mb_strtoupper($acronym)));
+
+        if ($normalized !== '') {
+            return $normalized;
+        }
+
+        $lettersOnly = strtoupper((string) preg_replace('/[^A-Z0-9]/u', '', (string) mb_strtoupper($label)));
+
+        return $lettersOnly !== '' ? mb_substr($lettersOnly, 0, 3) : 'STD';
+    }
+
+    private function normalizeVisualToken(string $value, string $fallback): string
+    {
+        $clean = trim(str_replace([';', '{', '}', '<', '>'], '', $value));
+
+        return $clean !== '' ? $clean : $fallback;
     }
 
     /**

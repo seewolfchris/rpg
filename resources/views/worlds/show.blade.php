@@ -14,6 +14,16 @@
         />
     </div>
 
+    <x-world-marker
+        class="mb-4"
+        :world-name="$world->name"
+        :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+        :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
+        :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
+        :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
+        :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
+    />
+
     <section class="ui-card p-6 sm:p-8">
         <p class="text-xs uppercase tracking-[0.14em] text-amber-300/80">Weltprofil</p>
         <h1 class="mt-2 font-heading break-words text-3xl text-stone-100 sm:text-4xl">{{ $world->name }}</h1>

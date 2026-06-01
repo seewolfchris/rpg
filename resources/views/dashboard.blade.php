@@ -26,6 +26,17 @@
                     <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Weltenkontext</p>
                     <h2 class="mt-1 font-heading text-2xl text-stone-100">Aktive Welt</h2>
                     <p class="mt-2 text-sm text-stone-300">{{ $selectedWorld?->name ?? 'Keine Welt ausgewählt' }}</p>
+                    @if ($selectedWorld)
+                        <x-world-marker
+                            class="mt-3"
+                            :world-name="$selectedWorld->name"
+                            :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+                            :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
+                            :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
+                            :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
+                            :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
+                        />
+                    @endif
                 </div>
                 <a href="{{ route('worlds.index') }}" class="ui-btn ui-btn-accent">Welten wechseln</a>
             </div>
