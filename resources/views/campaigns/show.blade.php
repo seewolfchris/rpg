@@ -5,6 +5,14 @@
 @section('content')
     @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.breadcrumbs
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $campaign->world->name, 'href' => route('worlds.show', ['world' => $campaign->world])],
+                ['label' => $campaign->title, 'current' => true],
+            ]"
+        />
+
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <x-navigation.back-link :href="$backUrl" label="Zurück" />
             <div class="flex flex-wrap items-start justify-between gap-4">

@@ -17,6 +17,19 @@
     @endphp
 
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.breadcrumbs
+            :items="$isWorldContext
+                ? [
+                    ['label' => 'Plattform', 'href' => route('home')],
+                    ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                    ['label' => 'Wissen', 'current' => true],
+                ]
+                : [
+                    ['label' => 'Plattform', 'href' => route('home')],
+                    ['label' => 'Wissen', 'current' => true],
+                ]"
+        />
+
         <header class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
             @if ($isWorldContext)

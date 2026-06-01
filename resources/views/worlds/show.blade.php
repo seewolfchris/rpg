@@ -5,6 +5,15 @@
 @section('meta_description', trim((string) ($world->tagline ?: $world->description ?: 'Weltansicht in C76-RPG.')))
 
 @section('content')
+    <div class="mb-4">
+        <x-navigation.breadcrumbs
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $world->name, 'current' => true],
+            ]"
+        />
+    </div>
+
     <section class="ui-card p-6 sm:p-8">
         <p class="text-xs uppercase tracking-[0.14em] text-amber-300/80">Weltprofil</p>
         <h1 class="mt-2 font-heading break-words text-3xl text-stone-100 sm:text-4xl">{{ $world->name }}</h1>

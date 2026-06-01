@@ -22,6 +22,15 @@
         }
     @endphp
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.breadcrumbs
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $campaign->world->name, 'href' => route('worlds.show', ['world' => $campaign->world])],
+                ['label' => $campaign->title, 'href' => route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign])],
+                ['label' => $scene->title, 'current' => true],
+            ]"
+        />
+
         <div class="ui-card {{ $sceneMoodThemeClass }} p-6 sm:p-8">
             <x-navigation.back-link :href="$backUrl" label="Zurück" />
 

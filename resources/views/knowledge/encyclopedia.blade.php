@@ -4,6 +4,15 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.breadcrumbs
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                ['label' => 'Wissen', 'href' => route('knowledge.index', ['world' => $world])],
+                ['label' => 'Enzyklopädie', 'current' => true],
+            ]"
+        />
+
         <header class="ui-card relative overflow-hidden p-6 sm:p-8">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(168,85,39,0.26),transparent_42%),radial-gradient(circle_at_75%_30%,rgba(127,29,29,0.32),transparent_40%),linear-gradient(to_bottom,rgba(17,17,17,0.96),rgba(8,8,8,0.98))]"></div>
 
