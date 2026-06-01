@@ -23,7 +23,7 @@
     $isAdminCurrent = request()->routeIs('admin.*');
 @endphp
 
-<nav class="app-nav" aria-label="Hauptnavigation">
+<nav id="app-mobile-navigation" class="app-nav" data-mobile-sheet-panel aria-label="Hauptnavigation">
     @include('partials.pwa-install-button')
     <a
         href="{{ route('worlds.index') }}"

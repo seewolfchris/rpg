@@ -84,14 +84,18 @@
             </div>
 
             <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                @php($isHomeCurrent = request()->routeIs('home'))
-                <a
-                    href="{{ route('home') }}"
-                    class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]"
-                    @if ($isHomeCurrent) aria-current="page" @endif
-                >
-                    C76-RPG
-                </a>
+                <div class="flex w-full items-center justify-between gap-3 sm:w-auto sm:flex-none">
+                    @php($isHomeCurrent = request()->routeIs('home'))
+                    <a
+                        href="{{ route('home') }}"
+                        class="font-heading break-words text-lg tracking-[0.12em] text-amber-300 sm:text-xl sm:tracking-[0.18em]"
+                        @if ($isHomeCurrent) aria-current="page" @endif
+                    >
+                        C76-RPG
+                    </a>
+
+                    <x-navigation.mobile-sheet />
+                </div>
 
                 <x-navigation.global
                     :unread-notifications-count="$unreadNotificationsCount"

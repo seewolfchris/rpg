@@ -455,10 +455,29 @@
     }
 
     .app-nav {
-        display: grid;
-        width: 100%;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 45;
+        display: flex;
+        width: min(23rem, 92vw);
+        max-width: 100%;
+        height: 100dvh;
+        flex-direction: column;
         gap: 0.5rem;
+        overflow-y: auto;
+        border-left: 1px solid rgb(82 82 91 / 80%);
+        background: linear-gradient(180deg, rgb(12 12 14 / 98%), rgb(5 5 7 / 98%));
+        padding: 1rem;
+        box-shadow: -12px 0 34px rgb(0 0 0 / 42%);
+        transform: translateX(102%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            transform 180ms ease,
+            opacity 180ms ease,
+            visibility 0s linear 180ms;
     }
 
     .app-shell {
@@ -474,6 +493,33 @@
         padding-bottom: clamp(2.6rem, 1.8rem + 2vw, 4.2rem);
     }
 
+    body.has-mobile-nav-open {
+        overflow: hidden;
+    }
+
+    body.has-mobile-nav-open .app-nav {
+        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+            transform 180ms ease,
+            opacity 180ms ease;
+    }
+
+    .app-mobile-nav-trigger {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+    }
+
+    .app-mobile-nav-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: rgb(3 5 9 / 62%);
+        backdrop-filter: blur(2px);
+    }
+
     .app-nav > *,
     .app-nav form,
     .app-nav form > button {
@@ -483,8 +529,9 @@
     }
 
     .app-nav :is(a, button, span) {
-        justify-content: center;
-        text-align: center;
+        justify-content: flex-start;
+        text-align: left;
+        min-height: 2.75rem;
         line-height: 1.25;
         white-space: normal;
         word-break: break-word;
@@ -1371,6 +1418,11 @@
         .reading-progress-ribbon-fill {
             transition: none !important;
         }
+
+        .app-nav,
+        .app-mobile-nav-backdrop {
+            transition: none !important;
+        }
     }
 
     @media (max-width: 640px) {
@@ -1405,18 +1457,49 @@
     }
 
     @media (min-width: 640px) {
+        body.has-mobile-nav-open {
+            overflow: auto;
+        }
+
         .app-nav {
+            position: static;
+            top: auto;
+            right: auto;
+            z-index: auto;
             display: flex;
             width: auto;
+            max-width: none;
+            height: auto;
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 0.75rem;
+            overflow-y: visible;
+            border-left: 0;
+            background: transparent;
+            padding: 0;
+            box-shadow: none;
+            transform: none;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: none;
         }
 
         .app-nav > *,
         .app-nav form,
         .app-nav form > button {
             width: auto;
+        }
+
+        .app-nav :is(a, button, span) {
+            justify-content: center;
+            text-align: center;
+            min-height: auto;
+        }
+
+        .app-mobile-nav-trigger,
+        .app-mobile-nav-backdrop {
+            display: none !important;
         }
     }
 }

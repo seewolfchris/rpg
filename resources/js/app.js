@@ -6,6 +6,7 @@ import { setupBrowserNotifications } from './app/browser-notifications';
 import { setupFormSubmitConfirmDialogs } from './app/confirm-dialogs';
 import { getCsrfToken } from './app/csrf';
 import { setupAtmosphericParallax } from './app/parallax';
+import { setupMobileSheetNavigation } from './app/navigation/mobile-sheet';
 import { setupPostEditorEnhancements } from './app/post-editor-enhancements';
 import { enforcePrivateDataBoundaryOnAuthChange } from './app/privacy-boundary';
 import { setupPwaInstallPrompt } from './app/pwa-install';
@@ -86,6 +87,7 @@ document.addEventListener('htmx:afterSwap', (event) => {
     persistActiveWorldSlugContext();
     setupSceneThreadReadingMode();
     setupAtmosphericParallax();
+    setupMobileSheetNavigation();
     setupPostEditorEnhancements();
     setupOfflinePostQueue();
     setupOfflineQueuePreferenceToggle();
@@ -98,6 +100,7 @@ const bootApplication = async () => {
     persistActiveWorldSlugContext();
     setupSceneThreadReadingMode();
     setupAtmosphericParallax();
+    setupMobileSheetNavigation();
     setupPostEditorEnhancements();
     setupPwaInstallPrompt();
     setupOfflinePostQueue();
