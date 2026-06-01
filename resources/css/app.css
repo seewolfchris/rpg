@@ -1426,6 +1426,28 @@
     }
 
     @media (max-width: 640px) {
+        body.is-reading-mode .reading-chapter-header {
+            position: static;
+            top: auto;
+            z-index: auto;
+            backdrop-filter: none;
+        }
+
+        body.is-reading-mode .reading-progress-bookmark {
+            position: static;
+            right: auto;
+            bottom: auto;
+            left: auto;
+            z-index: auto;
+            width: 100%;
+            margin: 0 0 0.8rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 18px rgb(0 0 0 / 28%);
+            backdrop-filter: none;
+            pointer-events: auto;
+            transform: none;
+        }
+
         .reading-progress-bookmark {
             left: 0.9rem;
             right: 0.9rem;
