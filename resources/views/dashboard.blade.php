@@ -20,6 +20,8 @@
             @endif
         </div>
 
+        @include('dashboard.partials.next-step')
+
         <section class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
