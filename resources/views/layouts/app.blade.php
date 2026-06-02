@@ -83,12 +83,12 @@
                 Laden ...
             </div>
 
-            <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:px-8 sm:py-5">
                 @php($routeWorld = request()->route('world'))
                 @php($headerWorldName = $routeWorld instanceof \App\Models\World ? $routeWorld->name : (string) data_get($activeWorldTheme ?? [], 'label', 'Standardwelt'))
 
-                <div class="w-full sm:w-auto sm:flex-none">
-                    <div class="flex items-center justify-between gap-3">
+                <div class="app-header-bar flex w-full items-center justify-between gap-3">
+                    <div class="app-header-brand flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
                         @php($isHomeCurrent = request()->routeIs('home'))
                         <a
                             href="{{ route('home') }}"
@@ -98,18 +98,18 @@
                             C76-RPG
                         </a>
 
-                        <x-navigation.mobile-sheet />
+                        <x-world-marker
+                            class="app-header-world-marker"
+                            :world-name="$headerWorldName"
+                            :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+                            :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
+                            :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
+                            :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
+                            :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
+                        />
                     </div>
 
-                    <x-world-marker
-                        class="app-header-world-marker mt-2"
-                        :world-name="$headerWorldName"
-                        :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
-                        :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
-                        :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
-                        :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
-                        :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
-                    />
+                    <x-navigation.mobile-sheet />
                 </div>
 
                 <x-navigation.global

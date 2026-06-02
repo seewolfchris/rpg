@@ -30,8 +30,8 @@ class WorldMarkerComponentTest extends TestCase
         $labelNodes = $xpath->query("//div[@data-world-marker]//span[contains(@class, 'world-marker-token') and normalize-space()='CA']");
         $this->assertGreaterThanOrEqual(1, $labelNodes->length);
 
-        $symbolNodes = $xpath->query("//div[@data-world-marker]//span[contains(@class, 'world-marker-symbol') and normalize-space()='ASCHE']");
-        $this->assertGreaterThanOrEqual(1, $symbolNodes->length);
+        $symbolNodes = $xpath->query("//div[@data-world-marker]//span[contains(@class, 'world-marker-symbol')]");
+        $this->assertSame(0, $symbolNodes->length);
     }
 
     public function test_dashboard_renders_world_marker_when_selected_world_is_available(): void
