@@ -21,6 +21,7 @@ class ViewContextServiceProvider extends ServiceProvider
         View::composer(['layouts.app', 'layouts.auth', 'welcome'], function ($view): void {
             $request = request();
             $activeWorldSlug = (string) $request->attributes->get('active_world_slug', World::defaultSlug());
+            $activeWorld = $request->attributes->get('active_world');
             $activeWorldTheme = $request->attributes->get('active_world_theme');
             $authSessionBoundary = 'guest';
 
@@ -46,6 +47,7 @@ class ViewContextServiceProvider extends ServiceProvider
                 app(NavigationCounters::class)->forUser(Auth::user()),
                 [
                     'activeWorldSlug' => $activeWorldSlug,
+                    'activeWorld' => $activeWorld instanceof World ? $activeWorld : null,
                     'activeWorldTheme' => $activeWorldTheme,
                     'authSessionBoundary' => $authSessionBoundary,
                 ],

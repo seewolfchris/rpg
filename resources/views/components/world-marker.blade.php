@@ -13,14 +13,30 @@
         $resolvedWorldName = 'Unbekannte Welt';
     }
 
-    $fallbackLabelSource = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $resolvedWorldName));
-    $fallbackLabel = substr($fallbackLabelSource, 0, 3);
+    $fallbackLabel = '';
+    $fallbackLabelParts = preg_split('/[\s\-]+/u', $resolvedWorldName, 3, PREG_SPLIT_NO_EMPTY);
+    if (is_array($fallbackLabelParts)) {
+        foreach ($fallbackLabelParts as $fallbackLabelPart) {
+            $fallbackLabel .= mb_substr($fallbackLabelPart, 0, 1);
+
+            if (mb_strlen($fallbackLabel) >= 3) {
+                break;
+            }
+        }
+    }
+
+    $fallbackLabel = strtoupper((string) preg_replace('/[^A-Z0-9]/u', '', (string) mb_strtoupper($fallbackLabel)));
     if ($fallbackLabel === '') {
-        $fallbackLabel = 'WEL';
+        $fallbackLabelSource = strtoupper((string) preg_replace('/[^A-Z0-9]/u', '', (string) mb_strtoupper($resolvedWorldName)));
+        $fallbackLabel = mb_substr($fallbackLabelSource, 0, 3);
+    }
+
+    if ($fallbackLabel === '') {
+        $fallbackLabel = 'STD';
     }
 
     $resolvedMarkerLabel = strtoupper(trim((string) $markerLabel));
-    if ($resolvedMarkerLabel === '') {
+    if ($resolvedMarkerLabel === '' || ($resolvedMarkerLabel === 'STD' && $resolvedWorldName !== 'Standardwelt')) {
         $resolvedMarkerLabel = $fallbackLabel;
     }
 

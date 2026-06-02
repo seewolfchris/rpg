@@ -79,7 +79,12 @@ class ApplyWorldContext
             $request->session()->put('world_slug', $resolvedSlug);
         }
 
+        $activeWorld = $routeWorld instanceof World && (string) $routeWorld->slug === $resolvedSlug
+            ? $routeWorld
+            : $this->resolveWorldForContext($resolvedSlug, $allowsInactiveWorld);
+
         $request->attributes->set('active_world_slug', $resolvedSlug);
+        $request->attributes->set('active_world', $activeWorld);
         $request->attributes->set(
             'active_world_theme',
             app(WorldThemeResolver::class)->resolve($resolvedSlug)
@@ -120,6 +125,17 @@ class ApplyWorldContext
     private function fallbackWorldSlug(bool $requireActive): string
     {
         return World::resolveConfiguredDefaultOrFail(requireActive: $requireActive)->slug;
+    }
+
+    private function resolveWorldForContext(string $slug, bool $allowsInactiveWorld): ?World
+    {
+        $query = World::query()->where('slug', $slug);
+
+        if (! $allowsInactiveWorld) {
+            $query->where('is_active', true);
+        }
+
+        return $query->first();
     }
 
     private function activeWorldSlugExists(string $slug): bool

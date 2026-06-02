@@ -85,7 +85,11 @@
 
             <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:px-8 sm:py-5">
                 @php($routeWorld = request()->route('world'))
-                @php($headerWorldName = $routeWorld instanceof \App\Models\World ? $routeWorld->name : (string) data_get($activeWorldTheme ?? [], 'label', 'Standardwelt'))
+                @php($headerWorld = $routeWorld instanceof \App\Models\World ? $routeWorld : ($activeWorld ?? null))
+                @php($headerWorldName = $headerWorld instanceof \App\Models\World ? $headerWorld->name : (string) data_get($activeWorldTheme ?? [], 'label', 'Standardwelt'))
+                @php($themeWorldLabel = trim((string) data_get($activeWorldTheme ?? [], 'label', '')))
+                @php($themeMarkerLabel = trim((string) data_get($activeWorldTheme ?? [], 'marker_label', '')))
+                @php($headerMarkerLabel = $headerWorld instanceof \App\Models\World && $themeWorldLabel === 'Standardwelt' && $headerWorldName !== 'Standardwelt' ? '' : $themeMarkerLabel)
 
                 <div class="app-header-bar flex w-full items-center justify-between gap-3">
                     <div class="app-header-brand flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
@@ -101,7 +105,7 @@
                         <x-world-marker
                             class="app-header-world-marker"
                             :world-name="$headerWorldName"
-                            :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+                            :marker-label="$headerMarkerLabel"
                             :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
                             :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
                             :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
