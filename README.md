@@ -124,7 +124,7 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 ## Projektstatus
 
 - Live-Instanz: https://rpg.c76.org
-- Aktueller Build: `v0.32-beta`
+- Aktueller Build: siehe [docs/STATUS.md](docs/STATUS.md)
 - Status: Beta - kontrollierte Nutzung/Testbetrieb; weitere Änderungen sind möglich.
 - Operativer Live-Status (Version, Gate-Stand, letzter Release): [docs/STATUS.md](docs/STATUS.md)
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)

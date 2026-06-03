@@ -25,7 +25,7 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Plattformname: **C76-RPG**.
 - Live-Instanz: **https://rpg.c76.org**.
-- Aktueller Build: **`v0.32-beta`**.
+- Aktueller Build: **siehe `docs/STATUS.md`**.
 - Status: **Beta** (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich).
 - Operativer Live-Status (Version, Gate-Stand, letzter Release): **`docs/STATUS.md`**.
 - Delivery-Basis steht:
