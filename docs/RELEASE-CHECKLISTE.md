@@ -2,6 +2,10 @@
 
 Ziel: Jeder Release läuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
+Aktueller Projektstand: `v0.32-beta` auf https://rpg.c76.org. Status: Beta
+(kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich). Kanonischer
+Live-Status: `docs/STATUS.md`.
+
 ## 0. Empfohlener One-Command-Flow
 
 Siehe `README.md` (Dokumentationssektion) fuer den aktuellen Einstieg und die verlinkte Release-Doku.
@@ -12,7 +16,7 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
 
 - `git pull --rebase origin main`
 - Alle geplanten Änderungen finalisieren.
-- Sicherstellen, dass `APP_VERSION` für den Release feststeht (z. B. `v0.30-beta`).
+- Sicherstellen, dass `APP_VERSION` für den Release feststeht (z. B. `v0.32-beta`).
 
 ## 2. Qualität lokal prüfen
 
@@ -197,7 +201,7 @@ Die Phase-A-Rollout-Skripte sind nach `ops/archive/release_phase_a/` verschoben 
     - `GRUEN`: weiter im Release-Flow.
     - `GELB`: weiter möglich, aber Delta beobachten.
     - `ROT`: report-only Signal, solange `PERF_GATE_ENFORCE=0`.
-    - `ROT` mit `PERF_GATE_ENFORCE=1`: harter non-zero-Abbruch (Standard bei stabilen Tags im `release_flow.sh`).
+    - `ROT` mit `PERF_GATE_ENFORCE=1`: harter non-zero-Abbruch (Standard bei Tags ohne `-beta`-Suffix im `release_flow.sh`).
 - Fallback ohne Gate:
   - `PERF_WORLD_SLUG=<world-slug> PERF_ITERATIONS=400 PERF_REPORT_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md PERF_LATEST_OUT=docs/PERFORMANCE-POSTS-LATEST-BY-ID-LATEST.md scripts/perf_posts_latest_by_id.sh`
   - Fallback direkt via Artisan:

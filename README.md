@@ -123,6 +123,9 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 
 ## Projektstatus
 
+- Live-Instanz: https://rpg.c76.org
+- Aktueller Build: `v0.32-beta`
+- Status: Beta - kontrollierte Nutzung/Testbetrieb; weitere Änderungen sind möglich.
 - Operativer Live-Status (Version, Gate-Stand, letzter Release): [docs/STATUS.md](docs/STATUS.md)
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)
 
@@ -146,7 +149,8 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 
 ## Lizenz / Security / Beiträge
 
-- Lizenz: proprietär, siehe [LICENSE](LICENSE)
-- Nutzung/Weitergabe außerhalb der vereinbarten Rahmenbedingungen ist nicht frei
+- Lizenz: proprietär / all rights reserved, siehe [LICENSE](LICENSE)
+- Nutzung, Kopie, Veränderung, Veröffentlichung, Weitergabe, Hosting/Betrieb oder Ableitung sind ohne vorherige schriftliche Erlaubnis nicht gestattet.
+- Öffentliche GitHub-Sichtbarkeit, falls vorhanden, gewährt keine freie Nutzungslizenz; Drittanbieter-Abhängigkeiten behalten ihre eigenen Lizenzen.
 - Security-Meldungen: siehe [SECURITY.md](SECURITY.md)
 - Beiträge: nur nach Absprache, siehe [CONTRIBUTING.md](CONTRIBUTING.md)

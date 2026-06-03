@@ -3,6 +3,8 @@
 ## Zweck
 Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden Betrieb.
 Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
+Produktive Live-Instanz: https://rpg.c76.org. Aktueller Build- und Beta-Status:
+`docs/STATUS.md`.
 
 ## Verbindliche Produktions-Defaults (Security/Betrieb)
 - `QUEUE_CONNECTION=redis`.
@@ -182,7 +184,7 @@ php artisan dev:testflight:seed --world=<world-slug> --password='<starkes-passwo
    - Ohne Perf-Gate: `scripts/release_flow.sh vX.Y-beta --skip-perf`
 4. Perf-Gate Verhalten:
    - `ROT` ist report-only, wenn Enforce aus ist (`PERF_GATE_ENFORCE=0`).
-   - Mit Enforce (`PERF_GATE_ENFORCE=1`, Standard für stabile `vX.Y`-Tags im `release_flow.sh`) endet `ROT` als non-zero.
+   - Mit Enforce (`PERF_GATE_ENFORCE=1`, Standard für Tags ohne `-beta`-Suffix im `release_flow.sh`) endet `ROT` als non-zero.
    - Runtime-Hint wird nicht automatisch in `.env` geschrieben.
    - Hint-Entscheidung kommt aus `docs/PERFORMANCE-POSTS-LATEST-BY-ID-GATE-LATEST.md`.
 

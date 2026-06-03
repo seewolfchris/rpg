@@ -2,6 +2,7 @@
 
 ## Zweck
 Technische Referenz fuer Service Worker, Offline-Lesen, Offline-Queue und Privacy-Boundary.
+Aktueller Build- und Beta-Status der Live-Instanz: siehe `STATUS.md`.
 
 ## Kernkomponenten
 - Service Worker Einstieg: `public/sw.js`

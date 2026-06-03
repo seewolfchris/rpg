@@ -5,7 +5,7 @@ This document is a summary only, not a second source of truth.
 - Source of truth: [docs/RELEASE-CHECKLISTE.md](../RELEASE-CHECKLISTE.md)
 - Source of truth: [README.md](../../README.md)
 - Current release and gate status: see [`docs/STATUS.md`](../STATUS.md). Do not duplicate live status data in this summary.
-- Last synced commit: `c4a2c4e0c69ae163a53ea3fc142a164f5617862c`
+- Last synced commit: `current release commit`
 
 ## 1. Standard release sequence
 

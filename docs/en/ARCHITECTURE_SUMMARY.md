@@ -3,7 +3,7 @@
 This document is a summary only, not a second source of truth.
 
 - Source of truth: [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
-- Last synced commit: `c4a2c4e0c69ae163a53ea3fc142a164f5617862c`
+- Last synced commit: `current release commit`
 
 ## 1. Core engineering standard
 

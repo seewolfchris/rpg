@@ -1,9 +1,10 @@
 # Docs-Übersicht
 
-Stand: 2026-04-23
+Stand: 2026-06-03
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
+- Aktueller Live-/Build-/Beta-Status: `STATUS.md`
 - Planung/Statusachsen: `../ROADMAP.md`
 - Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`

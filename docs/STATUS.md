@@ -7,26 +7,26 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 
 ## Operativer Live-Status
 
-- Statusdatum: **2026-05-04**
-- Produktstatus: **Beta (aktiv entwickelt)**
-- Versionslinie: **`v0.31-beta`**
-- Letzter Release-Eintrag: **`v0.31-beta` am 2026-05-04** (Quelle: `CHANGELOG.md`)
+- Statusdatum: **2026-06-03**
+- Produktstatus: **Beta (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich)**
+- Versionslinie: **`v0.32-beta`**
+- Produktive Live-Instanz: **https://rpg.c76.org**
+- Letzter Release-Eintrag: **`v0.32-beta` am 2026-06-03** (Quelle: `CHANGELOG.md`)
 
 ## Integrationsstand (post-release)
 
-- Media-/Handout-/Story-Tool-Reihe PR-0 bis PR-6 ist umgesetzt:
-  - PR-0 ADR Media/Handouts/Story-Tools
-  - PR-1 Spatie Media Library Foundation
-  - PR-2 Immersive Bilder fuer GM-Erzaehlposts
-  - PR-3 Persistente Campaign/Scene-Handouts
-  - PR-3b Handout-Media-Vertrag gehaertet
-  - PR-4a Szenen-Handout-Toolpanel
-  - PR-4b Handout-UX-Polish
-  - PR-5 Chronik / StoryLogEntry
-  - UX-Fix Romanmodus: "beenden & antworten"-CTA
-  - PR-6 Private Player Notes / Meine Notizen
-- Letzter dokumentierter Stabilisierungs-/Auditlauf: **2026-05-04**, Ergebnis **gruen**.
-- Audit-Ergebnis: **kein Runtime-Diff erforderlich**.
+- Rollenmodell-Reihe PR1-PR6 ist umgesetzt:
+  - globale Plattformrolle effektiv `admin`/`player`; globales `gm` entfernt
+  - Plattformflags `can_create_campaigns` und `can_post_without_moderation`
+  - kampagnenbezogene Rollen ueber `campaign_memberships` (`gm`, `trusted_player`, `player`)
+  - Kampagnen-Owner bleibt getrennt auf `campaigns.owner_id`
+  - Kampagnenerstellung auf `admin || can_create_campaigns` umgestellt
+  - Membership-first Lesepfade fuer Kampagne/Szene/Post
+  - UI-Trennung: Admin-Bereich fuer Plattformrechte, Kampagnenbereich owner-only fuer Teilnehmerrollen
+- UI-Fix SL-Kontakte: Kontaktformular oeffnet als viewportweiter Modal ueber `x-teleport="body"`.
+- Lizenz-/Dokumentationsstand: proprietaer / all rights reserved; keine Open-Source-Nutzungserlaubnis.
+- Letzter dokumentierter Stabilisierungs-/Auditlauf vor `v0.32-beta`: **2026-05-04**, Ergebnis **gruen**.
+- Ein neuer vollstaendiger Release-Gate-Lauf fuer `v0.32-beta` ist in dieser Datei noch nicht protokolliert.
 
 ## Verifikations- und Gate-Stand
 
@@ -59,6 +59,7 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 
 ## Pflege-Regel
 
-- README und ROADMAP enthalten keine Live-Statuszahlen mehr.
+- `docs/STATUS.md` bleibt kanonisch fuer Live-Status, Build und Gate-Stand.
+- README und ROADMAP duerfen nur knappe Orientierung enthalten und muessen auf diese Datei verweisen.
 - Historische Release-Historie bleibt in `CHANGELOG.md`.
 - Exakte Gate-Befehle bleiben in `docs/RELEASE-CHECKLISTE.md`.

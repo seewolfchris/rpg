@@ -3,6 +3,9 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
+- Keine unreleasten Aenderungen dokumentiert.
+
+## v0.32-beta (2026-06-03)
 - Rollenmodell in Scheiben PR1-PR6 auf das neue Zielmodell umgestellt:
   - globale Plattformrolle effektiv `admin`/`player` (globales `gm` entfernt)
   - Plattformflags `can_create_campaigns` und `can_post_without_moderation`
@@ -17,6 +20,8 @@ Alle nennenswerten Produktaenderungen an C76-RPG.
 - PHPStan-Folgefix: Membership-Typen (`assigned_at`, `membershipRoleValue`) konsistent gezogen.
 - UI-Fix SL-Kontakte: "Spielleitung kontaktieren"-Formular oeffnet als echter viewportweiter Modal ueber `x-teleport="body"` statt innerhalb des Panel-Containers.
 - Feature-Test fuer den SL-Kontakt-Modal erweitert (`x-teleport="body"` explizit abgesichert).
+- Lizenz- und Statusdokumentation auf proprietaer/all rights reserved, Live-Instanz `https://rpg.c76.org` und Beta-Build `v0.32-beta` aktualisiert.
+- Version defaults auf `v0.32-beta` aktualisiert.
 
 ## v0.31-beta (2026-05-04)
 - Globales Regelwerk komplett überarbeitet: Spieler schreiben IC-Beiträge in Ich-Perspektive und Präsens; ausführlichere Regeln zu Spielfluss, IC/OOC-Trennung, Proben, Moderation, Safety und Fair Play.

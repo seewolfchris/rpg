@@ -4,6 +4,8 @@
 - Security-Header werden zentral ueber `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 - Privacy-first Defaults fuer private HTML-Responses (`no-store/private`).
 - Auth-/Policy-basierte Zugriffskontrolle auf sensible Produktbereiche.
+- Live-Instanz: https://rpg.c76.org; aktueller Build-/Beta-Status: `STATUS.md`.
+- Das Projekt ist proprietaer; diese technische Security-Doku ist keine Nutzungslizenz.
 
 ## Crawler / Bot-Schutz
 - `public/robots.txt` sperrt Crawling (`Disallow: /`).

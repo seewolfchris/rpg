@@ -1,6 +1,8 @@
 # Deployment (Generisch)
 
 Diese Anleitung ist provider-neutral und gilt für Linux-Hosts mit PHP 8.5+, Composer, MySQL/MariaDB und Redis.
+Aktuelle produktive Live-Instanz des Projekts: https://rpg.c76.org.
+Build- und Beta-Status werden kanonisch in `docs/STATUS.md` gepflegt.
 
 ## Zielbild Produktion
 

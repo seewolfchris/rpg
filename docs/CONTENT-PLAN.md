@@ -1,6 +1,6 @@
 # Content-Plan C76-RPG
 
-Stand: 2026-05-04 (v0.31-beta)
+Stand: 2026-06-03 (v0.32-beta)
 
 ## 1. Projekt-Definition (kurz, spielbar)
 
@@ -59,7 +59,7 @@ Phase 1 bleibt bewusst schlank:
 ### 3.3 Enzyklopädie für Lore
 
 Die Enzyklopädie bleibt in Phase 1 unverändert als bestehender Lore-Kanal.  
-Markdown->DB-Sync kommt erst in Phase 2, wenn Lore-Dateien stabil und testbar strukturiert sind.
+Markdown->DB-Sync kommt erst in Phase 2, wenn Lore-Dateien belastbar und testbar strukturiert sind.
 
 ### 3.4 Tracking
 
@@ -134,7 +134,7 @@ Beginner-Guide + "Wie spielt man als Fortgeschrittener?" mit klaren Spielablauf-
 ### Phase 4 (variabel)
 
 Weltspezifische Regeln + weitere Welten.  
-Nur starten, wenn Phase 2 stabil und testbar ist.
+Nur starten, wenn Phase 2 belastbar und testbar ist.
 
 ### Phase 5 (2-4 PT)
 

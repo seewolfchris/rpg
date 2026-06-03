@@ -1,6 +1,6 @@
 # Content-Status
 
-Stand: 2026-05-04 (v0.31-beta)
+Stand: 2026-06-03 (v0.32-beta)
 
 ## Überblick
 
@@ -28,4 +28,4 @@ Stand: 2026-05-04 (v0.31-beta)
 
 - Hoch: Legacy-Lore lebt noch in alten Migrations und existiert parallel zu Markdown.
 - Mittel: Welttexte sind inhaltlich nutzbar, aber einzelne Begriffe brauchen noch mehr Eigenjargon.
-- Niedrig: Repo-Struktur für weitere Lore-Iteration steht stabil.
+- Niedrig: Repo-Struktur für weitere Lore-Iteration steht belastbar.

@@ -4,7 +4,7 @@ Aktueller Live-Status (Version, Gate-Stand, letzter Release): siehe `docs/STATUS
 
 ## Zielbild
 
-- Stabile, wartbare Release-Beta mit verlässlicher Delivery.
+- Wartbare Release-Beta mit verlässlicher Delivery; Beta bleibt kontrollierte Nutzung/Testbetrieb.
 - Plattform bleibt multi-world-fähig mit harten Weltkontext-Invarianten.
 - Qualitätsgates bleiben strikt und werden nicht aufgeweicht.
 - Architektur wird gezielt vereinfacht: weniger Drift, weniger Wrapper, klarere Verantwortungen.

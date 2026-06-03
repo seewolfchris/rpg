@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Übersicht
 
-Stand: 2026-05-28  
+Stand: 2026-06-03
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -24,6 +24,9 @@ Repository-Branch: `main`
 
 ## 1) Executive Summary
 - Plattformname: **C76-RPG**.
+- Live-Instanz: **https://rpg.c76.org**.
+- Aktueller Build: **`v0.32-beta`**.
+- Status: **Beta** (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich).
 - Operativer Live-Status (Version, Gate-Stand, letzter Release): **`docs/STATUS.md`**.
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
@@ -33,17 +36,17 @@ Repository-Branch: `main`
 
 | Bereich | Status | Bemerkung |
 |---|---|---|
-| Auth (Register/Login/Reset) | Stabil | Rollen- und Session-Flows produktiv nutzbar |
-| Charaktere + Charakterbogen | Stabil | CRUD, Ownership, LE/AE, Inventar/Waffen/Rüstung |
-| Kampagnen/Szenen/Posts | Stabil | IC/OOC, Moderation, Revisionen, Pinning |
-| GM-Proben + Persistenz | Stabil | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
-| Szenen-Abos / Read-Tracking / Jump-Links | Stabil | Unread-Logik und schnelle Navigation |
-| Kampagnen-Einladungen | Stabil | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
-| SL-Kontakt (privacy-first) | Stabil | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow; Kontaktformular als viewportweiter Modal (`x-teleport="body"`) |
-| Wissenszentrum / Enzyklopädie | Stabil | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
+| Auth (Register/Login/Reset) | Beta-nutzbar | Rollen- und Session-Flows produktiv nutzbar |
+| Charaktere + Charakterbogen | Beta-nutzbar | CRUD, Ownership, LE/AE, Inventar/Waffen/Rüstung |
+| Kampagnen/Szenen/Posts | Beta-nutzbar | IC/OOC, Moderation, Revisionen, Pinning |
+| GM-Proben + Persistenz | Beta-nutzbar | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
+| Szenen-Abos / Read-Tracking / Jump-Links | Beta-nutzbar | Unread-Logik und schnelle Navigation |
+| Kampagnen-Einladungen | Beta-nutzbar | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
+| SL-Kontakt (privacy-first) | Beta-nutzbar | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow; Kontaktformular als viewportweiter Modal (`x-teleport="body"`) |
+| Wissenszentrum / Enzyklopädie | Beta-nutzbar | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
 | Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
-| PWA-Basis | Stabil | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
-| Domänen-Invarianten + Retry-Resilienz | Stabil | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry für Notification-Fehler |
+| PWA-Basis | Beta-nutzbar | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
+| Domänen-Invarianten + Retry-Resilienz | Beta-nutzbar | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry für Notification-Fehler |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 
 ## Datenschutz & Offline-Funktion
