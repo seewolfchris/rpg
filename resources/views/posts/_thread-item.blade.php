@@ -21,6 +21,12 @@
         $isOocPost = $post->post_type === 'ooc';
         $isGmNarration = $post->isGmNarration();
         $character = $post->character;
+        $immersiveImages = $isGmNarration ? $post->immersiveImagesForDisplay() : collect();
+        $renderedPostContent = $post->renderedContentWithInlineImages($immersiveImages);
+        $inlineImmersiveMediaIds = $renderedPostContent->inlineMediaIds();
+        $galleryImmersiveImages = $immersiveImages
+            ->reject(static fn ($media): bool => in_array((int) $media->id, $inlineImmersiveMediaIds, true))
+            ->values();
         $isCharacterIcPost = $isIcPost && ! $isGmNarration && $character !== null;
         $characterId = $isCharacterIcPost ? (int) $character->id : 0;
         $canViewCharacterSheet = $characterId > 0 && in_array($characterId, $viewableCharacterIds, true);
@@ -225,17 +231,16 @@
                 „{{ $icQuote }}“
             </blockquote>
         @endif
-        {!! $post->renderedContent() !!}
+        {!! $renderedPostContent->html() !!}
     </div>
 
-    @php($immersiveImages = $post->relationLoaded('media')
-        ? $post->media->where('collection_name', \App\Models\Post::IMMERSIVE_IMAGES_COLLECTION)->values()
-        : collect())
-    @if ($isGmNarration && $immersiveImages->isNotEmpty())
+    @if ($isGmNarration && $galleryImmersiveImages->isNotEmpty())
         <section class="mt-4">
             <div class="grid gap-3 sm:grid-cols-2">
-                @foreach ($immersiveImages as $immersiveImage)
+                @foreach ($galleryImmersiveImages as $immersiveImage)
                     <img
+                        data-post-immersive-gallery-image="1"
+                        data-post-media-id="{{ $immersiveImage->id }}"
                         src="{{ $immersiveImage->getUrl() }}"
                         alt="Immersives Bild zu Beitrag #{{ $post->id }}"
                         loading="lazy"

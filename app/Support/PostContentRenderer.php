@@ -4,10 +4,41 @@ namespace App\Support;
 
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class PostContentRenderer
 {
+    private const INLINE_IMAGE_PLACEHOLDER_PATTERN = '/\[bild:([1-4])\]/iu';
+
+    private const INLINE_IMAGE_PLACEHOLDER_SPLIT_PATTERN = '/(\[bild:[1-4]\])/iu';
+
     public function render(string $content, ?string $format): HtmlString
+    {
+        $inlineMediaIds = [];
+
+        return new HtmlString($this->renderContent($content, $format, null, $inlineMediaIds));
+    }
+
+    /**
+     * @param  iterable<int, mixed>  $inlineImages
+     */
+    public function renderWithInlineImages(string $content, ?string $format, iterable $inlineImages): PostContentRenderResult
+    {
+        $inlineImagesByPosition = $this->inlineImagesByPosition($inlineImages);
+        $inlineMediaIds = [];
+        $html = $this->renderContent($content, $format, $inlineImagesByPosition, $inlineMediaIds);
+
+        return new PostContentRenderResult(
+            new HtmlString($html),
+            array_values(array_unique($inlineMediaIds)),
+        );
+    }
+
+    /**
+     * @param  array<int, Media>|null  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderContent(string $content, ?string $format, ?array $inlineImagesByPosition, array &$inlineMediaIds): string
     {
         $normalizedFormat = match ($format) {
             'markdown', 'bbcode', 'plain' => $format,
@@ -15,39 +46,72 @@ class PostContentRenderer
         };
 
         $html = match ($normalizedFormat) {
-            'markdown' => $this->renderMarkdownWithSpoilers($content),
-            'bbcode' => $this->renderBbcodeWithSpoilers($content),
-            default => $this->renderPlainWithSpoilers($content),
+            'markdown' => $this->renderMarkdownWithSpoilers($content, $inlineImagesByPosition, $inlineMediaIds),
+            'bbcode' => $this->renderBbcodeWithSpoilers($content, $inlineImagesByPosition, $inlineMediaIds),
+            default => $this->renderPlainWithSpoilers($content, $inlineImagesByPosition, $inlineMediaIds),
         };
 
         if ($html === '') {
             $html = '<p class="text-stone-400 italic">Kein Inhalt.</p>';
         }
 
-        return new HtmlString($html);
+        return $html;
     }
 
-    private function renderMarkdownWithSpoilers(string $content): string
+    /**
+     * @param  array<int, Media>|null  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderMarkdownWithSpoilers(string $content, ?array $inlineImagesByPosition, array &$inlineMediaIds): string
     {
         return $this->renderWithSpoilers(
             $content,
-            fn (string $segment): string => $this->renderMarkdownSegment($segment),
+            function (string $segment) use ($inlineImagesByPosition, &$inlineMediaIds): string {
+                return $this->renderSegmentWithInlineImages(
+                    $segment,
+                    fn (string $part): string => $this->renderMarkdownSegment($part),
+                    $inlineImagesByPosition,
+                    $inlineMediaIds,
+                );
+            },
         );
     }
 
-    private function renderBbcodeWithSpoilers(string $content): string
+    /**
+     * @param  array<int, Media>|null  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderBbcodeWithSpoilers(string $content, ?array $inlineImagesByPosition, array &$inlineMediaIds): string
     {
         return $this->renderWithSpoilers(
             $content,
-            fn (string $segment): string => $this->renderMarkdownSegment($this->convertBbcodeToMarkdown($segment)),
+            function (string $segment) use ($inlineImagesByPosition, &$inlineMediaIds): string {
+                return $this->renderSegmentWithInlineImages(
+                    $segment,
+                    fn (string $part): string => $this->renderMarkdownSegment($this->convertBbcodeToMarkdown($part)),
+                    $inlineImagesByPosition,
+                    $inlineMediaIds,
+                );
+            },
         );
     }
 
-    private function renderPlainWithSpoilers(string $content): string
+    /**
+     * @param  array<int, Media>|null  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderPlainWithSpoilers(string $content, ?array $inlineImagesByPosition, array &$inlineMediaIds): string
     {
         return $this->renderWithSpoilers(
             $content,
-            fn (string $segment): string => $this->renderPlainSegment($segment),
+            function (string $segment) use ($inlineImagesByPosition, &$inlineMediaIds): string {
+                return $this->renderSegmentWithInlineImages(
+                    $segment,
+                    fn (string $part): string => $this->renderPlainSegment($part),
+                    $inlineImagesByPosition,
+                    $inlineMediaIds,
+                );
+            },
         );
     }
 
@@ -89,6 +153,67 @@ class PostContentRenderer
         }
 
         return implode("\n", $htmlParts);
+    }
+
+    /**
+     * @param  callable(string): string  $renderer
+     * @param  array<int, Media>|null  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderSegmentWithInlineImages(string $segment, callable $renderer, ?array $inlineImagesByPosition, array &$inlineMediaIds): string
+    {
+        if ($inlineImagesByPosition === null || preg_match(self::INLINE_IMAGE_PLACEHOLDER_PATTERN, $segment) !== 1) {
+            return $renderer($segment);
+        }
+
+        $parts = preg_split(
+            self::INLINE_IMAGE_PLACEHOLDER_SPLIT_PATTERN,
+            $segment,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY,
+        ) ?: [];
+
+        if ($parts === []) {
+            return '';
+        }
+
+        $htmlParts = [];
+
+        foreach ($parts as $part) {
+            if (preg_match(self::INLINE_IMAGE_PLACEHOLDER_PATTERN, $part, $matches) === 1) {
+                $htmlParts[] = $this->renderInlineImagePlaceholder((int) $matches[1], $inlineImagesByPosition, $inlineMediaIds);
+
+                continue;
+            }
+
+            $partHtml = $renderer($part);
+
+            if ($partHtml !== '') {
+                $htmlParts[] = $partHtml;
+            }
+        }
+
+        return implode("\n", $htmlParts);
+    }
+
+    /**
+     * @param  array<int, Media>  $inlineImagesByPosition
+     * @param  list<int>  $inlineMediaIds
+     */
+    private function renderInlineImagePlaceholder(int $position, array $inlineImagesByPosition, array &$inlineMediaIds): string
+    {
+        $media = $inlineImagesByPosition[$position] ?? null;
+
+        if (! $media instanceof Media) {
+            return '<span data-post-inline-image-missing="1" class="inline-flex rounded border border-stone-700/70 bg-black/25 px-2 py-0.5 text-xs italic text-stone-400">Bild '.$position.' nicht verfügbar</span>';
+        }
+
+        $mediaId = (int) $media->id;
+        $inlineMediaIds[] = $mediaId;
+
+        return '<figure data-post-inline-image="1" data-post-inline-image-slot="'.$position.'" data-post-media-id="'.$mediaId.'" class="my-5 overflow-hidden rounded-lg border border-stone-700/80 bg-black/30">'
+            .'<img src="'.e($media->getUrl()).'" alt="Immersives Bild '.$position.'" loading="lazy" class="w-full object-cover">'
+            .'</figure>';
     }
 
     private function renderMarkdownSegment(string $segment): string
@@ -185,5 +310,33 @@ class PostContentRenderer
         }
 
         return in_array(strtolower($scheme), ['http', 'https', 'mailto'], true);
+    }
+
+    /**
+     * @param  iterable<int, mixed>  $inlineImages
+     * @return array<int, Media>
+     */
+    private function inlineImagesByPosition(iterable $inlineImages): array
+    {
+        $mediaItems = collect($inlineImages)
+            ->filter(static fn (mixed $media): bool => $media instanceof Media)
+            ->sortBy([
+                ['order_column', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values()
+            ->take(4);
+
+        $imagesByPosition = [];
+
+        foreach ($mediaItems as $index => $media) {
+            if (! $media instanceof Media) {
+                continue;
+            }
+
+            $imagesByPosition[$index + 1] = $media;
+        }
+
+        return $imagesByPosition;
     }
 }

@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Support\PostContentRenderer;
+use App\Support\PostContentRenderResult;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Spatie\MediaLibrary\HasMedia;
@@ -19,10 +21,12 @@ class Post extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\PostFactory> */
     use HasFactory;
+
     use InteractsWithMedia;
     use SoftDeletes;
 
     public const THREAD_POSTS_PER_PAGE = 20;
+
     public const IMMERSIVE_IMAGES_COLLECTION = 'immersive_images';
 
     /**
@@ -217,6 +221,39 @@ class Post extends Model implements HasMedia
     public function renderedContent(): HtmlString
     {
         return app(PostContentRenderer::class)->render($this->content, $this->content_format);
+    }
+
+    /**
+     * @param  iterable<int, mixed>|null  $immersiveImages
+     */
+    public function renderedContentWithInlineImages(?iterable $immersiveImages = null): PostContentRenderResult
+    {
+        if (! $this->isGmNarration()) {
+            return new PostContentRenderResult($this->renderedContent());
+        }
+
+        return app(PostContentRenderer::class)->renderWithInlineImages(
+            $this->content,
+            $this->content_format,
+            $immersiveImages ?? $this->immersiveImagesForDisplay(),
+        );
+    }
+
+    /**
+     * @return Collection<int, \Spatie\MediaLibrary\MediaCollections\Models\Media>
+     */
+    public function immersiveImagesForDisplay(): Collection
+    {
+        $media = $this->relationLoaded('media')
+            ? $this->media->where('collection_name', self::IMMERSIVE_IMAGES_COLLECTION)
+            : $this->getMedia(self::IMMERSIVE_IMAGES_COLLECTION);
+
+        return $media
+            ->sortBy([
+                ['order_column', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values();
     }
 
     public function isGmNarration(): bool

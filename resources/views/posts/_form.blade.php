@@ -232,6 +232,10 @@
         <p class="mt-2 text-xs text-stone-500">
             Erlaubte Formate: JPG, PNG, WEBP. Maximal 4 Bilder pro Beitrag, jeweils bis 4 MB.
         </p>
+        <p class="mt-2 text-xs text-stone-500">
+            Du kannst Bilder im Text mit [bild:1], [bild:2], [bild:3] oder [bild:4] einfügen.
+            Nicht eingefügte Bilder erscheinen unter dem Beitrag.
+        </p>
         @error('immersive_images')
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror

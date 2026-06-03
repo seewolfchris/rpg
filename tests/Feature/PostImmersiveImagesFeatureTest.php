@@ -311,6 +311,174 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $response->assertDontSee($mediaUrl, false);
     }
 
+    public function test_gm_markdown_placeholder_renders_first_immersive_image_inline(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "Dichter Nebel zieht auf.\n\n[bild:1]\n\nDie Laternen werden kleiner.",
+            'markdown',
+        );
+        $media = $this->attachImmersiveImages($post, 1)->first();
+        $mediaUrl = $media->getUrl();
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 1, $mediaUrl);
+        $this->assertSame(1, substr_count($html, $mediaUrl));
+    }
+
+    public function test_gm_bbcode_placeholder_renders_second_immersive_image_inline(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "[b]Die Brücke knarrt.[/b]\n\n[bild:2]\n\nDer Fluss darunter bleibt schwarz.",
+            'bbcode',
+        );
+        $mediaItems = $this->attachImmersiveImages($post, 2);
+        $firstMedia = $mediaItems->first();
+        $secondMedia = $mediaItems->last();
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
+        $this->assertGalleryImageContains($html, (int) $firstMedia->id, $firstMedia->getUrl());
+        $this->assertSame(1, substr_count($html, $secondMedia->getUrl()));
+    }
+
+    public function test_plain_inline_placeholders_leave_unreferenced_images_in_gallery(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "Der Blick faellt auf das Tor.\n\n[bild:1]\n\nDanach bleiben Details im Randlicht.",
+            'plain',
+        );
+        $mediaItems = $this->attachImmersiveImages($post, 3);
+        $firstMedia = $mediaItems->get(0);
+        $secondMedia = $mediaItems->get(1);
+        $thirdMedia = $mediaItems->get(2);
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 1, $firstMedia->getUrl());
+        $this->assertGalleryImageContains($html, (int) $secondMedia->id, $secondMedia->getUrl());
+        $this->assertGalleryImageContains($html, (int) $thirdMedia->id, $thirdMedia->getUrl());
+    }
+
+    public function test_referenced_inline_images_do_not_render_again_in_gallery(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "Erster Blick.\n\n[bild:1]\n\nZweiter Blick.\n\n[bild:2]",
+            'markdown',
+        );
+        $mediaItems = $this->attachImmersiveImages($post, 3);
+        $firstMedia = $mediaItems->get(0);
+        $secondMedia = $mediaItems->get(1);
+        $thirdMedia = $mediaItems->get(2);
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 1, $firstMedia->getUrl());
+        $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
+        $this->assertSame(1, substr_count($html, $firstMedia->getUrl()));
+        $this->assertSame(1, substr_count($html, $secondMedia->getUrl()));
+        $this->assertGalleryImageContains($html, (int) $thirdMedia->id, $thirdMedia->getUrl());
+    }
+
+    public function test_placeholder_in_non_gm_post_does_not_render_an_inline_image(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $player = User::factory()->create();
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'character_id' => $character->id,
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'content' => 'Ich sehe [bild:1] im Nebel.',
+            'meta' => null,
+            'moderation_status' => 'approved',
+        ]);
+        $media = $this->attachImmersiveImages($post, 1)->first();
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk()
+            ->assertSeeText('[bild:1]')
+            ->assertDontSee('data-post-inline-image="1"', false)
+            ->assertDontSee('data-post-immersive-gallery-image="1"', false)
+            ->assertDontSee($media->getUrl(), false);
+    }
+
+    public function test_inline_image_rendering_keeps_markdown_html_stripping(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "Rohes <strong>HTML</strong> bleibt Text.\n\n[bild:1]",
+            'markdown',
+        );
+        $media = $this->attachImmersiveImages($post, 1)->first();
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 1, $media->getUrl());
+        $this->assertStringNotContainsString('<strong>HTML</strong>', $html);
+        $this->assertStringContainsString('Rohes HTML bleibt Text.', $html);
+    }
+
     public function test_only_expected_models_have_media_library_interfaces_in_current_scope(): void
     {
         $this->assertTrue(is_subclass_of(Post::class, HasMedia::class));
@@ -350,14 +518,14 @@ class PostImmersiveImagesFeatureTest extends TestCase
         return [$campaign, $scene, $gm];
     }
 
-    private function createGmNarrationPost(Scene $scene, User $gm, ?string $content = null): Post
+    private function createGmNarrationPost(Scene $scene, User $gm, ?string $content = null, string $contentFormat = 'markdown'): Post
     {
         return Post::factory()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
             'character_id' => null,
             'post_type' => 'ic',
-            'content_format' => 'markdown',
+            'content_format' => $contentFormat,
             'content' => $content ?? str_repeat('Die Spielleitung beschreibt den nächsten Takt. ', 2),
             'meta' => ['author_role' => 'gm'],
             'moderation_status' => 'approved',
@@ -378,6 +546,22 @@ class PostImmersiveImagesFeatureTest extends TestCase
         }
 
         return $post->fresh()->getMedia(Post::IMMERSIVE_IMAGES_COLLECTION);
+    }
+
+    private function assertInlineImageSlotContains(string $html, int $slot, string $mediaUrl): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/<figure[^>]*data-post-inline-image-slot="'.$slot.'"[^>]*>.*?<img[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            $html,
+        );
+    }
+
+    private function assertGalleryImageContains(string $html, int $mediaId, string $mediaUrl): void
+    {
+        $this->assertMatchesRegularExpression(
+            '/<img[^>]*data-post-immersive-gallery-image="1"[^>]*data-post-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            $html,
+        );
     }
 
     /**
