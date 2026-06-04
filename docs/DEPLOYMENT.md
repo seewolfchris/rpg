@@ -1,8 +1,8 @@
 # Deployment (Generisch)
 
 Diese Anleitung ist provider-neutral und gilt für Linux-Hosts mit PHP 8.5+, Composer, MySQL/MariaDB und Redis.
-Aktuelle produktive Live-Instanz des Projekts: https://rpg.c76.org.
-Build- und Beta-Status werden kanonisch in `docs/STATUS.md` gepflegt.
+Produktive Live-Instanz des Projekts: https://rpg.c76.org.
+Release-, Entwicklungs-, Live-, Build- und Gate-Status werden kanonisch in `docs/STATUS.md` gepflegt.
 
 ## Zielbild Produktion
 
@@ -21,6 +21,10 @@ npm run build
 php artisan test
 ```
 
+Der vollstaendige Release-/CI-Gate-Umfang steht in `docs/RELEASE-CHECKLISTE.md`;
+dazu gehoeren Status-Drift, Architektur-Guardrails, E2E, Artisan-Smoke und
+Build-Artefakt-Driftcheck.
+
 ## 2) Produktions-`.env` setzen
 
 Nutze `.env.production.example` als Vorlage. Mindestwerte:
@@ -29,6 +33,9 @@ Nutze `.env.production.example` als Vorlage. Mindestwerte:
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://example.org
+APP_VERSION=
+APP_BUILD=
+WORLD_DEFAULT_SLUG=chroniken-der-asche
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -44,6 +51,7 @@ SESSION_DRIVER=redis
 SESSION_SECURE_COOKIE=true
 TRUSTED_PROXIES=<proxy-ip/cidr,...>
 SECURITY_HSTS_MAX_AGE=31536000
+MEDIA_DISK=public
 ```
 
 ## 3) Deploy auf dem Zielhost

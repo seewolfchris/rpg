@@ -5,7 +5,7 @@ namespace App\Actions\StoryLog;
 use App\Domain\StoryLog\StoryLogEntryMutationService;
 use App\Models\StoryLogEntry;
 
-class DeleteStoryLogEntryAction
+final class DeleteStoryLogEntryAction
 {
     public function __construct(
         private readonly StoryLogEntryMutationService $mutationService,

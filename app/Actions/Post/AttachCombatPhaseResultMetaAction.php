@@ -6,7 +6,7 @@ namespace App\Actions\Post;
 
 use App\Models\Post;
 
-class AttachCombatPhaseResultMetaAction
+final class AttachCombatPhaseResultMetaAction
 {
     /**
      * @param  array<string, mixed>  $combatPhaseResult

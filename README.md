@@ -30,11 +30,14 @@ Der Fokus liegt auf asynchronem Storytelling, klaren Weltkontexten und einem sch
 - Kampagnenrollen über `campaign_memberships`: `gm`, `trusted_player`, `player` bei separatem Kampagnen-Owner (`campaigns.owner_id`)
 - Kampagnen-/Szenenverwaltung mit Sichtbarkeit, Einladungen, Read-Tracking und Bookmarks
 - Privacy-first SL-Kontakt pro Kampagne (Thread-basiert, kein Chat/Realtime, kein Dashboard-Flow)
-- Posting mit IC/OOC, Spoiler, Edit-Historie und Moderationspfad
+- Posting mit IC/OOC, Spoiler, Edit-Historie, Moderationspfad und Inline-Bildern fuer Spielleitungsbeitraege
+- Szenenbeschreibungen mit stabilen Bildmarkern `[bild:1]` bis `[bild:4]`
+- Handouts, Story-Log und private Notizen als Kampagnen-/Szenenwerkzeuge
 - Charakterverwaltung inkl. Ownership-/Policy-Checks
-- Benachrichtigungen (In-App, Mail, Browser Web Push)
+- Benachrichtigungen und Mitteilungszentrale (In-App, Mail, Browser Web Push)
 - PWA-Basis mit Offline-Lesen für definierte Seiten und Offline-Post-Queue
 - Multi-World-Routing unter `/w/{world}/...` inkl. Legacy-Redirects
+- Kampf-/Magiewerkzeuge und Konfliktakteure hinter Feature-Flag
 
 ## Technischer Rahmen
 
@@ -110,7 +113,8 @@ Git-Hook aktivieren (einmal lokal pro Clone):
 git config core.hooksPath .githooks
 ```
 
-Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md).
+Erweiterte Gates (Status-Drift, Analyse, Architektur-Guardrails, E2E, Smoke,
+Build-Artefakt-Drift und Release-Pipeline): siehe [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md).
 
 ## Produktion (Kurz)
 
@@ -124,9 +128,9 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 ## Projektstatus
 
 - Live-Instanz: https://rpg.c76.org
-- Aktueller Build: siehe [docs/STATUS.md](docs/STATUS.md)
+- Aktueller Release-, Entwicklungs- und Live-Stand: siehe [docs/STATUS.md](docs/STATUS.md)
 - Status: Beta - kontrollierte Nutzung/Testbetrieb; weitere Änderungen sind möglich.
-- Operativer Live-Status (Version, Gate-Stand, letzter Release): [docs/STATUS.md](docs/STATUS.md)
+- Operativer Status (Release, Entwicklungsstand, Live-Stand, Gate-Stand): [docs/STATUS.md](docs/STATUS.md)
 - Historie und Release-Notizen: [CHANGELOG.md](CHANGELOG.md)
 
 ## Bekannte Grenzen / Nicht-Ziele
@@ -134,6 +138,9 @@ Erweiterte Gates (Analyse, E2E, Release-Pipeline): siehe [docs/RELEASE-CHECKLIST
 - Kein Realtime-WebSocket-Produktkern (HTTP-first für asynchrones PbP)
 - Web Push nur mit Browser-Permission und aktivem Service Worker
 - Keine externe Medien-CDN-Optimierung als Standardpfad
+- Direkte Public-Disk-URLs fuer immersive Post-Bilder und Szenen-Inhaltsbilder
+  sind unabhaengig von Post- oder Szenenberechtigungen erreichbar; vertrauliche
+  Medien gehoeren in kontrollierte Handouts.
 
 ## Dokumentation
 

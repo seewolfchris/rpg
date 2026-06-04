@@ -4,8 +4,14 @@
 - Security-Header werden zentral ueber `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
 - Privacy-first Defaults fuer private HTML-Responses (`no-store/private`).
 - Auth-/Policy-basierte Zugriffskontrolle auf sensible Produktbereiche.
-- Live-Instanz: https://rpg.c76.org; aktueller Build-/Beta-Status: `STATUS.md`.
+- Live-Instanz: https://rpg.c76.org; Release-, Entwicklungs-, Live- und Build-Status: `STATUS.md`.
 - Das Projekt ist proprietaer; diese technische Security-Doku ist keine Nutzungslizenz.
+
+## Medien-Privacy-Grenze
+- Immersive Bilder in Spielleitungsbeitraegen (`immersive_images`) und Szenen-Inhaltsbilder (`scene_content_images`) nutzen bewusst die Public-Disk.
+- Direkte Datei-URLs dieser Collections sind unabhaengig von Post- oder Szenenberechtigungen erreichbar.
+- Diese Grenze gilt fuer atmosphaerische Inline-Bilder, nicht fuer vertrauliche Handouts.
+- Vertrauliche oder berechtigungsabhaengige Medien muessen ueber kontrollierte Handouts bzw. autorisierte Auslieferung laufen.
 
 ## Crawler / Bot-Schutz
 - `public/robots.txt` sperrt Crawling (`Disallow: /`).

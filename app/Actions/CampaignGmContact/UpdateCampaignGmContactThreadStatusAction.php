@@ -4,7 +4,7 @@ namespace App\Actions\CampaignGmContact;
 
 use App\Models\CampaignGmContactThread;
 
-class UpdateCampaignGmContactThreadStatusAction
+final class UpdateCampaignGmContactThreadStatusAction
 {
     public function execute(CampaignGmContactThread $thread, string $status): CampaignGmContactThread
     {

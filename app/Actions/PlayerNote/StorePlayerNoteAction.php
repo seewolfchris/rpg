@@ -10,7 +10,7 @@ use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Validation\ValidationException;
 
-class StorePlayerNoteAction
+final class StorePlayerNoteAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

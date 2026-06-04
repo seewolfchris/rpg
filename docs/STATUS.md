@@ -1,17 +1,25 @@
-# STATUS - C76-RPG (kanonische Live-Quelle)
+# STATUS - C76-RPG (kanonische Statusquelle)
 
 Diese Datei ist die einzige kanonische Quelle fuer:
-- aktuelle Versionslinie
+- Release-, Entwicklungs- und Live-Status
 - operativen Gate-Stand
 - letzten dokumentierten Release-Zeitpunkt
+- Audit-Basis aktueller Dokumentationspruefungen
 
-## Operativer Live-Status
+## Statusachsen
 
-- Statusdatum: **2026-06-03**
+- Statusdatum: **2026-06-04**
 - Produktstatus: **Beta (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich)**
-- Versionslinie: **`v0.32-beta`**
+- Audit-Basis dieser Dokumentationspruefung: **`d442c0c`**
+- Letztes veröffentlichtes Release: **`v0.32-beta` am 2026-06-03** (Quelle: `CHANGELOG.md`)
+- Entwicklungsstand: **Branch `main`** (kein statischer Commit; konkrete Commits altern mit jedem Merge)
 - Produktive Live-Instanz: **https://rpg.c76.org**
-- Letzter Release-Eintrag: **`v0.32-beta` am 2026-06-03** (Quelle: `CHANGELOG.md`)
+- Produktiver Live-Stand: **unbekannt / extern zu verifizieren**
+
+Ein produktiver Commit darf hier nur genannt werden, wenn er ueber einen sichtbaren Build-Hinweis,
+ein Deployment-Protokoll oder `APP_BUILD` tatsaechlich belegt ist. Der bestehende dokumentierte
+Release- und Live-Stand ist `v0.32-beta`; post-release Aenderungen auf `main` sind nicht automatisch
+als live zu behaupten.
 
 ## Integrationsstand (post-release)
 
@@ -33,13 +41,18 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 - Letzter dokumentierter Vollstand: **2026-04-04**
 - Gesamtstatus dieses Vollstands: **gruen**
 - Pflichtgates im Vollstand:
+  - `scripts/check_status_drift.sh`
+  - `composer validate --strict`
+  - `composer analyse`
+  - `php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php`
   - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
   - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency` (CI-MySQL-Job)
   - `php artisan test --without-tty --do-not-cache-result --group=mysql-critical` (CI-MySQL-Job)
-  - `node --test tests/js/*.mjs`
+  - `npm run test:js`
   - `npm run test:e2e`
   - `npm run build`
-  - `composer analyse`
+  - `SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh`
+  - `git diff --exit-code -- public/build public/js/character-sheet.global.js`
 - Letzter dokumentierter Stabilisierungs-/Auditlauf (2026-05-04):
   - `composer validate --strict`
   - `composer analyse`
@@ -59,7 +72,7 @@ Diese Datei ist die einzige kanonische Quelle fuer:
 
 ## Pflege-Regel
 
-- `docs/STATUS.md` bleibt kanonisch fuer Live-Status, Build und Gate-Stand.
+- `docs/STATUS.md` bleibt kanonisch fuer Release-Status, Entwicklungsstand, Live-Stand, Build und Gate-Stand.
 - README und ROADMAP duerfen nur knappe Orientierung enthalten und muessen auf diese Datei verweisen.
 - Historische Release-Historie bleibt in `CHANGELOG.md`.
 - Exakte Gate-Befehle bleiben in `docs/RELEASE-CHECKLISTE.md`.

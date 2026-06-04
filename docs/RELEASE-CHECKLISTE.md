@@ -2,9 +2,8 @@
 
 Ziel: Jeder Release läuft gleich ab, ohne Raten und ohne vergessene Schritte.
 
-Aktueller Projektstand: `v0.32-beta` auf https://rpg.c76.org. Status: Beta
-(kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich). Kanonischer
-Live-Status: `docs/STATUS.md`.
+Kanonischer Release-, Entwicklungs-, Live- und Gate-Status: `docs/STATUS.md`.
+Diese Checkliste beschreibt den Ablauf; konkrete Statuswerte stehen nicht hier.
 
 ## 0. Empfohlener One-Command-Flow
 
@@ -24,8 +23,12 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
   - `php artisan optimize:clear`
 - Composer-Validierung:
   - `composer validate --strict`
+- Status-Drift-Guard:
+  - `bash scripts/check_status_drift.sh`
 - Statische Analyse:
   - `composer analyse`
+- Architektur-Guardrails:
+  - `php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php`
 - Config-Drift-Report (warn-only, nicht blockierend):
   - `bash scripts/check_config_drift.sh`
   - Der Check schreibt keine Konfiguration, endet immer mit Exit-Code `0` und macht nur Drift zwischen lokalen/prod Env-Beispielen sowie Ops-Leitplanken sichtbar.
@@ -40,6 +43,9 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
   - `npm run test:e2e`
 - Frontend-Build:
   - `npm run build`
+- CI-Smoke und Build-Artefakt-Driftcheck:
+  - `SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh`
+  - `git diff --exit-code -- public/build public/js/character-sheet.global.js`
 
 Nur wenn alles grün ist, weiter.
 
@@ -127,7 +133,7 @@ $PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
 Preflight-Werte vor Deploy gegenpruefen:
 
 ```bash
-grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
+grep -E '^(APP_ENV|APP_VERSION|APP_BUILD|WORLD_DEFAULT_SLUG|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
 ```
 
 Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:
@@ -213,6 +219,8 @@ Die Phase-A-Rollout-Skripte sind nach `ops/archive/release_phase_a/` verschoben 
   - Release-Stand
   - wichtige Änderungen
   - offene Prioritäten
+- `docs/STATUS.md` bleibt die einzige Quelle fuer Release-, Entwicklungs-, Live- und Gate-Status.
+- Bei CI-Workflow-Aenderungen auch `README.md`, `docs/README.md`, Projektuebersicht und Deployment-Doku synchronisieren.
 
 ## 8. Kurzprotokoll (empfohlen)
 

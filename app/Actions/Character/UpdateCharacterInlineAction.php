@@ -7,7 +7,7 @@ namespace App\Actions\Character;
 use App\Data\Character\InlineUpdateCharacterInput;
 use Illuminate\Validation\Rule;
 
-class UpdateCharacterInlineAction
+final class UpdateCharacterInlineAction
 {
     /**
      * @return array<string, array<int, string|\Illuminate\Validation\Rules\In>>

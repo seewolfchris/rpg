@@ -10,7 +10,7 @@ use App\Notifications\CampaignGmContactMessageNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 
-class NotifyCampaignGmContactMessageAction
+final class NotifyCampaignGmContactMessageAction
 {
     public function __construct(
         private readonly CampaignAccess $campaignAccess,

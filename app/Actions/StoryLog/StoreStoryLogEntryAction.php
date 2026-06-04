@@ -7,7 +7,7 @@ use App\Models\StoryLogEntry;
 use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 
-class StoreStoryLogEntryAction
+final class StoreStoryLogEntryAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

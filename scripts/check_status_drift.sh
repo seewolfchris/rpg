@@ -21,6 +21,12 @@ fi
 
 NON_CANONICAL_STATUS_FILES+=("${PROJECT_OVERVIEW_FILES[0]}")
 
+REQUIRED_STATUS_TERMS=(
+  'Letztes veröffentlichtes Release'
+  'Entwicklungsstand'
+  'Produktiver Live-Stand'
+)
+
 STATUS_PATTERNS=(
   'v[0-9]+\.[0-9]+([.-][0-9A-Za-z._-]+)?'
   '([0-9]+ passed|[0-9]+ assertions)'
@@ -32,6 +38,13 @@ STATUS_PATTERNS=(
 for file in "README.md" "ROADMAP.md"; do
   if ! grep -q 'docs/STATUS\.md' "$file"; then
     echo "[status-drift] ERROR: $file must reference docs/STATUS.md"
+    exit 1
+  fi
+done
+
+for term in "${REQUIRED_STATUS_TERMS[@]}"; do
+  if ! grep -q "$term" docs/STATUS.md; then
+    echo "[status-drift] ERROR: docs/STATUS.md must keep status axis: $term"
     exit 1
   fi
 done

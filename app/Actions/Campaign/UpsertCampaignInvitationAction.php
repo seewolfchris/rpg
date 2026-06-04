@@ -9,7 +9,7 @@ use App\Models\CampaignInvitation;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
 
-class UpsertCampaignInvitationAction
+final class UpsertCampaignInvitationAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

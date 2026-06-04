@@ -3,7 +3,7 @@
 This document is a summary only, not a second source of truth.
 
 - Source of truth: [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
-- Last synced commit: `current release commit`
+- Release, development, live, and gate status: [docs/STATUS.md](../STATUS.md)
 
 ## 1. Core engineering standard
 
@@ -12,6 +12,7 @@ This document is a summary only, not a second source of truth.
 - Mutating actions are `final`.
 - Controllers stay thin: `authorize()` + action call + response.
 - Persistence, transactions, and locking do not belong in controllers.
+- Non-final Actions under `app/Actions` must be explicitly classified as read-only by the architecture guardrail.
 
 ## 2. Guardrails
 

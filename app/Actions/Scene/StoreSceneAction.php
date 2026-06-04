@@ -14,7 +14,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class StoreSceneAction
+final class StoreSceneAction
 {
     public function __construct(
         private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,

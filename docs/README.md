@@ -1,10 +1,10 @@
 # Docs-Übersicht
 
-Stand: 2026-06-03
+Stand: 2026-06-04
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
-- Aktueller Live-/Build-/Beta-Status: `STATUS.md`
+- Release-, Entwicklungs-, Live-/Build-/Beta-Status: `STATUS.md`
 - Planung/Statusachsen: `../ROADMAP.md`
 - Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
@@ -15,8 +15,9 @@ Stand: 2026-06-03
 - Architekturentscheidungen: `adr/*`
 
 ## Kern-Dokumente (pflegepflichtig)
-- `PROJEKT-ÜBERSICHT.md`
+- `PROJEKT-ÜBERSICHT.md`
 - `RELEASE-CHECKLISTE.md`
+- `STATUS.md`
 - `OPERATIONS_RUNBOOK.md`
 - `IMMERSION-ARCHITEKTUR.md`
 - `ARCHITECTURE.md`
@@ -36,5 +37,6 @@ Stand: 2026-06-03
    - den letzten Lauf
    - die Baseline, auf die `LATEST` aktuell verweist.
 3. Ältere datierte Reports entweder löschen oder in einen Archivpfad verschieben.
-4. Bei inhaltlichen Änderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
-5. Bei CI-Workflow-Änderungen (`.github/workflows/ci.yml`) auch `README.md`, `PROJEKT-ÜBERSICHT.md` und `DEPLOYMENT.md` synchronisieren.
+4. Bei inhaltlichen Änderungen immer auch `PROJEKT-ÜBERSICHT.md` auf Stand bringen.
+5. Bei CI-Workflow-Änderungen (`.github/workflows/ci.yml`) auch `README.md`, `RELEASE-CHECKLISTE.md`, `PROJEKT-ÜBERSICHT.md`, `DEPLOYMENT.md` und die EN-Summaries synchronisieren.
+6. `STATUS.md` muss Release, Entwicklungsstand und produktiven Live-Stand getrennt fuehren; produktive Commits nur mit externem Nachweis dokumentieren.

@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class UpdateSceneAction
+final class UpdateSceneAction
 {
     public function __construct(
         private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,

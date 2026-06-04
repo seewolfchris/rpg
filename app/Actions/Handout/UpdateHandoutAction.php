@@ -10,7 +10,7 @@ use Illuminate\Http\UploadedFile;
 use RuntimeException;
 use Throwable;
 
-class UpdateHandoutAction
+final class UpdateHandoutAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

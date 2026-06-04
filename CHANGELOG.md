@@ -3,11 +3,13 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
+- Dokumentationsdrift bereinigt: Statusachsen fuer Release, Entwicklungsstand und produktiven Live-Stand getrennt, Produktions-Env-Vorlage aktualisiert und Action-Finality-Guardrail ergaenzt.
 - Bilder im Text erweitert: Spielleitungsbeitraege und Szenenbeschreibungen unterstuetzen stabile Marker `[bild:1]` bis `[bild:4]`, bestehende Post-Bilder bleiben kompatibel, Szenen-Inhaltsbilder nutzen bewusst die Public-Disk.
 - Desktop-Seitenrahmen fuer Uebersichten, Kartenraster und Tabellen verbreitert; Lesebreiten fuer Regelwerke, Artikel und Szenenbeitraege bewusst begrenzt.
 - UX-/A11y-Polish in drei Scheiben umgesetzt: semantisch gruppierte globale Navigation, kontextfuehrende Breadcrumb-/Context-Bar, sichtbarere Fokuszustaende und bessere Grundkontraste.
 - Wiederverwendbare Empty-State-Komponente eingefuehrt und persoenliche Bereiche, Mitteilungen, Einladungen, Abos und Lesezeichen mit scope-korrekten Zaehlungen und Kontextlinks nachgezogen.
 - Wissenszentrum fuer Plattform-/Weltkontext, Tabs, CTAs, aktive Weltkarten und responsive Lesbarkeit geschaerft.
+- Historische Doppelueberschriften bei `v0.27-beta` und `v0.28-beta` bleiben vorerst unveraendert; eine semantische Bereinigung dieser alten Release-Historie ist separater Cleanup.
 
 ## v0.32-beta (2026-06-03)
 - Rollenmodell in Scheiben PR1-PR6 auf das neue Zielmodell umgestellt:

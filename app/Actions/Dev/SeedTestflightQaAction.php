@@ -14,7 +14,7 @@ use App\Models\World;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 
-class SeedTestflightQaAction
+final class SeedTestflightQaAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

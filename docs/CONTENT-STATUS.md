@@ -1,6 +1,6 @@
 # Content-Status
 
-Stand: 2026-06-03 (v0.32-beta)
+Stand: 2026-06-04
 
 ## Überblick
 
@@ -9,7 +9,7 @@ Stand: 2026-06-03 (v0.32-beta)
 | Phase 1: Globales Regelwerk | done | Markdown live, Regeln aus Dateien statt Blade-Text |
 | Phase 1.5: Stil-Polish + Test-Entkopplung | done | Immersions-Ton geschärft, Enzyklopädie-Tests fixture-basiert |
 | Phase 2: Chroniken der Asche (Markdown-Basis) | in_progress | Weltüberblick + erste Kernlore angelegt |
-| Phase 2: Weltintegration in `/wissen` | todo | Noch nicht aktiviert, nur Content vorbereitet |
+| Phase 2: Weltintegration in `/wissen` | implemented_flagged | `KnowledgePageController::worldOverview()` und `worldLore()` vorhanden, hinter `WORLD_MARKDOWN_PREVIEW`, default off |
 | Phase 2: Seed-Cleanup produktiv | todo | Erst nach kompletter Fixture-Entkopplung aller betroffenen Tests |
 
 ## Phase 2 Artefakte

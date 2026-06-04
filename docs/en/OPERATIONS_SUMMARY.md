@@ -4,7 +4,7 @@ This document is a summary only, not a second source of truth.
 
 - Source of truth: [docs/OPERATIONS_RUNBOOK.md](../OPERATIONS_RUNBOOK.md)
 - Source of truth: [docs/RELEASE-CHECKLISTE.md](../RELEASE-CHECKLISTE.md)
-- Last synced commit: `current release commit`
+- Release, development, live, and gate status: [docs/STATUS.md](../STATUS.md)
 
 ## 1. Production defaults (high level)
 
@@ -27,6 +27,7 @@ This document is a summary only, not a second source of truth.
 - Queue worker must run in production for async retries.
 - Webpush failures (`404`/`410`) can trigger invalid subscription cleanup.
 - Offline queue is browser-local data; auth boundary and logout cleanup behavior are part of operational checks.
+- Immersive post images and scene content images use public storage URLs; confidential media should use controlled handouts.
 
 ## 4. Post-deploy minimum
 

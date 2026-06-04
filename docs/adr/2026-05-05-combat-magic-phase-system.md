@@ -1,7 +1,11 @@
 # ADR 2026-05-05: Phase-basiertes Kampf- und Magiesystem als Spielleitungs-Werkzeug
 
 ## 1. Status
-Proposed
+Accepted
+
+Amended: 2026-06-04
+
+Implementation status: Partially implemented behind `COMBAT_TOOLS_ENABLED`
 
 ## 2. Kontext
 C76-RPG ist ein story-first Play-by-Post-System. Der Szenenthread ist das Zentrum des Spiels, und Spieler formulieren dort ihre IC-Absichten in normaler Beitragssprache.
@@ -93,7 +97,7 @@ V1 unterstützt einfache Gegner/NPCs ohne vollständiges NPC-Modell über Snapsh
 Ein vollständiges NPC-Domänenmodell ist ausdrücklich kein V1-Ziel.
 
 ## 7. Magie-Zielbild
-Magie gehört zur Zielarchitektur, ist aber nicht Teil des ersten Kampf-MVP.
+Magie gehört zur Zielarchitektur. Sie war nicht Teil des ersten Kampf-MVP; generische Magieauswertung ist inzwischen teilweise hinter `COMBAT_TOOLS_ENABLED` umgesetzt.
 
 Spätere generische Magieauswertung umfasst:
 - Zaubername
@@ -143,7 +147,20 @@ Nachteile:
 - Keine Würfelorgien.
 - Keine D&D-artige Kampfrundenmaschine.
 
-## 11. PR-Roadmap
+## 11. Implementation status
+Umgesetzt:
+- Einzelne Kampfaktionen als SL-only Werkzeug hinter Feature-Flag.
+- Kampfphasen mit Aktionssammlung und Aufloesung.
+- Generische Magieaktionen mit AE-Kosten und Effektarten.
+- Konfliktakteure fuer Character-/NPC-Snapshots.
+- Controller, Services, Routen und Feature-Tests fuer Kampf, Magie und Konfliktakteure.
+
+Weiterhin bewusst begrenzt:
+- Kein Spielerformular fuer Kampfaktionen.
+- Keine Spieler-Kampfqueue.
+- Keine Initiative-Engine, taktische Rundenschleife, WebSockets oder Echtzeitpflicht.
+
+Historische PR-Roadmap:
 - PR-0: ADR + TASKS, Dokumentation only.
 - PR-1: Attribut-current-Fundament + Charakterbogenanzeige Max/Aktuell.
 - PR-2: CombatService MVP für einzelne Kampfaktion + Tests.

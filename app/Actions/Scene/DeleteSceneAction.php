@@ -8,7 +8,7 @@ use App\Domain\Scene\SceneHeaderImageStorage;
 use App\Models\Scene;
 use Illuminate\Support\Facades\DB;
 
-class DeleteSceneAction
+final class DeleteSceneAction
 {
     public function __construct(
         private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,

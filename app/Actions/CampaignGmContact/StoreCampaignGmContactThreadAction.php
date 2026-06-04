@@ -8,7 +8,7 @@ use App\Models\CampaignGmContactThread;
 use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 
-class StoreCampaignGmContactThreadAction
+final class StoreCampaignGmContactThreadAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

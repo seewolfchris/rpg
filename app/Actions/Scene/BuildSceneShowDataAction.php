@@ -10,7 +10,7 @@ use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
 
-class BuildSceneShowDataAction
+final class BuildSceneShowDataAction
 {
     public function __construct(
         private readonly SceneThreadReadStateService $sceneThreadReadStateService,

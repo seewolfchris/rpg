@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
-class UpdateCharacterAction
+final class UpdateCharacterAction
 {
     public function __construct(
         private readonly CharacterInventoryService $inventoryService,

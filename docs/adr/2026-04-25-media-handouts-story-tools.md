@@ -1,7 +1,11 @@
 # ADR 2026-04-25: Media-, Handout- und Story-Tools-Erweiterung
 
 ## 1. Status
-Proposed / Vorgeschlagen
+Accepted
+
+Amended: 2026-06-04
+
+Implementation status: Partially implemented
 
 ## 2. Kontext
 C76-RPG hat bereits ein starkes textbasiertes Fundament rund um `App\Models\Post` mit IC/OOC, Spielleitungsmodus, Moderation, Revisionen, Pins, Würfel-/Probenintegration und SoftDeletes.
@@ -46,7 +50,7 @@ Der Story-Feed bleibt die primäre Nutzererfahrung. Eine mögliche Avatar-Migrat
 Es wird ausdrücklich mit `App\Models\Post` gearbeitet; ein `ScenePost`-Modell wird nicht eingeführt.
 
 ## 5. Vorgeschlagenes Datenmodell
-Die folgenden Strukturen sind als High-Level-Zielbild für spätere Implementierungs-PRs gedacht. Diese ADR führt keine Migrationen ein.
+Die folgenden Strukturen waren als High-Level-Zielbild gedacht. Wesentliche Teile sind inzwischen umgesetzt; diese ADR bleibt das Entscheidungsdokument, nicht die aktuelle Projektstatusquelle.
 
 ### Handout (voraussichtliche Felder)
 - `id`
@@ -89,12 +93,12 @@ World-Kontext wird grundsätzlich über die Kampagne abgeleitet. Ein direktes `w
 - SoftDeletes optional, Entscheidung in der Umsetzung
 
 ## 6. Media Library Strategy
-Als geplante Grundlage wird Spatie Laravel Media Library vorgesehen. Diese ADR installiert die Abhängigkeit noch nicht.
+Spatie Laravel Media Library ist die Grundlage fuer neue Medien-Collections.
 
-Geplante Collections:
+Collections:
 - `immersive_images` auf `App\Models\Post`
 - `scene_content_images` auf `App\Models\Scene`
-- `handout_file` oder `handout_images` auf `Handout`
+- `handout_file` auf `Handout`
 - `avatar` auf `Character`/`User` später optional
 
 Der aktuelle Avatar-Bestand bleibt in Phase 1 unverändert:
@@ -151,7 +155,20 @@ Technische Leitplanken:
 - Progressive Enhancement statt SPA-Umbau.
 - Bestehende Grenzen bleiben erhalten: Reading Mode, `scene-thread-feed`, `data-reading-mode-chrome`, Offline-Queue-Panels, Post-Form-Verhalten, GM-Inventar-Schnellaktion.
 
-## 10. Implementation Sequence
+## 10. Implementation status
+Umgesetzt:
+- Spatie Media Library Foundation.
+- `immersive_images` auf `App\Models\Post`.
+- `scene_content_images` auf `App\Models\Scene`.
+- `Handout` mit `handout_file`, Reveal/Unreveal, Policies, Forms und kontrollierter Auslieferung.
+- Szenen-Toollinks/-Panels fuer Handouts, Story-Log und private Notizen.
+- `StoryLogEntry` und `PlayerNote` inklusive Sichtbarkeits-/Privacy-Tests.
+
+Teilweise/offen:
+- Avatar-Migration bleibt optional.
+- Breitere Medien-Retention und autorisierte Auslieferung fuer vertrauliche Szenen-Inhaltsbilder bleiben separate spaetere Scheiben.
+
+Historische Sequenz:
 ### PR-0
 - Nur ADR.
 
@@ -210,10 +227,6 @@ Technische Leitplanken:
 - Dauerhafte öffentliche Disk-URLs als unbeabsichtigte Zugriffspfade.
 
 ## 12. Non-Goals
-- Keine Runtime-Implementierung in diesem ADR-PR.
-- Keine Dependency-Installation in diesem PR.
-- Keine Migrationen in diesem PR.
-- Keine Avatar-Migration in der ersten Implementierungsphase.
 - Keine KI-Bilderzeugung.
 - Kein vollständiges DAM-/Media-Archiv-System.
 - Kein SPA-Rewrite.
@@ -222,16 +235,18 @@ Technische Leitplanken:
 - Keine Einführung externer CDN-Pflicht.
 - Keine automatische Markdown-Heading-Extraktion in der ersten StoryLog-Phase.
 - Keine geteilten/kollaborativen PlayerNotes in der ersten PlayerNote-Phase.
+- Historisch fuer den urspruenglichen ADR-PR: keine Runtime-Implementierung, Dependency-Installation oder Migration in diesem reinen Entscheidungs-PR.
+- Keine Avatar-Migration in der ersten Implementierungsphase.
 
 ## 13. Verification
-Für dieses ADR-PR gilt:
+Historisch fuer den urspruenglichen ADR-PR galt:
 - Keine Runtime-Verhaltensänderung.
 - Keine Dependency-Änderung.
 - Keine Migration.
 - Keine Änderungen an Routes/Controller/Models/Views/Assets.
 - `git diff` soll nur die neue ADR-Datei zeigen.
 
-Für spätere Implementierungs-PRs gelten die normalen Gates:
+Für Implementierungs- und Pflege-PRs gelten die normalen Gates:
 - `composer validate --strict`
 - `composer analyse`
 - `php artisan test --without-tty --do-not-cache-result`

@@ -1,6 +1,6 @@
 # C76-RPG - Projekt-Übersicht
 
-Stand: 2026-06-03
+Stand: 2026-06-04
 Repository-Branch: `main`
 
 ## Quicklinks
@@ -25,9 +25,9 @@ Repository-Branch: `main`
 ## 1) Executive Summary
 - Plattformname: **C76-RPG**.
 - Live-Instanz: **https://rpg.c76.org**.
-- Aktueller Build: **siehe `docs/STATUS.md`**.
+- Aktueller Release-, Entwicklungs-, Live- und Build-Stand: **siehe `docs/STATUS.md`**.
 - Status: **Beta** (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich).
-- Operativer Live-Status (Version, Gate-Stand, letzter Release): **`docs/STATUS.md`**.
+- Operativer Status (Release, Entwicklungsstand, Live-Stand, Gate-Stand): **`docs/STATUS.md`**.
 - Delivery-Basis steht:
   - CI Workflow aktiv (`.github/workflows/ci.yml`)
   - Release-Smoke-Skript aktiv (`scripts/release_smoke.sh`, inkl. Weltkontext-/Routing-Checks)
@@ -38,9 +38,14 @@ Repository-Branch: `main`
 |---|---|---|
 | Auth (Register/Login/Reset) | Beta-nutzbar | Rollen- und Session-Flows produktiv nutzbar |
 | Charaktere + Charakterbogen | Beta-nutzbar | CRUD, Ownership, LE/AE, Inventar/Waffen/Rüstung |
-| Kampagnen/Szenen/Posts | Beta-nutzbar | IC/OOC, Moderation, Revisionen, Pinning |
+| Kampagnen/Szenen/Posts | Beta-nutzbar | IC/OOC, Moderation, Revisionen, Pinning, stabile Bildmarker |
 | GM-Proben + Persistenz | Beta-nutzbar | d100, Zielwert/Modifikator, LE/AE-Impact, RS-Minderung |
 | Szenen-Abos / Read-Tracking / Jump-Links | Beta-nutzbar | Unread-Logik und schnelle Navigation |
+| Szenen-Inhaltsbilder | Beta-nutzbar | `scene_content_images` mit `[bild:1]` bis `[bild:4]`, Galerie-Fallback |
+| Handouts | Beta-nutzbar | Kampagnen-/Szenenreferenzen mit Reveal/Unreveal und kontrollierter Auslieferung |
+| Story-Log | Beta-nutzbar | Manuelle Kampagnen-/Szenenmarker fuer Zusammenfassungen und Pivotpunkte |
+| Private Notizen | Beta-nutzbar | Spielergebundene Notizen mit harter Owner-Sichtbarkeit |
+| Kampf/Magie/Konfliktakteure | Implementiert hinter Flag | SL-only Werkzeuge hinter `COMBAT_TOOLS_ENABLED`; Standardbetrieb bleibt unveraendert |
 | Kampagnen-Einladungen | Beta-nutzbar | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
 | SL-Kontakt (privacy-first) | Beta-nutzbar | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow; Kontaktformular als viewportweiter Modal (`x-teleport="body"`) |
 | Wissenszentrum / Enzyklopädie | Beta-nutzbar | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
@@ -51,6 +56,7 @@ Repository-Branch: `main`
 
 ## Datenschutz & Offline-Funktion
 - Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
+- Mediengrenze: Immersive Bilder in Spielleitungsbeitraegen und Szenen-Inhaltsbilder liegen bewusst auf der Public-Disk. Direkte Datei-URLs sind unabhaengig von Post- oder Szenenberechtigungen erreichbar. Vertrauliche Medien gehoeren in kontrollierte Handouts.
 
 ## 3) Multi-Welt-Umstellung (neu)
 
@@ -94,6 +100,11 @@ Repository-Branch: `main`
   - Controller mappen Invariant-Fehler in validierungsnahe User-Fehlermeldungen (statt 500)
 - Benachrichtigungs-Resilienz:
   - `PostNotificationOrchestrator` mit sofortigem Versuch + Queue-Retry-Fallback (`RetryScenePostNotificationsJob`, `RetryPostMentionNotificationsJob`)
+- Media- und Szenenwerkzeuge:
+  - `Post` nutzt Spatie Media Library fuer `immersive_images` und SoftDelete-sichere Darstellung.
+  - `Scene` nutzt Spatie Media Library fuer `scene_content_images` mit stabiler Slot-Aufloesung.
+  - `Handout`, `StoryLogEntry` und `PlayerNote` sind eigene Modelle mit Policies, Actions/Services und Kampagnen-/Szenenrouten.
+  - Kampf-/Magiewerkzeuge nutzen Services, Controller und Tests, bleiben aber hinter `COMBAT_TOOLS_ENABLED`.
 - Character-Create-Flow ist in Action/Services aufgeteilt:
   - `app/Actions/Character/CreateCharacterAction.php` (Transaktion, Inventory-Audit, after-commit Avatar-Finalisierung)
   - `app/Services/Character/AttributeNormalizer.php` (Backfill + Sanitizing + Pool-Normalisierung)
@@ -201,13 +212,18 @@ Repository-Branch: `main`
 
 ### 5.1 CI / Release
 - CI Gates:
+  - `scripts/check_status_drift.sh`
   - `composer validate --strict`
   - `composer analyse`
+  - `php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php`
   - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
   - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency` (separater MySQL-Job)
   - `php artisan test --without-tty --do-not-cache-result --group=mysql-critical` (separater MySQL-Job)
   - `npm run test:js`
+  - `npm run test:e2e`
   - `npm run build`
+  - `SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh`
+  - `git diff --exit-code -- public/build public/js/character-sheet.global.js`
 - Wichtiger Test-Hinweis:
   - vor lokalen Feature-Testläufen nach aktivierten Caches immer `php artisan optimize:clear`
 - Release-Checkliste:
@@ -267,11 +283,13 @@ Repository-Branch: `main`
 ## 6) Offene Risiken und Restthemen
 - Kein WebSocket-/Realtime-Backbone (bewusste Entscheidung für asynchrones PbP).
 - Kein externes Media/CDN-Setup.
+- Public-Disk-URLs fuer immersive Post-Bilder und Szenen-Inhaltsbilder sind eine bewusste Produktgrenze; vertrauliche Medien muessen ueber Handouts bzw. kontrollierte Auslieferung laufen.
 
 ## 7) Empfohlene nächste Schritte
 1. `scripts/release_flow.sh vX.Y-beta --world <slug> --archive` als Standard vor jedem Release nutzen.
 2. Perf-Gate-Statushistorie (`...GATE-LATEST.md`) bei jeder Staging/Prod-Runde fortschreiben.
 3. Runtime-Hint aktiv lassen oder deaktivieren anhand wiederholter Messungen im Zielsystem.
+4. Historische Changelog-Doppelungen in einem separaten Cleanup klaeren, ohne alte Release-Inhalte umzudeuten.
 
 ---
 Diese Datei ist eine Architektur- und Betriebsuebersicht; der operative Live-Status liegt in `docs/STATUS.md`.

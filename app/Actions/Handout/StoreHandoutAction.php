@@ -11,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 use RuntimeException;
 use Throwable;
 
-class StoreHandoutAction
+final class StoreHandoutAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

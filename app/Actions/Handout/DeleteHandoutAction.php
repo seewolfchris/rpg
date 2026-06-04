@@ -5,7 +5,7 @@ namespace App\Actions\Handout;
 use App\Domain\Handout\HandoutMutationService;
 use App\Models\Handout;
 
-class DeleteHandoutAction
+final class DeleteHandoutAction
 {
     public function __construct(
         private readonly HandoutMutationService $mutationService,

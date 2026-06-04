@@ -6,7 +6,7 @@ use App\Domain\StoryLog\StoryLogEntryMutationService;
 use App\Models\StoryLogEntry;
 use App\Models\User;
 
-class RevealStoryLogEntryAction
+final class RevealStoryLogEntryAction
 {
     public function __construct(
         private readonly StoryLogEntryMutationService $mutationService,

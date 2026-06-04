@@ -5,7 +5,7 @@ namespace App\Actions\PlayerNote;
 use App\Models\PlayerNote;
 use Illuminate\Database\DatabaseManager;
 
-class DeletePlayerNoteAction
+final class DeletePlayerNoteAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

@@ -6,7 +6,7 @@ namespace App\Actions\Post;
 
 use App\Models\Post;
 
-class AttachMagicResultMetaAction
+final class AttachMagicResultMetaAction
 {
     /**
      * @param  array<string, mixed>  $magicResult

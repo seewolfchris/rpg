@@ -3,7 +3,7 @@
 ## Zweck
 Schnelle Fehlersuche und reproduzierbare Reaktionen bei Incidents im laufenden Betrieb.
 Security-Header werden zentral in `App\Http\Middleware\ApplySecurityHeaders` gesetzt.
-Produktive Live-Instanz: https://rpg.c76.org. Aktueller Build- und Beta-Status:
+Produktive Live-Instanz: https://rpg.c76.org. Release-, Entwicklungs-, Live- und Build-Status:
 `docs/STATUS.md`.
 
 ## Verbindliche Produktions-Defaults (Security/Betrieb)
@@ -21,6 +21,11 @@ Schnellcheck auf dem Zielhost:
 cd /var/www/<app>
 grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
 ```
+
+## Medien-Privacy-Grenze
+- Immersive Bilder in Spielleitungsbeitraegen und Szenen-Inhaltsbilder liegen auf der Public-Disk.
+- Direkte Datei-URLs sind unabhaengig von Post- oder Szenenberechtigungen erreichbar.
+- Bei Privacy-Incidents pruefen, ob vertrauliche Inhalte versehentlich in diese Inline-Bild-Collections statt in kontrollierte Handouts hochgeladen wurden.
 
 ## Korrelation und Logs
 - Jede Web-Response enthält `X-Request-Id`.

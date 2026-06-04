@@ -17,7 +17,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
-class DeleteCharacterAction
+final class DeleteCharacterAction
 {
     public function __construct(
         private readonly DatabaseManager $db,

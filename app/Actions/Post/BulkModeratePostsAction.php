@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
-class BulkModeratePostsAction
+final class BulkModeratePostsAction
 {
     public function __construct(
         private readonly ApplyPostModerationFiltersAction $applyPostModerationFiltersAction,

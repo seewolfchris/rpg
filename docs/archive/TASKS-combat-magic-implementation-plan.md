@@ -1,5 +1,12 @@
 # TASKS: Kampf- und Magiesystem
 
+Status: Historischer Implementierungsplan
+
+Aktueller Produkt- und Umsetzungsstand: siehe `docs/PROJEKT-ÜBERSICHT.md`
+und `docs/adr/2026-05-05-combat-magic-phase-system.md`.
+
+Dieses Dokument ist ein archivierter PR-Plan. Es ist keine aktuelle Statusquelle.
+
 ## 1. Zielbild
 Das Kampf- und Magiesystem für C76-RPG bleibt story-first und Play-by-Post-kompatibel. Spieler formulieren Absichten als normale IC-Beiträge im Szenenthread. Spielleitung und Co-Spielleitung werten diese Absichten strukturiert aus und erzeugen nachvollziehbare Ergebnisse mit d100-Logik und klaren Konsequenzen auf Werte.
 

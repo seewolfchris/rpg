@@ -6,7 +6,7 @@ use App\Domain\Handout\HandoutMutationService;
 use App\Models\Handout;
 use App\Models\User;
 
-class RevealHandoutAction
+final class RevealHandoutAction
 {
     public function __construct(
         private readonly HandoutMutationService $mutationService,

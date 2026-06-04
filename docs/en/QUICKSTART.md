@@ -7,7 +7,6 @@ This document is a summary only, not a second source of truth.
 - Source of truth: [docs/RELEASE-CHECKLISTE.md](../RELEASE-CHECKLISTE.md)
 - Source of truth: [docs/OPERATIONS_RUNBOOK.md](../OPERATIONS_RUNBOOK.md)
 - Live status: see [`docs/STATUS.md`](../STATUS.md) as the source of truth for the current version, release state, and gate status.
-- Last synced commit: `current release commit`
 
 ## 1. Local prerequisites
 
@@ -43,6 +42,7 @@ Open: `http://127.0.0.1:8000`
 ```bash
 php artisan optimize:clear
 composer validate --strict
+bash scripts/check_status_drift.sh
 composer analyse
 bash scripts/check_config_drift.sh
 php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical
@@ -52,4 +52,4 @@ npm run build
 
 Notes:
 - `scripts/check_config_drift.sh` is warn-only/report-only in PR-03 and always exits `0`.
-- For full release flow and optional gates, use [docs/RELEASE-CHECKLISTE.md](../RELEASE-CHECKLISTE.md).
+- For E2E, smoke, build-artifact drift, and full release flow, use [docs/RELEASE-CHECKLISTE.md](../RELEASE-CHECKLISTE.md).

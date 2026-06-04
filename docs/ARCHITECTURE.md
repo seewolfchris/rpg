@@ -4,6 +4,7 @@
 - Actions-first for mutations.
 - Model-first action signatures by default.
 - Mutating actions are `final`.
+- Non-final actions under `app/Actions` must be explicitly classified as read-only in the architecture guardrail allowlist.
 - Controllers stay thin: `authorize()` + action call + response.
 - No controller-layer persistence or transaction/lock logic.
 
@@ -83,6 +84,7 @@ Policy:
 - Whitelist is temporary technical debt.
 - Every controller refactor slice must reduce this list.
 - `composer analyse` is a mandatory CI gate.
+- `tests/Feature/Architecture/ArchitectureGuardrailsTest.php` additionally enforces that unclassified Actions are `final`; only explicit read-only/query/render Actions may remain non-final.
 
 ## Migration Progress
 - Migrated in this batch (Slice 1 + Slice 2):

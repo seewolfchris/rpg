@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
-class CreateCharacterAction
+final class CreateCharacterAction
 {
     public function __construct(
         private readonly AttributeNormalizer $attributeNormalizer,

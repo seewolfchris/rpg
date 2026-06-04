@@ -53,7 +53,7 @@ Phase 1 bleibt bewusst schlank:
   - `grundregeln.md`
   - `glossar.md`
   - `abkuerzungen.md`
-- `KnowledgeController::rules()` lädt diese Dateien direkt.
+- `KnowledgePageController::rules()` lädt diese Dateien direkt.
 - `rules.blade.php` rendert nur noch HTML aus Markdown.
 
 ### 3.3 Enzyklopädie für Lore
