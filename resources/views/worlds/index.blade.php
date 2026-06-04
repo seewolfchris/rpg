@@ -5,7 +5,7 @@
 @section('meta_description', 'Wähle eine Spielwelt für Kampagnen, Szenen und Wissen in C76-RPG.')
 
 @section('content')
-    <section class="ui-card p-6 sm:p-8">
+    <section class="ui-page-wide ui-card p-6 sm:p-8">
         <p class="text-xs uppercase tracking-[0.14em] text-amber-300/80">C76-RPG</p>
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Betrete eine Welt</h1>
         <p class="mt-3 max-w-3xl text-base leading-relaxed text-stone-300 sm:text-lg">
@@ -14,7 +14,7 @@
         </p>
     </section>
 
-    <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <section class="ui-page-wide mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse ($worlds as $world)
             <article class="ui-card-soft rounded-2xl border border-stone-800/85 bg-neutral-900/65 p-5 shadow-lg shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/55">
                 <h2 class="font-heading break-words text-2xl text-stone-100">{{ $world->name }}</h2>

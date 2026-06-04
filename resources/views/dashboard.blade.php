@@ -3,7 +3,7 @@
 @section('title', 'Dashboard | C76-RPG')
 
 @section('content')
-    <section class="mx-auto w-full max-w-4xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         <div class="ui-card p-6 sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Sichere Zuflucht</p>
             <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">Willkommen, {{ auth()->user()->name }}</h1>

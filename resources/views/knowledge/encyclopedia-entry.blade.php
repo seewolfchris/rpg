@@ -15,7 +15,7 @@
                 ->get();
     @endphp
 
-    <section class="mx-auto w-full max-w-5xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <header class="relative overflow-hidden rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(168,85,39,0.26),transparent_42%),radial-gradient(circle_at_75%_30%,rgba(127,29,29,0.32),transparent_40%),linear-gradient(to_bottom,rgba(17,17,17,0.96),rgba(8,8,8,0.98))]"></div>
 

@@ -3,7 +3,7 @@
 @section('title', $storyLogEntry->title.' | Chronik')
 
 @section('content')
-    <section class="mx-auto w-full max-w-5xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <x-navigation.back-link :href="$backUrl" label="Zurück" />
 
@@ -42,7 +42,7 @@
 
             @if ($storyLogEntry->body)
                 <article class="mt-6 rounded-xl border border-stone-800 bg-neutral-900/50 p-5">
-                    <div class="whitespace-pre-line leading-relaxed text-stone-300">{{ $storyLogEntry->body }}</div>
+                    <div class="ui-reading-width whitespace-pre-line leading-relaxed text-stone-300">{{ $storyLogEntry->body }}</div>
                 </article>
             @endif
 

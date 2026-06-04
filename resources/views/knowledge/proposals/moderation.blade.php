@@ -3,7 +3,7 @@
 @section('title', 'Enzyklopädie-Moderation')
 
 @section('content')
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         @include('knowledge._nav')
 
         <header class="ui-card p-6 sm:p-8">

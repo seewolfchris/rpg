@@ -3,7 +3,7 @@
 @section('title', $handout->title.' | Handout')
 
 @section('content')
-    <section class="mx-auto w-full max-w-5xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <x-navigation.back-link :href="$backUrl" label="Zurück" />
 
@@ -37,7 +37,7 @@
             @if ($handout->description)
                 <article class="mt-6 rounded-xl border border-stone-800 bg-neutral-900/50 p-5">
                     <h2 class="font-heading text-xl text-stone-100">Beschreibung</h2>
-                    <div class="mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $handout->description }}</div>
+                    <div class="ui-reading-width mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $handout->description }}</div>
                 </article>
             @endif
 

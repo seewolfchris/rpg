@@ -3,7 +3,7 @@
 @section('title', 'Weltenverwaltung | C76-RPG')
 
 @section('content')
-    <section class="rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
+    <section class="ui-page-wide rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <p class="text-xs uppercase tracking-widest text-amber-300/80">Admin</p>
@@ -13,7 +13,7 @@
         </div>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-4 sm:p-6">
+    <section class="ui-page-wide mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-4 sm:p-6">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-stone-800 text-sm">
                 <thead>

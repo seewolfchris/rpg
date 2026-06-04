@@ -97,7 +97,7 @@
         );
     @endphp
 
-    <section class="character-living-document mx-auto w-full max-w-6xl space-y-6">
+    <section class="character-living-document ui-page-medium space-y-6">
         <x-navigation.back-link :href="$backUrl" label="Zurück" />
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>

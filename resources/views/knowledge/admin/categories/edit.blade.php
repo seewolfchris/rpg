@@ -3,7 +3,7 @@
 @section('title', 'Kategorie bearbeiten · Enzyklopädie Admin')
 
 @section('content')
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Wissenszentrum · Admin</p>
             <h1 class="font-heading text-3xl text-stone-100">Kategorie bearbeiten</h1>

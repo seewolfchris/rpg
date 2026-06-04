@@ -83,7 +83,7 @@
                 Laden ...
             </div>
 
-            <header class="app-header mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:px-8 sm:py-5">
+            <header class="app-header ui-page-shell ui-page-wide flex flex-col gap-3 py-4 sm:py-5">
                 @php($routeWorld = request()->route('world'))
                 @php($headerWorld = $routeWorld instanceof \App\Models\World ? $routeWorld : ($activeWorld ?? null))
                 @php($headerWorldName = $headerWorld instanceof \App\Models\World ? $headerWorld->name : (string) data_get($activeWorldTheme ?? [], 'label', 'Standardwelt'))
@@ -125,7 +125,7 @@
 
             <main
                 id="app-main"
-                class="app-main-shell mx-auto w-full max-w-6xl break-words px-5 pb-16 pt-2 sm:px-8"
+                class="app-main-shell ui-page-shell ui-page-wide break-words pb-16 pt-2"
             >
                 @include('partials.flash')
 
@@ -153,7 +153,7 @@
                 ></div>
             @endauth
 
-            <footer class="mx-auto w-full max-w-6xl px-5 pb-8 sm:px-8">
+            <footer class="ui-page-shell ui-page-wide pb-8">
                 @include('partials.version-footer')
                 <div class="mt-3">
                     @include('partials.legal-links')

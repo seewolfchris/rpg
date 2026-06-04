@@ -5,7 +5,7 @@
 @section('content')
     @php($isWorldContext = isset($world) && $world instanceof \App\Models\World)
 
-    <section class="knowledge-rulebook-page mx-auto w-full max-w-6xl space-y-6">
+    <section class="knowledge-rulebook-page ui-page-medium space-y-6">
         <x-navigation.context-bar
             :scope="$isWorldContext ? 'world' : 'platform'"
             :world="$isWorldContext ? $world : null"

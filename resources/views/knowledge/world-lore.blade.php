@@ -12,7 +12,7 @@
         ];
     @endphp
 
-    <section class="mx-auto w-full max-w-5xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <x-navigation.context-bar
             scope="world"
             :world="$world"

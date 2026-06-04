@@ -4,7 +4,7 @@
 
 @section('content')
     @php($returnTo = request()->getRequestUri())
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>

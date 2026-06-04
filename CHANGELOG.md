@@ -3,6 +3,7 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
+- Desktop-Seitenrahmen fuer Uebersichten, Kartenraster und Tabellen verbreitert; Lesebreiten fuer Regelwerke, Artikel und Szenenbeitraege bewusst begrenzt.
 - UX-/A11y-Polish in drei Scheiben umgesetzt: semantisch gruppierte globale Navigation, kontextfuehrende Breadcrumb-/Context-Bar, sichtbarere Fokuszustaende und bessere Grundkontraste.
 - Wiederverwendbare Empty-State-Komponente eingefuehrt und persoenliche Bereiche, Mitteilungen, Einladungen, Abos und Lesezeichen mit scope-korrekten Zaehlungen und Kontextlinks nachgezogen.
 - Wissenszentrum fuer Plattform-/Weltkontext, Tabs, CTAs, aktive Weltkarten und responsive Lesbarkeit geschaerft.

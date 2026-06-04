@@ -21,7 +21,7 @@
             $sceneHeaderStyle = "background-image: linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,.78)), url('".asset('storage/'.$scene->header_image_path)."'); background-size: cover; background-position: center;";
         }
     @endphp
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-medium space-y-6">
         <x-navigation.context-bar
             scope="world"
             :world="$campaign->world"
@@ -101,7 +101,7 @@
             @if ($scene->description)
                 <article class="ui-card-soft mt-6 p-5">
                     <h2 class="font-heading text-xl text-stone-100">Szenenbeschreibung</h2>
-                    <div class="mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $scene->description }}</div>
+                    <div class="ui-reading-width mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $scene->description }}</div>
                 </article>
             @endif
 

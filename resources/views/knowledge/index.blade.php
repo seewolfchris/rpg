@@ -16,7 +16,7 @@
             : route('knowledge.global.encyclopedia');
     @endphp
 
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         <x-navigation.context-bar
             :scope="$isWorldContext ? 'world' : 'platform'"
             :world="$isWorldContext ? $world : null"

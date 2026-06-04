@@ -3,7 +3,7 @@
 @section('title', 'Kampagnen-Einladungen | C76-RPG')
 
 @section('content')
-    <section class="mx-auto w-full max-w-5xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>

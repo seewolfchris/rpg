@@ -5,7 +5,7 @@
 @section('meta_description', trim((string) ($world->tagline ?: $world->description ?: 'Weltansicht in C76-RPG.')))
 
 @section('content')
-    <div class="mb-4">
+    <div class="ui-page-medium mb-4">
         <x-navigation.context-bar
             scope="world"
             :world="$world"
@@ -17,17 +17,18 @@
         />
     </div>
 
-    <x-world-marker
-        class="mb-4"
-        :world-name="$world->name"
-        :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
-        :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
-        :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
-        :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
-        :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
-    />
+    <div class="ui-page-medium mb-4">
+        <x-world-marker
+            :world-name="$world->name"
+            :marker-label="(string) data_get($activeWorldTheme ?? [], 'marker_label', '')"
+            :marker-symbol="(string) data_get($activeWorldTheme ?? [], 'marker_symbol', '')"
+            :marker-bg="(string) data_get($activeWorldTheme ?? [], 'marker_bg', '')"
+            :marker-fg="(string) data_get($activeWorldTheme ?? [], 'marker_fg', '')"
+            :marker-border="(string) data_get($activeWorldTheme ?? [], 'marker_border', '')"
+        />
+    </div>
 
-    <section class="ui-card p-6 sm:p-8">
+    <section class="ui-page-medium ui-card p-6 sm:p-8">
         <p class="text-xs uppercase tracking-[0.14em] text-amber-300/80">Weltprofil</p>
         <h1 class="mt-2 font-heading break-words text-3xl text-stone-100 sm:text-4xl">{{ $world->name }}</h1>
         @if ($world->tagline)
@@ -53,7 +54,7 @@
         </div>
     </section>
 
-    <section class="mt-6 ui-card-soft rounded-2xl border border-stone-800/85 bg-neutral-900/60 p-6 sm:p-7">
+    <section class="ui-page-medium mt-6 ui-card-soft rounded-2xl border border-stone-800/85 bg-neutral-900/60 p-6 sm:p-7">
         <h2 class="font-heading text-2xl text-stone-100">Öffentliche Kampagnen</h2>
         @if ($featuredCampaigns->isEmpty())
             <p class="mt-3 text-sm text-stone-400">Aktuell sind keine öffentlichen Kampagnen vorhanden.</p>

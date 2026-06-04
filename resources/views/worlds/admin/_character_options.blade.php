@@ -1,4 +1,4 @@
-<section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
+<section class="ui-page-wide mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
     <h2 class="font-heading text-2xl text-stone-100">Charakter-Optionen pro Welt</h2>
     <p class="mt-2 text-sm text-stone-300">Importiere eine Vorlage und passe Spezies/Berufungen danach individuell an.</p>
 
@@ -25,7 +25,7 @@
     </form>
 </section>
 
-<section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
+<section class="ui-page-wide mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
     <h2 class="font-heading text-2xl text-stone-100">Spezies</h2>
 
     <div class="mt-4 space-y-4">
@@ -171,7 +171,7 @@
     </article>
 </section>
 
-<section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
+<section class="ui-page-wide mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
     <h2 class="font-heading text-2xl text-stone-100">Berufungen</h2>
 
     <div class="mt-4 space-y-4">

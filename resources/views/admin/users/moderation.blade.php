@@ -3,7 +3,7 @@
 @section('title', 'Benutzer verwalten | C76-RPG')
 
 @section('content')
-    <section class="rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
+    <section class="ui-page-wide rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
         <p class="text-xs uppercase tracking-widest text-amber-300/80">Admin</p>
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Benutzer verwalten</h1>
         <p class="mt-3 text-sm text-stone-300">
@@ -12,7 +12,7 @@
         </p>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-4 sm:p-6">
+    <section class="ui-page-wide mt-6 rounded-2xl border border-stone-800 bg-neutral-900/60 p-4 sm:p-6">
         <form method="GET" action="{{ route('admin.users.moderation.index') }}" class="mb-4">
             <label for="q" class="sr-only">Suche</label>
             <div class="flex flex-wrap gap-2">

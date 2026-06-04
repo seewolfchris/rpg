@@ -37,7 +37,7 @@
         };
     @endphp
 
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         @if ($selectedWorld)
             <x-navigation.context-bar
                 scope="world"

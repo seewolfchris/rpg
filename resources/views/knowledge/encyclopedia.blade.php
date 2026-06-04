@@ -3,7 +3,7 @@
 @section('title', 'Enzyklopädie · Wissenszentrum')
 
 @section('content')
-    <section class="mx-auto w-full max-w-6xl space-y-6">
+    <section class="ui-page-wide space-y-6">
         <x-navigation.context-bar
             scope="world"
             :world="$world"

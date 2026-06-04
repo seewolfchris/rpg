@@ -33,6 +33,49 @@
     #app-flash {
         scroll-margin-top: 5rem;
     }
+
+    .ui-page-shell,
+    .ui-page-wide,
+    .ui-page-medium,
+    .ui-reading-width {
+        box-sizing: border-box;
+        width: 100%;
+        margin-inline: auto;
+    }
+
+    .ui-page-shell {
+        padding-inline: 1rem;
+    }
+
+    .ui-page-wide {
+        max-width: var(--ui-page-wide-max);
+    }
+
+    .ui-page-medium {
+        max-width: var(--ui-page-medium-max);
+    }
+
+    .ui-reading-width {
+        max-width: min(100%, var(--ui-reading-max));
+    }
+
+    @media (min-width: 640px) {
+        .ui-page-shell {
+            padding-inline: 1.5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .ui-page-shell {
+            padding-inline: 2rem;
+        }
+    }
+
+    @media (min-width: 1536px) {
+        .ui-page-shell {
+            padding-inline: 2.5rem;
+        }
+    }
 }
 
 @font-face {
@@ -137,6 +180,9 @@
         --narrative-font-size: clamp(1.03rem, 1rem + 0.34vw, 1.18rem);
         --narrative-line-height: 1.9;
         --narrative-max-width: 76ch;
+        --ui-page-wide-max: 92rem;
+        --ui-page-medium-max: 80rem;
+        --ui-reading-max: var(--narrative-max-width);
     }
 
     [x-cloak] {
@@ -1513,22 +1559,6 @@
 
     .knowledge-rulebook-page {
         width: 100%;
-    }
-
-    .knowledge-rulebook-page .knowledge-rulebook-article {
-        width: 100%;
-        max-width: none;
-        margin-inline: 0;
-    }
-
-    .knowledge-rulebook-page .knowledge-rulebook-article > .knowledge-content {
-        width: 100%;
-        max-width: none;
-        margin-inline: 0;
-    }
-
-    .knowledge-rulebook-page .knowledge-content > * {
-        max-width: none;
     }
 
     .knowledge-rulebook-page .knowledge-content :where(table, pre) {
