@@ -38,6 +38,18 @@
     @endphp
 
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        @if ($selectedWorld)
+            <x-navigation.context-bar
+                scope="world"
+                :world="$selectedWorld"
+                :items="[
+                    ['label' => 'Plattform', 'href' => route('home')],
+                    ['label' => $selectedWorld->name, 'href' => route('worlds.show', ['world' => $selectedWorld])],
+                    ['label' => 'Charaktere', 'current' => true],
+                ]"
+            />
+        @endif
+
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="min-w-0 flex-1">
@@ -98,9 +110,24 @@
         </form>
 
         @if ($characters->isEmpty())
-            <div class="rounded-xl border border-stone-800 bg-black/45 p-8 text-center text-stone-300">
-                Noch keine Charaktere vorhanden.
-            </div>
+            @php
+                $hasCharacterFilter = $selectedStatus !== 'all';
+            @endphp
+            <x-empty-state
+                :title="$hasCharacterFilter ? 'Keine Charaktere im aktuellen Filter' : 'Noch keine Charaktere'"
+                :description="$hasCharacterFilter
+                    ? 'Für den gewählten Status gibt es in dieser Welt keine sichtbaren Charaktere.'
+                    : 'Erstelle deinen ersten Charakter, um einer Kampagne beizutreten und IC-Beiträge schreiben zu können.'"
+                :hint="$isGmView && ! $hasCharacterFilter ? 'In der GM-Ansicht erscheinen hier auch Charaktere anderer Spieler im gewählten Weltenkontext.' : ''"
+            >
+                <x-slot name="actions">
+                    @if (! $hasCharacterFilter)
+                        <a href="{{ route('characters.create', ['world' => $selectedWorld->slug ?? null, 'return_to' => $returnTo]) }}" class="ui-btn ui-btn-accent">Charakter erstellen</a>
+                    @else
+                        <a href="{{ route('characters.index', ['world' => $selectedWorld->slug ?? null]) }}" class="ui-btn">Filter zurücksetzen</a>
+                    @endif
+                </x-slot>
+            </x-empty-state>
         @else
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($characters as $character)

@@ -202,6 +202,11 @@
         outline: none;
     }
 
+    :where(a, button, summary, [role='button']):focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+    }
+
     :where(input:not([type='checkbox']):not([type='radio']), select, textarea):disabled {
         cursor: not-allowed;
         opacity: 0.55;
@@ -347,6 +352,82 @@
         color: rgb(253 230 138);
     }
 
+    .ui-empty-state {
+        display: flex;
+        gap: 1rem;
+        border: 1px solid rgb(82 82 91 / 76%);
+        border-radius: 0.875rem;
+        background:
+            linear-gradient(180deg, rgb(24 24 27 / 64%), rgb(10 10 10 / 58%));
+        padding: 1.35rem;
+        box-shadow: 0 16px 32px rgb(0 0 0 / 20%);
+    }
+
+    .ui-empty-state-marker {
+        width: 0.38rem;
+        align-self: stretch;
+        flex: 0 0 auto;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, rgb(245 158 11 / 76%), rgb(120 113 108 / 38%));
+    }
+
+    .app-context-bar {
+        box-shadow: 0 14px 28px rgb(0 0 0 / 18%);
+    }
+
+    .app-context-link:focus-visible,
+    .app-context-action:focus-visible {
+        border-radius: 0.35rem;
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+    }
+
+    .app-context-chip,
+    .app-context-action {
+        display: inline-flex;
+        min-height: 1.8rem;
+        max-width: 100%;
+        align-items: center;
+        border-radius: 0.5rem;
+        border: 1px solid rgb(82 82 91 / 74%);
+        background: rgb(24 24 27 / 60%);
+        padding: 0.3rem 0.55rem;
+        color: rgb(214 211 209);
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    .app-context-meta {
+        min-width: min(100%, 18rem);
+    }
+
+    .app-context-chip-scope {
+        border-color: rgb(217 119 6 / 58%);
+        background: rgb(146 64 14 / 18%);
+        color: rgb(253 230 138);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .app-context-action {
+        border-color: rgb(120 113 108 / 78%);
+        background: rgb(0 0 0 / 20%);
+        color: rgb(231 229 228);
+        font-weight: 700;
+        text-decoration: none;
+        transition:
+            border-color 140ms ease,
+            color 140ms ease,
+            background-color 140ms ease;
+    }
+
+    .app-context-action:hover {
+        border-color: rgb(245 158 11 / 72%);
+        background: rgb(146 64 14 / 18%);
+        color: rgb(255 247 237);
+    }
+
     .immersion-feedback {
         border-color: rgb(120 53 15 / 55%);
         background:
@@ -488,9 +569,21 @@
     }
 
     .app-nav-secondary,
+    .app-nav-management,
     .app-nav-account {
         border-top: 1px solid rgb(63 63 70 / 68%);
         padding-top: 0.65rem;
+    }
+
+    .app-nav-group-label {
+        width: 100%;
+        color: rgb(168 162 158);
+        font-family: 'DM Mono', monospace;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        line-height: 1.2;
+        text-transform: uppercase;
     }
 
     .app-nav-status-chip,
@@ -615,6 +708,15 @@
         line-height: 1.25;
         white-space: normal;
         word-break: break-word;
+    }
+
+    .app-nav .app-nav-link:focus-visible,
+    .app-nav .app-nav-account-action:focus-visible,
+    .app-mobile-nav-trigger:focus-visible,
+    .app-mobile-nav-backdrop:focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+        box-shadow: 0 0 0 5px rgb(0 0 0 / 52%);
     }
 
     .landing-shell {
@@ -1466,6 +1568,14 @@
         transform: rotate(-90deg);
     }
 
+    :where(table) th {
+        color: rgb(214 211 209);
+    }
+
+    :where(table) td {
+        color: rgb(214 211 209);
+    }
+
     @media (prefers-reduced-motion: reduce) {
         html {
             scroll-behavior: auto;
@@ -1500,8 +1610,18 @@
         }
 
         .app-nav,
-        .app-mobile-nav-backdrop {
+        .app-mobile-nav-backdrop,
+        .app-context-action,
+        .ui-btn,
+        .ui-card,
+        .ui-card-soft {
             transition: none !important;
+        }
+
+        .ui-btn:hover,
+        .ui-card:hover,
+        .ui-card-soft:hover {
+            transform: none !important;
         }
     }
 
@@ -1520,6 +1640,33 @@
 
         .world-marker {
             width: auto;
+        }
+
+        .app-context-bar > div {
+            align-items: flex-start;
+        }
+
+        .app-context-meta {
+            width: 100%;
+        }
+
+        .app-context-chip,
+        .app-context-action {
+            min-height: 2.25rem;
+        }
+
+        .ui-empty-state {
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .ui-empty-state-marker {
+            width: 100%;
+            height: 0.3rem;
+        }
+
+        .ui-empty-state .ui-btn {
+            width: 100%;
         }
 
         body.is-reading-mode .reading-chapter-header {
@@ -1633,15 +1780,25 @@
             justify-content: flex-start;
         }
 
+        .app-nav-management {
+            grid-column: 1;
+            justify-content: flex-start;
+        }
+
         .app-nav-account {
             grid-column: 2;
             justify-content: flex-end;
         }
 
         .app-nav-secondary,
+        .app-nav-management,
         .app-nav-account {
             border-top: 0;
             padding-top: 0;
+        }
+
+        .app-nav-primary .app-nav-group-label {
+            display: none;
         }
 
         .app-nav > *,
@@ -1672,6 +1829,7 @@
         }
 
         .app-nav-secondary .app-nav-link,
+        .app-nav-management .app-nav-link,
         .app-nav-account .app-nav-account-action,
         .app-nav-account .app-nav-status-chip,
         .app-nav-account [data-pwa-install-button] {

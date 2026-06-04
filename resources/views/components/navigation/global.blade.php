@@ -14,32 +14,46 @@
     $statusChipClass = 'app-nav-status-chip rounded-md border border-stone-700/70 bg-black/25 px-2.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.06em] text-stone-300';
     $accountActionClass = 'app-nav-account-action rounded-md border border-stone-700/70 bg-black/20 px-2.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-stone-300 transition hover:border-stone-500 hover:text-stone-100';
 
-    $isWorldsCurrent = request()->routeIs('worlds.*');
-    $isKnowledgeCurrent = request()->routeIs('knowledge.*');
+    $isWorldsSection = request()->routeIs('worlds.*');
+    $isKnowledgeSection = request()->routeIs('knowledge.*');
+    $isCampaignsSection = request()->routeIs('campaigns.*');
+    $isCharactersSection = request()->routeIs('characters.*');
+    $isNotificationsSection = request()->routeIs('notifications.*');
+    $isGmSection = request()->routeIs('gm.*');
+    $isAdminSection = request()->routeIs('admin.*');
+
+    $isWorldsCurrent = request()->routeIs('worlds.index');
+    $isKnowledgeCurrent = request()->routeIs('knowledge.global.index');
     $isDashboardCurrent = request()->routeIs('dashboard');
     $isLeaderboardCurrent = request()->routeIs('leaderboard.*');
-    $isCampaignsCurrent = request()->routeIs('campaigns.*');
-    $isCharactersCurrent = request()->routeIs('characters.*');
-    $isNotificationsCurrent = request()->routeIs('notifications.*');
-    $isSubscriptionsCurrent = request()->routeIs('scene-subscriptions.*');
-    $isBookmarksCurrent = request()->routeIs('bookmarks.*');
-    $isInvitationsCurrent = request()->routeIs('campaign-invitations.*');
-    $isGmCurrent = request()->routeIs('gm.*');
-    $isAdminCurrent = request()->routeIs('admin.*');
+    $isCampaignsCurrent = request()->routeIs('campaigns.index');
+    $isCharactersCurrent = request()->routeIs('characters.index');
+    $isNotificationsCurrent = request()->routeIs('notifications.index');
+    $isSubscriptionsCurrent = request()->routeIs('scene-subscriptions.index');
+    $isBookmarksCurrent = request()->routeIs('bookmarks.index');
+    $isInvitationsCurrent = request()->routeIs('campaign-invitations.index');
+    $isGmCurrent = request()->routeIs('gm.index');
+    $isAdminCurrent = request()->routeIs('admin.users.moderation.index');
+    $showManagementNavigation = auth()->check() && (
+        auth()->user()->isGmOrAdmin()
+        || auth()->user()->hasAnyCoGmCampaignAccess()
+        || auth()->user()->hasRole(\App\Enums\UserRole::ADMIN)
+    );
 @endphp
 
 <nav id="app-mobile-navigation" class="app-nav" data-mobile-sheet-panel aria-label="Hauptnavigation">
-    <div class="app-nav-group app-nav-primary" data-nav-group="primary">
+    <div class="app-nav-group app-nav-primary" data-nav-group="primary" role="group" aria-label="Primäre Navigation">
+        <p class="app-nav-group-label">Hauptnavigation</p>
         <a
             href="{{ route('worlds.index') }}"
-            class="{{ $standardLinkBase }} {{ $isWorldsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            class="{{ $standardLinkBase }} {{ $isWorldsSection ? $standardLinkActive : $standardLinkInactive }}"
             @if ($isWorldsCurrent) aria-current="page" @endif
         >
             Welten
         </a>
         <a
             href="{{ route('knowledge.global.index') }}"
-            class="{{ $standardLinkBase }} {{ $isKnowledgeCurrent ? $standardLinkActive : $standardLinkInactive }}"
+            class="{{ $standardLinkBase }} {{ $isKnowledgeSection ? $standardLinkActive : $standardLinkInactive }}"
             @if ($isKnowledgeCurrent) aria-current="page" @endif
         >
             Wissen
@@ -54,21 +68,21 @@
             </a>
             <a
                 href="{{ route('campaigns.index') }}"
-                class="{{ $standardLinkBase }} {{ $isCampaignsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+                class="{{ $standardLinkBase }} {{ $isCampaignsSection ? $standardLinkActive : $standardLinkInactive }}"
                 @if ($isCampaignsCurrent) aria-current="page" @endif
             >
                 Kampagnen
             </a>
             <a
                 href="{{ route('characters.index') }}"
-                class="{{ $standardLinkBase }} {{ $isCharactersCurrent ? $standardLinkActive : $standardLinkInactive }}"
+                class="{{ $standardLinkBase }} {{ $isCharactersSection ? $standardLinkActive : $standardLinkInactive }}"
                 @if ($isCharactersCurrent) aria-current="page" @endif
             >
                 Charaktere
             </a>
             <a
                 href="{{ route('notifications.index') }}"
-                class="relative {{ $standardLinkBase }} {{ $isNotificationsCurrent ? $standardLinkActive : $standardLinkInactive }}"
+                class="relative {{ $standardLinkBase }} {{ $isNotificationsSection ? $standardLinkActive : $standardLinkInactive }}"
                 @if ($isNotificationsCurrent) aria-current="page" @endif
             >
                 Mitteilungen
@@ -84,7 +98,8 @@
     </div>
 
     @auth
-        <div class="app-nav-group app-nav-secondary" data-nav-group="secondary">
+        <div class="app-nav-group app-nav-secondary" data-nav-group="secondary" role="group" aria-label="Meine Bereiche">
+            <p class="app-nav-group-label">Meine Bereiche</p>
             <a
                 href="{{ route('leaderboard.index') }}"
                 class="{{ $secondaryLinkBase }} {{ $isLeaderboardCurrent ? $secondaryLinkActive : $secondaryLinkInactive }}"
@@ -125,10 +140,15 @@
                     </span>
                 @endif
             </a>
+        </div>
+
+        @if ($showManagementNavigation)
+            <div class="app-nav-group app-nav-management" data-nav-group="management" role="group" aria-label="Verwaltung">
+                <p class="app-nav-group-label">Verwaltung</p>
             @if (auth()->user()->isGmOrAdmin() || auth()->user()->hasAnyCoGmCampaignAccess())
                 <a
                     href="{{ route('gm.index') }}"
-                    class="{{ $secondaryLinkBase }} {{ $isGmCurrent ? $secondaryLinkActive : $secondaryLinkInactive }}"
+                    class="{{ $secondaryLinkBase }} {{ $isGmSection ? $secondaryLinkActive : $secondaryLinkInactive }}"
                     @if ($isGmCurrent) aria-current="page" @endif
                 >
                     GM-Bereich
@@ -137,13 +157,14 @@
             @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
                 <a
                     href="{{ route('admin.users.moderation.index') }}"
-                    class="{{ $secondaryLinkBase }} {{ $isAdminCurrent ? $secondaryLinkActive : $secondaryLinkInactive }}"
+                    class="{{ $secondaryLinkBase }} {{ $isAdminSection ? $secondaryLinkActive : $secondaryLinkInactive }}"
                     @if ($isAdminCurrent) aria-current="page" @endif
                 >
                     Benutzerverwaltung
                 </a>
             @endif
-        </div>
+            </div>
+        @endif
 
         <div class="app-nav-group app-nav-account" data-nav-group="account">
             <span class="{{ $statusChipClass }}">

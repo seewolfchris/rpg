@@ -17,7 +17,9 @@
     @endphp
 
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <x-navigation.breadcrumbs
+        <x-navigation.context-bar
+            :scope="$isWorldContext ? 'world' : 'platform'"
+            :world="$isWorldContext ? $world : null"
             :items="$isWorldContext
                 ? [
                     ['label' => 'Plattform', 'href' => route('home')],
@@ -31,19 +33,36 @@
         />
 
         <header class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
+            <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">
+                Wissenszentrum · {{ $isWorldContext ? 'Weltbezogen' : 'Plattformweit' }}
+            </p>
             @if ($isWorldContext)
                 <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Leitfaden für Spiel, Welt und Regeln</h1>
                 <p class="mt-4 max-w-4xl text-base leading-relaxed text-stone-300 sm:text-lg">
                     Strukturierter Einstieg für die Welt <strong class="text-amber-200">{{ $world->name }}</strong>:
                     Wie Play-by-Post hier funktioniert, welche Regeln gelten und wie du dich schnell orientierst.
                 </p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <a href="{{ route('worlds.show', ['world' => $world]) }}" class="ui-btn">Weltprofil</a>
+                    <a href="{{ route('knowledge.rules', ['world' => $world]) }}" class="ui-btn">Regelwerk</a>
+                    <a href="{{ route('knowledge.encyclopedia', ['world' => $world]) }}" class="ui-btn ui-btn-accent">Enzyklopädie</a>
+                </div>
             @else
                 <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Plattformwissen für C76-RPG</h1>
                 <p class="mt-4 max-w-4xl text-base leading-relaxed text-stone-300 sm:text-lg">
                     Dieser Bereich ist weltunabhängig. Hier findest du den allgemeinen Einstieg, grundlegende Regeln
                     und den Zugang zu weltgebundenem Wissen.
                 </p>
+                <div class="mt-5 grid gap-3 md:grid-cols-2">
+                    <div class="rounded-xl border border-amber-700/45 bg-amber-900/10 p-4">
+                        <p class="text-sm font-semibold text-amber-100">Hier gelten allgemeine Regeln.</p>
+                        <p class="mt-1 text-sm text-stone-300">Plattformwissen erklärt Abläufe, Schreibkonventionen und Grundregeln.</p>
+                    </div>
+                    <div class="rounded-xl border border-stone-700/75 bg-neutral-900/55 p-4">
+                        <p class="text-sm font-semibold text-stone-100">Weltwissen findest du je Welt.</p>
+                        <p class="mt-1 text-sm text-stone-300">Lore, Enzyklopädie und Kampagnenkontext bleiben bewusst weltbezogen.</p>
+                    </div>
+                </div>
             @endif
         </header>
 
@@ -116,7 +135,7 @@
                 <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($worlds as $catalogWorld)
                         @php($isSelected = $selectedWorldSlug !== '' && $selectedWorldSlug === $catalogWorld->slug)
-                        <article class="rounded-xl border {{ $isSelected ? 'border-amber-500/70 bg-amber-900/15' : 'border-stone-800 bg-neutral-900/60' }} p-4">
+                        <article class="rounded-xl border {{ $isSelected ? 'border-amber-400/85 bg-amber-900/20 ring-1 ring-amber-400/45' : 'border-stone-800 bg-neutral-900/60' }} p-4">
                             <h3 class="font-heading text-xl text-stone-100">{{ $catalogWorld->name }}</h3>
                             @if ($catalogWorld->tagline)
                                 <p class="mt-2 text-sm text-amber-200">{{ $catalogWorld->tagline }}</p>
@@ -126,17 +145,17 @@
                             </p>
 
                             @if ($isSelected)
-                                <p class="mt-3 text-xs font-semibold uppercase tracking-widest text-amber-300">
-                                    Aktive Welt in dieser Session
+                                <p class="ui-badge mt-3 !rounded-md !border-amber-500/60 !bg-amber-500/15 !text-amber-100">
+                                    Aktive Welt
                                 </p>
                             @endif
 
                             <div class="mt-4 flex flex-wrap gap-2">
                                 <a href="{{ route('knowledge.index', ['world' => $catalogWorld]) }}" class="ui-btn inline-flex">
-                                    Weltwissen
+                                    Weltwissen öffnen
                                 </a>
                                 <a href="{{ route('knowledge.encyclopedia', ['world' => $catalogWorld]) }}" class="ui-btn ui-btn-accent inline-flex">
-                                    Enzyklopädie
+                                    Enzyklopädie öffnen
                                 </a>
                             </div>
                         </article>

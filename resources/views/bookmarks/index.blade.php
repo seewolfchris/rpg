@@ -4,6 +4,16 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.context-bar
+            scope="world"
+            :world="$world"
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                ['label' => 'Lesezeichen', 'current' => true],
+            ]"
+        />
+
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -42,7 +52,23 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($bookmarks->isEmpty())
-                <p class="text-sm text-stone-400">Keine Lesezeichen für den gewählten Filter.</p>
+                @php
+                    $hasBookmarkFilter = $search !== '';
+                @endphp
+                <x-empty-state
+                    :title="$hasBookmarkFilter && $totalCount > 0 ? 'Keine Lesezeichen im aktuellen Filter' : 'Keine Lesezeichen'"
+                    :description="$hasBookmarkFilter && $totalCount > 0
+                        ? 'Für deine Suche wurden keine sichtbaren Lesezeichen in dieser Welt gefunden.'
+                        : 'Speichere wichtige Szenenstellen als Lesezeichen, um später schnell dorthin zurückzukehren.'"
+                >
+                    <x-slot name="actions">
+                        @if ($hasBookmarkFilter && $totalCount > 0)
+                            <a href="{{ route('bookmarks.index', ['world' => $world]) }}" class="ui-btn">Filter zurücksetzen</a>
+                        @else
+                            <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent">Kampagnen öffnen</a>
+                        @endif
+                    </x-slot>
+                </x-empty-state>
             @else
                 <div class="space-y-3">
                     @foreach ($bookmarks as $bookmark)

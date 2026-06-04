@@ -17,7 +17,7 @@
                 <p class="text-sm text-stone-400">Noch keine Punkte vergeben.</p>
             @else
                 <div class="overflow-x-auto">
-                    <table class="min-w-full border-separate border-spacing-y-2 text-left">
+                    <table class="min-w-[52rem] border-separate border-spacing-y-2 text-left">
                         <thead>
                             <tr>
                                 <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Rang</th>

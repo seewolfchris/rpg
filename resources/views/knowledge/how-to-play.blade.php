@@ -6,6 +6,23 @@
     @php($isWorldContext = isset($world) && $world instanceof \App\Models\World)
 
     <section class="mx-auto w-full max-w-5xl space-y-6">
+        <x-navigation.context-bar
+            :scope="$isWorldContext ? 'world' : 'platform'"
+            :world="$isWorldContext ? $world : null"
+            :items="$isWorldContext
+                ? [
+                    ['label' => 'Plattform', 'href' => route('home')],
+                    ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                    ['label' => 'Wissen', 'href' => route('knowledge.index', ['world' => $world])],
+                    ['label' => 'Wie spielt man?', 'current' => true],
+                ]
+                : [
+                    ['label' => 'Plattform', 'href' => route('home')],
+                    ['label' => 'Wissen', 'href' => route('knowledge.global.index')],
+                    ['label' => 'Wie spielt man?', 'current' => true],
+                ]"
+        />
+
         <header class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Wissenszentrum</p>
             <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">

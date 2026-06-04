@@ -96,6 +96,55 @@ class NavigationActiveStateTest extends TestCase
             ->assertSee('id="nav-bookmark-count-badge"', false);
     }
 
+    public function test_authenticated_navigation_separates_primary_personal_and_management_groups(): void
+    {
+        $user = User::factory()->admin()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+        $response->assertOk()
+            ->assertSeeText('Hauptnavigation')
+            ->assertSeeText('Meine Bereiche')
+            ->assertSeeText('Verwaltung');
+
+        $html = $response->getContent();
+        $this->assertIsString($html);
+
+        $xpath = $this->toXPath($html);
+
+        $primaryLinks = $xpath->query("//nav[@aria-label='Hauptnavigation']//div[@data-nav-group='primary']//a");
+        $secondaryLinks = $xpath->query("//nav[@aria-label='Hauptnavigation']//div[@data-nav-group='secondary']//a");
+        $managementLinks = $xpath->query("//nav[@aria-label='Hauptnavigation']//div[@data-nav-group='management']//a");
+
+        $this->assertGreaterThanOrEqual(6, $primaryLinks->length);
+        $this->assertSame(4, $secondaryLinks->length);
+        $this->assertGreaterThanOrEqual(1, $managementLinks->length);
+    }
+
+    public function test_nested_campaign_pages_do_not_set_global_aria_current_on_parent_link(): void
+    {
+        $user = User::factory()->create();
+        $world = World::factory()->create();
+        $campaign = \App\Models\Campaign::factory()->create([
+            'world_id' => $world->id,
+            'owner_id' => $user->id,
+            'is_public' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('campaigns.show', [
+            'world' => $world,
+            'campaign' => $campaign,
+        ]));
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertIsString($html);
+
+        $xpath = $this->toXPath($html);
+        $currentNodes = $xpath->query("//nav[@aria-label='Hauptnavigation']//a[@aria-current='page']");
+
+        $this->assertSame(0, $currentNodes->length);
+    }
+
     /**
      * @return array<string, array{0: string, 1: string}>
      */

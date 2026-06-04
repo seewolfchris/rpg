@@ -4,7 +4,9 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <x-navigation.breadcrumbs
+        <x-navigation.context-bar
+            scope="world"
+            :world="$world"
             :items="[
                 ['label' => 'Plattform', 'href' => route('home')],
                 ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],

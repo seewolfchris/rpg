@@ -4,7 +4,10 @@ namespace App\Support;
 
 use App\Models\CampaignInvitation;
 use App\Models\Campaign;
+use App\Models\SceneBookmark;
+use App\Models\SceneSubscription;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 
 class NavigationCounters
@@ -13,6 +16,11 @@ class NavigationCounters
      * @var array<string, array{unreadNotificationsCount: int, pendingCampaignInvitationsCount: int, bookmarkCount: int}>
      */
     private array $cache = [];
+
+    /**
+     * @var array<string, array{pendingCampaignInvitationsCount: int, activeSceneSubscriptionsCount: int, visibleBookmarkCount: int}>
+     */
+    private array $personalCenterCache = [];
 
     /**
      * @return array{unreadNotificationsCount: int, pendingCampaignInvitationsCount: int, bookmarkCount: int}
@@ -53,6 +61,55 @@ class NavigationCounters
         ];
 
         $this->cache[$cacheKey] = $resolved;
+
+        return $resolved;
+    }
+
+    /**
+     * @return array{pendingCampaignInvitationsCount: int, activeSceneSubscriptionsCount: int, visibleBookmarkCount: int}
+     */
+    public function personalCenterForUser(?User $user, ?World $world): array
+    {
+        if (! $user || ! $world) {
+            return [
+                'pendingCampaignInvitationsCount' => 0,
+                'activeSceneSubscriptionsCount' => 0,
+                'visibleBookmarkCount' => 0,
+            ];
+        }
+
+        $cacheKey = 'user:'.$user->getKey().':world:'.$world->getKey();
+        if (isset($this->personalCenterCache[$cacheKey])) {
+            return $this->personalCenterCache[$cacheKey];
+        }
+
+        $visibleCampaignIdsForWorld = Campaign::query()
+            ->visibleTo($user)
+            ->where('world_id', (int) $world->id)
+            ->select('id');
+
+        $activeSceneSubscriptionsCount = SceneSubscription::query()
+            ->where('user_id', (int) $user->id)
+            ->where('is_muted', false)
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($visibleCampaignIdsForWorld): void {
+                $campaignQuery->whereIn('id', $visibleCampaignIdsForWorld);
+            })
+            ->count();
+
+        $visibleBookmarkCount = SceneBookmark::query()
+            ->where('user_id', (int) $user->id)
+            ->whereHas('scene.campaign', function (Builder $campaignQuery) use ($visibleCampaignIdsForWorld): void {
+                $campaignQuery->whereIn('id', $visibleCampaignIdsForWorld);
+            })
+            ->count();
+
+        $resolved = [
+            'pendingCampaignInvitationsCount' => $this->forUser($user)['pendingCampaignInvitationsCount'],
+            'activeSceneSubscriptionsCount' => $activeSceneSubscriptionsCount,
+            'visibleBookmarkCount' => $visibleBookmarkCount,
+        ];
+
+        $this->personalCenterCache[$cacheKey] = $resolved;
 
         return $resolved;
     }

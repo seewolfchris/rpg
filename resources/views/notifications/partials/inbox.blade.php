@@ -17,7 +17,11 @@
     <h2 class="font-heading text-xl text-stone-100">Posteingang</h2>
 
     @if ($notifications->isEmpty())
-        <p class="mt-4 text-sm text-stone-400">Keine Benachrichtigungen vorhanden.</p>
+        <x-empty-state
+            class="mt-4"
+            title="Keine neuen Mitteilungen"
+            description="Hier erscheinen Einladungen, Antworten, Szenenhinweise und Systemmeldungen."
+        />
     @else
         <div class="mt-4 space-y-3">
             @foreach ($notifications as $notification)

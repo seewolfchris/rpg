@@ -6,7 +6,10 @@
 
 @section('content')
     <div class="mb-4">
-        <x-navigation.breadcrumbs
+        <x-navigation.context-bar
+            scope="world"
+            :world="$world"
+            :show-world-switch="false"
             :items="[
                 ['label' => 'Plattform', 'href' => route('home')],
                 ['label' => $world->name, 'current' => true],

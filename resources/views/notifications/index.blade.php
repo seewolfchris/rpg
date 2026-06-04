@@ -3,7 +3,14 @@
 @section('title', 'Benachrichtigungen | C76-RPG')
 
 @section('content')
-    @php($returnTo = is_string($returnTo ?? null) && $returnTo !== '' ? $returnTo : route('notifications.index'))
+    @php
+        $returnTo = is_string($returnTo ?? null) && $returnTo !== '' ? $returnTo : route('notifications.index');
+        $activeWorldName = $activeWorld instanceof \App\Models\World ? $activeWorld->name : 'Aktive Welt';
+        $worldRouteParameters = $activeWorld instanceof \App\Models\World ? ['world' => $activeWorld] : [];
+        $pendingCenterInvitationCount = (int) data_get($personalCenterCounts ?? [], 'pendingCampaignInvitationsCount', 0);
+        $activeCenterSubscriptionCount = (int) data_get($personalCenterCounts ?? [], 'activeSceneSubscriptionsCount', 0);
+        $visibleCenterBookmarkCount = (int) data_get($personalCenterCounts ?? [], 'visibleBookmarkCount', 0);
+    @endphp
     <section class="mx-auto w-full max-w-5xl space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -32,7 +39,7 @@
 
                 <div class="flex flex-wrap items-center gap-2">
                     <a
-                        href="{{ route('scene-subscriptions.index') }}"
+                        href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}"
                         class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
                         Abo-Dashboard
@@ -65,6 +72,40 @@
             </div>
         </div>
 
+        <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Mitteilungen-Schnellzugriffe">
+            <a href="{{ route('notifications.index') }}" class="ui-card-soft block p-4 hover:border-amber-600/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400/70">
+                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Persönlich</p>
+                <h2 class="mt-2 font-heading text-lg text-stone-100">Posteingang / Mitteilungen</h2>
+                <p class="mt-2 text-sm text-stone-300">
+                    <span class="font-semibold text-amber-200">{{ $unreadCount }}</span> ungelesen
+                </p>
+            </a>
+
+            <a href="{{ route('campaign-invitations.index') }}" class="ui-card-soft block p-4 hover:border-amber-600/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400/70">
+                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Persönlich · plattformweit</p>
+                <h2 class="mt-2 font-heading text-lg text-stone-100">Kampagnen-Einladungen</h2>
+                <p class="mt-2 text-sm text-stone-300">
+                    <span class="font-semibold text-amber-200">{{ $pendingCenterInvitationCount }}</span> offen
+                </p>
+            </a>
+
+            <a href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}" class="ui-card-soft block p-4 hover:border-amber-600/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400/70">
+                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Aktive Welt: {{ $activeWorldName }}</p>
+                <h2 class="mt-2 font-heading text-lg text-stone-100">Szenen-Abos</h2>
+                <p class="mt-2 text-sm text-stone-300">
+                    <span class="font-semibold text-emerald-300">{{ $activeCenterSubscriptionCount }}</span> aktiv
+                </p>
+            </a>
+
+            <a href="{{ route('bookmarks.index', $worldRouteParameters) }}" class="ui-card-soft block p-4 hover:border-amber-600/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-400/70">
+                <p class="text-xs uppercase tracking-[0.1em] text-stone-400">Aktive Welt: {{ $activeWorldName }}</p>
+                <h2 class="mt-2 font-heading text-lg text-stone-100">Lesezeichen</h2>
+                <p class="mt-2 text-sm text-stone-300">
+                    <span class="font-semibold text-emerald-300">{{ $visibleCenterBookmarkCount }}</span> sichtbar
+                </p>
+            </a>
+        </section>
+
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -77,9 +118,16 @@
             </div>
 
             @if ($subscriptions->isEmpty())
-                <p class="mb-6 text-sm text-stone-400">
-                    Du hast aktuell keine Szenen abonniert.
-                </p>
+                <x-empty-state
+                    class="mb-6"
+                    title="Keine Szenen-Abos"
+                    description="Du folgst derzeit keiner Szene in deinem sichtbaren Kampagnenbereich. Öffne eine Kampagne oder Szene und aktiviere Benachrichtigungen, damit du neue Beiträge nicht verpasst."
+                >
+                    <x-slot name="actions">
+                        <a href="{{ route('campaigns.index', $worldRouteParameters) }}" class="ui-btn ui-btn-accent">Kampagnen öffnen</a>
+                        <a href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}" class="ui-btn">Abo-Dashboard</a>
+                    </x-slot>
+                </x-empty-state>
             @else
                 <div class="mb-8 space-y-3">
                     @foreach ($subscriptions as $subscription)

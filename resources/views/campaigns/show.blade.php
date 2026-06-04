@@ -5,7 +5,10 @@
 @section('content')
     @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <x-navigation.breadcrumbs
+        <x-navigation.context-bar
+            scope="world"
+            :world="$campaign->world"
+            :campaign="$campaign"
             :items="[
                 ['label' => 'Plattform', 'href' => route('home')],
                 ['label' => $campaign->world->name, 'href' => route('worlds.show', ['world' => $campaign->world])],

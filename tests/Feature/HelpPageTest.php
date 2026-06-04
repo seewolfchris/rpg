@@ -76,6 +76,27 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Einträge sichtbar');
     }
 
+    public function test_knowledge_center_distinguishes_platform_and_world_context_orientation(): void
+    {
+        $world = $this->defaultWorld();
+
+        $this->withSession(['world_slug' => $world->slug])
+            ->get(route('knowledge.global.index'))
+            ->assertOk()
+            ->assertSeeText('Plattformweit')
+            ->assertSeeText('Hier gelten allgemeine Regeln.')
+            ->assertSeeText('Weltwissen findest du je Welt.')
+            ->assertSeeText('Aktive Welt');
+
+        $this->get(route('knowledge.index', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Weltbezogen')
+            ->assertSeeText('Aktive Welt:')
+            ->assertSeeText('Weltprofil')
+            ->assertSeeText('Regelwerk')
+            ->assertSeeText('Enzyklopädie');
+    }
+
     public function test_rules_page_uses_updated_d100_probe_wording_without_d20_legacy(): void
     {
         $response = $this->get(route('knowledge.global.rules'));

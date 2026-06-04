@@ -3,7 +3,9 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
-- Keine unreleasten Aenderungen dokumentiert.
+- UX-/A11y-Polish in drei Scheiben umgesetzt: semantisch gruppierte globale Navigation, kontextfuehrende Breadcrumb-/Context-Bar, sichtbarere Fokuszustaende und bessere Grundkontraste.
+- Wiederverwendbare Empty-State-Komponente eingefuehrt und persoenliche Bereiche, Mitteilungen, Einladungen, Abos und Lesezeichen mit scope-korrekten Zaehlungen und Kontextlinks nachgezogen.
+- Wissenszentrum fuer Plattform-/Weltkontext, Tabs, CTAs, aktive Weltkarten und responsive Lesbarkeit geschaerft.
 
 ## v0.32-beta (2026-06-03)
 - Rollenmodell in Scheiben PR1-PR6 auf das neue Zielmodell umgestellt:

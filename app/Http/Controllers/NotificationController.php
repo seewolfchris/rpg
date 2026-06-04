@@ -9,7 +9,9 @@ use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
 use App\Models\SceneSubscription;
 use App\Support\Navigation\SafeReturnUrl;
+use App\Support\NavigationCounters;
 use App\Models\User;
+use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +27,7 @@ class NotificationController extends Controller
         private readonly MarkNotificationReadAction $markNotificationReadAction,
         private readonly MarkAllNotificationsReadAction $markAllNotificationsReadAction,
         private readonly SafeReturnUrl $safeReturnUrl,
+        private readonly NavigationCounters $navigationCounters,
     ) {}
 
     public function preferences(Request $request): View
@@ -99,6 +102,9 @@ class NotificationController extends Controller
         $activeSubscriptionCount = (int) ($subscriptionCounts['active_count'] ?? 0);
         $mutedSubscriptionCount = (int) ($subscriptionCounts['muted_count'] ?? 0);
         $returnTo = $this->notificationReturnTo($request);
+        $activeWorld = $request->attributes->get('active_world');
+        $activeWorld = $activeWorld instanceof World ? $activeWorld : null;
+        $personalCenterCounts = $this->navigationCounters->personalCenterForUser($user, $activeWorld);
 
         return view('notifications.index', compact(
             'notifications',
@@ -107,6 +113,8 @@ class NotificationController extends Controller
             'activeSubscriptionCount',
             'mutedSubscriptionCount',
             'returnTo',
+            'activeWorld',
+            'personalCenterCounts',
         ));
     }
 

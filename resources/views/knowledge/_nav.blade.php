@@ -4,8 +4,8 @@
 
     $knowledgeTabs = $isWorldContext
         ? [
-            ['route' => 'knowledge.global.index', 'label' => 'Plattform'],
-            ['route' => 'knowledge.index', 'label' => 'Weltübersicht', 'world' => true],
+            ['route' => 'knowledge.global.index', 'label' => 'Plattformwissen'],
+            ['route' => 'knowledge.index', 'label' => 'Weltwissen', 'world' => true],
             ['route' => 'knowledge.how-to-play', 'label' => 'Wie spielt man?', 'world' => true],
             ['route' => 'knowledge.rules', 'label' => 'Regelwerk', 'world' => true],
             ['route' => 'knowledge.encyclopedia', 'pattern' => 'knowledge.encyclopedia*', 'label' => 'Enzyklopädie', 'world' => true],
@@ -14,7 +14,7 @@
             ['route' => 'knowledge.global.index', 'label' => 'Übersicht'],
             ['route' => 'knowledge.global.how-to-play', 'label' => 'Wie spielt man?'],
             ['route' => 'knowledge.global.rules', 'label' => 'Regelwerk'],
-            ['route' => 'knowledge.global.encyclopedia', 'label' => 'Weltenwissen'],
+            ['route' => 'knowledge.global.encyclopedia', 'label' => 'Welten & Enzyklopädien'],
         ];
 @endphp
 

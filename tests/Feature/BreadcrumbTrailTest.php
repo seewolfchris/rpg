@@ -44,6 +44,9 @@ class BreadcrumbTrailTest extends TestCase
 
         $xpath = $this->toXPath($html);
 
+        $breadcrumbNavs = $xpath->query("//nav[@aria-label='Breadcrumb']");
+        $this->assertSame(1, $breadcrumbNavs->length);
+
         $breadcrumbItems = $xpath->query("//nav[@aria-label='Breadcrumb']//ol/li[not(@aria-hidden='true')]");
         $this->assertSame(4, $breadcrumbItems->length);
 
@@ -62,6 +65,11 @@ class BreadcrumbTrailTest extends TestCase
         $currentNodes = $xpath->query("//nav[@aria-label='Breadcrumb']//li/*[@aria-current='page']");
         $this->assertSame(1, $currentNodes->length);
         $this->assertSame($scene->title, $this->normalizeText($currentNodes->item(0)?->textContent ?? ''));
+
+        $this->assertStringContainsString('Weltbezogen', $html);
+        $this->assertStringContainsString('Aktive Welt:', $html);
+        $this->assertStringContainsString('Kampagne:', $html);
+        $this->assertStringContainsString('Szene:', $html);
 
         $expectedBackHref = (string) parse_url(route('campaigns.show', [
             'world' => $campaign->world,

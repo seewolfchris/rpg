@@ -48,7 +48,22 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($invitations->isEmpty())
-                <p class="text-sm text-stone-400">Keine Einladungen für den gewählten Filter.</p>
+                @php
+                    $isPendingFilter = $status === 'pending';
+                @endphp
+                <x-empty-state
+                    :title="$isPendingFilter ? 'Keine offenen Einladungen' : 'Keine Einladungen im aktuellen Filter'"
+                    :description="$isPendingFilter
+                        ? 'Wenn dich eine Spielleitung zu einer Kampagne einlädt, erscheint die Einladung hier.'
+                        : 'Für den gewählten Status wurden keine Kampagnen-Einladungen gefunden.'"
+                >
+                    <x-slot name="actions">
+                        <a href="{{ route('worlds.index') }}" class="ui-btn ui-btn-accent">Welten ansehen</a>
+                        @if (! $isPendingFilter)
+                            <a href="{{ route('campaign-invitations.index') }}" class="ui-btn">Offene Einladungen</a>
+                        @endif
+                    </x-slot>
+                </x-empty-state>
             @else
                 <div class="space-y-3">
                     @foreach ($invitations as $invitation)
@@ -82,6 +97,32 @@
                             </div>
 
                             <div class="mt-4 flex flex-wrap items-center gap-2">
+                                @php($invitationWorld = $invitation->campaign->world)
+                                @if ($invitationWorld)
+                                    @can('view', $invitation->campaign)
+                                        <a
+                                            href="{{ route('campaigns.show', ['world' => $invitationWorld, 'campaign' => $invitation->campaign]) }}"
+                                            class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                        >
+                                            Kampagne ansehen
+                                        </a>
+                                    @endcan
+
+                                    <a
+                                        href="{{ route('worlds.show', ['world' => $invitationWorld]) }}"
+                                        class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                    >
+                                        Weltprofil
+                                    </a>
+
+                                    <a
+                                        href="{{ route('knowledge.rules', ['world' => $invitationWorld]) }}"
+                                        class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                                    >
+                                        Regeln/Wissen
+                                    </a>
+                                @endif
+
                                 @if ($invitation->status === 'pending')
                                     <form method="POST" action="{{ route('campaign-invitations.accept', ['world' => $invitation->campaign->world, 'invitation' => $invitation]) }}">
                                         @csrf
@@ -104,15 +145,6 @@
                                             Ablehnen
                                         </button>
                                     </form>
-                                @endif
-
-                                @if ($invitation->status === 'accepted')
-                                    <a
-                                        href="{{ route('campaigns.show', ['world' => $invitation->campaign->world, 'campaign' => $invitation->campaign]) }}"
-                                        class="rounded-md border border-stone-600/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
-                                    >
-                                        Kampagne öffnen
-                                    </a>
                                 @endif
                             </div>
                         </article>

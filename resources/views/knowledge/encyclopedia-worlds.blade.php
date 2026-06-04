@@ -4,7 +4,8 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
-        <x-navigation.breadcrumbs
+        <x-navigation.context-bar
+            scope="platform"
             :items="[
                 ['label' => 'Plattform', 'href' => route('home')],
                 ['label' => 'Wissen', 'href' => route('knowledge.global.index')],
@@ -27,7 +28,7 @@
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($worlds as $catalogWorld)
                 @php($isSelected = $selectedWorldSlug !== '' && $selectedWorldSlug === $catalogWorld->slug)
-                <article class="rounded-2xl border {{ $isSelected ? 'border-amber-500/70 bg-amber-900/15' : 'border-stone-800 bg-neutral-900/60' }} p-5">
+                <article class="rounded-2xl border {{ $isSelected ? 'border-amber-400/85 bg-amber-900/20 ring-1 ring-amber-400/45' : 'border-stone-800 bg-neutral-900/60' }} p-5">
                     <h2 class="font-heading text-2xl text-stone-100">{{ $catalogWorld->name }}</h2>
                     @if ($catalogWorld->tagline)
                         <p class="mt-2 text-sm text-amber-200">{{ $catalogWorld->tagline }}</p>
@@ -40,8 +41,8 @@
                     </p>
 
                     @if ($isSelected)
-                        <p class="mt-3 text-xs font-semibold uppercase tracking-widest text-amber-300">
-                            Aktive Welt in dieser Session
+                        <p class="ui-badge mt-3 !rounded-md !border-amber-500/60 !bg-amber-500/15 !text-amber-100">
+                            Aktive Welt
                         </p>
                     @endif
 
@@ -56,7 +57,7 @@
                             href="{{ route('knowledge.index', ['world' => $catalogWorld]) }}"
                             class="ui-btn inline-flex"
                         >
-                            Weltwissen
+                            Weltwissen öffnen
                         </a>
                         <form method="POST" action="{{ route('worlds.activate', ['world' => $catalogWorld]) }}">
                             @csrf

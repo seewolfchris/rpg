@@ -5,6 +5,16 @@
 @section('content')
     @php($returnTo = request()->getRequestUri())
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.context-bar
+            scope="world"
+            :world="$world"
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                ['label' => 'Kampagnen', 'current' => true],
+            ]"
+        />
+
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Chroniken und Handlungsbögen · {{ $world->name }}</p>
@@ -31,9 +41,18 @@
         </div>
 
         @if ($campaigns->isEmpty())
-            <div class="rounded-xl border border-stone-800 bg-black/45 p-8 text-center text-stone-300">
-                Keine Kampagnen gefunden.
-            </div>
+            <x-empty-state
+                title="Keine Kampagnen in dieser Welt"
+                description="In dieser Welt gibt es aktuell keine Kampagne, der du beigetreten bist. Du kannst eine neue Kampagne starten oder eine andere Welt wählen."
+                :hint="auth()->user()->can('create', App\Models\Campaign::class) ? '' : 'Du hast aktuell keine Berechtigung, selbst Kampagnen zu erstellen.'"
+            >
+                <x-slot name="actions">
+                    @can('create', App\Models\Campaign::class)
+                        <a href="{{ route('campaigns.create', ['world' => $world, 'return_to' => $returnTo]) }}" class="ui-btn ui-btn-accent">Neue Kampagne</a>
+                    @endcan
+                    <a href="{{ route('worlds.index') }}" class="ui-btn">Welt wechseln</a>
+                </x-slot>
+            </x-empty-state>
         @else
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($campaigns as $campaign)

@@ -4,6 +4,16 @@
 
 @section('content')
     <section class="mx-auto w-full max-w-6xl space-y-6">
+        <x-navigation.context-bar
+            scope="world"
+            :world="$world"
+            :items="[
+                ['label' => 'Plattform', 'href' => route('home')],
+                ['label' => $world->name, 'href' => route('worlds.show', ['world' => $world])],
+                ['label' => 'Szenen-Abos', 'current' => true],
+            ]"
+        />
+
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -101,7 +111,24 @@
 
         <section class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             @if ($subscriptions->isEmpty())
-                <p class="text-sm text-stone-400">Keine Abos für den gewählten Filter.</p>
+                @php
+                    $hasSubscriptionFilter = $status !== 'all' || $search !== '';
+                @endphp
+                <x-empty-state
+                    :title="$hasSubscriptionFilter && $totalCount > 0 ? 'Keine Abos im aktuellen Filter' : 'Keine Szenen-Abos'"
+                    :description="$hasSubscriptionFilter && $totalCount > 0
+                        ? 'Für den gewählten Filter wurden keine Szenen-Abos gefunden.'
+                        : 'Du folgst derzeit keiner Szene. Öffne eine Kampagne oder Szene und aktiviere Benachrichtigungen, damit du neue Beiträge nicht verpasst.'"
+                >
+                    <x-slot name="actions">
+                        @if ($hasSubscriptionFilter && $totalCount > 0)
+                            <a href="{{ route('scene-subscriptions.index', ['world' => $world]) }}" class="ui-btn">Filter zurücksetzen</a>
+                        @else
+                            <a href="{{ route('campaigns.index', ['world' => $world]) }}" class="ui-btn ui-btn-accent">Kampagnen öffnen</a>
+                            <a href="{{ route('notifications.index') }}" class="ui-btn">Zu Mitteilungen</a>
+                        @endif
+                    </x-slot>
+                </x-empty-state>
             @else
                 <div class="space-y-3">
                     @foreach ($subscriptions as $subscription)
