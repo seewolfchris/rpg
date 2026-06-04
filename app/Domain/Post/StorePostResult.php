@@ -10,5 +10,6 @@ final readonly class StorePostResult
         public Post $post,
         public bool $probeCreated,
         public bool $inventoryAwardApplied,
+        public ?string $mediaWarning = null,
     ) {}
 }

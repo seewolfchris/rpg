@@ -11,6 +11,7 @@ use App\Models\Handout;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use App\Domain\Post\PostImmersiveImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -62,7 +63,13 @@ class PostImmersiveImagesFeatureTest extends TestCase
         ]).'#post-'.$post->id);
 
         $this->assertTrue($post->isGmNarration());
-        $this->assertCount(2, $post->getMedia(Post::IMMERSIVE_IMAGES_COLLECTION));
+        $mediaItems = $post->getMedia(Post::IMMERSIVE_IMAGES_COLLECTION);
+        $this->assertCount(2, $mediaItems);
+        $this->assertSame([1, 2], $mediaItems
+            ->map(static fn ($media): int => (int) $media->getCustomProperty('slot'))
+            ->sort()
+            ->values()
+            ->all());
         $this->assertDatabaseCount('media', 2);
         $this->assertDatabaseHas('media', [
             'model_type' => Post::class,
@@ -184,6 +191,49 @@ class PostImmersiveImagesFeatureTest extends TestCase
             'model_id' => $post->id,
             'collection_name' => Post::IMMERSIVE_IMAGES_COLLECTION,
         ]);
+        $this->assertSame(1, (int) $post->getMedia(Post::IMMERSIVE_IMAGES_COLLECTION)->first()?->getCustomProperty('slot'));
+    }
+
+    public function test_stable_post_slots_survive_removal_and_lowest_free_slot_is_reused(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost($scene, $gm);
+
+        app(PostImmersiveImageService::class)->attachImmersiveImages($post, [
+            UploadedFile::fake()->image('slot-1.jpg', 1200, 700),
+            UploadedFile::fake()->image('slot-2.jpg', 1200, 700),
+        ]);
+
+        $mediaBySlot = $this->mediaByPersistedSlot($post->fresh());
+        $slotOneMedia = $mediaBySlot[1];
+        $slotTwoMedia = $mediaBySlot[2];
+
+        $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            ...$this->gmUpdatePayload($post),
+            'remove_immersive_media_ids' => [(int) $slotOneMedia->id],
+        ])->assertRedirect();
+
+        $slotTwoMedia->refresh();
+        $this->assertSame(2, (int) $slotTwoMedia->getCustomProperty('slot'));
+        $this->assertDatabaseMissing('media', ['id' => (int) $slotOneMedia->id]);
+
+        $this->actingAs($gm)->patch(route('posts.update', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            ...$this->gmUpdatePayload($post),
+            'immersive_images' => [UploadedFile::fake()->image('new-slot-1.jpg', 1200, 700)],
+        ])->assertRedirect();
+
+        $mediaBySlot = $this->mediaByPersistedSlot($post->fresh());
+
+        $this->assertArrayHasKey(1, $mediaBySlot);
+        $this->assertArrayHasKey(2, $mediaBySlot);
+        $this->assertSame((int) $slotTwoMedia->id, (int) $mediaBySlot[2]->id);
+        $this->assertNotSame((int) $slotTwoMedia->id, (int) $mediaBySlot[1]->id);
     }
 
     public function test_gm_can_remove_existing_immersive_images_on_update(): void
@@ -391,6 +441,38 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $this->assertGalleryImageContains($html, (int) $thirdMedia->id, $thirdMedia->getUrl());
     }
 
+    public function test_existing_post_images_without_slot_property_render_legacy_order_without_persisting_slots(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $post = $this->createGmNarrationPost(
+            $scene,
+            $gm,
+            "Erster Eindruck.\n\n[bild:2]\n\nWeitere Spuren.",
+            'plain',
+        );
+        $mediaItems = $this->attachImmersiveImages($post, 2);
+        $firstMedia = $mediaItems->get(0);
+        $secondMedia = $mediaItems->get(1);
+
+        $response = $this->actingAs($gm)->get(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
+        $this->assertGalleryImageContains($html, (int) $firstMedia->id, $firstMedia->getUrl());
+
+        $firstMedia->refresh();
+        $secondMedia->refresh();
+
+        $this->assertNull($firstMedia->getCustomProperty('slot'));
+        $this->assertNull($secondMedia->getCustomProperty('slot'));
+    }
+
     public function test_referenced_inline_images_do_not_render_again_in_gallery(): void
     {
         [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
@@ -487,6 +569,8 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $this->assertContains(InteractsWithMedia::class, class_uses_recursive(Handout::class));
         $this->assertTrue(is_subclass_of(EncyclopediaEntry::class, HasMedia::class));
         $this->assertContains(InteractsWithMedia::class, class_uses_recursive(EncyclopediaEntry::class));
+        $this->assertTrue(is_subclass_of(Scene::class, HasMedia::class));
+        $this->assertContains(InteractsWithMedia::class, class_uses_recursive(Scene::class));
 
         $this->assertFalse(is_subclass_of(Character::class, HasMedia::class));
         $this->assertFalse(is_subclass_of(User::class, HasMedia::class));
@@ -562,6 +646,28 @@ class PostImmersiveImagesFeatureTest extends TestCase
             '/<img[^>]*data-post-immersive-gallery-image="1"[^>]*data-post-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
             $html,
         );
+    }
+
+    /**
+     * @return array<int, \Spatie\MediaLibrary\MediaCollections\Models\Media>
+     */
+    private function mediaByPersistedSlot(Post $post): array
+    {
+        $mediaBySlot = [];
+
+        foreach ($post->getMedia(Post::IMMERSIVE_IMAGES_COLLECTION) as $media) {
+            $slot = (int) $media->getCustomProperty('slot');
+
+            if ($slot <= 0) {
+                continue;
+            }
+
+            $mediaBySlot[$slot] = $media;
+        }
+
+        ksort($mediaBySlot);
+
+        return $mediaBySlot;
     }
 
     /**

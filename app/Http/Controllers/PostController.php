@@ -91,10 +91,16 @@ class PostController extends Controller
                 : 'Die Erzählung fließt weiter im Abenteuerkanal.',
         ];
 
-        return redirect()
+        $redirect = redirect()
             ->to(route('campaigns.scenes.show', ['world' => $world, 'campaign' => $campaign, 'scene' => $scene]).'#post-'.$storedPost->post->id)
             ->with('status', $statusMessage)
             ->with('post_feedback', $postFeedback);
+
+        if ($storedPost->mediaWarning !== null) {
+            $redirect->with('media_warning', $storedPost->mediaWarning);
+        }
+
+        return $redirect;
     }
 
     public function edit(Request $request, World $world, Post $post): View
@@ -151,7 +157,7 @@ class PostController extends Controller
          * } $updateData
          */
         $updateData = $data;
-        $this->updatePostAction->execute($post, $user, $updateData);
+        $mediaWarning = $this->updatePostAction->execute($post, $user, $updateData);
 
         $post->load(Post::SCENE_CONTEXT_RELATIONS);
         [$scene, $campaign] = $this->resolveSceneContext($post);
@@ -166,9 +172,15 @@ class PostController extends Controller
             $parameters['return_to'] = $returnTo;
         }
 
-        return redirect()
+        $redirect = redirect()
             ->to(route('campaigns.scenes.show', $parameters).'#post-'.$post->id)
             ->with('status', 'Beitrag aktualisiert.');
+
+        if ($mediaWarning !== null) {
+            $redirect->with('media_warning', $mediaWarning);
+        }
+
+        return $redirect;
     }
 
     public function destroy(Request $request, World $world, Post $post): RedirectResponse

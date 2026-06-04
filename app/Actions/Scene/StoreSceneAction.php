@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Scene;
 
+use App\Domain\Media\InlineImageMediaMutationException;
+use App\Domain\Scene\SceneContentImageService;
 use App\Domain\Scene\SceneHeaderImageStorage;
 use App\Models\Campaign;
 use App\Models\Scene;
@@ -16,18 +18,21 @@ class StoreSceneAction
 {
     public function __construct(
         private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,
+        private readonly SceneContentImageService $sceneContentImageService,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
+     * @param  list<UploadedFile>  $contentImages
      */
     public function execute(
         Campaign $campaign,
         array $data,
         int $creatorId,
         ?UploadedFile $headerImage = null,
-    ): Scene {
-        unset($data['header_image'], $data['remove_header_image']);
+        array $contentImages = [],
+    ): SceneMutationResult {
+        unset($data['header_image'], $data['remove_header_image'], $data['content_images'], $data['remove_content_media_ids']);
 
         $data['campaign_id'] = $campaign->id;
         $data['created_by'] = $creatorId > 0 ? $creatorId : null;
@@ -35,7 +40,7 @@ class StoreSceneAction
         $stagedHeaderImage = $this->sceneHeaderImageStorage->stage($headerImage);
 
         try {
-            return DB::transaction(function () use ($campaign, $data, $creatorId, $stagedHeaderImage): Scene {
+            $scene = DB::transaction(function () use ($campaign, $data, $creatorId, $stagedHeaderImage): Scene {
                 /** @var Scene $scene */
                 $scene = Scene::query()->create($data);
 
@@ -54,6 +59,22 @@ class StoreSceneAction
 
             throw $exception;
         }
+
+        $mediaWarning = null;
+
+        if ($contentImages !== []) {
+            try {
+                $this->sceneContentImageService->mutateContentImages($scene, $contentImages);
+            } catch (InlineImageMediaMutationException $exception) {
+                report($exception);
+                $mediaWarning = $exception->userMessage();
+            } catch (Throwable $throwable) {
+                report($throwable);
+                $mediaWarning = InlineImageMediaMutationException::uploadFailed($throwable)->userMessage();
+            }
+        }
+
+        return new SceneMutationResult($scene, $mediaWarning);
     }
 
     private function ensureDefaultSubscriptions(Scene $scene, int $creatorId, int $ownerId): void

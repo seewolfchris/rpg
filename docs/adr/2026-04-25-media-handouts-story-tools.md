@@ -93,6 +93,7 @@ Als geplante Grundlage wird Spatie Laravel Media Library vorgesehen. Diese ADR i
 
 Geplante Collections:
 - `immersive_images` auf `App\Models\Post`
+- `scene_content_images` auf `App\Models\Scene`
 - `handout_file` oder `handout_images` auf `Handout`
 - `avatar` auf `Character`/`User` später optional
 
@@ -111,7 +112,10 @@ Konservative Entscheidung:
 - Unrevealed-Handouts dürfen nicht über öffentliche URLs erreichbar sein.
 - Handout-Dateien müssen über autorisierte Laravel-Routen oder einen gleichwertigen kontrollierten Mechanismus ausgeliefert werden.
 - Thumbnails/Conversions unrevealed Handouts dürfen nicht über öffentliche URLs leaken.
-- Immersive Bilder dürfen initial einfacher starten, müssen aber Post-Sichtbarkeit, Moderation und SoftDelete-Semantik respektieren.
+- Immersive Bilder in Spielleitungsbeiträgen und Bilder in Szenenbeschreibungen nutzen bewusst die `public`-Disk wie bestehende Post-Bilder.
+- Direkte Bild-URLs dieser beiden Collections sind damit unabhängig von Post- oder Szenenberechtigungen erreichbar. Das ist eine explizite Privacy-/Produktentscheidung für atmosphärische Inline-Bilder, nicht für vertrauliche Handouts.
+- Falls Szenen-Inhaltsbilder später vertrauliche oder berechtigungsabhängige Informationen tragen sollen, ist eine separate spätere Scheibe für autorisierte Medienauslieferung erforderlich.
+- Immersive Bilder müssen Post-Sichtbarkeit, Moderation und SoftDelete-Semantik im Rendering respektieren; Szenen-Inhaltsbilder müssen Szenen-Sichtbarkeit im Rendering respektieren.
 
 Die spätere Implementierung muss Lifecycle-Regeln explizit entscheiden für:
 - Post-Delete

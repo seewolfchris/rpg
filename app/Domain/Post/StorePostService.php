@@ -2,6 +2,7 @@
 
 namespace App\Domain\Post;
 
+use App\Domain\Media\InlineImageMediaMutationException;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
@@ -41,7 +42,7 @@ class StorePostService
             data: $data,
             normalizedPayload: $normalizedPayload,
         );
-        $this->runAfterCommitMediaMutationPhase(
+        $mediaWarning = $this->runAfterCommitMediaMutationPhase(
             post: $transactionResult['post'],
             data: $data,
         );
@@ -69,29 +70,38 @@ class StorePostService
             post: $transactionResult['post'],
             probeCreated: $transactionResult['probeCreated'],
             inventoryAwardApplied: $transactionResult['inventoryAwardApplied'],
+            mediaWarning: $mediaWarning,
         );
     }
 
     /**
      * @param  array<string, mixed>  $data
      */
-    private function runAfterCommitMediaMutationPhase(Post $post, array $data): void
+    private function runAfterCommitMediaMutationPhase(Post $post, array $data): ?string
     {
         if (! $post->isGmNarration()) {
-            return;
+            return null;
         }
 
         $immersiveImages = $this->extractImmersiveImagesFromPayload($data);
 
         if ($immersiveImages === []) {
-            return;
+            return null;
         }
 
         try {
             $this->postImmersiveImageService->attachImmersiveImages($post, $immersiveImages);
+        } catch (InlineImageMediaMutationException $exception) {
+            report($exception);
+
+            return $exception->userMessage();
         } catch (Throwable $throwable) {
             report($throwable);
+
+            return InlineImageMediaMutationException::uploadFailed($throwable)->userMessage();
         }
+
+        return null;
     }
 
     /**

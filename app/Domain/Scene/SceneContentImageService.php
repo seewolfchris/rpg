@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Post;
+namespace App\Domain\Scene;
 
 use App\Domain\Media\InlineImageMediaMutationException;
 use App\Domain\Media\InlineImageMediaMutationResult;
-use App\Models\Post;
+use App\Models\Scene;
 use App\Support\InlineImageSlotResolver;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\UploadedFile;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
 
-final class PostImmersiveImageService
+final class SceneContentImageService
 {
     public function __construct(
         private readonly DatabaseManager $db,
@@ -23,39 +23,23 @@ final class PostImmersiveImageService
 
     /**
      * @param  list<UploadedFile>  $files
-     */
-    public function attachImmersiveImages(Post $post, array $files): int
-    {
-        return $this->mutateImmersiveImages($post, $files)->attachedCount;
-    }
-
-    /**
-     * @param  list<int>  $mediaIds
-     */
-    public function removeImmersiveImagesById(Post $post, array $mediaIds): int
-    {
-        return $this->mutateImmersiveImages($post, [], $mediaIds)->removedCount;
-    }
-
-    /**
-     * @param  list<UploadedFile>  $files
      * @param  list<int>  $removeMediaIds
      */
-    public function mutateImmersiveImages(Post $post, array $files = [], array $removeMediaIds = []): InlineImageMediaMutationResult
+    public function mutateContentImages(Scene $scene, array $files = [], array $removeMediaIds = []): InlineImageMediaMutationResult
     {
         $files = $this->normalizeUploadedFiles($files);
         $removeMediaIds = $this->normalizeMediaIds($removeMediaIds);
         $createdMedia = [];
 
         try {
-            return $this->db->transaction(function () use ($post, $files, $removeMediaIds, &$createdMedia): InlineImageMediaMutationResult {
-                /** @var Post $lockedPost */
-                $lockedPost = Post::query()
-                    ->whereKey((int) $post->id)
+            return $this->db->transaction(function () use ($scene, $files, $removeMediaIds, &$createdMedia): InlineImageMediaMutationResult {
+                /** @var Scene $lockedScene */
+                $lockedScene = Scene::query()
+                    ->whereKey((int) $scene->id)
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                $currentMedia = $this->lockedImmersiveMedia($lockedPost);
+                $currentMedia = $this->lockedContentMedia($lockedScene);
                 $currentMediaIds = $currentMedia
                     ->map(static fn (Media $media): int => (int) $media->id)
                     ->all();
@@ -86,10 +70,10 @@ final class PostImmersiveImageService
                     }
 
                     /** @var Media $media */
-                    $media = $lockedPost
+                    $media = $lockedScene
                         ->addMedia($file)
                         ->withCustomProperties(['slot' => $slot])
-                        ->toMediaCollection(Post::IMMERSIVE_IMAGES_COLLECTION);
+                        ->toMediaCollection(Scene::CONTENT_IMAGES_COLLECTION);
 
                     $createdMedia[] = $media;
                     $attachedCount++;
@@ -124,13 +108,32 @@ final class PostImmersiveImageService
     /**
      * @return \Illuminate\Support\Collection<int, Media>
      */
-    private function lockedImmersiveMedia(Post $post): \Illuminate\Support\Collection
+    private function lockedContentMedia(Scene $scene): \Illuminate\Support\Collection
     {
-        return $post->media()
-            ->where('collection_name', Post::IMMERSIVE_IMAGES_COLLECTION)
+        return $scene->media()
+            ->where('collection_name', Scene::CONTENT_IMAGES_COLLECTION)
             ->orderBy('order_column')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * @param  array<mixed>  $files
+     * @return list<UploadedFile>
+     */
+    private function normalizeUploadedFiles(array $files): array
+    {
+        $normalized = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $normalized[] = $file;
+        }
+
+        return $normalized;
     }
 
     /**
@@ -151,28 +154,7 @@ final class PostImmersiveImageService
             $normalized[] = $id;
         }
 
-        $normalized = array_values(array_unique($normalized));
-
-        return $normalized;
-    }
-
-    /**
-     * @param  array<mixed>  $files
-     * @return list<UploadedFile>
-     */
-    private function normalizeUploadedFiles(array $files): array
-    {
-        $normalized = [];
-
-        foreach ($files as $file) {
-            if (! $file instanceof UploadedFile) {
-                continue;
-            }
-
-            $normalized[] = $file;
-        }
-
-        return $normalized;
+        return array_values(array_unique($normalized));
     }
 
     /**

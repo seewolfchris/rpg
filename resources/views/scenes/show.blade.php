@@ -20,6 +20,15 @@
         if (! empty($scene->header_image_path)) {
             $sceneHeaderStyle = "background-image: linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,.78)), url('".asset('storage/'.$scene->header_image_path)."'); background-size: cover; background-position: center;";
         }
+
+        $sceneContentImages = $scene->contentImagesForDisplay();
+        $renderedSceneDescription = $scene->description
+            ? app(\App\Support\SceneDescriptionRenderer::class)->render((string) $scene->description, $sceneContentImages)
+            : null;
+        $sceneInlineMediaIds = $renderedSceneDescription?->inlineMediaIds() ?? [];
+        $sceneGalleryContentImages = $sceneContentImages
+            ->reject(static fn ($media): bool => in_array((int) $media->id, $sceneInlineMediaIds, true))
+            ->values();
     @endphp
     <section class="ui-page-medium space-y-6">
         <x-navigation.context-bar
@@ -98,10 +107,28 @@
                 </div>
             @endif
 
-            @if ($scene->description)
+            @if ($scene->description || $sceneGalleryContentImages->isNotEmpty())
                 <article class="ui-card-soft mt-6 p-5">
                     <h2 class="font-heading text-xl text-stone-100">Szenenbeschreibung</h2>
-                    <div class="ui-reading-width mt-3 whitespace-pre-line leading-relaxed text-stone-300">{{ $scene->description }}</div>
+                    @if ($renderedSceneDescription !== null)
+                        <div class="ui-reading-width mt-3 space-y-4 leading-relaxed text-stone-300">
+                            {!! $renderedSceneDescription->toHtml() !!}
+                        </div>
+                    @endif
+                    @if ($sceneGalleryContentImages->isNotEmpty())
+                        <div class="ui-reading-width mt-5 grid gap-3 sm:grid-cols-2">
+                            @foreach ($sceneGalleryContentImages as $sceneContentImage)
+                                <img
+                                    data-scene-content-gallery-image="1"
+                                    data-scene-media-id="{{ $sceneContentImage->id }}"
+                                    src="{{ $sceneContentImage->getUrl() }}"
+                                    alt="Bild zur Szenenbeschreibung"
+                                    loading="lazy"
+                                    class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                                >
+                            @endforeach
+                        </div>
+                    @endif
                 </article>
             @endif
 

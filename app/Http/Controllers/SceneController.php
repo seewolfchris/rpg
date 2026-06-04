@@ -56,12 +56,14 @@ class SceneController extends Controller
         $this->ensureCampaignBelongsToWorld($world, $campaign);
         $this->authorize('create', [Scene::class, $campaign]);
 
-        $scene = $this->storeSceneAction->execute(
+        $result = $this->storeSceneAction->execute(
             campaign: $campaign,
             data: $request->validated(),
             creatorId: (int) auth()->id(),
             headerImage: $this->headerImageFromRequest($request),
+            contentImages: $request->uploadedContentImages(),
         );
+        $scene = $result->scene;
 
         $parameters = ['world' => $world, 'campaign' => $campaign, 'scene' => $scene];
         $returnTo = $this->safeReturnUrl->carry($request);
@@ -69,9 +71,15 @@ class SceneController extends Controller
             $parameters['return_to'] = $returnTo;
         }
 
-        return redirect()
+        $redirect = redirect()
             ->route('campaigns.scenes.show', $parameters)
             ->with('status', 'Szene erstellt.');
+
+        if ($result->mediaWarning !== null) {
+            $redirect->with('media_warning', $result->mediaWarning);
+        }
+
+        return $redirect;
     }
 
     public function show(Request $request, World $world, Campaign $campaign, Scene $scene): View|RedirectResponse
@@ -165,11 +173,13 @@ class SceneController extends Controller
         $this->ensureSceneBelongsToWorld($world, $campaign, $scene);
         $this->authorize('update', $scene);
 
-        $this->updateSceneAction->execute(
+        $result = $this->updateSceneAction->execute(
             scene: $scene,
             data: $request->validated(),
             headerImage: $this->headerImageFromRequest($request),
             removeHeaderImage: $request->boolean('remove_header_image'),
+            contentImages: $request->uploadedContentImages(),
+            removeContentMediaIds: $request->removeContentMediaIds(),
         );
 
         $parameters = ['world' => $world, 'campaign' => $campaign, 'scene' => $scene];
@@ -178,9 +188,15 @@ class SceneController extends Controller
             $parameters['return_to'] = $returnTo;
         }
 
-        return redirect()
+        $redirect = redirect()
             ->route('campaigns.scenes.show', $parameters)
             ->with('status', 'Szene aktualisiert.');
+
+        if ($result->mediaWarning !== null) {
+            $redirect->with('media_warning', $result->mediaWarning);
+        }
+
+        return $redirect;
     }
 
     public function destroy(World $world, Campaign $campaign, Scene $scene): RedirectResponse

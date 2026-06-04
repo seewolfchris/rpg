@@ -7,6 +7,7 @@ namespace App\Actions\Post;
 use App\Actions\Post\Support\PostUpdateModerationContext;
 use App\Actions\Post\Support\PostUpdateMutationInput;
 use App\Actions\Post\Support\PostUpdateTransactionResult;
+use App\Domain\Media\InlineImageMediaMutationException;
 use App\Domain\Post\PostImmersiveImageService;
 use App\Domain\Post\PostModerationService;
 use App\Domain\Post\PostNotificationOrchestrator;
@@ -42,14 +43,16 @@ final class UpdatePostAction
      *   moderation_note?: mixed
      * }  $data
      */
-    public function execute(Post $post, User $editor, array $data): void
+    public function execute(Post $post, User $editor, array $data): ?string
     {
         $mutation = $this->runValidationAndNormalizationPhase($data);
         $result = $this->runTransactionalMutationPhase($post, $editor, $mutation);
-        $this->runAfterCommitMediaMutationPhase($result->post, $mutation);
+        $mediaWarning = $this->runAfterCommitMediaMutationPhase($result->post, $mutation);
         $this->runAfterCommitEffectsPhase($result, $editor);
 
         $post->refresh();
+
+        return $mediaWarning;
     }
 
     /**
@@ -132,21 +135,29 @@ final class UpdatePostAction
         }
     }
 
-    private function runAfterCommitMediaMutationPhase(Post $post, PostUpdateMutationInput $mutation): void
+    private function runAfterCommitMediaMutationPhase(Post $post, PostUpdateMutationInput $mutation): ?string
     {
+        if ($mutation->removeImmersiveMediaIds === [] && (! $this->isGmNarrationMutation($mutation) || $mutation->immersiveImages === [])) {
+            return null;
+        }
+
         try {
-            if ($mutation->removeImmersiveMediaIds !== []) {
-                $this->postImmersiveImageService->removeImmersiveImagesById($post, $mutation->removeImmersiveMediaIds);
-            }
+            $this->postImmersiveImageService->mutateImmersiveImages(
+                post: $post,
+                files: $this->isGmNarrationMutation($mutation) ? $mutation->immersiveImages : [],
+                removeMediaIds: $mutation->removeImmersiveMediaIds,
+            );
+        } catch (InlineImageMediaMutationException $exception) {
+            report($exception);
 
-            if (! $this->isGmNarrationMutation($mutation) || $mutation->immersiveImages === []) {
-                return;
-            }
-
-            $this->postImmersiveImageService->attachImmersiveImages($post, $mutation->immersiveImages);
+            return $exception->userMessage();
         } catch (Throwable $throwable) {
             report($throwable);
+
+            return InlineImageMediaMutationException::uploadFailed($throwable)->userMessage();
         }
+
+        return null;
     }
 
     private function lockAndVerifyContext(Post $post): Post

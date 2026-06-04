@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Campaign;
 
+use App\Domain\Scene\SceneHeaderImageStorage;
 use App\Models\Campaign;
 use App\Models\Handout;
 use App\Models\Post;
+use App\Models\Scene;
 use App\Models\World;
 use Illuminate\Database\DatabaseManager;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -15,6 +17,7 @@ final class DeleteCampaignAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,
     ) {}
 
     public function execute(World $world, Campaign $campaign): void
@@ -46,14 +49,22 @@ final class DeleteCampaignAction
 
     private function persistDeletion(Campaign $campaign): void
     {
-        $this->cleanupPostAndHandoutMedia($campaign);
+        $this->cleanupCampaignMedia($campaign);
 
         $campaign->delete();
     }
 
-    private function cleanupPostAndHandoutMedia(Campaign $campaign): void
+    private function cleanupCampaignMedia(Campaign $campaign): void
     {
         $campaignId = (int) $campaign->id;
+
+        $sceneHeaderPaths = Scene::query()
+            ->where('campaign_id', $campaignId)
+            ->whereNotNull('header_image_path')
+            ->orderBy('id')
+            ->pluck('header_image_path')
+            ->filter(fn (mixed $path): bool => is_string($path) && $path !== '')
+            ->values();
 
         $handoutMediaIds = Media::query()
             ->join('handouts', 'media.model_id', '=', 'handouts.id')
@@ -72,8 +83,17 @@ final class DeleteCampaignAction
             ->orderBy('media.id')
             ->pluck('media.id');
 
+        $sceneContentMediaIds = Media::query()
+            ->join('scenes', 'media.model_id', '=', 'scenes.id')
+            ->where('media.model_type', Scene::class)
+            ->where('media.collection_name', Scene::CONTENT_IMAGES_COLLECTION)
+            ->where('scenes.campaign_id', $campaignId)
+            ->orderBy('media.id')
+            ->pluck('media.id');
+
         $mediaIds = $handoutMediaIds
             ->merge($postMediaIds)
+            ->merge($sceneContentMediaIds)
             ->unique()
             ->values();
 
@@ -83,6 +103,12 @@ final class DeleteCampaignAction
             if ($media instanceof Media) {
                 $media->delete();
             }
+        }
+
+        foreach ($sceneHeaderPaths as $sceneHeaderPath) {
+            $this->db->afterCommit(function () use ($sceneHeaderPath): void {
+                $this->sceneHeaderImageStorage->delete((string) $sceneHeaderPath);
+            });
         }
     }
 }

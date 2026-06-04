@@ -5,6 +5,27 @@
     $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
         ? $cancelUrl
         : (isset($scene) ? route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]) : route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+    $editingScene = isset($scene) && $scene instanceof \App\Models\Scene;
+    $existingSceneContentImagesRaw = $editingScene
+        ? ($scene->relationLoaded('media')
+            ? $scene->media->where('collection_name', \App\Models\Scene::CONTENT_IMAGES_COLLECTION)->values()
+            : $scene->media()->where('collection_name', \App\Models\Scene::CONTENT_IMAGES_COLLECTION)->get())
+        : collect();
+    $sceneContentMediaResolution = app(\App\Support\InlineImageSlotResolver::class)->resolve($existingSceneContentImagesRaw);
+    $existingSceneContentImages = collect($sceneContentMediaResolution->mediaBySlot())
+        ->sortKeys()
+        ->values()
+        ->concat(
+            $sceneContentMediaResolution->orderedMedia()
+                ->reject(static fn ($mediaItem): bool => array_key_exists((int) $mediaItem->id, $sceneContentMediaResolution->slotByMediaId()))
+                ->values()
+        )
+        ->values();
+    $sceneContentSlotByMediaId = $sceneContentMediaResolution->slotByMediaId();
+    $selectedSceneContentRemovalIds = collect((array) old('remove_content_media_ids', []))
+        ->map(static fn ($id) => is_numeric($id) ? (int) $id : 0)
+        ->filter(static fn (int $id): bool => $id > 0)
+        ->all();
 @endphp
 
 <div class="space-y-5">
@@ -90,7 +111,7 @@
     </div>
 
     <div>
-        <label for="header_image" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Szenen-Headerbild (optional)</label>
+        <label for="header_image" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Szenen-Titelbild (optional)</label>
         <input
             id="header_image"
             type="file"
@@ -98,11 +119,14 @@
             accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
             class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-amber-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:uppercase file:tracking-[0.08em] file:text-amber-100 hover:file:bg-amber-500/35 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
         >
+        <p class="mt-2 text-xs leading-relaxed text-stone-500">
+            Das Titelbild erscheint im Kopf der Szene und ist unabhängig von Bildern in der Szenenbeschreibung.
+        </p>
         @if (! empty($scene?->header_image_path))
             <div class="mt-3 space-y-2">
                 <img
                     src="{{ asset('storage/'.$scene->header_image_path) }}"
-                    alt="Aktuelles Szenen-Headerbild"
+                    alt="Aktuelles Szenen-Titelbild"
                     class="max-h-44 w-full rounded-md object-cover"
                 >
                 <label class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-300">
@@ -113,7 +137,7 @@
                         @checked((bool) old('remove_header_image', false))
                         class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
                     >
-                    Headerbild entfernen
+                    Titelbild entfernen
                 </label>
             </div>
         @endif
@@ -124,6 +148,102 @@
             <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
         @enderror
     </div>
+
+    <section
+        data-inline-image-controls
+        data-inline-image-target="#description"
+        data-inline-image-max-slots="4"
+        class="rounded-lg border border-stone-700/80 bg-black/30 p-4"
+    >
+        <div>
+            <label for="content_images" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Bilder in der Szenenbeschreibung (optional)</label>
+            <input
+                id="content_images"
+                type="file"
+                name="content_images[]"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                multiple
+                data-inline-image-file-input
+                class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-amber-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:uppercase file:tracking-[0.08em] file:text-amber-100 hover:file:bg-amber-500/35 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
+            >
+            <p class="mt-2 text-xs leading-relaxed text-stone-500">
+                Maximal 4 gespeicherte Bilder, JPG/PNG/WEBP, jeweils bis 4 MB. Marker [bild:1] bis [bild:4] setzen Bilder in die Beschreibung; nicht verwendete Bilder erscheinen als Galerie.
+            </p>
+            @error('content_images')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('content_images.*')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div data-inline-image-preview-list class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+        <p data-inline-image-status class="mt-3 text-xs text-stone-500"></p>
+
+        @if ($editingScene && $existingSceneContentImages->isNotEmpty())
+            <div class="mt-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Bestehende Bilder in der Szenenbeschreibung</p>
+                <p class="mt-2 text-xs text-stone-500">
+                    Bilder bleiben unverändert, solange sie nicht explizit zur Entfernung markiert werden.
+                </p>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($existingSceneContentImages as $contentImage)
+                        @php($displaySlot = $sceneContentSlotByMediaId[(int) $contentImage->id] ?? null)
+                        <div
+                            data-inline-image-existing
+                            data-inline-image-existing-slot="{{ $displaySlot }}"
+                            class="rounded-lg border border-stone-700/80 bg-black/35 p-3"
+                        >
+                            <img
+                                src="{{ $contentImage->getUrl() }}"
+                                alt="Bild in der Szenenbeschreibung"
+                                loading="lazy"
+                                class="h-40 w-full rounded-md object-cover"
+                            >
+                            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-stone-300">
+                                <span data-inline-image-slot-label class="rounded border border-stone-600/80 px-2 py-1 text-stone-200">
+                                    @if ($displaySlot !== null)
+                                        Slot {{ $displaySlot }}
+                                    @else
+                                        Galerie
+                                    @endif
+                                </span>
+                                @if ($displaySlot !== null)
+                                    <button
+                                        type="button"
+                                        data-inline-image-insert-marker
+                                        data-inline-image-slot="{{ $displaySlot }}"
+                                        class="rounded-md border border-amber-500/70 px-2 py-1 font-semibold text-amber-100 transition hover:bg-amber-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                                    >
+                                        Marker [bild:{{ $displaySlot }}]
+                                    </button>
+                                @endif
+                            </div>
+                            <label class="mt-3 inline-flex items-center gap-2 text-xs text-stone-300">
+                                <input
+                                    type="checkbox"
+                                    name="remove_content_media_ids[]"
+                                    value="{{ $contentImage->id }}"
+                                    data-inline-image-remove
+                                    @checked(in_array((int) $contentImage->id, $selectedSceneContentRemovalIds, true))
+                                    class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-amber-500 focus:ring-amber-500/60"
+                                >
+                                Bild entfernen
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+
+                @error('remove_content_media_ids')
+                    <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+                @error('remove_content_media_ids.*')
+                    <p class="mt-3 text-sm text-red-300">{{ $message }}</p>
+                @enderror
+            </div>
+        @endif
+    </section>
 
     <div class="grid gap-4 sm:grid-cols-3">
         <div>

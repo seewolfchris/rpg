@@ -124,6 +124,14 @@ Wenn die Spielleitung eine Nebenfigur spielt, kann sie deren Handlung ebenfalls 
 
 Die Spielleitung führt die Welt. Die Spieler führen ihre eigenen Figuren.
 
+## Bilder im Text
+
+Die Spielleitung kann Bilder in Szenenbeschreibungen und Spielleitungsbeiträgen verwenden, wenn sie Orientierung oder Atmosphäre stärken.
+
+Mit `[bild:1]`, `[bild:2]`, `[bild:3]` oder `[bild:4]` wird ein hochgeladenes Bild an dieser Stelle im Text angezeigt. Bilder ohne Marker erscheinen als Galerie unter dem Text.
+
+Ein Bild soll die Szene unterstützen, aber nicht ersetzen. Wichtige Informationen sollten immer auch im Text stehen.
+
 ---
 
 # (5) IC und OOC

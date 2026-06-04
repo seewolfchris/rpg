@@ -4,6 +4,7 @@ namespace App\Http\Requests\Scene;
 
 use App\Models\Campaign;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -38,6 +39,15 @@ class StoreSceneRequest extends FormRequest
             'summary' => ['nullable', 'string', 'max:1200'],
             'description' => ['nullable', 'string', 'max:15000'],
             'header_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'mimetypes:image/jpeg,image/png,image/webp,image/avif', 'max:4096'],
+            'content_images' => ['nullable', 'array', 'max:4'],
+            'content_images.*' => [
+                'bail',
+                'file',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:4096',
+            ],
             'status' => ['required', Rule::in(['open', 'closed', 'archived'])],
             'mood' => ['required', Rule::in($this->moodKeys())],
             'position' => ['nullable', 'integer', 'min:0', 'max:100000'],
@@ -45,6 +55,29 @@ class StoreSceneRequest extends FormRequest
             'opens_at' => ['nullable', 'date'],
             'closes_at' => ['nullable', 'date', 'after_or_equal:opens_at'],
         ];
+    }
+
+    /**
+     * @return list<UploadedFile>
+     */
+    public function uploadedContentImages(): array
+    {
+        $rawFiles = $this->file('content_images', []);
+        $files = $rawFiles instanceof UploadedFile
+            ? [$rawFiles]
+            : (is_array($rawFiles) ? $rawFiles : []);
+
+        $uploadedFiles = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $uploadedFiles[] = $file;
+        }
+
+        return $uploadedFiles;
     }
 
     protected function prepareForValidation(): void

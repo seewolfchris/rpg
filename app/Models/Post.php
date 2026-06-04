@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\PostContentRenderer;
 use App\Support\PostContentRenderResult;
+use App\Support\InlineImageSlotResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -248,11 +249,21 @@ class Post extends Model implements HasMedia
             ? $this->media->where('collection_name', self::IMMERSIVE_IMAGES_COLLECTION)
             : $this->getMedia(self::IMMERSIVE_IMAGES_COLLECTION);
 
-        return $media
-            ->sortBy([
-                ['order_column', 'asc'],
-                ['id', 'asc'],
-            ])
+        $slotResolver = app(InlineImageSlotResolver::class);
+        $resolution = $slotResolver->resolve($media);
+        $assignedMedia = collect($resolution->mediaBySlot())
+            ->sortKeys()
+            ->values();
+        $assignedMediaIds = $assignedMedia
+            ->map(static fn ($mediaItem): int => (int) $mediaItem->id)
+            ->all();
+
+        return $assignedMedia
+            ->concat(
+                $resolution->orderedMedia()
+                    ->reject(static fn ($mediaItem): bool => in_array((int) $mediaItem->id, $assignedMediaIds, true))
+                    ->values()
+            )
             ->values();
     }
 

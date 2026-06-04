@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Scene;
 
+use App\Domain\Media\InlineImageMediaMutationException;
+use App\Domain\Scene\SceneContentImageService;
 use App\Domain\Scene\SceneHeaderImageStorage;
 use App\Models\Scene;
 use Illuminate\Http\UploadedFile;
@@ -14,18 +16,23 @@ class UpdateSceneAction
 {
     public function __construct(
         private readonly SceneHeaderImageStorage $sceneHeaderImageStorage,
+        private readonly SceneContentImageService $sceneContentImageService,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data
+     * @param  list<UploadedFile>  $contentImages
+     * @param  list<int>  $removeContentMediaIds
      */
     public function execute(
         Scene $scene,
         array $data,
         ?UploadedFile $headerImage = null,
         bool $removeHeaderImage = false,
-    ): void {
-        unset($data['header_image'], $data['remove_header_image']);
+        array $contentImages = [],
+        array $removeContentMediaIds = [],
+    ): SceneMutationResult {
+        unset($data['header_image'], $data['remove_header_image'], $data['content_images'], $data['remove_content_media_ids']);
 
         $stagedHeaderImage = $this->sceneHeaderImageStorage->stage($headerImage);
         $replaceHeaderImage = $stagedHeaderImage !== null;
@@ -67,5 +74,27 @@ class UpdateSceneAction
 
             throw $exception;
         }
+
+        if ($contentImages === [] && $removeContentMediaIds === []) {
+            return new SceneMutationResult($scene, null);
+        }
+
+        try {
+            $this->sceneContentImageService->mutateContentImages(
+                scene: $scene,
+                files: $contentImages,
+                removeMediaIds: $removeContentMediaIds,
+            );
+        } catch (InlineImageMediaMutationException $exception) {
+            report($exception);
+
+            return new SceneMutationResult($scene, $exception->userMessage());
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return new SceneMutationResult($scene, InlineImageMediaMutationException::uploadFailed($throwable)->userMessage());
+        }
+
+        return new SceneMutationResult($scene, null);
     }
 }

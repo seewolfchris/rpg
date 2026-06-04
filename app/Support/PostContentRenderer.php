@@ -12,6 +12,10 @@ class PostContentRenderer
 
     private const INLINE_IMAGE_PLACEHOLDER_SPLIT_PATTERN = '/(\[bild:[1-4]\])/iu';
 
+    public function __construct(
+        private readonly InlineImageSlotResolver $inlineImageSlotResolver,
+    ) {}
+
     public function render(string $content, ?string $format): HtmlString
     {
         $inlineMediaIds = [];
@@ -318,25 +322,8 @@ class PostContentRenderer
      */
     private function inlineImagesByPosition(iterable $inlineImages): array
     {
-        $mediaItems = collect($inlineImages)
-            ->filter(static fn (mixed $media): bool => $media instanceof Media)
-            ->sortBy([
-                ['order_column', 'asc'],
-                ['id', 'asc'],
-            ])
-            ->values()
-            ->take(4);
-
-        $imagesByPosition = [];
-
-        foreach ($mediaItems as $index => $media) {
-            if (! $media instanceof Media) {
-                continue;
-            }
-
-            $imagesByPosition[$index + 1] = $media;
-        }
-
-        return $imagesByPosition;
+        return $this->inlineImageSlotResolver
+            ->resolve($inlineImages)
+            ->mediaBySlot();
     }
 }

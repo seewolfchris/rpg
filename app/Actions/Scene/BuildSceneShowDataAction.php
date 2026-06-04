@@ -21,7 +21,7 @@ class BuildSceneShowDataAction
 
     public function execute(World $world, Campaign $campaign, Scene $scene, User $user): SceneShowData
     {
-        $scene->load(['campaign.owner', 'creator', 'previousScene']);
+        $scene->load(['campaign.owner', 'creator', 'previousScene', 'media']);
         $scene->loadCount('subscriptions');
 
         $threadReadState = $this->sceneThreadReadStateService->resolveForShowAndMarkRead(

@@ -5,6 +5,7 @@ import { setupSceneThreadReadingMode } from './immersion/reading-mode';
 import { setupBrowserNotifications } from './app/browser-notifications';
 import { setupFormSubmitConfirmDialogs } from './app/confirm-dialogs';
 import { getCsrfToken } from './app/csrf';
+import { setupInlineImageControls } from './app/inline-image-controls';
 import { setupAtmosphericParallax } from './app/parallax';
 import { setupMobileSheetNavigation } from './app/navigation/mobile-sheet';
 import { setupPostEditorEnhancements } from './app/post-editor-enhancements';
@@ -89,6 +90,7 @@ document.addEventListener('htmx:afterSwap', (event) => {
     setupAtmosphericParallax();
     setupMobileSheetNavigation();
     setupPostEditorEnhancements();
+    setupInlineImageControls(target);
     setupOfflinePostQueue();
     setupOfflineQueuePreferenceToggle();
     void renderDeadLetterPanel();
@@ -102,6 +104,7 @@ const bootApplication = async () => {
     setupAtmosphericParallax();
     setupMobileSheetNavigation();
     setupPostEditorEnhancements();
+    setupInlineImageControls();
     setupPwaInstallPrompt();
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();

@@ -2,16 +2,24 @@
 
 namespace App\Models;
 
+use App\Support\InlineImageSlotResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Scene extends Model
+class Scene extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\SceneFactory> */
     use HasFactory;
+
+    use InteractsWithMedia;
+
+    public const CONTENT_IMAGES_COLLECTION = 'scene_content_images';
 
     /**
      * @var list<string>
@@ -159,5 +167,43 @@ class Scene extends Model
         return $this->belongsToMany(User::class, 'scene_subscriptions')
             ->withPivot(['is_muted', 'last_read_post_id', 'last_read_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * @return Collection<int, \Spatie\MediaLibrary\MediaCollections\Models\Media>
+     */
+    public function contentImagesForDisplay(): Collection
+    {
+        $media = $this->relationLoaded('media')
+            ? $this->media->where('collection_name', self::CONTENT_IMAGES_COLLECTION)
+            : $this->getMedia(self::CONTENT_IMAGES_COLLECTION);
+
+        $slotResolver = app(InlineImageSlotResolver::class);
+        $resolution = $slotResolver->resolve($media);
+        $assignedMedia = collect($resolution->mediaBySlot())
+            ->sortKeys()
+            ->values();
+        $assignedMediaIds = $assignedMedia
+            ->map(static fn ($mediaItem): int => (int) $mediaItem->id)
+            ->all();
+
+        return $assignedMedia
+            ->concat(
+                $resolution->orderedMedia()
+                    ->reject(static fn ($mediaItem): bool => in_array((int) $mediaItem->id, $assignedMediaIds, true))
+                    ->values()
+            )
+            ->values();
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection(self::CONTENT_IMAGES_COLLECTION)
+            ->acceptsMimeTypes([
+                'image/jpeg',
+                'image/png',
+                'image/webp',
+            ]);
     }
 }

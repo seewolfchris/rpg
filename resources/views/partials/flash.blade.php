@@ -1,5 +1,6 @@
 @php($statusMessage = session('status'))
 @php($postFeedback = session('post_feedback'))
+@php($mediaWarning = session('media_warning'))
 
 @if ($statusMessage)
     @if (is_array($postFeedback))
@@ -23,4 +24,10 @@
             {{ $statusMessage }}
         </div>
     @endif
+@endif
+
+@if ($mediaWarning)
+    <div class="mb-6 rounded-lg border border-amber-600/45 bg-amber-950/30 px-4 py-3 text-sm text-amber-100" data-media-warning>
+        {{ $mediaWarning }}
+    </div>
 @endif
