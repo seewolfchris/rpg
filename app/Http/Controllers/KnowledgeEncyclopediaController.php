@@ -148,7 +148,6 @@ class KnowledgeEncyclopediaController extends Controller
             })
             ->values()
             ->all();
-        $imagePrompts = $entryMetaBuilder->buildImagePrompts($entry);
         $canManage = $request->user()?->isAdmin() ?? false;
 
         return view('knowledge.encyclopedia-entry', compact(
@@ -157,7 +156,6 @@ class KnowledgeEncyclopediaController extends Controller
             'relatedEntries',
             'renderedContent',
             'crossLinks',
-            'imagePrompts',
             'canManage',
         ));
     }

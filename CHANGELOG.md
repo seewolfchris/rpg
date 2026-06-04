@@ -3,6 +3,7 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
+- Veraltete Bild-Prompt-Vorschlaege aus oeffentlichen Enzyklopaedie-Eintraegen entfernt.
 - Dokumentationsdrift bereinigt: Statusachsen fuer Release, Entwicklungsstand und produktiven Live-Stand getrennt, Produktions-Env-Vorlage aktualisiert und Action-Finality-Guardrail ergaenzt.
 - Bilder im Text erweitert: Spielleitungsbeitraege und Szenenbeschreibungen unterstuetzen stabile Marker `[bild:1]` bis `[bild:4]`, bestehende Post-Bilder bleiben kompatibel, Szenen-Inhaltsbilder nutzen bewusst die Public-Disk.
 - Desktop-Seitenrahmen fuer Uebersichten, Kartenraster und Tabellen verbreitert; Lesebreiten fuer Regelwerke, Artikel und Szenenbeitraege bewusst begrenzt.

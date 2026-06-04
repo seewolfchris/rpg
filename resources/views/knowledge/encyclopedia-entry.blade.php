@@ -157,20 +157,6 @@
             </section>
         @endif
 
-        <section class="rounded-2xl border border-stone-800 bg-black/35 p-5 shadow-xl shadow-black/25">
-            <h2 class="font-heading text-xl text-stone-100">Bild-Prompt-Vorschläge</h2>
-            <p class="mt-1 text-sm text-stone-300">
-                Für Midjourney, SDXL oder ähnliche Tools. Prompts als Ausgangspunkt nutzen und bei Bedarf feinjustieren.
-            </p>
-            <div class="mt-4 space-y-3">
-                @foreach ($imagePrompts as $prompt)
-                    <article class="rounded-lg border border-stone-700/80 bg-black/35 p-3">
-                        <p class="font-mono text-xs leading-relaxed text-stone-200">{{ $prompt }}</p>
-                    </article>
-                @endforeach
-            </div>
-        </section>
-
         <article class="rounded-2xl border border-stone-800 bg-zinc-900 p-6 shadow-2xl">
             <div class="knowledge-content text-[#cccccc]">
                 {{ $renderedContent }}

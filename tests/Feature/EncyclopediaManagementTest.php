@@ -227,6 +227,7 @@ class EncyclopediaManagementTest extends TestCase
         $fixture = $this->encyclopediaFixture($world);
         $entry = $fixture['zeitalterEntry']->fresh('category');
         $this->assertNotNull($entry);
+        $removedPromptHeading = 'Bild-Prompt-'.'Vorschläge';
 
         $this->get(route('knowledge.encyclopedia.entry', [
             'world' => $entry->category->world,
@@ -235,8 +236,9 @@ class EncyclopediaManagementTest extends TestCase
         ]))
             ->assertOk()
             ->assertSeeText($entry->title)
+            ->assertSeeText($entry->content)
             ->assertSeeText('Alle Einträge')
-            ->assertSeeText('Bild-Prompt-Vorschläge');
+            ->assertDontSeeText($removedPromptHeading);
     }
 
     public function test_public_entry_detail_shows_extracted_cross_links_when_markdown_contains_them(): void
