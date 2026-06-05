@@ -5,7 +5,10 @@ Stand: 2026-06-04
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
 - Release-, Entwicklungs-, Live-/Build-/Beta-Status: `STATUS.md`
-- Planung/Statusachsen: `../ROADMAP.md`
+- Roadmap-Einstieg: `../ROADMAP.md`
+- Produkt-Roadmap: `PRODUCT_ROADMAP.md`
+- Technische Roadmap: `TECHNICAL_ROADMAP.md`
+- Manueller Testflight: `TESTFLIGHT_PLAN.md`
 - Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
 - Security-Hardening (technisch): `SECURITY.md`
@@ -16,6 +19,9 @@ Stand: 2026-06-04
 
 ## Kern-Dokumente (pflegepflichtig)
 - `PROJEKT-ÜBERSICHT.md`
+- `PRODUCT_ROADMAP.md`
+- `TECHNICAL_ROADMAP.md`
+- `TESTFLIGHT_PLAN.md`
 - `RELEASE-CHECKLISTE.md`
 - `STATUS.md`
 - `OPERATIONS_RUNBOOK.md`
@@ -30,6 +36,13 @@ Stand: 2026-06-04
 - Perf staging/prod snapshot: `PERFORMANCE-POSTS-LATEST-BY-ID-STAGING-PROD.md`
 - Datierte Perf-Läufe: `PERFORMANCE-POSTS-LATEST-BY-ID-YYYY-MM-DD.md`
 - Smoke snapshots: `SMOKE-PASS-*.md`
+
+## Roadmaps und Planung
+
+- `../ROADMAP.md` - strategischer Einstieg und Wegweiser
+- `PRODUCT_ROADMAP.md` - Produktprioritaeten und Feature-Phasen
+- `TECHNICAL_ROADMAP.md` - technische Konsolidierung und Betrieb
+- `TESTFLIGHT_PLAN.md` - kontrollierter Testlauf mit 3-5 Nutzern
 
 ## Aufräumregel (praktisch)
 1. `LATEST` und `GATE-LATEST` immer behalten.

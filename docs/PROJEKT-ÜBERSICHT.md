@@ -6,7 +6,10 @@ Repository-Branch: `main`
 ## Quicklinks
 - Einstieg und Setup: `README.md`
 - Operativer Live-Status (kanonisch): `docs/STATUS.md`
-- Gesamt-Roadmap: `ROADMAP.md`
+- Roadmap-Einstieg: `ROADMAP.md`
+- Produkt-Roadmap: `docs/PRODUCT_ROADMAP.md`
+- Technische Roadmap: `docs/TECHNICAL_ROADMAP.md`
+- Testflight-Plan: `docs/TESTFLIGHT_PLAN.md`
 - Immersion-Architektur: `docs/IMMERSION-ARCHITEKTUR.md`
 - Release-Ablauf: `docs/RELEASE-CHECKLISTE.md`
 - Betrieb/Incident-Handling: `docs/OPERATIONS_RUNBOOK.md`

@@ -145,7 +145,10 @@ Build-Artefakt-Drift und Release-Pipeline): siehe [docs/RELEASE-CHECKLISTE.md](d
 ## Dokumentation
 
 - Status (kanonisch): [docs/STATUS.md](docs/STATUS.md)
-- Roadmap: [ROADMAP.md](ROADMAP.md)
+- Roadmap-Einstieg: [ROADMAP.md](ROADMAP.md)
+- Produkt-Roadmap: [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md)
+- Technische Roadmap: [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+- Testflight-Plan: [docs/TESTFLIGHT_PLAN.md](docs/TESTFLIGHT_PLAN.md)
 - Release-Flow und Quality-Gates: [docs/RELEASE-CHECKLISTE.md](docs/RELEASE-CHECKLISTE.md)
 - Betrieb/Incidents: [docs/OPERATIONS_RUNBOOK.md](docs/OPERATIONS_RUNBOOK.md)
 - Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
