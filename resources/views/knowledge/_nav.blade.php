@@ -6,12 +6,14 @@
         ? [
             ['route' => 'knowledge.global.index', 'label' => 'Plattformwissen'],
             ['route' => 'knowledge.index', 'label' => 'Weltwissen', 'world' => true],
+            ['route' => 'knowledge.getting-started', 'label' => 'Erste Schritte', 'world' => true],
             ['route' => 'knowledge.how-to-play', 'label' => 'Wie spielt man?', 'world' => true],
             ['route' => 'knowledge.rules', 'label' => 'Regelwerk', 'world' => true],
             ['route' => 'knowledge.encyclopedia', 'pattern' => 'knowledge.encyclopedia*', 'label' => 'Enzyklopädie', 'world' => true],
         ]
         : [
             ['route' => 'knowledge.global.index', 'label' => 'Übersicht'],
+            ['route' => 'knowledge.global.getting-started', 'label' => 'Erste Schritte'],
             ['route' => 'knowledge.global.how-to-play', 'label' => 'Wie spielt man?'],
             ['route' => 'knowledge.global.rules', 'label' => 'Regelwerk'],
             ['route' => 'knowledge.global.encyclopedia', 'label' => 'Welten & Enzyklopädien'],
@@ -19,7 +21,7 @@
 @endphp
 
 <nav class="rounded-xl border border-stone-800 bg-neutral-900/70 p-3" aria-label="Wissenszentrum Navigation">
-    <div class="grid gap-2 sm:grid-cols-2 {{ $isWorldContext ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }}">
+    <div class="grid gap-2 sm:grid-cols-2 {{ $isWorldContext ? 'lg:grid-cols-6' : 'lg:grid-cols-5' }}">
         @foreach ($knowledgeTabs as $tab)
             @php($isCurrent = request()->routeIs($tab['pattern'] ?? $tab['route']))
             <a

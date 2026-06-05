@@ -43,6 +43,11 @@ class KnowledgePageController extends Controller
         return view('knowledge.how-to-play', compact('world'));
     }
 
+    public function gettingStarted(?World $world = null): View
+    {
+        return view('knowledge.getting-started', compact('world'));
+    }
+
     public function rules(?World $world = null): View
     {
         $rulebookSections = $this->loadGlobalRulebookSections();

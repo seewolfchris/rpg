@@ -297,6 +297,61 @@
     $cancelUrl = is_string($cancelUrl ?? null) && $cancelUrl !== ''
         ? $cancelUrl
         : ($backUrl ?? (isset($character) ? route('characters.show', $character) : route('characters.index')));
+    $useWizard = ! $isEdit;
+    $wizardSteps = [
+        'basics' => 'Welt & Grunddaten',
+        'options' => 'Herkunft & Berufung',
+        'attributes' => 'Attribute',
+        'story' => 'Biografie & Weltbezug',
+        'gear' => 'Ausrüstung & Avatar',
+        'summary' => 'Übersicht & Speichern',
+    ];
+    $wizardGuidance = [
+        'basics' => [
+            'title' => 'Welt & Grunddaten',
+            'task' => 'Fülle nur Name, optionalen Beinamen, Welt und Status aus. Damit ist klar, wo die Figur gespielt wird.',
+            'why' => 'Die Welt bestimmt die verfügbaren Optionen und verhindert, dass Figuren versehentlich in der falschen Spielwelt landen.',
+            'later' => 'Name, Beiname und Status kannst du später bearbeiten. Die Welt ist nach der Erstellung bewusst kein schneller Spielerwechsel.',
+            'skip' => 'Kampagnenbeitritt, Regeln, Ausrüstung und Hintergrunddetails sind hier noch nicht nötig.',
+        ],
+        'options' => [
+            'title' => 'Herkunft & Berufung',
+            'task' => 'Wähle Herkunft, Spezies und Berufung. Lies die Kurztexte und nimm die Option, die dein Spielbild am besten trifft.',
+            'why' => 'Diese Auswahl erklärt, woher die Figur kommt, was sie grundsätzlich kann und welche Werte automatisch angepasst werden.',
+            'later' => 'Vor dem Speichern kannst du jederzeit zurück. Nach Spielstart sollten Änderungen an Spezies oder Berufung mit der Spielleitung abgestimmt werden.',
+            'skip' => 'Du musst kein Startpaket optimieren und keine eigene Regelmaschine verstehen. Die bestehende Validierung bleibt maßgeblich.',
+        ],
+        'attributes' => [
+            'title' => 'Attribute',
+            'task' => 'Verteile acht Werte zwischen 30 und 60 und achte auf den erlaubten Durchschnitt.',
+            'why' => 'Attribute beschreiben die Grundkompetenz deiner Figur und fließen später in Proben, LE und AE ein.',
+            'later' => 'Narrative Notizen kannst du später pflegen. Die Zahlen selbst werden nach der Erstellung über Progression verändert.',
+            'skip' => 'Du musst keine perfekte Verteilung finden. Wichtig ist ein plausibles Profil, nicht mathematische Optimierung.',
+        ],
+        'story' => [
+            'title' => 'Biografie & Weltbezug',
+            'task' => 'Schreibe eine kurze Biografie, ein klares Konzept, eine Verbindung zur Welt und bei Bedarf ein GM-Geheimnis.',
+            'why' => 'Diese Angaben geben der Spielleitung Anknüpfungspunkte und helfen anderen, deine Figur in Szenen einzuordnen.',
+            'later' => 'Texte und Absprachen können wachsen, sobald die Figur gespielt wird.',
+            'skip' => 'Du brauchst keine vollständige Romanbiografie und keine komplette Regelkenntnis. Ein spielbarer Ansatz reicht.',
+        ],
+        'gear' => [
+            'title' => 'Ausrüstung & Avatar',
+            'task' => 'Trage nur wichtige Gegenstände ein und lade optional ein Portrait hoch.',
+            'why' => 'Ausrüstung und Bild machen die Figur in Szenen greifbarer, sind für den ersten Speichervorgang aber nicht der Kern.',
+            'later' => 'Inventar, Waffen, Rüstung und Avatar können im Spiel weiter gepflegt werden.',
+            'skip' => 'Du musst jetzt keinen vollständigen Einkaufszettel bauen und keine Kampfausrüstung ausoptimieren.',
+        ],
+        'summary' => [
+            'title' => 'Übersicht & Speichern',
+            'task' => 'Prüfe die wichtigsten Eckdaten und speichere erst, wenn Welt, Konzept und Werte stimmig wirken.',
+            'why' => 'Beim Speichern läuft weiterhin die kanonische Servervalidierung aus dem bestehenden Store-Vertrag.',
+            'later' => 'Nach dem Speichern geht es zu Charakterdetails, offenen Einladungen oder sichtbaren Kampagnen der aktiven Welt.',
+            'skip' => 'Hier wird keine fachlich falsche Kampagnenanmeldung ausgelöst.',
+        ],
+    ];
+    $errorKeys = $errors->getBag('default')->keys();
+    $firstErrorField = (string) ($errorKeys[0] ?? '');
 @endphp
 
 <section class="mx-auto w-full max-w-7xl rounded-3xl border border-stone-800 bg-black/40 p-5 shadow-2xl shadow-black/50 backdrop-blur-sm sm:p-8"
@@ -318,7 +373,10 @@
     </header>
 
     @if ($errors->any())
-        <article class="mt-6 rounded-xl border border-red-700/60 bg-red-950/35 p-4 text-sm text-red-200">
+        <article
+            class="mt-6 rounded-xl border border-red-700/60 bg-red-950/35 p-4 text-sm text-red-200"
+            @if ($firstErrorField !== '') data-validation-error-field="{{ $firstErrorField }}" @endif
+        >
             <h2 class="font-semibold uppercase tracking-widest">Validierung fehlgeschlagen</h2>
             <ul class="mt-2 list-disc space-y-1 pl-5">
                 @foreach ($errors->all() as $error)
@@ -326,6 +384,47 @@
                 @endforeach
             </ul>
         </article>
+    @endif
+
+    @if ($useWizard)
+        <section class="mt-6 rounded-2xl border border-stone-800 bg-neutral-950/75 p-5" aria-label="Charakter-Assistent">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Charakter-Assistent</p>
+                    <h2 class="mt-1 font-heading text-2xl text-stone-100">Schritt für Schritt zur Spielfigur</h2>
+                    <p class="mt-2 text-sm text-stone-300">
+                        Jeder Schritt erklärt, was jetzt wichtig ist und was du bewusst noch ignorieren kannst.
+                        Ohne JavaScript bleibt alles sichtbar und absendbar.
+                    </p>
+                </div>
+                <p class="rounded-md border border-stone-700/80 bg-black/35 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-stone-300" x-text="wizardProgressLabel">
+                    1 / 6
+                </p>
+            </div>
+
+            <div class="mt-4 h-2 overflow-hidden rounded-full bg-stone-800/80">
+                <div class="h-full rounded-full bg-amber-500/80 transition-all duration-200" :style="'width: ' + wizardProgressPercent + '%'"></div>
+            </div>
+
+            <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                @foreach ($wizardSteps as $wizardStepKey => $wizardStepLabel)
+                    <button
+                        type="button"
+                        class="rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] transition"
+                        :class="currentWizardStep === '{{ $wizardStepKey }}' ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-300 hover:border-stone-500 hover:text-stone-100'"
+                        @click="setWizardStep('{{ $wizardStepKey }}')"
+                    >
+                        {{ $wizardStepLabel }}
+                    </button>
+                @endforeach
+            </div>
+
+            <noscript>
+                <p class="mt-4 rounded-lg border border-stone-700/80 bg-black/35 p-3 text-sm text-stone-300">
+                    JavaScript ist deaktiviert. Das Formular wird vollständig angezeigt und kann normal gespeichert werden.
+                </p>
+            </noscript>
+        </section>
     @endif
 
     <form method="POST" action="{{ $action }}" enctype="multipart/form-data" class="mt-6 space-y-8">
@@ -337,8 +436,22 @@
             @method($method)
         @endif
 
+        @if ($useWizard)
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'basics',
+                'guidance' => $wizardGuidance['basics'],
+            ])
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'story',
+                'guidance' => $wizardGuidance['story'],
+            ])
+        @endif
+
         <section class="grid gap-6 lg:grid-cols-2">
-            <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+            <article
+                class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+                @if ($useWizard) x-show="wizardShowsStep('basics')" @endif
+            >
                 <h2 class="font-heading text-2xl text-stone-100">Identität</h2>
 
                 <div class="mt-4 space-y-4">
@@ -406,6 +519,16 @@
                         </select>
                     </div>
 
+                </div>
+            </article>
+
+            <article
+                class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+                @if ($useWizard) x-show="wizardShowsStep('story')" @endif
+            >
+                <h2 class="font-heading text-2xl text-stone-100">Narrative Kerndaten</h2>
+
+                <div class="mt-4 space-y-4">
                     <div>
                         <label for="bio" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Biografie</label>
                         <textarea
@@ -418,26 +541,6 @@
                         >{{ old('bio', $character->bio ?? '') }}</textarea>
                     </div>
 
-                    <div>
-                        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Herkunft</p>
-                        <div class="grid gap-2 sm:grid-cols-2">
-                            @foreach ($originOptions as $originKey => $originLabel)
-                                <label class="rounded-lg border border-stone-700/80 bg-black/35 px-3 py-2 text-sm text-stone-200 transition hover:border-stone-500"
-                                    :class="origin === '{{ $originKey }}' ? 'border-red-500/70 bg-red-500/10 text-red-100' : ''"
-                                >
-                                    <input type="radio" class="sr-only" name="origin" value="{{ $originKey }}" x-model="origin" @checked($selectedOrigin === $originKey)>
-                                    {{ $originLabel }}
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            </article>
-
-            <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
-                <h2 class="font-heading text-2xl text-stone-100">Narrative Kerndaten</h2>
-
-                <div class="mt-4 space-y-4">
                     <div>
                         <label for="concept" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Kurzes Konzept (1 Satz)</label>
                         <textarea
@@ -480,12 +583,36 @@
             </article>
         </section>
 
-        <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+        @if ($useWizard)
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'options',
+                'guidance' => $wizardGuidance['options'],
+            ])
+        @endif
+
+        <section
+            class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+            @if ($useWizard) x-show="wizardShowsStep('options')" @endif
+        >
             <h2 class="font-heading text-2xl text-stone-100">Spezies</h2>
             <p class="mt-2 text-sm text-stone-300">Spezies-Boni werden sofort auf effektive Mindestwerte und LE/AE angewendet.</p>
             <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500" x-show="origin === 'real_world_beginner'" x-cloak>
                 Herkunft "Real-World Anfänger": Nur Mensch ist verfügbar.
             </p>
+
+            <div class="mt-4">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Herkunft</p>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    @foreach ($originOptions as $originKey => $originLabel)
+                        <label class="rounded-lg border border-stone-700/80 bg-black/35 px-3 py-2 text-sm text-stone-200 transition hover:border-stone-500"
+                            :class="origin === '{{ $originKey }}' ? 'border-red-500/70 bg-red-500/10 text-red-100' : ''"
+                        >
+                            <input type="radio" class="sr-only" name="origin" value="{{ $originKey }}" x-model="origin" @checked($selectedOrigin === $originKey)>
+                            {{ $originLabel }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
 
             <div class="mt-4 grid gap-3 lg:grid-cols-3">
                 <template x-if="visibleSpeciesEntries.length === 0">
@@ -506,7 +633,17 @@
             </div>
         </section>
 
-        <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+        @if ($useWizard)
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'attributes',
+                'guidance' => $wizardGuidance['attributes'],
+            ])
+        @endif
+
+        <section
+            class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+            @if ($useWizard) x-show="wizardShowsStep('attributes')" @endif
+        >
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 class="font-heading text-2xl text-stone-100">Grundeigenschaften</h2>
@@ -582,7 +719,10 @@
             </div>
         </section>
 
-        <section class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <section
+            class="grid gap-6 lg:grid-cols-[1.4fr_1fr]"
+            @if ($useWizard) x-show="wizardShowsStep('options')" @endif
+        >
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <h2 class="font-heading text-2xl text-stone-100">Berufung</h2>
                 <p class="mt-2 text-sm text-stone-300">Mindestwerte werden gegen deine effektiven Attribute (inkl. Spezies) geprüft.</p>
@@ -694,7 +834,10 @@
             </article>
         </section>
 
-        <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+        <section
+            class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+            @if ($useWizard) x-show="wizardShowsStep('story')" @endif
+        >
             <h2 class="font-heading text-2xl text-stone-100">Vorteile und Nachteile (1:1)</h2>
             <p class="mt-2 text-sm text-stone-300">
                 Wähle {{ $traitsMin }} bis {{ $traitsMax }} Vorteile und exakt gleich viele Nachteile.
@@ -803,7 +946,17 @@
             </div>
         </section>
 
-        <section class="space-y-6">
+        @if ($useWizard)
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'gear',
+                'guidance' => $wizardGuidance['gear'],
+            ])
+        @endif
+
+        <section
+            class="space-y-6"
+            @if ($useWizard) x-show="wizardShowsStep('gear')" @endif
+        >
             <article class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
                 <div class="flex items-center justify-between gap-3">
                     <div>
@@ -1043,7 +1196,10 @@
             </article>
         </section>
 
-        <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5">
+        <section
+            class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5"
+            @if ($useWizard) x-show="wizardShowsStep('gear')" @endif
+        >
             <h2 class="font-heading text-2xl text-stone-100">Avatar</h2>
             <p class="mt-2 text-sm text-stone-300">Porträt deiner Figur für Szenenansicht und Steckbrief.</p>
 
@@ -1068,6 +1224,82 @@
                 @endif
             </div>
         </section>
+
+        @if ($useWizard)
+            @include('characters.partials.wizard-step-guidance', [
+                'wizardStepKey' => 'summary',
+                'guidance' => $wizardGuidance['summary'],
+            ])
+
+            <section class="rounded-2xl border border-stone-800 bg-neutral-950/75 p-5" x-show="wizardShowsStep('summary')">
+                <h2 class="font-heading text-2xl text-stone-100">Übersicht & Speichern</h2>
+                <p class="mt-2 text-sm text-stone-300">
+                    Prüfe die Eckdaten. Die verbindliche Prüfung passiert weiterhin serverseitig beim Speichern.
+                </p>
+
+                <dl class="mt-5 grid gap-3 md:grid-cols-2">
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Welt</dt>
+                        <dd class="mt-1 font-semibold text-stone-100">{{ $selectedWorldName }}</dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Herkunft</dt>
+                        <dd class="mt-1 font-semibold text-stone-100" x-text="selectedOriginLabel"></dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Spezies</dt>
+                        <dd class="mt-1 font-semibold text-stone-100" x-text="selectedSpeciesLabel"></dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Berufung</dt>
+                        <dd class="mt-1 font-semibold text-stone-100" x-text="selectedCallingLabel"></dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Attribute</dt>
+                        <dd class="mt-1 font-semibold" :class="averageValid ? 'text-emerald-200' : 'text-red-300'" x-text="averageFormatted"></dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">LE / AE</dt>
+                        <dd class="mt-1 font-semibold text-stone-100"><span x-text="leMax"></span> LE / <span x-text="aeMax"></span> AE</dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Vorteile / Nachteile</dt>
+                        <dd class="mt-1 font-semibold" :class="traitsValid ? 'text-emerald-200' : 'text-red-300'">
+                            <span x-text="advantages.length"></span> / <span x-text="disadvantages.length"></span>
+                        </dd>
+                    </div>
+                    <div class="rounded-xl border border-stone-800 bg-black/35 p-4">
+                        <dt class="text-xs uppercase tracking-[0.12em] text-stone-400">Ausrüstung</dt>
+                        <dd class="mt-1 font-semibold text-stone-100">
+                            <span x-text="inventory.length"></span> Gegenstände,
+                            <span x-text="weapons.length"></span> Waffen,
+                            <span x-text="armors.length"></span> Rüstungen
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+        @endif
+
+        @if ($useWizard)
+            <nav class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-800 bg-black/35 p-4" aria-label="Charakter-Assistent Navigation">
+                <button
+                    type="button"
+                    class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100 disabled:opacity-40"
+                    @click="previousWizardStep()"
+                    :disabled="currentWizardIndex === 0"
+                >
+                    <span x-text="previousWizardButtonLabel">Zurück im Assistenten</span>
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md border border-amber-500/70 bg-amber-500/15 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-500/25 disabled:opacity-40"
+                    @click="nextWizardStep()"
+                    :disabled="currentWizardIndex >= wizardSteps.length - 1"
+                >
+                    <span x-text="nextWizardButtonLabel">Weiter</span>
+                </button>
+            </nav>
+        @endif
 
         <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-stone-800 pt-6">
             <a

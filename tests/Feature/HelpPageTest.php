@@ -36,6 +36,12 @@ class HelpPageTest extends TestCase
             ->assertSeeText('Schnellstart in 7 Schritten')
             ->assertSeeText('Ich-Perspektive');
 
+        $this->get(route('knowledge.global.getting-started'))
+            ->assertOk()
+            ->assertSeeText('Erste Schritte ins Spiel')
+            ->assertSeeText('Was ist was?')
+            ->assertSeeText('Einladungen ansehen');
+
         $this->get(route('knowledge.global.rules'))
             ->assertOk()
             ->assertSeeText('Regelwerk')
@@ -62,6 +68,12 @@ class HelpPageTest extends TestCase
             ->assertOk()
             ->assertSeeText('Schnellstart in 7 Schritten')
             ->assertSeeText('Ich-Perspektive');
+
+        $this->get(route('knowledge.getting-started', ['world' => $world]))
+            ->assertOk()
+            ->assertSeeText('Erste Schritte ins Spiel')
+            ->assertSeeText('Aktive Welt:')
+            ->assertSeeText('Charakter erstellen');
 
         $this->get(route('knowledge.rules', ['world' => $world]))
             ->assertOk()

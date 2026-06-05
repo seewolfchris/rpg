@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Dashboard\BuildDashboardNextStepAction;
 use App\Domain\Post\PostModerationScope;
 use App\Models\Character;
 use App\Models\Campaign;
@@ -20,6 +21,7 @@ class DashboardController extends Controller
     public function __construct(
         private readonly NavigationCounters $navigationCounters,
         private readonly PostModerationScope $postModerationScope,
+        private readonly BuildDashboardNextStepAction $buildDashboardNextStepAction,
     ) {}
 
     public function __invoke(Request $request): View
@@ -74,6 +76,7 @@ class DashboardController extends Controller
             ->count();
 
         $bookmarkCount = $this->navigationCounters->forUser($user)['bookmarkCount'];
+        $dashboardNextStep = $this->buildDashboardNextStepAction->execute($user, $selectedWorld);
 
         $hasCharacter = Character::query()
             ->where('user_id', $user->id)
@@ -146,6 +149,7 @@ class DashboardController extends Controller
             'canAccessModerationQueue' => $canAccessModerationQueue,
             'unreadSceneCount' => $unreadSceneCount,
             'bookmarkCount' => $bookmarkCount,
+            'dashboardNextStep' => $dashboardNextStep,
             'tutorialSteps' => $tutorialSteps,
             'tutorialCompletedCount' => $tutorialCompletedCount,
             'worlds' => $worlds,

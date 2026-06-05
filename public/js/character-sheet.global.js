@@ -179,6 +179,40 @@
             inventory: [],
             weapons: [],
             armors: [],
+            currentWizardStep: 'basics',
+
+            wizardSteps: [
+                {
+                    key: 'basics',
+                    label: 'Welt & Grunddaten',
+                    fields: ['name', 'epithet', 'world_id', 'status'],
+                },
+                {
+                    key: 'options',
+                    label: 'Herkunft & Berufung',
+                    fields: ['origin', 'species', 'calling', 'calling_custom_name', 'calling_custom_description'],
+                },
+                {
+                    key: 'attributes',
+                    label: 'Attribute',
+                    fields: ['mu', 'kl', 'in', 'ch', 'ff', 'ge', 'ko', 'kk'],
+                },
+                {
+                    key: 'story',
+                    label: 'Biografie & Weltbezug',
+                    fields: ['bio', 'concept', 'world_connection', 'gm_secret', 'advantages', 'disadvantages', 'gm_note'],
+                },
+                {
+                    key: 'gear',
+                    label: 'Ausrüstung & Avatar',
+                    fields: ['inventory', 'weapons', 'armors', 'avatar'],
+                },
+                {
+                    key: 'summary',
+                    label: 'Übersicht & Speichern',
+                    fields: [],
+                },
+            ],
 
             init() {
                 if (!this.worldId || !this.worldConfigs?.[this.worldId]) {
@@ -215,6 +249,28 @@
                         this.enforceWorldSelections();
                     });
                 }
+
+                this.focusFirstInvalidWizardStep();
+            },
+
+            focusFirstInvalidWizardStep() {
+                if (typeof document === 'undefined') {
+                    return;
+                }
+
+                const invalidField = document.querySelector('[aria-invalid="true"], .is-invalid, [data-validation-error-field]');
+                if (!(invalidField instanceof HTMLElement)) {
+                    return;
+                }
+
+                const fieldName = invalidField.getAttribute('name')
+                    ?? invalidField.getAttribute('data-validation-error-field')
+                    ?? '';
+                const step = this.wizardStepForField(fieldName);
+
+                if (step) {
+                    this.currentWizardStep = step;
+                }
             },
 
             get config() {
@@ -230,6 +286,10 @@
 
             get originOptions() {
                 return this.config.origins ?? {};
+            },
+
+            get selectedOriginLabel() {
+                return this.originOptions[this.origin] ?? 'Unbekannte Herkunft';
             },
 
             get speciesOptions() {
@@ -359,6 +419,10 @@
                 return this.speciesOptions[this.species] ?? null;
             },
 
+            get selectedSpeciesLabel() {
+                return this.selectedSpecies?.label ?? 'Unbekannte Spezies';
+            },
+
             get selectedCalling() {
                 return this.callingOptions[this.calling] ?? null;
             },
@@ -409,6 +473,76 @@
 
             get armorsMax() {
                 return 12;
+            },
+
+            get currentWizardIndex() {
+                const index = this.wizardSteps.findIndex((step) => step.key === this.currentWizardStep);
+
+                return index >= 0 ? index : 0;
+            },
+
+            get wizardProgressLabel() {
+                return `${this.currentWizardIndex + 1} / ${this.wizardSteps.length}`;
+            },
+
+            get wizardProgressPercent() {
+                if (this.wizardSteps.length === 0) {
+                    return 0;
+                }
+
+                return ((this.currentWizardIndex + 1) / this.wizardSteps.length) * 100;
+            },
+
+            get nextWizardStepEntry() {
+                return this.wizardSteps[this.currentWizardIndex + 1] ?? null;
+            },
+
+            get previousWizardStepEntry() {
+                return this.wizardSteps[this.currentWizardIndex - 1] ?? null;
+            },
+
+            get nextWizardButtonLabel() {
+                return this.nextWizardStepEntry
+                    ? `Weiter zu ${this.nextWizardStepEntry.label}`
+                    : 'Speichern prüfen';
+            },
+
+            get previousWizardButtonLabel() {
+                return this.previousWizardStepEntry
+                    ? `Zurück zu ${this.previousWizardStepEntry.label}`
+                    : 'Zurück im Assistenten';
+            },
+
+            wizardShowsStep(step) {
+                return this.currentWizardStep === step;
+            },
+
+            setWizardStep(step) {
+                if (this.wizardSteps.some((entry) => entry.key === step)) {
+                    this.currentWizardStep = step;
+                }
+            },
+
+            nextWizardStep() {
+                const nextIndex = Math.min(this.currentWizardIndex + 1, this.wizardSteps.length - 1);
+                this.currentWizardStep = this.wizardSteps[nextIndex]?.key ?? this.currentWizardStep;
+            },
+
+            previousWizardStep() {
+                const previousIndex = Math.max(this.currentWizardIndex - 1, 0);
+                this.currentWizardStep = this.wizardSteps[previousIndex]?.key ?? this.currentWizardStep;
+            },
+
+            wizardStepForField(fieldName) {
+                const normalizedField = String(fieldName ?? '').replace(/\[[^\]]*\]/g, '');
+                const step = this.wizardSteps.find((entry) => entry.fields.some((field) => (
+                    normalizedField === field
+                    || normalizedField === `${field}_note`
+                    || normalizedField.startsWith(`${field}.`)
+                    || normalizedField.startsWith(`${field}[`)
+                )));
+
+                return step?.key ?? null;
             },
 
             get requiresCustomCalling() {

@@ -14,6 +14,9 @@ Route::get('/wissen', [KnowledgePageController::class, 'index'])
 Route::get('/wissen/wie-spielt-man', [KnowledgePageController::class, 'howToPlay'])
     ->name('knowledge.how-to-play');
 
+Route::get('/wissen/erste-schritte', [KnowledgePageController::class, 'gettingStarted'])
+    ->name('knowledge.getting-started');
+
 Route::get('/wissen/regelwerk', [KnowledgePageController::class, 'rules'])
     ->name('knowledge.rules');
 

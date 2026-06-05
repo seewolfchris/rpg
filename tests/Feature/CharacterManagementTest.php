@@ -146,6 +146,19 @@ class CharacterManagementTest extends TestCase
             ->assertOk()
             ->assertSee('character-sheet.global.js', false)
             ->assertSee('x-data="characterSheetForm(', false)
+            ->assertSeeText('Charakter-Assistent')
+            ->assertSeeText('Schritt für Schritt zur Spielfigur')
+            ->assertSeeText('Welt & Grunddaten')
+            ->assertSeeText('Herkunft & Berufung')
+            ->assertSeeText('Übersicht & Speichern')
+            ->assertSeeText('Was du hier tust')
+            ->assertSeeText('Warum das wichtig ist')
+            ->assertSeeText('Was du später ändern kannst')
+            ->assertSeeText('Was du jetzt noch nicht wissen musst')
+            ->assertSeeText('Fülle nur Name, optionalen Beinamen, Welt und Status aus.')
+            ->assertSeeText('Du musst jetzt keinen vollständigen Einkaufszettel bauen')
+            ->assertSeeText('Hier wird keine fachlich falsche Kampagnenanmeldung ausgelöst.')
+            ->assertSeeText('JavaScript ist deaktiviert. Das Formular wird vollständig angezeigt und kann normal gespeichert werden.')
             ->assertDontSee('@vite/client', false)
             ->assertDontSee(':5173', false);
     }
@@ -221,6 +234,19 @@ class CharacterManagementTest extends TestCase
         ]], $character->armors);
 
         $response->assertRedirect();
+    }
+
+    public function test_character_create_preserves_return_to_navigation(): void
+    {
+        $user = User::factory()->create();
+        $returnTo = '/campaign-invitations';
+
+        $response = $this->actingAs($user)
+            ->get(route('characters.create', ['return_to' => $returnTo]));
+
+        $response->assertOk()
+            ->assertSee('name="return_to" value="'.$returnTo.'"', false)
+            ->assertSee('href="'.$returnTo.'"', false);
     }
 
     public function test_character_index_shows_associated_player_name_on_character_card(): void
@@ -503,6 +529,13 @@ class CharacterManagementTest extends TestCase
                 fn (string $message): bool => str_contains($message, 'mindestens')
             )
         );
+
+        $this->actingAs($user)
+            ->withSession(['errors' => $errors])
+            ->get(route('characters.create'))
+            ->assertOk()
+            ->assertSeeText('Validierung fehlgeschlagen')
+            ->assertSee('data-validation-error-field="concept"', false);
     }
 
     public function test_character_sheet_shows_specific_required_messages_for_traits(): void

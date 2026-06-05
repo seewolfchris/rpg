@@ -86,3 +86,59 @@ test('characterSheetForm filters callings by origin and resets invalid selection
     );
     assert.equal(component.calling, 'barde');
 });
+
+test('characterSheetForm exposes progressive wizard state without changing form payload rules', () => {
+    const component = characterSheetForm({
+        config: baseConfig,
+        worldConfigs: {
+            1: baseConfig,
+        },
+        attributeKeys: ['mu'],
+        initial: {
+            worldId: '1',
+            origin: 'native_vhaltor',
+            species: 'mensch',
+            calling: 'barde',
+            attributes: { mu: 40 },
+            attributeNotes: {},
+            advantages: ['Diszipliniert'],
+            disadvantages: ['Misstrauisch'],
+            inventory: [{ name: 'Notizbuch', quantity: 1, equipped: false }],
+            weapons: [{ name: 'Dolch', attack: 35, parry: 30, damage: 8 }],
+            armors: [{ name: 'Leder', protection: 1, equipped: false }],
+        },
+    });
+
+    component.init();
+
+    assert.equal(component.currentWizardStep, 'basics');
+    assert.equal(component.wizardSteps.at(-1).label, 'Übersicht & Speichern');
+    assert.equal(component.wizardProgressLabel, '1 / 6');
+    assert.equal(component.wizardShowsStep('basics'), true);
+    assert.equal(component.wizardShowsStep('summary'), false);
+    assert.equal(component.previousWizardButtonLabel, 'Zurück im Assistenten');
+    assert.equal(component.nextWizardButtonLabel, 'Weiter zu Herkunft & Berufung');
+    assert.equal(component.wizardStepForField('origin'), 'options');
+    assert.equal(component.wizardStepForField('in'), 'attributes');
+    assert.equal(component.wizardStepForField('in_note'), 'attributes');
+    assert.equal(component.wizardStepForField('bio'), 'story');
+    assert.equal(component.wizardStepForField('inventory.0.name'), 'gear');
+
+    component.nextWizardStep();
+    assert.equal(component.currentWizardStep, 'options');
+    assert.equal(component.selectedOriginLabel, 'Aus dieser Welt');
+    assert.equal(component.selectedSpeciesLabel, 'Mensch');
+    assert.equal(component.selectedCallingLabel, 'Barde');
+
+    component.setWizardStep('summary');
+    assert.equal(component.currentWizardStep, 'summary');
+    assert.equal(component.wizardProgressLabel, '6 / 6');
+    assert.equal(component.previousWizardButtonLabel, 'Zurück zu Ausrüstung & Avatar');
+    assert.equal(component.nextWizardButtonLabel, 'Speichern prüfen');
+
+    component.previousWizardStep();
+    assert.equal(component.currentWizardStep, 'gear');
+
+    component.setWizardStep('unknown');
+    assert.equal(component.currentWizardStep, 'gear');
+});
