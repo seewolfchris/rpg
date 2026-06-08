@@ -53,6 +53,11 @@ Route::prefix('/admin')
             ->name('admin.users.update')
             ->middleware('throttle:moderation');
 
+        Route::delete('users/{user}', [AdminUserController::class, 'destroy'])
+            ->whereNumber('user')
+            ->name('admin.users.destroy')
+            ->middleware('throttle:moderation');
+
         Route::patch('worlds/{world}/toggle-active', [WorldAdminController::class, 'toggleActive'])
             ->name('admin.worlds.toggle-active')
             ->middleware('throttle:moderation');

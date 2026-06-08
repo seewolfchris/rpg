@@ -55,9 +55,13 @@ class LoginRequest extends FormRequest
         $this->session()->invalidate();
         $this->session()->regenerateToken();
 
-        $message = $user->isSuspended()
-            ? 'Account ist gesperrt.'
-            : 'Account wartet auf Freischaltung.';
+        if ($user->isDeletedUserSystemAccount()) {
+            $message = trans('auth.failed');
+        } elseif ($user->isSuspended()) {
+            $message = 'Account ist gesperrt.';
+        } else {
+            $message = 'Account wartet auf Freischaltung.';
+        }
 
         throw ValidationException::withMessages([
             'email' => $message,

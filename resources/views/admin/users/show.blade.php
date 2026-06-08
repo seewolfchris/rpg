@@ -10,6 +10,7 @@
         \App\Enums\UserStatus::PENDING->value => 'Wartend',
         default => 'Gesperrt',
     })
+    @php($isDeletedUserSystemAccount = $user->isDeletedUserSystemAccount())
 
     <section class="ui-page-wide rounded-2xl border border-stone-800 bg-neutral-900/60 p-6">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -17,13 +18,26 @@
                 <p class="text-xs uppercase tracking-widest text-amber-300/80">Admin · Benutzer</p>
                 <h1 class="mt-2 font-heading break-words text-3xl text-stone-100 sm:text-4xl">{{ $user->name }}</h1>
                 <p class="mt-3 break-words text-sm text-stone-300">{{ $user->email }}</p>
+                @if ($isDeletedUserSystemAccount)
+                    <p class="mt-3 inline-flex rounded-full border border-red-500/70 px-2 py-1 text-xs uppercase tracking-widest text-red-200">
+                        Technisches Systemkonto
+                    </p>
+                @endif
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('admin.users.index') }}" class="ui-btn inline-flex">Übersicht</a>
-                <a href="{{ route('admin.users.edit', $user) }}" class="ui-btn ui-btn-accent inline-flex">Bearbeiten</a>
+                @unless ($isDeletedUserSystemAccount)
+                    <a href="{{ route('admin.users.edit', $user) }}" class="ui-btn ui-btn-accent inline-flex">Bearbeiten</a>
+                @endunless
             </div>
         </div>
     </section>
+
+    @error('user')
+        <section class="ui-page-wide mt-4 rounded-2xl border border-red-500/60 bg-red-950/30 p-4 text-sm text-red-100">
+            {{ $message }}
+        </section>
+    @enderror
 
     <section class="ui-page-wide mt-6 grid gap-4 lg:grid-cols-2">
         <article class="rounded-2xl border border-stone-800 bg-neutral-900/60 p-5">
@@ -142,4 +156,35 @@
             </dl>
         </article>
     </section>
+
+    @unless ($isDeletedUserSystemAccount)
+        <section class="ui-page-wide mt-6 rounded-2xl border border-red-500/60 bg-red-950/20 p-5">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-red-300">Gefahrenzone</p>
+                    <h2 class="mt-2 font-heading text-xl text-stone-100">Benutzer endgültig entfernen</h2>
+                    <p class="mt-3 max-w-3xl text-sm text-stone-300">
+                        Der Benutzer wird aus der Datenbank gelöscht. Erhaltenswerte Spielinhalte werden auf '{{ \App\Models\User::DELETED_USER_SYSTEM_NAME }}' übertragen.
+                    </p>
+                    @if ($user->owned_campaigns_count > 0)
+                        <p class="mt-2 max-w-3xl text-sm text-amber-200">
+                            Dieser Benutzer besitzt {{ $user->owned_campaigns_count }} {{ $user->owned_campaigns_count === 1 ? 'Kampagne' : 'Kampagnen' }}. Beim Entfernen wird der Kampagnen-Owner auf '{{ \App\Models\User::DELETED_USER_SYSTEM_NAME }}' übertragen.
+                        </p>
+                    @endif
+                </div>
+
+                <form method="POST" action="{{ route('admin.users.destroy', $user) }}">
+                    @csrf
+                    @method('DELETE')
+                    <button
+                        type="submit"
+                        class="rounded-md border border-red-500/80 bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/25"
+                        onclick="return confirm('Benutzer endgültig entfernen? Erhaltenswerte Spielinhalte werden auf {{ \App\Models\User::DELETED_USER_SYSTEM_NAME }} übertragen.')"
+                    >
+                        Benutzer endgültig entfernen
+                    </button>
+                </form>
+            </div>
+        </section>
+    @endunless
 @endsection

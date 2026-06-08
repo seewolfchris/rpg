@@ -32,6 +32,7 @@ class UpdateAdminUserRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
+                Rule::notIn([User::DELETED_USER_SYSTEM_EMAIL]),
                 Rule::unique('users', 'email')->ignore($targetUserId),
             ],
             'password' => ['nullable', 'confirmed', Password::defaults()],

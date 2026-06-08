@@ -41,6 +41,12 @@ final class UpdateAdminManagedUserAction
                 ]);
             }
 
+            if ($lockedTarget->isDeletedUserSystemAccount()) {
+                throw ValidationException::withMessages([
+                    'user' => 'Das technische Systemkonto kann nicht bearbeitet werden.',
+                ]);
+            }
+
             $nextRole = UserRole::from((string) $attributes['role']);
             $nextStatus = UserStatus::from((string) $attributes['status']);
 

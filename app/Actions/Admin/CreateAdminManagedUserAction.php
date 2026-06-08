@@ -41,6 +41,12 @@ final class CreateAdminManagedUserAction
                 ]);
             }
 
+            if (strcasecmp((string) $attributes['email'], User::DELETED_USER_SYSTEM_EMAIL) === 0) {
+                throw ValidationException::withMessages([
+                    'email' => 'Diese E-Mail-Adresse ist für ein technisches Systemkonto reserviert.',
+                ]);
+            }
+
             return $this->persistUser($lockedActor, $attributes);
         }, 3);
 

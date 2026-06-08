@@ -22,6 +22,10 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasPushSubscriptions, Notifiable;
 
+    public const DELETED_USER_SYSTEM_NAME = 'Gelöschter Benutzer';
+
+    public const DELETED_USER_SYSTEM_EMAIL = 'deleted-user@system.invalid';
+
     /**
      * @var array<string, array<string, bool>>
      */
@@ -340,7 +344,12 @@ class User extends Authenticatable
 
     public function canAccessPlatform(): bool
     {
-        return $this->isActive();
+        return $this->isActive() && ! $this->isDeletedUserSystemAccount();
+    }
+
+    public function isDeletedUserSystemAccount(): bool
+    {
+        return strcasecmp((string) $this->email, self::DELETED_USER_SYSTEM_EMAIL) === 0;
     }
 
     /**

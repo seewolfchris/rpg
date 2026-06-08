@@ -30,6 +30,7 @@ class AdminUserModerationController extends Controller
         $search = trim((string) $request->query('q', ''));
 
         $users = User::query()
+            ->where('email', '!=', User::DELETED_USER_SYSTEM_EMAIL)
             ->when($search !== '', function ($query) use ($search): void {
                 $searchTerm = '%'.$search.'%';
                 $query->where(function ($innerQuery) use ($searchTerm): void {

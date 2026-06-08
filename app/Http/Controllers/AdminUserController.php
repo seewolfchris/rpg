@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Admin\CreateAdminManagedUserAction;
+use App\Actions\Admin\DeleteAdminManagedUserAction;
 use App\Actions\Admin\UpdateAdminManagedUserAction;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
@@ -19,6 +20,7 @@ class AdminUserController extends Controller
     public function __construct(
         private readonly CreateAdminManagedUserAction $createAdminManagedUserAction,
         private readonly UpdateAdminManagedUserAction $updateAdminManagedUserAction,
+        private readonly DeleteAdminManagedUserAction $deleteAdminManagedUserAction,
     ) {}
 
     public function index(Request $request): View
@@ -26,6 +28,7 @@ class AdminUserController extends Controller
         $filters = $this->normalizedFilters($request);
 
         $users = User::query()
+            ->where('email', '!=', User::DELETED_USER_SYSTEM_EMAIL)
             ->withCount(['ownedCampaigns', 'campaignMemberships'])
             ->when($filters['q'] !== '', function ($query) use ($filters): void {
                 $searchTerm = '%'.$filters['q'].'%';
@@ -87,6 +90,8 @@ class AdminUserController extends Controller
 
     public function edit(User $user): View
     {
+        abort_if($user->isDeletedUserSystemAccount(), 404);
+
         return view('admin.users.edit', compact('user'));
     }
 
@@ -108,6 +113,24 @@ class AdminUserController extends Controller
         return redirect()
             ->route('admin.users.show', $user)
             ->with('status', 'Benutzer '.$user->name.' aktualisiert.');
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        $actor = $this->authenticatedUser($request);
+        $userName = $user->name;
+
+        try {
+            $this->deleteAdminManagedUserAction->execute($actor, $user);
+        } catch (ValidationException $exception) {
+            return back()->withErrors([
+                'user' => $this->firstValidationMessage($exception),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('status', 'Benutzer '.$userName.' endgültig entfernt.');
     }
 
     /**
@@ -142,5 +165,18 @@ class AdminUserController extends Controller
             'sl' => $sl,
             'moderation' => $moderation,
         ];
+    }
+
+    private function firstValidationMessage(ValidationException $exception): string
+    {
+        foreach ($exception->errors() as $messages) {
+            $firstMessage = $messages[0] ?? null;
+
+            if (is_string($firstMessage) && $firstMessage !== '') {
+                return $firstMessage;
+            }
+        }
+
+        return 'Benutzer konnte nicht entfernt werden.';
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Actions\Admin;
 
+use App\Actions\Admin\DeleteAdminManagedUserAction;
 use App\Actions\Admin\UpdateAdminManagedUserAction;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
@@ -32,5 +33,15 @@ class AdminUserManagementActionTest extends TestCase
             'can_post_without_moderation' => (bool) $target->can_post_without_moderation,
             'status_reason' => 'last active admin',
         ]);
+    }
+
+    public function test_it_blocks_deleting_last_active_admin(): void
+    {
+        $actor = User::factory()->admin()->suspended()->create();
+        $target = User::factory()->admin()->active()->create();
+
+        $this->expectException(ValidationException::class);
+
+        app(DeleteAdminManagedUserAction::class)->execute($actor, $target);
     }
 }
