@@ -33,7 +33,7 @@
     $isBookmarksCurrent = request()->routeIs('bookmarks.index');
     $isInvitationsCurrent = request()->routeIs('campaign-invitations.index');
     $isGmCurrent = request()->routeIs('gm.index');
-    $isAdminCurrent = request()->routeIs('admin.users.moderation.index');
+    $isAdminCurrent = request()->routeIs('admin.users.*');
     $showManagementNavigation = auth()->check() && (
         auth()->user()->isGmOrAdmin()
         || auth()->user()->hasAnyCoGmCampaignAccess()
@@ -156,7 +156,7 @@
             @endif
             @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))
                 <a
-                    href="{{ route('admin.users.moderation.index') }}"
+                    href="{{ route('admin.users.index') }}"
                     class="{{ $secondaryLinkBase }} {{ $isAdminSection ? $secondaryLinkActive : $secondaryLinkInactive }}"
                     @if ($isAdminCurrent) aria-current="page" @endif
                 >

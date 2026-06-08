@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminUserModerationController;
 use App\Http\Controllers\WorldAdminController;
 use App\Http\Controllers\WorldCallingOptionAdminController;
@@ -10,6 +11,16 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('/admin')
     ->middleware('role:admin')
     ->group(function (): void {
+        Route::get('users', [AdminUserController::class, 'index'])
+            ->name('admin.users.index');
+
+        Route::get('users/create', [AdminUserController::class, 'create'])
+            ->name('admin.users.create');
+
+        Route::post('users', [AdminUserController::class, 'store'])
+            ->name('admin.users.store')
+            ->middleware('throttle:moderation');
+
         Route::get('users/moderation', [AdminUserModerationController::class, 'index'])
             ->name('admin.users.moderation.index');
 
@@ -27,6 +38,19 @@ Route::prefix('/admin')
 
         Route::patch('users/{user}/reactivate', [AdminUserModerationController::class, 'reactivate'])
             ->name('admin.users.moderation.reactivate')
+            ->middleware('throttle:moderation');
+
+        Route::get('users/{user}', [AdminUserController::class, 'show'])
+            ->whereNumber('user')
+            ->name('admin.users.show');
+
+        Route::get('users/{user}/edit', [AdminUserController::class, 'edit'])
+            ->whereNumber('user')
+            ->name('admin.users.edit');
+
+        Route::patch('users/{user}', [AdminUserController::class, 'update'])
+            ->whereNumber('user')
+            ->name('admin.users.update')
             ->middleware('throttle:moderation');
 
         Route::patch('worlds/{world}/toggle-active', [WorldAdminController::class, 'toggleActive'])

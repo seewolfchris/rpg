@@ -41,7 +41,7 @@ class NavigationActiveStateTest extends TestCase
             'bookmarks' => ['bookmarks.index', 'Lesezeichen', true],
             'invitations' => ['campaign-invitations.index', 'Einladungen', false],
             'gm' => ['gm.index', 'GM-Bereich', false],
-            'admin' => ['admin.users.moderation.index', 'Benutzerverwaltung', false],
+            'admin' => ['admin.users.index', 'Benutzerverwaltung', false],
         ];
     }
 
