@@ -160,6 +160,13 @@ $PHP_BIN artisan config:cache
 - Globale Wissensseiten laden (`/wissen`, `/wissen/enzyklopaedie`), `/hilfe` liefert `302` auf `/wissen`.
 - Kampagnen-/Szenen-Legacy-Pfade ohne Weltsegment liefern `301` auf den Weltkontext.
 - Charakter-Erstellung lädt ohne JS-Fehler.
+- Manueller Smoke für Admin-User-Löschung:
+  - Testuser erstellen.
+  - Testuser Kampagne, Szene, Charakter und Post erzeugen lassen.
+  - Testuser als Admin über die Gefahrenzone endgültig entfernen.
+  - Prüfen: User taucht nicht mehr in normalen Benutzerlisten auf.
+  - Prüfen: Kampagne, Szene, Post und Charakter existieren weiter.
+  - Prüfen: erhaltene Inhalte zeigen verständlich `Gelöschter Benutzer` statt kaputter Referenzen.
 - Offline-Queue-Fehlerpfad prüfen (kurz):
   - Validierungsfehler (`422`) erzeugt einen Eintrag im Bereich "Offline-Entwürfe mit Fehler".
   - UI zeigt `error_summary` (z. B. `Text zu kurz`) und erlaubt "In Editor übernehmen" (Anhängen/Ersetzen/Abbrechen).

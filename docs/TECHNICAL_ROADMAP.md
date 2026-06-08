@@ -62,6 +62,25 @@ in `docs/STATUS.md`.
 - Moderation, Revisionen, Pins, Reactions, Bookmarks nicht vermischen
 - weitere Konsolidierung nur characterization-test-first
 
+### Datenmodell-Haertung fuer User-Loeschung
+
+- Leitregel: Benutzerkonten sind loeschbar. Erzaehlte Geschichte ist unverletzlich.
+- Technischer Schuldschein: Narrative Inhalte duerfen auf Datenbankebene nicht mehr durch User-Cascade geloescht werden.
+- Zielmodell: Restrict + Action. Direkte `User::delete()`-Pfade werden durch `restrictOnDelete()` blockiert; die Admin-Delete-Action haengt narrative Inhalte vorher kontrolliert auf `Geloeschter Benutzer <deleted-user@system.invalid>` um.
+- Spaetere Migration fuer narrative User-FKs vorbereiten:
+  - `posts.user_id`
+  - `campaigns.owner_id`
+  - `characters.user_id`
+  - `scenes.created_by`
+  - `story_log_entries.created_by`
+  - `handouts.created_by`
+  - `campaign_gm_contact_threads.created_by`
+  - `campaign_gm_contact_messages.user_id`
+  - `dice_rolls.user_id`
+  - `post_mentions.mentioned_user_id`
+- Persoenliche/technische Daten bleiben bewusst entfernbar, z. B. Memberships, Invitations, Bookmarks, Subscriptions, Reactions, Notes, Sessions und Push-Abos.
+- Umsetzung erst nach erfolgreichem Deploy-Smoke der aktuellen Admin-User-Loeschung; Migration mit Tests fuer direkten Delete-Block und erfolgreichen Action-Reassign absichern.
+
 ### Betrieb
 
 - Release-Smoke verbessern
