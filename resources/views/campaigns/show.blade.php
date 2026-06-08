@@ -232,6 +232,11 @@
                 Owner: <span class="font-semibold text-stone-100">{{ $campaign->owner->name }}</span>.
                 Owner bleibt eine Kampagneneigenschaft und ist keine Membership-Rolle.
             </p>
+            @if (auth()->user()?->isAdmin())
+                <p class="mt-2 text-sm text-amber-200">
+                    Admins können Kampagnenrollen plattformseitig verwalten; der Owner bleibt unverändert.
+                </p>
+            @endif
 
             @if ($memberships->isEmpty())
                 <p class="mt-5 text-sm text-stone-400">Noch keine aktiven Memberships vorhanden.</p>

@@ -17,7 +17,7 @@ class UpdateCampaignMembershipRoleRequest extends FormRequest
 
         return $user instanceof User
             && $campaign instanceof Campaign
-            && (int) $campaign->owner_id === (int) $user->id;
+            && ((int) $campaign->owner_id === (int) $user->id || $user->isAdmin());
     }
 
     /**

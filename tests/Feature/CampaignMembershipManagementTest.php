@@ -34,6 +34,23 @@ class CampaignMembershipManagementTest extends TestCase
             ->assertDontSee('Rolle setzen');
     }
 
+    public function test_admin_sees_membership_role_controls_and_platform_hint_in_visible_campaign_ui(): void
+    {
+        [$campaign, , , $playerMembership] = $this->seedCampaignWithMemberships();
+        $admin = User::factory()->admin()->create();
+
+        $campaign->forceFill([
+            'is_public' => true,
+        ])->save();
+
+        $this->actingAs($admin)
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertOk()
+            ->assertSee('Rolle setzen')
+            ->assertSee('Admins können Kampagnenrollen plattformseitig verwalten; der Owner bleibt unverändert.')
+            ->assertSee((string) $playerMembership->user->email);
+    }
+
     public function test_owner_can_change_participant_role_from_player_to_gm(): void
     {
         [$campaign, $owner, , $playerMembership] = $this->seedCampaignWithMemberships();
@@ -120,12 +137,11 @@ class CampaignMembershipManagementTest extends TestCase
         ]);
     }
 
-    public function test_admin_cannot_change_campaign_roles_when_not_owner(): void
+    public function test_normal_user_cannot_change_campaign_roles(): void
     {
         [$campaign, , , $playerMembership] = $this->seedCampaignWithMemberships();
-        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)
+        $this->actingAs($playerMembership->user)
             ->patch(route('campaigns.memberships.update', [
                 'world' => $campaign->world,
                 'campaign' => $campaign,
@@ -139,6 +155,43 @@ class CampaignMembershipManagementTest extends TestCase
             'id' => $playerMembership->id,
             'role' => CampaignMembershipRole::PLAYER->value,
         ]);
+    }
+
+    public function test_admin_can_change_campaign_roles_when_not_owner_without_changing_owner(): void
+    {
+        [$campaign, , , $playerMembership] = $this->seedCampaignWithMemberships();
+        $admin = User::factory()->admin()->create();
+        $originalOwnerId = (int) $campaign->owner_id;
+
+        $this->actingAs($admin)
+            ->patch(route('campaigns.memberships.update', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'membership' => $playerMembership,
+            ]), [
+                'role' => CampaignMembershipRole::GM->value,
+            ])
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->assertDatabaseHas('campaign_memberships', [
+            'id' => $playerMembership->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $admin->id,
+        ]);
+
+        $this->assertDatabaseHas('campaign_role_events', [
+            'campaign_id' => $campaign->id,
+            'actor_user_id' => $admin->id,
+            'target_user_id' => $playerMembership->user_id,
+            'event_type' => CampaignRoleEvent::EVENT_MEMBERSHIP_ROLE_CHANGED,
+            'old_role' => CampaignMembershipRole::PLAYER->value,
+            'new_role' => CampaignMembershipRole::GM->value,
+            'source' => 'campaign_membership_role_update',
+        ]);
+
+        $campaign->refresh();
+
+        $this->assertSame($originalOwnerId, (int) $campaign->owner_id);
     }
 
     public function test_pending_invitations_remain_separate_from_active_memberships(): void
