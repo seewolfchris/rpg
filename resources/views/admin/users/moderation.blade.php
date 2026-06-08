@@ -8,6 +8,7 @@
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Benutzer verwalten</h1>
         <p class="mt-3 text-sm text-stone-300">
             Diese Oberfläche steuert globale Plattformrechte und den Accountstatus.
+            Benutzer mit SL-Recht dürfen eigene Kampagnen erstellen und werden dort automatisch Owner und GM.
             Kampagnenrollen werden ausschließlich in der jeweiligen Kampagne verwaltet.
         </p>
     </section>
@@ -38,7 +39,7 @@
                         <th class="px-3 py-3">User</th>
                         <th class="px-3 py-3">Accountstatus</th>
                         <th class="px-3 py-3">Plattformrolle</th>
-                        <th class="px-3 py-3">Kampagnen anlegen</th>
+                        <th class="px-3 py-3">Eigene Kampagnen leiten</th>
                         <th class="px-3 py-3">Ohne Moderation posten</th>
                         <th class="px-3 py-3 text-right">Aktionen</th>
                     </tr>
@@ -156,14 +157,14 @@
                                             <option value="{{ \App\Enums\UserRole::ADMIN->value }}" @selected($isAdmin)>Admin</option>
                                         </select>
 
-                                        <label class="sr-only" for="create-campaigns-{{ $user->id }}">Kampagnen anlegen</label>
+                                        <label class="sr-only" for="create-campaigns-{{ $user->id }}">Eigene Kampagnen leiten</label>
                                         <select
                                             id="create-campaigns-{{ $user->id }}"
                                             name="can_create_campaigns"
                                             class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs uppercase tracking-wider text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                                         >
-                                            <option value="0" @selected(! $user->can_create_campaigns)>Create: Aus</option>
-                                            <option value="1" @selected($user->can_create_campaigns)>Create: An</option>
+                                            <option value="0" @selected(! $user->can_create_campaigns)>SL-Recht: Nein</option>
+                                            <option value="1" @selected($user->can_create_campaigns)>SL-Recht: Ja</option>
                                         </select>
 
                                         <label class="sr-only" for="post-without-moderation-{{ $user->id }}">Ohne Moderation posten</label>
