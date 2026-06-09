@@ -51,6 +51,26 @@ class CampaignMembershipManagementTest extends TestCase
             ->assertSee((string) $playerMembership->user->email);
     }
 
+    public function test_player_sees_active_participant_names_and_roles_but_not_emails(): void
+    {
+        [$campaign, $owner, $gmMember, $playerMembership] = $this->seedCampaignWithMemberships();
+
+        $this->actingAs($playerMembership->user)
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertOk()
+            ->assertSee('Aktive Teilnehmer')
+            ->assertSee((string) $owner->name)
+            ->assertSee((string) $gmMember->name)
+            ->assertSee((string) $playerMembership->user->name)
+            ->assertSee('Owner')
+            ->assertSee('GM')
+            ->assertSee('Player')
+            ->assertDontSee('Rolle setzen')
+            ->assertDontSee((string) $owner->email, false)
+            ->assertDontSee((string) $gmMember->email, false)
+            ->assertDontSee((string) $playerMembership->user->email, false);
+    }
+
     public function test_owner_can_change_participant_role_from_player_to_gm(): void
     {
         [$campaign, $owner, , $playerMembership] = $this->seedCampaignWithMemberships();

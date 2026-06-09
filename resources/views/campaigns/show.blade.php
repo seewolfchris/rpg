@@ -254,7 +254,9 @@
                             <div>
                                 <p class="text-sm text-stone-200">
                                     {{ $membership->user->name }}
-                                    <span class="text-stone-500">• {{ $membership->user->email }}</span>
+                                    @if ($canManageMembershipRoles)
+                                        <span class="text-stone-500">• {{ $membership->user->email }}</span>
+                                    @endif
                                 </p>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     @if ($isOwnerMembership)
