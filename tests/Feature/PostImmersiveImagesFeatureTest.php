@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\EncyclopediaEntry;
 use App\Models\Handout;
@@ -29,6 +31,45 @@ class PostImmersiveImagesFeatureTest extends TestCase
 
         Storage::fake('public');
         config(['media-library.disk_name' => 'public']);
+    }
+
+    public function test_immersive_image_controls_are_only_rendered_for_campaign_moderators(): void
+    {
+        [$campaign, $scene, $gm] = $this->seedCampaignSceneContext();
+        $player = User::factory()->create();
+        $coGm = User::factory()->create();
+
+        CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => $gm->id,
+        ]);
+
+        Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $route = route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]);
+
+        $playerResponse = $this->actingAs($player)->get($route);
+
+        $playerResponse->assertOk()
+            ->assertSee('data-offline-post-form', false)
+            ->assertDontSee('data-inline-image-controls', false)
+            ->assertDontSee('Bilder im Spielleitungsbeitrag', false);
+
+        $coGmResponse = $this->actingAs($coGm)->get($route);
+
+        $coGmResponse->assertOk()
+            ->assertSee('data-offline-post-form', false)
+            ->assertSee('data-inline-image-controls', false)
+            ->assertSee('Bilder im Spielleitungsbeitrag', false);
     }
 
     public function test_gm_can_create_gm_narration_post_with_immersive_images(): void

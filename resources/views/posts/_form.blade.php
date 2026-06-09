@@ -229,6 +229,7 @@
         @enderror
     </div>
 
+    @if ($canUseGmPostMode)
     <section
         x-show="isGmMode() || {{ $editingPost && $existingImmersiveImages->isNotEmpty() ? 'true' : 'false' }}"
         x-cloak
@@ -329,6 +330,7 @@
             </div>
         @endif
     </section>
+    @endif
 
     @if ($wave3EditorPreviewEnabled)
         <section data-post-preview class="rounded-lg border border-stone-700/80 bg-black/30 p-4">
