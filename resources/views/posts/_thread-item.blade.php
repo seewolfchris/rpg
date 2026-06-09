@@ -238,14 +238,22 @@
         <section class="mt-4">
             <div class="grid gap-3 sm:grid-cols-2">
                 @foreach ($galleryImmersiveImages as $immersiveImage)
-                    <img
-                        data-post-immersive-gallery-image="1"
-                        data-post-media-id="{{ $immersiveImage->id }}"
-                        src="{{ $immersiveImage->getUrl() }}"
-                        alt="Immersives Bild zu Beitrag #{{ $post->id }}"
-                        loading="lazy"
-                        class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                    <a
+                        href="{{ $immersiveImage->getUrl() }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Originalbild zu Beitrag #{{ $post->id }} öffnen"
+                        class="block"
                     >
+                        <img
+                            data-post-immersive-gallery-image="1"
+                            data-post-media-id="{{ $immersiveImage->id }}"
+                            src="{{ $immersiveImage->getUrl() }}"
+                            alt="Immersives Bild zu Beitrag #{{ $post->id }}"
+                            loading="lazy"
+                            class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                        >
+                    </a>
                 @endforeach
             </div>
         </section>

@@ -86,9 +86,12 @@ final class SceneDescriptionRenderer
 
         $mediaId = (int) $media->id;
         $inlineMediaIds[] = $mediaId;
+        $mediaUrl = e($media->getUrl());
 
         return '<figure data-scene-inline-image="1" data-scene-inline-image-slot="'.$slot.'" data-scene-media-id="'.$mediaId.'" class="my-5 overflow-hidden rounded-lg border border-stone-700/80 bg-black/30">'
-            .'<img src="'.e($media->getUrl()).'" alt="Bild '.$slot.' zur Szenenbeschreibung" loading="lazy" class="w-full object-cover">'
+            .'<a href="'.$mediaUrl.'" target="_blank" rel="noopener noreferrer" aria-label="Originalbild '.$slot.' zur Szenenbeschreibung öffnen">'
+            .'<img src="'.$mediaUrl.'" alt="Bild '.$slot.' zur Szenenbeschreibung" loading="lazy" class="w-full object-cover">'
+            .'</a>'
             .'</figure>';
     }
 

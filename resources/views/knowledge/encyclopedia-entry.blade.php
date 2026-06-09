@@ -129,6 +129,7 @@
                                 href="{{ $mediaItem->getUrl() }}"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label="Originalbild {{ $mediaItem->file_name }} öffnen"
                                 class="group block cursor-zoom-in"
                             >
                                 <img

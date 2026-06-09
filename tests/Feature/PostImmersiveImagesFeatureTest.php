@@ -424,7 +424,7 @@ class PostImmersiveImagesFeatureTest extends TestCase
 
         $html = $response->getContent();
         $this->assertInlineImageSlotContains($html, 1, $mediaUrl);
-        $this->assertSame(1, substr_count($html, $mediaUrl));
+        $this->assertSame(2, substr_count($html, $mediaUrl));
     }
 
     public function test_gm_bbcode_placeholder_renders_second_immersive_image_inline(): void
@@ -451,7 +451,7 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $html = $response->getContent();
         $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
         $this->assertGalleryImageContains($html, (int) $firstMedia->id, $firstMedia->getUrl());
-        $this->assertSame(1, substr_count($html, $secondMedia->getUrl()));
+        $this->assertSame(2, substr_count($html, $secondMedia->getUrl()));
     }
 
     public function test_plain_inline_placeholders_leave_unreferenced_images_in_gallery(): void
@@ -539,8 +539,8 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $html = $response->getContent();
         $this->assertInlineImageSlotContains($html, 1, $firstMedia->getUrl());
         $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
-        $this->assertSame(1, substr_count($html, $firstMedia->getUrl()));
-        $this->assertSame(1, substr_count($html, $secondMedia->getUrl()));
+        $this->assertSame(2, substr_count($html, $firstMedia->getUrl()));
+        $this->assertSame(2, substr_count($html, $secondMedia->getUrl()));
         $this->assertGalleryImageContains($html, (int) $thirdMedia->id, $thirdMedia->getUrl());
     }
 
@@ -676,7 +676,7 @@ class PostImmersiveImagesFeatureTest extends TestCase
     private function assertInlineImageSlotContains(string $html, int $slot, string $mediaUrl): void
     {
         $this->assertMatchesRegularExpression(
-            '/<figure[^>]*data-post-inline-image-slot="'.$slot.'"[^>]*>.*?<img[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            '/<figure[^>]*data-post-inline-image-slot="'.$slot.'"[^>]*>.*?<a[^>]*href="'.preg_quote($mediaUrl, '/').'"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>.*?<img[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
             $html,
         );
     }
@@ -684,7 +684,7 @@ class PostImmersiveImagesFeatureTest extends TestCase
     private function assertGalleryImageContains(string $html, int $mediaId, string $mediaUrl): void
     {
         $this->assertMatchesRegularExpression(
-            '/<img[^>]*data-post-immersive-gallery-image="1"[^>]*data-post-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            '/<a[^>]*href="'.preg_quote($mediaUrl, '/').'"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>.*?<img[^>]*data-post-immersive-gallery-image="1"[^>]*data-post-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
             $html,
         );
     }

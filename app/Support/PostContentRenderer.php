@@ -214,9 +214,12 @@ class PostContentRenderer
 
         $mediaId = (int) $media->id;
         $inlineMediaIds[] = $mediaId;
+        $mediaUrl = e($media->getUrl());
 
         return '<figure data-post-inline-image="1" data-post-inline-image-slot="'.$position.'" data-post-media-id="'.$mediaId.'" class="my-5 overflow-hidden rounded-lg border border-stone-700/80 bg-black/30">'
-            .'<img src="'.e($media->getUrl()).'" alt="Immersives Bild '.$position.'" loading="lazy" class="w-full object-cover">'
+            .'<a href="'.$mediaUrl.'" target="_blank" rel="noopener noreferrer" aria-label="Originalbild '.$position.' des Spielleitungsbeitrags öffnen">'
+            .'<img src="'.$mediaUrl.'" alt="Immersives Bild '.$position.'" loading="lazy" class="w-full object-cover">'
+            .'</a>'
             .'</figure>';
     }
 

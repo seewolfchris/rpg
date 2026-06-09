@@ -56,12 +56,20 @@
                         : $handout->getFirstMedia(\App\Models\Handout::HANDOUT_FILE_COLLECTION) !== null)
                     <article class="rounded-xl border border-stone-800 bg-neutral-900/60 p-4">
                         @if ($hasFile)
-                            <img
-                                src="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
-                                alt="Handout {{ $handout->title }}"
-                                loading="lazy"
-                                class="h-44 w-full rounded-lg border border-stone-700/80 bg-black/35 object-cover"
+                            <a
+                                href="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Originalbild Handout {{ $handout->title }} öffnen"
+                                class="block"
                             >
+                                <img
+                                    src="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                                    alt="Handout {{ $handout->title }}"
+                                    loading="lazy"
+                                    class="h-44 w-full rounded-lg border border-stone-700/80 bg-black/35 object-cover"
+                                >
+                            </a>
                         @endif
 
                         <div class="mt-3 flex items-start justify-between gap-2">

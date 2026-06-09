@@ -227,8 +227,8 @@ class SceneContentImagesFeatureTest extends TestCase
         $html = $response->getContent();
         $this->assertInlineImageSlotContains($html, 1, $firstMedia->getUrl());
         $this->assertInlineImageSlotContains($html, 2, $secondMedia->getUrl());
-        $this->assertSame(1, substr_count($html, $firstMedia->getUrl()));
-        $this->assertSame(1, substr_count($html, $secondMedia->getUrl()));
+        $this->assertSame(2, substr_count($html, $firstMedia->getUrl()));
+        $this->assertSame(2, substr_count($html, $secondMedia->getUrl()));
         $this->assertGalleryImageContains($html, (int) $thirdMedia->id, $thirdMedia->getUrl());
     }
 
@@ -422,7 +422,7 @@ class SceneContentImagesFeatureTest extends TestCase
     private function assertInlineImageSlotContains(string $html, int $slot, string $mediaUrl): void
     {
         $this->assertMatchesRegularExpression(
-            '/<figure[^>]*data-scene-inline-image-slot="'.$slot.'"[^>]*>.*?<img[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            '/<figure[^>]*data-scene-inline-image-slot="'.$slot.'"[^>]*>.*?<a[^>]*href="'.preg_quote($mediaUrl, '/').'"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>.*?<img[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
             $html,
         );
     }
@@ -430,7 +430,7 @@ class SceneContentImagesFeatureTest extends TestCase
     private function assertGalleryImageContains(string $html, int $mediaId, string $mediaUrl): void
     {
         $this->assertMatchesRegularExpression(
-            '/<img[^>]*data-scene-content-gallery-image="1"[^>]*data-scene-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
+            '/<a[^>]*href="'.preg_quote($mediaUrl, '/').'"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>.*?<img[^>]*data-scene-content-gallery-image="1"[^>]*data-scene-media-id="'.$mediaId.'"[^>]*src="'.preg_quote($mediaUrl, '/').'"/s',
             $html,
         );
     }

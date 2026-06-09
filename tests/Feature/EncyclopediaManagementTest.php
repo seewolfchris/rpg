@@ -689,7 +689,8 @@ class EncyclopediaManagementTest extends TestCase
             ->assertSee('Original öffnen')
             ->assertSee('href="'.$mediaItem->getUrl().'"', false)
             ->assertSee('target="_blank"', false)
-            ->assertSee('rel="noopener noreferrer"', false);
+            ->assertSee('rel="noopener noreferrer"', false)
+            ->assertSee('aria-label="Originalbild '.$mediaItem->file_name.' öffnen"', false);
     }
 
     public function test_store_rejects_invalid_media_type_for_entry_uploads(): void

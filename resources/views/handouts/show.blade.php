@@ -42,11 +42,19 @@
             @endif
 
             <div class="mt-6 space-y-3">
-                <img
-                    src="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
-                    alt="Handout {{ $handout->title }}"
-                    class="w-full rounded-xl border border-stone-700/80 bg-black/30 object-contain"
+                <a
+                    href="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Originalbild Handout {{ $handout->title }} öffnen"
+                    class="block"
                 >
+                    <img
+                        src="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"
+                        alt="Handout {{ $handout->title }}"
+                        class="w-full rounded-xl border border-stone-700/80 bg-black/30 object-contain"
+                    >
+                </a>
 
                 <a
                     href="{{ route('campaigns.handouts.file', ['world' => $campaign->world, 'campaign' => $campaign, 'handout' => $handout]) }}"

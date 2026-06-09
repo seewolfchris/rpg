@@ -31,8 +31,13 @@ class HandoutVisibilityTest extends TestCase
         [$campaign, $owner, $gm, $player] = $this->seedPrivateCampaignContext();
 
         $handout = $this->createHandoutWithFile($campaign, $owner, true, 'Freigegebene Karte');
+        $fileRoute = route('campaigns.handouts.file', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'handout' => $handout,
+        ]);
 
-        $this->actingAs($player)
+        $response = $this->actingAs($player)
             ->get(route('campaigns.handouts.show', [
                 'world' => $campaign->world,
                 'campaign' => $campaign,
@@ -41,20 +46,17 @@ class HandoutVisibilityTest extends TestCase
             ->assertOk()
             ->assertSee('Freigegebene Karte');
 
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]*href="'.preg_quote($fileRoute, '/').'"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>.*?<img[^>]*src="'.preg_quote($fileRoute, '/').'"/s',
+            $response->getContent(),
+        );
+
         $this->actingAs($player)
-            ->get(route('campaigns.handouts.file', [
-                'world' => $campaign->world,
-                'campaign' => $campaign,
-                'handout' => $handout,
-            ]))
+            ->get($fileRoute)
             ->assertOk();
 
         $this->actingAs($gm)
-            ->get(route('campaigns.handouts.file', [
-                'world' => $campaign->world,
-                'campaign' => $campaign,
-                'handout' => $handout,
-            ]))
+            ->get($fileRoute)
             ->assertOk();
     }
 

@@ -118,14 +118,22 @@
                     @if ($sceneGalleryContentImages->isNotEmpty())
                         <div class="ui-reading-width mt-5 grid gap-3 sm:grid-cols-2">
                             @foreach ($sceneGalleryContentImages as $sceneContentImage)
-                                <img
-                                    data-scene-content-gallery-image="1"
-                                    data-scene-media-id="{{ $sceneContentImage->id }}"
-                                    src="{{ $sceneContentImage->getUrl() }}"
-                                    alt="Bild zur Szenenbeschreibung"
-                                    loading="lazy"
-                                    class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                                <a
+                                    href="{{ $sceneContentImage->getUrl() }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Originalbild zur Szenenbeschreibung öffnen"
+                                    class="block"
                                 >
+                                    <img
+                                        data-scene-content-gallery-image="1"
+                                        data-scene-media-id="{{ $sceneContentImage->id }}"
+                                        src="{{ $sceneContentImage->getUrl() }}"
+                                        alt="Bild zur Szenenbeschreibung"
+                                        loading="lazy"
+                                        class="w-full rounded-lg border border-stone-700/80 bg-black/30 object-cover"
+                                    >
+                                </a>
                             @endforeach
                         </div>
                     @endif
