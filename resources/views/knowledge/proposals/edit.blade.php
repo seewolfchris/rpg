@@ -14,7 +14,7 @@
                     <p class="mt-2 text-stone-300">Nach dem Speichern wird der Vorschlag erneut als ausstehend eingereicht.</p>
                 </div>
                 <span class="rounded-full border border-amber-500/50 bg-amber-500/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-amber-200">
-                    Status: {{ $entry->status }}
+                    Status: {{ $entry->statusLabel() }}
                 </span>
             </div>
 

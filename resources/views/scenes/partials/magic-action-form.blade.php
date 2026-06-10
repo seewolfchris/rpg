@@ -1,8 +1,8 @@
 @php
     $sectionId = $sectionId ?? 'magic-action-tool';
     $title = $title ?? 'Magieaktion (Spielleitung)';
-    $description = $description ?? 'Spieler schreiben Absichten im Thread. Die Spielleitung wertet hier eine einzelne Magieaktion aus.';
-    $hint = $hint ?? 'V1: Einzelaktion, keine Magie in Kampfphasen und keine Spieler-Queue.';
+    $description = $description ?? 'Spieler schreiben Absichten im Faden. Die Spielleitung wertet hier eine einzelne Magieaktion aus.';
+    $hint = $hint ?? 'V1: Einzelaktion, keine Magie in Kampfphasen und keine Spieler-Warteschlange.';
     $formAction = $formAction ?? route('campaigns.scenes.magic.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]);
     $submitLabel = $submitLabel ?? 'Magieaktion auswerten';
     $conflictActors = $conflictActors ?? collect();

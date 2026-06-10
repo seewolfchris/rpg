@@ -42,6 +42,8 @@ class NotificationWorkflowTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertSame('post_moderation', $notification->data['kind'] ?? null);
         $this->assertSame('approved', $notification->data['new_status'] ?? null);
+        $this->assertSame('Freigegeben', $notification->data['new_status_label'] ?? null);
+        $this->assertStringContainsString('Freigegeben', (string) ($notification->data['message'] ?? ''));
         $this->assertSame($post->id, $notification->data['post_id'] ?? null);
     }
 

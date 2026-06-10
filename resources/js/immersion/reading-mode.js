@@ -362,7 +362,7 @@ function updateReadingProgressBookmark(root) {
 
     if (posts.length === 0) {
         if (valueNode instanceof HTMLElement) {
-            valueNode.textContent = 'Noch keine Posts';
+            valueNode.textContent = 'Noch keine Beiträge';
         }
 
         if (percentNode instanceof HTMLElement) {
@@ -382,7 +382,7 @@ function updateReadingProgressBookmark(root) {
     const percent = Math.max(0, Math.min(100, Math.round(ratio * 100)));
 
     if (valueNode instanceof HTMLElement) {
-        valueNode.textContent = `Post ${currentPosition} / ${posts.length}`;
+        valueNode.textContent = `Beitrag ${currentPosition} / ${posts.length}`;
     }
 
     if (percentNode instanceof HTMLElement) {

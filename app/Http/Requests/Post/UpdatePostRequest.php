@@ -141,7 +141,7 @@ class UpdatePostRequest extends FormRequest
 
             if ($postType === 'ic' && $postMode === 'gm') {
                 if (! $canModerate) {
-                    $validator->errors()->add('post_mode', 'Nur GM oder Co-GM dürfen als Spielleitung posten.');
+                    $validator->errors()->add('post_mode', 'Nur SL oder Co-SL dürfen als Spielleitung posten.');
                 }
 
                 if ($characterId !== null) {

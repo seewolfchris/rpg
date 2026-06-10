@@ -81,7 +81,7 @@
                 @csrf
                 <button type="submit" class="ui-btn ui-btn-accent">Kampfphase auswerten</button>
             </form>
-            <p class="text-xs text-stone-400">Wertet alle erfassten Aktionen in Reihenfolge aus und erstellt einen Kampfblock im Thread.</p>
+            <p class="text-xs text-stone-400">Wertet alle erfassten Aktionen in Reihenfolge aus und erstellt einen Kampfblock im Faden.</p>
         </div>
         @error('combat_phase')
             <p class="mt-3 text-sm text-red-300">{{ $message }}</p>

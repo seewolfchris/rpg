@@ -10,7 +10,7 @@
                 <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Benutzerverwaltung</h1>
                 <p class="mt-3 max-w-3xl text-sm text-stone-300">
                     Suche, Stammdaten, Plattformrechte und Accountstatus zentral verwalten.
-                    Benutzer mit SL-Recht dürfen eigene Kampagnen erstellen und werden dort automatisch Owner und GM.
+                    Benutzer mit SL-Recht dürfen eigene Kampagnen erstellen und werden dort automatisch Kampagnenleitung und SL.
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -35,7 +35,7 @@
             <select id="status" name="status" class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2.5 text-xs uppercase tracking-wider text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40">
                 <option value="all" @selected($filters['status'] === 'all')>Status: Alle</option>
                 <option value="{{ \App\Enums\UserStatus::ACTIVE->value }}" @selected($filters['status'] === \App\Enums\UserStatus::ACTIVE->value)>Status: Aktiv</option>
-                <option value="{{ \App\Enums\UserStatus::PENDING->value }}" @selected($filters['status'] === \App\Enums\UserStatus::PENDING->value)>Status: Wartend</option>
+                <option value="{{ \App\Enums\UserStatus::PENDING->value }}" @selected($filters['status'] === \App\Enums\UserStatus::PENDING->value)>Status: Ausstehend</option>
                 <option value="{{ \App\Enums\UserStatus::SUSPENDED->value }}" @selected($filters['status'] === \App\Enums\UserStatus::SUSPENDED->value)>Status: Gesperrt</option>
             </select>
 
@@ -43,7 +43,7 @@
             <select id="role" name="role" class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2.5 text-xs uppercase tracking-wider text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40">
                 <option value="all" @selected($filters['role'] === 'all')>Rolle: Alle</option>
                 <option value="{{ \App\Enums\UserRole::ADMIN->value }}" @selected($filters['role'] === \App\Enums\UserRole::ADMIN->value)>Rolle: Admin</option>
-                <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($filters['role'] === \App\Enums\UserRole::PLAYER->value)>Rolle: Player</option>
+                <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($filters['role'] === \App\Enums\UserRole::PLAYER->value)>Rolle: Spieler</option>
             </select>
 
             <label for="sl" class="sr-only">SL-Recht</label>
@@ -67,7 +67,7 @@
             <table class="min-w-full divide-y divide-stone-800 text-sm">
                 <thead>
                     <tr class="text-left text-xs uppercase tracking-widest text-stone-400">
-                        <th class="px-3 py-3">User</th>
+                        <th class="px-3 py-3">Nutzer</th>
                         <th class="px-3 py-3">Status</th>
                         <th class="px-3 py-3">Rolle</th>
                         <th class="px-3 py-3">Rechte</th>
@@ -81,7 +81,7 @@
                         @php($statusValue = $user->status instanceof \App\Enums\UserStatus ? $user->status->value : (string) $user->status)
                         @php($statusLabel = match ($statusValue) {
                             \App\Enums\UserStatus::ACTIVE->value => 'Aktiv',
-                            \App\Enums\UserStatus::PENDING->value => 'Wartend',
+                            \App\Enums\UserStatus::PENDING->value => 'Ausstehend',
                             default => 'Gesperrt',
                         })
                         <tr>
@@ -104,7 +104,7 @@
                             </td>
                             <td class="px-3 py-3">
                                 <span class="inline-flex rounded-full border px-2 py-1 text-xs uppercase tracking-widest {{ $roleValue === \App\Enums\UserRole::ADMIN->value ? 'border-amber-500/70 text-amber-200' : 'border-stone-600 text-stone-300' }}">
-                                    {{ $roleValue === \App\Enums\UserRole::ADMIN->value ? 'Admin' : 'Player' }}
+                                    {{ \App\Enums\UserRole::labelFor($roleValue) }}
                                 </span>
                             </td>
                             <td class="px-3 py-3 text-xs text-stone-300">
@@ -112,8 +112,8 @@
                                 <span class="block">Moderationsfrei: {{ $user->can_post_without_moderation ? 'Ja' : 'Nein' }}</span>
                             </td>
                             <td class="px-3 py-3 text-xs text-stone-400">
-                                <span class="block">Owner: {{ $user->owned_campaigns_count }}</span>
-                                <span class="block">Memberships: {{ $user->campaign_memberships_count }}</span>
+                                <span class="block">Kampagnenleitung: {{ $user->owned_campaigns_count }}</span>
+                                <span class="block">Teilnahmen: {{ $user->campaign_memberships_count }}</span>
                             </td>
                             <td class="px-3 py-3">
                                 <div class="flex justify-end gap-2">

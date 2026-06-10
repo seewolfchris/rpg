@@ -46,7 +46,7 @@ class MobileHeaderNavigationContractTest extends TestCase
         $response->assertOk()
             ->assertSee('Welten')
             ->assertSee('Wissen')
-            ->assertSee('Dashboard')
+            ->assertSee('Übersicht')
             ->assertSee('id="nav-unread-notifications-badge"', false)
             ->assertSee('id="nav-bookmark-count-badge"', false)
             ->assertSee('data-logout-form', false)

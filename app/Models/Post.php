@@ -31,6 +31,15 @@ class Post extends Model implements HasMedia
     public const IMMERSIVE_IMAGES_COLLECTION = 'immersive_images';
 
     /**
+     * @var array<string, string>
+     */
+    private const MODERATION_STATUS_LABELS = [
+        'pending' => 'Ausstehend',
+        'approved' => 'Freigegeben',
+        'rejected' => 'Abgelehnt',
+    ];
+
+    /**
      * @var list<string>
      */
     public const WORLD_CONTEXT_RELATIONS = [
@@ -280,6 +289,11 @@ class Post extends Model implements HasMedia
             && $this->getAttribute('character_id') === null
             && is_string($authorRole)
             && $authorRole === 'gm';
+    }
+
+    public static function moderationStatusLabelFor(string $status): string
+    {
+        return self::MODERATION_STATUS_LABELS[$status] ?? $status;
     }
 
     public function registerMediaCollections(): void

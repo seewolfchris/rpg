@@ -79,9 +79,9 @@
                 class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
             >
                 @php($campaignStatus = old('status', $campaign->status ?? 'draft'))
-                <option value="draft" @selected($campaignStatus === 'draft')>Draft</option>
-                <option value="active" @selected($campaignStatus === 'active')>Active</option>
-                <option value="archived" @selected($campaignStatus === 'archived')>Archived</option>
+                <option value="draft" @selected($campaignStatus === 'draft')>Entwurf</option>
+                <option value="active" @selected($campaignStatus === 'active')>Aktiv</option>
+                <option value="archived" @selected($campaignStatus === 'archived')>Archiviert</option>
             </select>
             @error('status')
                 <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

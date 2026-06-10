@@ -1,8 +1,8 @@
 @php
     $sectionId = $sectionId ?? 'combat-action-tool';
     $title = $title ?? 'Kampfaktion (Spielleitung)';
-    $description = $description ?? 'Spieler schreiben Absichten im Thread. Die Spielleitung wertet hier eine einzelne Kampfaktion aus.';
-    $hint = $hint ?? 'V1: Einzelaktion, keine Kampfphasen und keine Spieler-Queue.';
+    $description = $description ?? 'Spieler schreiben Absichten im Faden. Die Spielleitung wertet hier eine einzelne Kampfaktion aus.';
+    $hint = $hint ?? 'V1: Einzelaktion, keine Kampfphasen und keine Spieler-Warteschlange.';
     $formAction = $formAction ?? route('campaigns.scenes.combat.actions.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]);
     $submitLabel = $submitLabel ?? 'Kampfaktion auswerten';
     $fieldPrefix = $fieldPrefix ?? 'combat_action';
@@ -404,7 +404,7 @@
                         name="intent_text"
                         rows="2"
                         maxlength="500"
-                        placeholder="Kurznotiz zur Absicht aus dem Thread"
+                        placeholder="Kurznotiz zur Absicht aus dem Faden"
                         class="w-full px-4 py-2.5 text-sm text-stone-100 placeholder:text-stone-500"
                     >{{ old('intent_text') }}</textarea>
                     @error('intent_text')
@@ -432,7 +432,7 @@
         <div class="flex flex-wrap items-center gap-3">
             <button type="submit" class="ui-btn ui-btn-accent">{{ $submitLabel }}</button>
             <p class="text-xs text-stone-400">
-                Spieler nutzen weiterhin normale IC-Posts. Dieses Formular ist nur für Spielleitung und Co-Spielleitung.
+                Spieler nutzen weiterhin normale IC-Beiträge. Dieses Formular ist nur für Spielleitung und Co-Spielleitung.
             </p>
         </div>
     </form>

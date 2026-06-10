@@ -29,6 +29,17 @@ class EncyclopediaEntry extends Model implements HasMedia
     public const ENTRY_MEDIA_COLLECTION = 'entry_media';
 
     /**
+     * @var array<string, string>
+     */
+    private const STATUS_LABELS = [
+        self::STATUS_DRAFT => 'Entwurf',
+        self::STATUS_PENDING => 'Ausstehend',
+        self::STATUS_PUBLISHED => 'Veröffentlicht',
+        self::STATUS_REJECTED => 'Abgelehnt',
+        self::STATUS_ARCHIVED => 'Archiviert',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -107,6 +118,16 @@ class EncyclopediaEntry extends Model implements HasMedia
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusLabelFor((string) $this->status);
+    }
+
+    public static function statusLabelFor(string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? $status;
     }
 
     public function registerMediaCollections(): void

@@ -3,7 +3,7 @@
 
 <div id="gm-contact-thread-detail" class="rounded-lg border border-stone-700/70 bg-neutral-900/60 p-4">
     @if (! $selectedThread)
-        <p class="text-sm text-stone-400">Wähle einen Thread aus, um Nachrichten zu sehen.</p>
+        <p class="text-sm text-stone-400">Wähle einen Faden aus, um Nachrichten zu sehen.</p>
     @else
         @php($status = (string) $selectedThread->status)
         <div class="flex flex-wrap items-start justify-between gap-2">
@@ -84,7 +84,7 @@
                 </button>
             </form>
         @else
-            <p class="mt-4 text-sm text-stone-400">Dieser Thread ist geschlossen. Antworten sind erst nach Wiederöffnung möglich.</p>
+            <p class="mt-4 text-sm text-stone-400">Dieser Faden ist geschlossen. Antworten sind erst nach Wiederöffnung möglich.</p>
         @endcan
 
         @can('updateStatus', $selectedThread)
@@ -104,7 +104,7 @@
                             type="submit"
                             class="rounded-md border border-red-700/80 bg-red-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-red-200 transition hover:bg-red-900/40"
                         >
-                            Thread schließen
+                            Faden schließen
                         </button>
                     </form>
                 @endif
@@ -124,7 +124,7 @@
                             type="submit"
                             class="rounded-md border border-emerald-600/80 bg-emerald-900/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-200 transition hover:bg-emerald-900/40"
                         >
-                            Thread wieder öffnen
+                            Faden wieder öffnen
                         </button>
                     </form>
                 @endif

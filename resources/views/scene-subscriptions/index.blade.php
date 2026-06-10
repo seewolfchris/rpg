@@ -17,7 +17,7 @@
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Dashboard</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Übersicht</p>
                     <h1 class="font-heading text-3xl text-stone-100">Szenen-Abos</h1>
                     <p class="mt-3 text-sm text-stone-300">
                         Verwalte alle abonnierten Szenen zentral, inkl. Filter und Sammelaktionen.
@@ -149,7 +149,7 @@
                                             {{ $hasUnread ? 'Neue Beiträge vorhanden' : 'Alles gelesen' }}
                                         </p>
                                         <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">
-                                            Posts: {{ $subscribedScene->posts_count }}
+                                            Beiträge: {{ $subscribedScene->posts_count }}
                                             @if ($subscription->last_read_at)
                                                 • Letzter Lesepunkt: <x-relative-time :at="$subscription->last_read_at" />
                                             @endif

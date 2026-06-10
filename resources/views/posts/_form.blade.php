@@ -352,7 +352,7 @@
         <section class="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h3 class="font-heading text-lg text-amber-100">GM-Probe für diesen Beitrag</h3>
+                    <h3 class="font-heading text-lg text-amber-100">SL-Probe für diesen Beitrag</h3>
                     <p class="mt-1 text-xs leading-relaxed text-amber-200/80">
                         Würfle die Probe vor dem Veröffentlichen. Das Ergebnis wird beim Speichern unverändert in den Beitrag übernommen.
                     </p>
@@ -545,7 +545,7 @@
             <div class="mt-5 rounded-md border border-stone-700/80 bg-black/25 p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <h4 class="text-sm font-semibold uppercase tracking-widest text-amber-200">Inventar-Fund im gleichen Post</h4>
+                        <h4 class="text-sm font-semibold uppercase tracking-widest text-amber-200">Inventar-Fund im gleichen Beitrag</h4>
                         <p class="mt-1 text-xs text-stone-400">Optional: Fügt dem Ziel-Held direkt einen Gegenstand im Charakterbogen hinzu.</p>
                     </div>
                     <label class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-200">

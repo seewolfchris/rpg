@@ -110,6 +110,48 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_campaign_scene_overview_uses_german_scene_status_labels(): void
+    {
+        $creator = User::factory()->canCreateCampaigns()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $creator->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $creator->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $creator->id,
+            'assigned_at' => now(),
+        ]);
+
+        foreach ([
+            'open' => 'Offene Brücke',
+            'closed' => 'Geschlossene Halle',
+            'archived' => 'Archivierte Spur',
+        ] as $status => $title) {
+            Scene::factory()->create([
+                'campaign_id' => (int) $campaign->id,
+                'created_by' => (int) $creator->id,
+                'title' => $title,
+                'status' => $status,
+            ]);
+        }
+
+        $this->actingAs($creator)
+            ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
+            ->assertOk()
+            ->assertSeeText('Offen')
+            ->assertSeeText('Geschlossen')
+            ->assertSeeText('Archiviert')
+            ->assertDontSeeText('Open')
+            ->assertDontSeeText('Closed')
+            ->assertDontSeeText('Archived');
+    }
+
     public function test_player_post_is_pending_and_gm_can_approve_it(): void
     {
         $gm = User::factory()->gm()->create();
@@ -639,7 +681,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $sceneResponse = $this->actingAs($player)->get(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]));
         $expectedOutcomeLabel = $expectedSuccess ? 'Erfolg' : 'Misserfolg';
         $sceneResponse->assertOk()
-            ->assertSeeText('GM-Probe')
+            ->assertSeeText('SL-Probe')
             ->assertSeeText('Klettern am zerborstenen Ascheturm bei Sturm')
             ->assertSeeText($playerCharacter->name)
             ->assertSeeText('Probe auf: Mut')
@@ -690,7 +732,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertSeeText('GM-Probe (Vorabwurf)')
+            ->assertSeeText('SL-Probe (Vorabwurf)')
             ->assertSeeText('Vorabwurf für Brandungsprobe')
             ->assertSeeText('Ergebnis:')
             ->assertSee('name="probe_roll_token"', false);

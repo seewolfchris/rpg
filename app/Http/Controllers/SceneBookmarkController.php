@@ -100,7 +100,7 @@ class SceneBookmarkController extends Controller
             }
         }
 
-        return back()->with('status', 'Bookmark gespeichert.');
+        return back()->with('status', 'Lesezeichen gespeichert.');
     }
 
     public function destroy(Request $request, World $world, Campaign $campaign, Scene $scene): RedirectResponse
@@ -114,7 +114,7 @@ class SceneBookmarkController extends Controller
             user: $user,
         );
 
-        return back()->with('status', 'Bookmark entfernt.');
+        return back()->with('status', 'Lesezeichen entfernt.');
     }
 
     /**

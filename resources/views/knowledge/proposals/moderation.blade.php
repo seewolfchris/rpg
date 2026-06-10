@@ -8,7 +8,7 @@
 
         <header class="ui-card p-6 sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Wissenszentrum · Moderation</p>
-            <h1 class="font-heading text-3xl text-stone-100">Vorschlags-Queue</h1>
+            <h1 class="font-heading text-3xl text-stone-100">Vorschlagsliste</h1>
             <p class="mt-2 text-sm text-stone-300">Ausstehende Vorschläge prüfen und freigeben oder ablehnen.</p>
         </header>
 
@@ -38,7 +38,7 @@
                                 </div>
 
                                 <span class="rounded-full border border-amber-600/60 bg-amber-700/20 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-amber-200">
-                                    {{ $entry->status }}
+                                    {{ $entry->statusLabel() }}
                                 </span>
                             </div>
 

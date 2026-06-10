@@ -17,6 +17,17 @@ class Campaign extends Model
     use HasFactory;
 
     /**
+     * @var array<string, string>
+     */
+    private const STATUS_LABELS = [
+        'draft' => 'Entwurf',
+        'active' => 'Aktiv',
+        'inactive' => 'Inaktiv',
+        'archived' => 'Archiviert',
+        'completed' => 'Abgeschlossen',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -222,5 +233,15 @@ class Campaign extends Model
     public function userCanPostWithoutModeration(User $user): bool
     {
         return app(CampaignAccess::class)->userCanPostWithoutModeration($this, $user);
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusLabelFor((string) $this->status);
+    }
+
+    public static function statusLabelFor(string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? $status;
     }
 }

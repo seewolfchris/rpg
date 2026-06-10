@@ -162,7 +162,7 @@
                     rows="3"
                     maxlength="1000"
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
-                    placeholder="z. B. Typische Eigenschaften für GM-Proben."
+                    placeholder="z. B. Typische Eigenschaften für SL-Proben."
                 >{{ old('game_relevance_probe', data_get($gameRelevance, 'probe_hint', '')) }}</textarea>
                 @error('game_relevance_probe')
                     <p class="mt-2 text-sm text-red-300">{{ $message }}</p>

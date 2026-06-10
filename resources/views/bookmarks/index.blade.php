@@ -87,7 +87,7 @@
                                             @endif
                                             Gesetzt: <x-relative-time :at="$bookmark->updated_at" />
                                             @if ($bookmark->post_id)
-                                                • Post #{{ $bookmark->post_id }}
+                                                • Beitrag #{{ $bookmark->post_id }}
                                             @endif
                                         </p>
                                     </div>

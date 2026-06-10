@@ -84,7 +84,7 @@
             required
             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/35"
         >
-            <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($selectedRole === \App\Enums\UserRole::PLAYER->value)>Player</option>
+            <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($selectedRole === \App\Enums\UserRole::PLAYER->value)>Spieler</option>
             <option value="{{ \App\Enums\UserRole::ADMIN->value }}" @selected($selectedRole === \App\Enums\UserRole::ADMIN->value)>Admin</option>
         </select>
         @error('role')
@@ -100,7 +100,7 @@
             required
             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/35"
         >
-            <option value="{{ \App\Enums\UserStatus::PENDING->value }}" @selected($selectedStatus === \App\Enums\UserStatus::PENDING->value)>Wartend</option>
+            <option value="{{ \App\Enums\UserStatus::PENDING->value }}" @selected($selectedStatus === \App\Enums\UserStatus::PENDING->value)>Ausstehend</option>
             <option value="{{ \App\Enums\UserStatus::ACTIVE->value }}" @selected($selectedStatus === \App\Enums\UserStatus::ACTIVE->value)>Aktiv</option>
             <option value="{{ \App\Enums\UserStatus::SUSPENDED->value }}" @selected($selectedStatus === \App\Enums\UserStatus::SUSPENDED->value)>Gesperrt</option>
         </select>

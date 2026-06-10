@@ -29,7 +29,7 @@
             <p class="mt-4 text-base leading-relaxed text-stone-300 sm:text-lg">
                 {{ $isWorldContext
                     ? 'Die Basisregeln gelten in dieser Welt und werden durch weltbezogene Lore ergänzt.'
-                    : 'Das globale Regelwerk definiert, wie Beitragsfluss, GM-Proben und Moderation konsistent funktionieren.' }}
+                    : 'Das globale Regelwerk definiert, wie Beitragsfluss, SL-Proben und Moderation konsistent funktionieren.' }}
             </p>
         </header>
 

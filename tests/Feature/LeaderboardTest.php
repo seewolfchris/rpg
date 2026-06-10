@@ -18,9 +18,9 @@ class LeaderboardTest extends TestCase
     public function test_authenticated_user_can_view_ordered_leaderboard(): void
     {
         $viewer = User::factory()->create(['points' => 15]);
-        $high = User::factory()->create(['name' => 'High Player', 'points' => 50]);
-        $mid = User::factory()->create(['name' => 'Mid Player', 'points' => 30]);
-        $low = User::factory()->create(['name' => 'Low Player', 'points' => 10]);
+        $high = User::factory()->create(['name' => 'Hohe Chronistin', 'points' => 50]);
+        $mid = User::factory()->create(['name' => 'Mittlerer Chronist', 'points' => 30]);
+        $low = User::factory()->create(['name' => 'Niedrige Chronistin', 'points' => 10]);
 
         PointEvent::query()->create([
             'user_id' => $high->id,
@@ -54,7 +54,9 @@ class LeaderboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Rangliste der Chronisten');
-        $response->assertSeeInOrder(['High Player', 'Mid Player', 'Low Player']);
+        $response->assertSeeInOrder(['Hohe Chronistin', 'Mittlerer Chronist', 'Niedrige Chronistin']);
+        $response->assertSeeText('Spieler');
+        $response->assertDontSeeText('player');
         $response->assertSee('Dein aktueller Rang:');
         $response->assertSee('#3');
     }

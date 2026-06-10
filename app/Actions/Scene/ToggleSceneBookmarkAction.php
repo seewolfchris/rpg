@@ -124,7 +124,7 @@ final class ToggleSceneBookmarkAction
 
             if (! $post instanceof Post) {
                 throw ValidationException::withMessages([
-                    'post_id' => 'Der gewählte Post gehört nicht zu dieser Szene.',
+                    'post_id' => 'Der gewählte Beitrag gehört nicht zu dieser Szene.',
                 ]);
             }
 

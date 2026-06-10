@@ -42,7 +42,7 @@
                         href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}"
                         class="rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
                     >
-                        Abo-Dashboard
+                        Abo-Übersicht
                     </a>
                     <a
                         href="{{ route('notifications.preferences', ['return_to' => $returnTo]) }}"
@@ -125,7 +125,7 @@
                 >
                     <x-slot name="actions">
                         <a href="{{ route('campaigns.index', $worldRouteParameters) }}" class="ui-btn ui-btn-accent">Kampagnen öffnen</a>
-                        <a href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}" class="ui-btn">Abo-Dashboard</a>
+                        <a href="{{ route('scene-subscriptions.index', $worldRouteParameters) }}" class="ui-btn">Abo-Übersicht</a>
                     </x-slot>
                 </x-empty-state>
             @else

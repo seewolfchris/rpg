@@ -1,27 +1,27 @@
 @extends('layouts.auth')
 
-@section('title', 'GM-Bereich | C76-RPG')
+@section('title', 'SL-Bereich | C76-RPG')
 
 @section('content')
     <section class="ui-page-wide space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Spielleitungsbereich</p>
-            <h1 class="font-heading text-3xl text-stone-100">GM-Bereich</h1>
+            <h1 class="font-heading text-3xl text-stone-100">SL-Bereich</h1>
             <p class="font-body mt-3 text-stone-300">
                 Zentrale Werkzeuge für Moderation und Verwaltung.
             </p>
         </div>
 
         <article class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <h2 class="font-heading text-2xl text-stone-100">Moderations-Queue</h2>
+            <h2 class="font-heading text-2xl text-stone-100">Moderationsliste</h2>
             <p class="mt-3 text-sm text-stone-300">
-                Prüfe pending/approved/rejected Posts, filtere die Liste und setze Status direkt mit Quick-Buttons.
+                Prüfe ausstehende, freigegebene und abgelehnte Beiträge, filtere die Liste und setze Status direkt mit Schnellaktionen.
             </p>
             <a
                 href="{{ route('gm.moderation.index', ['world' => $activeWorldSlug]) }}"
                 class="mt-5 inline-flex rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                 >
-                    Zur Queue
+                    Zur Moderationsliste
                 </a>
         </article>
 

@@ -61,7 +61,7 @@
 
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="ui-badge !rounded">
-                        {{ $scene->status }}
+                        {{ $scene->statusLabel() }}
                     </span>
                     <span class="ui-badge !rounded {{ $sceneMoodBadgeClass }}">
                         Stimmung: {{ $sceneMoodLabel }}
@@ -72,7 +72,7 @@
                         <span class="ui-badge !rounded !border-red-700/60 !bg-red-900/20 !text-red-300">OOC aus</span>
                     @endif
                     <span class="ui-badge !rounded">
-                        Follower: {{ $scene->subscriptions_count }}
+                        Abonnenten: {{ $scene->subscriptions_count }}
                     </span>
                     @if ($subscription)
                         <span class="ui-badge !rounded {{ $subscription->is_muted ? '!border-red-700/60 !bg-red-900/20 !text-red-300' : '!border-emerald-600/60 !bg-emerald-900/20 !text-emerald-300' }}">
@@ -80,7 +80,7 @@
                         </span>
                         @if ($latestPostId > 0)
                             <span class="ui-badge !rounded">
-                                {{ $hasUnreadPosts ? 'Neu im Thread' : 'Thread gelesen' }}
+                                {{ $hasUnreadPosts ? 'Neu im Faden' : 'Faden gelesen' }}
                             </span>
                         @endif
                     @else
@@ -176,14 +176,14 @@
 
             <div class="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
                 <div class="ui-card-soft space-y-3 p-4" data-reading-mode-chrome>
-                    <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Thread-Werkzeuge</p>
+                    <p class="text-xs uppercase tracking-widest text-stone-400">Schnellnavigation und Fadenwerkzeuge</p>
                     <div class="flex flex-wrap items-center gap-3">
                     @if ($jumpToLatestPostUrl)
                         <a
                             href="{{ $jumpToLatestPostUrl }}"
                             class="ui-btn"
                         >
-                            Zum neuesten Post
+                            Zum neuesten Beitrag
                         </a>
                     @endif
                     @if ($jumpToLastReadUrl)
@@ -500,7 +500,7 @@
             @endif
 
             <section id="inventory-quick-action" class="ui-card border-emerald-800/40 bg-emerald-950/15 p-6 sm:p-8" data-reading-mode-chrome>
-                <h2 class="font-heading text-2xl text-emerald-100">GM-Inventar-Schnellaktion</h2>
+                <h2 class="font-heading text-2xl text-emerald-100">SL-Inventar-Schnellaktion</h2>
                 <p class="mt-2 text-sm text-emerald-200/90">
                     Gegenstände direkt in der Szene hinzufügen oder entfernen, ohne den Charakterbogen zu öffnen.
                 </p>
@@ -638,7 +638,7 @@
                         <h2 class="mt-1 font-heading text-2xl text-amber-100">{{ $scene->title }}</h2>
                         <p class="mt-1 text-sm text-stone-300">{{ $campaign->title }} · Stimmung: {{ $sceneMoodLabel }}</p>
                         <p class="mt-2 text-[0.68rem] uppercase tracking-[0.1em] text-stone-400">
-                            Tasten im Romanmodus: <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">N</kbd> nächster Post · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">P</kbd> vorheriger Post · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">Esc</kbd> beendet
+                            Tasten im Romanmodus: <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">N</kbd> nächster Beitrag · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">P</kbd> vorheriger Beitrag · <kbd class="rounded border border-stone-700/80 bg-black/45 px-1.5 py-0.5 text-stone-200">Esc</kbd> beendet
                         </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
@@ -667,13 +667,13 @@
                 data-reading-progress-bookmark
                 aria-hidden="true"
             >
-                <p class="reading-progress-label" data-reading-progress-value>Post 1 / 1</p>
+                <p class="reading-progress-label" data-reading-progress-value>Beitrag 1 / 1</p>
                 <p class="reading-progress-percent" data-reading-progress-percent>0 %</p>
                 <div class="reading-progress-ribbon">
                     <span class="reading-progress-ribbon-fill" data-reading-progress-bar></span>
                 </div>
             </aside>
-            <h2 class="font-heading text-2xl text-stone-100">Thread</h2>
+            <h2 class="font-heading text-2xl text-stone-100">Faden</h2>
             <div id="scene-thread-feed" class="mt-5 space-y-6">
                 @include('scenes.partials.thread-page', [
                     'posts' => $posts,

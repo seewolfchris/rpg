@@ -63,7 +63,7 @@ class CampaignInvitationNotification extends Notification
             ->subject('Neue Kampagneneinladung')
             ->greeting('Hallo '.$notifiable->name.',')
             ->line($inviterName.' hat dich zur Kampagne "'.$campaign->title.'" eingeladen.')
-            ->line('Angefragte Rolle: '.strtoupper($this->invitation->role))
+            ->line('Angefragte Rolle: '.$this->invitation->roleLabel())
             ->action('Einladungen anzeigen', route('campaign-invitations.index'))
             ->line('Du kannst die Einladung annehmen oder ablehnen.');
     }
@@ -82,7 +82,7 @@ class CampaignInvitationNotification extends Notification
             context: [
                 'inviter' => $inviterName,
                 'campaign' => $campaign->title,
-                'role' => $this->invitation->role,
+                'role' => $this->invitation->roleLabel(),
             ],
             fallback: [
                 'title' => 'Neue Kampagneneinladung',
@@ -123,12 +123,13 @@ class CampaignInvitationNotification extends Notification
             'kind' => 'campaign_invitation',
             'title' => 'Neue Kampagneneinladung',
             'message' => $this->inviterName()
-                .' hat dich zu "'.$campaign->title.'" eingeladen.',
+                .' hat dich zu "'.$campaign->title.'" eingeladen. Rolle: '.$this->invitation->roleLabel().'.',
             'action_url' => route('campaign-invitations.index'),
             'campaign_id' => $campaign->id,
             'campaign_title' => $campaign->title,
             'invitation_id' => $this->invitation->id,
             'role' => $this->invitation->role,
+            'role_label' => $this->invitation->roleLabel(),
             'invited_by' => $this->invitation->invited_by,
         ];
     }
@@ -162,7 +163,7 @@ class CampaignInvitationNotification extends Notification
     private function inviterName(): string
     {
         if ($this->invitation->invited_by === null) {
-            return 'Ein Spielleiter';
+            return 'Eine Spielleitung';
         }
 
         $inviter = $this->invitation->inviter;
@@ -171,6 +172,6 @@ class CampaignInvitationNotification extends Notification
             return $inviter->name;
         }
 
-        return 'Ein Spielleiter';
+        return 'Eine Spielleitung';
     }
 }

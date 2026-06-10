@@ -14,7 +14,7 @@ return [
         ],
         'campaign_invitation' => [
             'title' => 'Neue Kampagneneinladung',
-            'body' => ':inviter laedt dich zu ":campaign" ein.',
+            'body' => ':inviter laedt dich zu ":campaign" als :role ein.',
             'action_label' => 'Einladungen',
         ],
     ],
@@ -33,7 +33,7 @@ return [
             ],
             'campaign_invitation' => [
                 'title' => 'Ruf aus den Aschelanden',
-                'body' => ':inviter ruft dich in die Kampagne ":campaign".',
+                'body' => ':inviter ruft dich als :role in die Kampagne ":campaign".',
                 'action_label' => 'Ruf annehmen',
             ],
         ],

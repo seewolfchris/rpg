@@ -76,7 +76,7 @@
                                     </p>
                                     <p class="mt-2 text-xs uppercase tracking-[0.08em] text-stone-500">
                                         Eingeladen von {{ $invitation->inviter?->name ?? 'System' }}
-                                        • Rolle: {{ strtoupper($invitation->role) }}
+                                        • Rolle: {{ $invitation->roleLabel() }}
                                         • <x-relative-time :at="$invitation->created_at" />
                                     </p>
                                 </div>
@@ -88,11 +88,7 @@
                                             ? 'border-red-700/60 bg-red-900/20 text-red-300'
                                             : 'border-amber-700/60 bg-amber-900/20 text-amber-300')
                                 }}">
-                                    {{ match ($invitation->status) {
-                                        'accepted' => 'angenommen',
-                                        'declined' => 'abgelehnt',
-                                        default => 'ausstehend',
-                                    } }}
+                                    {{ $invitation->statusLabel() }}
                                 </span>
                             </div>
 

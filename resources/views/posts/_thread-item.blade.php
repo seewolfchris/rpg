@@ -303,7 +303,7 @@
         @php($probeAttributeLabel = $probeAttributeKey !== '' ? (string) data_get($probeAttributeConfig, $probeAttributeKey.'.label', strtoupper($probeAttributeKey)) : null)
         @php($probeOutcomeLabel = $post->diceRoll->probe_is_success === null ? null : ($post->diceRoll->probe_is_success ? 'Erfolg' : 'Misserfolg'))
         <section class="dice-roll-visual mt-4 rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
-            <p class="text-xs uppercase tracking-widest text-amber-300">GM-Probe</p>
+            <p class="text-xs uppercase tracking-widest text-amber-300">SL-Probe</p>
             <p class="mt-2 text-sm text-stone-200">{{ $post->diceRoll->label }}</p>
 
             <div class="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-400">

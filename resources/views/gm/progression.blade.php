@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Charakterentwicklung | C76-RPG')
+@section('title', 'SL-Charakterentwicklung | C76-RPG')
 
 @section('content')
     @php
@@ -18,17 +18,17 @@
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM-Entwicklung</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">SL-Entwicklung</p>
                     <h1 class="font-heading text-3xl text-stone-100">Charakterentwicklung</h1>
                     <p class="mt-2 text-sm text-stone-300">Vergib XP-Meilensteine oder Korrekturen für Kampagnen-Charaktere.</p>
                 </div>
-                <a href="{{ route('gm.index') }}" class="ui-btn">Zum GM-Bereich</a>
+                <a href="{{ route('gm.index') }}" class="ui-btn">Zum SL-Bereich</a>
             </div>
         </div>
 
         @if ($campaigns->isEmpty())
             <section class="ui-card p-6 text-sm text-stone-300">
-                Für deinen Account gibt es in dieser Welt keine Co-GM-Berechtigung für XP-Vergaben.
+                Für deinen Account gibt es in dieser Welt keine Co-SL-Berechtigung für XP-Vergaben.
             </section>
         @else
             <section class="ui-card p-6 sm:p-8">

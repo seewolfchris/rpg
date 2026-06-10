@@ -115,7 +115,7 @@ class GmAccessTest extends TestCase
             ->assertViewHas('pendingCount', 0)
             ->assertViewHas('approvedCount', 0)
             ->assertViewHas('rejectedCount', 0)
-            ->assertSee('Keine Posts für den gewählten Filter.');
+            ->assertSee('Keine Beiträge für den gewählten Filter.');
     }
 
     public function test_admin_can_open_world_moderation_queue_with_posts(): void

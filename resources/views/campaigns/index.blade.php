@@ -60,7 +60,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <h2 class="font-heading text-xl text-stone-100">{{ $campaign->title }}</h2>
                             <span class="rounded border border-stone-600/80 bg-black/40 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-stone-300">
-                                {{ $campaign->status }}
+                                {{ $campaign->statusLabel() }}
                             </span>
                         </div>
 
@@ -74,7 +74,7 @@
 
                         <div class="mt-4 flex items-center gap-2">
                             @if ($campaign->is_public)
-                                <span class="rounded border border-emerald-600/60 bg-emerald-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-emerald-300">Public</span>
+                                <span class="rounded border border-emerald-600/60 bg-emerald-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-emerald-300">Öffentlich</span>
                             @else
                                 <span class="rounded border border-amber-600/60 bg-amber-900/20 px-2 py-1 text-[0.65rem] uppercase tracking-[0.08em] text-amber-300">Intern</span>
                             @endif

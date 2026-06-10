@@ -204,7 +204,7 @@ return [
             'label' => 'Eigene',
             'minimums' => [],
             'bonuses' => ['attributes' => []],
-            'description' => 'Frei definierte Berufung, die mit dem GM abgestimmt wird.',
+            'description' => 'Frei definierte Berufung, die mit der SL abgestimmt wird.',
             'custom' => true,
         ],
     ],

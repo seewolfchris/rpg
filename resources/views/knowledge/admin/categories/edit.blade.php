@@ -42,7 +42,7 @@
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h3 class="font-heading text-lg text-stone-100">{{ $entry->title }}</h3>
                                     <span class="inline-flex rounded-full border px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] {{ $entry->status === \App\Models\EncyclopediaEntry::STATUS_PUBLISHED ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200' : ($entry->status === \App\Models\EncyclopediaEntry::STATUS_DRAFT ? 'border-amber-500/50 bg-amber-500/15 text-amber-200' : 'border-stone-600/80 bg-stone-700/20 text-stone-300') }}">
-                                        {{ $entry->status }}
+                                        {{ $entry->statusLabel() }}
                                     </span>
                                     <span class="rounded-full border border-stone-600/80 bg-black/50 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-stone-300">
                                         Pos {{ $entry->position }}

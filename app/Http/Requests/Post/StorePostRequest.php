@@ -159,7 +159,7 @@ class StorePostRequest extends FormRequest
 
             if ($postType === 'ic' && $postMode === 'gm') {
                 if (! $canModerate) {
-                    $validator->errors()->add('post_mode', 'Nur GM oder Co-GM dürfen als Spielleitung posten.');
+                    $validator->errors()->add('post_mode', 'Nur SL oder Co-SL dürfen als Spielleitung posten.');
                 }
 
                 if ($characterId !== null) {
@@ -202,7 +202,7 @@ class StorePostRequest extends FormRequest
 
             if ($probeEnabled) {
                 if (! $canModerate) {
-                    $validator->errors()->add('probe_enabled', 'Nur GM oder Co-GM dürfen Proben ausführen.');
+                    $validator->errors()->add('probe_enabled', 'Nur SL oder Co-SL dürfen Proben ausführen.');
                 } else {
                     $probeCharacterId = $this->filled('probe_character_id')
                         ? (int) $this->input('probe_character_id')
@@ -240,7 +240,7 @@ class StorePostRequest extends FormRequest
 
             if ($inventoryAwardEnabled) {
                 if (! $canModerate) {
-                    $validator->errors()->add('inventory_award_enabled', 'Nur GM oder Co-GM dürfen Inventar-Funde vergeben.');
+                    $validator->errors()->add('inventory_award_enabled', 'Nur SL oder Co-SL dürfen Inventar-Funde vergeben.');
                 } else {
                     $awardCharacterId = $this->filled('inventory_award_character_id')
                         ? (int) $this->input('inventory_award_character_id')

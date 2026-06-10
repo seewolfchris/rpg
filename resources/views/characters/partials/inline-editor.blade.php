@@ -45,10 +45,10 @@
                     <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">Weltbezug:</span> {{ $normalizeVisible((string) $character->world_connection) }}</p>
                 @endif
                 @if ($canManageCharacter && $character->gm_secret)
-                    <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (GM):</span> {{ $normalizeVisible((string) $character->gm_secret) }}</p>
+                    <p class="text-sm text-red-200"><span class="font-semibold text-red-100">Geheimnis (SL):</span> {{ $normalizeVisible((string) $character->gm_secret) }}</p>
                 @endif
                 @if ($canManageCharacter && $character->gm_note)
-                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">GM-Notiz:</span> {{ $normalizeVisible((string) $character->gm_note) }}</p>
+                    <p class="text-sm text-stone-200"><span class="font-semibold text-stone-100">SL-Notiz:</span> {{ $normalizeVisible((string) $character->gm_note) }}</p>
                 @endif
             </section>
         @endif
@@ -130,7 +130,7 @@
             </div>
 
             <div>
-                <label for="inline_gm_secret" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Geheimnis (GM)</label>
+                <label for="inline_gm_secret" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Geheimnis (SL)</label>
                 <textarea
                     id="inline_gm_secret"
                     name="gm_secret"
@@ -141,7 +141,7 @@
             </div>
 
             <div>
-                <label for="inline_gm_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">GM-Notiz</label>
+                <label for="inline_gm_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">SL-Notiz</label>
                 <textarea
                     id="inline_gm_note"
                     name="gm_note"

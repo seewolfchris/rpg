@@ -159,7 +159,7 @@ final class SeedTestflightQaAction
             'co_gm' => $this->upsertAccount(
                 key: 'co_gm',
                 worldSlug: $worldSlug,
-                name: '[TESTFLIGHT] Co-GM '.$worldSlug,
+                name: '[TESTFLIGHT] Co-SL '.$worldSlug,
                 role: UserRole::PLAYER,
                 canCreateCampaigns: false,
                 plainPassword: $plainPassword,
@@ -183,7 +183,7 @@ final class SeedTestflightQaAction
             'trusted_player' => $this->upsertAccount(
                 key: 'trusted_player',
                 worldSlug: $worldSlug,
-                name: '[TESTFLIGHT] Trusted Player '.$worldSlug,
+                name: '[TESTFLIGHT] Vertrauensspieler '.$worldSlug,
                 role: UserRole::PLAYER,
                 canCreateCampaigns: false,
                 plainPassword: $plainPassword,

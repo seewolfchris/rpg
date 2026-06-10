@@ -10,7 +10,7 @@
         <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Betrete eine Welt</h1>
         <p class="mt-3 max-w-3xl text-base leading-relaxed text-stone-300 sm:text-lg">
             Wähle den Schauplatz für deine nächste Szene und steige direkt in Kampagnen,
-            Threads und das passende Wissenszentrum ein.
+            Fäden und das passende Wissenszentrum ein.
         </p>
     </section>
 

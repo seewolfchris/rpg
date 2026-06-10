@@ -54,10 +54,10 @@
                 </li>
                 <li>
                     <strong class="text-stone-100">4. Szene lesen, bevor du schreibst</strong><br>
-                    Prüfe die letzten Posts und notiere dir offene Konflikte, damit dein Einstieg zur laufenden Handlung passt.
+                    Prüfe die letzten Beiträge und notiere dir offene Konflikte, damit dein Einstieg zur laufenden Handlung passt.
                 </li>
                 <li>
-                    <strong class="text-stone-100">5. Ersten IC-Post schreiben</strong><br>
+                    <strong class="text-stone-100">5. Ersten IC-Beitrag schreiben</strong><br>
                     IC-Beiträge immer in Ich-Perspektive und Präsens: <em>Ich hebe die Klinge und halte den Atem an.</em>
                 </li>
                 <li>
@@ -65,8 +65,8 @@
                     Bei unklaren Aktionen löst die Spielleitung oder Co-Spielleitung die Probe aus und nennt Anlass, Zielwert und Modifikator.
                 </li>
                 <li>
-                    <strong class="text-stone-100">7. Thread weiterführen</strong><br>
-                    Reagiere auf andere Posts, halte IC/OOC getrennt und markiere Spoiler sauber.
+                    <strong class="text-stone-100">7. Faden weiterführen</strong><br>
+                    Reagiere auf andere Beiträge, halte IC/OOC getrennt und markiere Spoiler sauber.
                 </li>
             </ol>
         </section>
@@ -76,7 +76,7 @@
                 <h2 class="font-heading text-xl text-stone-100">IC-Mindeststandard</h2>
                 <ul class="mt-4 space-y-2 text-sm leading-relaxed text-stone-300">
                     <li>1. Ich-Form und Präsens (Gegenwart).</li>
-                    <li>2. Klarer Handlungsimpuls pro Post.</li>
+                    <li>2. Klarer Handlungsimpuls pro Beitrag.</li>
                     <li>3. Nicht für andere Figuren entscheiden.</li>
                     <li>4. Dauerhaft lesbar: keine Textwände ohne Abschnitte.</li>
                 </ul>
@@ -88,7 +88,7 @@
                     <li>1. Zu lange Vorgeschichte statt aktueller Aktion.</li>
                     <li>2. OOC-Infos mitten im IC-Absatz.</li>
                     <li>3. Eigene Probenergebnisse ohne Freigabe durch Spielleitung oder Co-Spielleitung im Freitext festlegen.</li>
-                    <li>4. Ohne Rückbezug auf die letzten zwei Posts schreiben.</li>
+                    <li>4. Ohne Rückbezug auf die letzten zwei Beiträge schreiben.</li>
                 </ul>
             </article>
         </section>

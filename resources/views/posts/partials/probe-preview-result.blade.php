@@ -15,7 +15,7 @@
 <div class="rounded-md border border-amber-700/50 bg-amber-950/20 p-4" data-probe-preview-payload>
     <input type="hidden" name="probe_roll_token" value="{{ (string) ($preview['token'] ?? '') }}">
 
-    <p class="text-xs uppercase tracking-[0.12em] text-amber-300">GM-Probe (Vorabwurf)</p>
+    <p class="text-xs uppercase tracking-[0.12em] text-amber-300">SL-Probe (Vorabwurf)</p>
     <p class="mt-2 text-sm text-stone-200">{{ (string) ($preview['probe_explanation'] ?? '') }}</p>
 
     <div class="mt-3 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.08em] text-stone-400">

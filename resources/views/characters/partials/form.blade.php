@@ -330,7 +330,7 @@
         ],
         'story' => [
             'title' => 'Biografie & Weltbezug',
-            'task' => 'Schreibe eine kurze Biografie, ein klares Konzept, eine Verbindung zur Welt und bei Bedarf ein GM-Geheimnis.',
+            'task' => 'Schreibe eine kurze Biografie, ein klares Konzept, eine Verbindung zur Welt und bei Bedarf ein SL-Geheimnis.',
             'why' => 'Diese Angaben geben der Spielleitung Anknüpfungspunkte und helfen anderen, deine Figur in Szenen einzuordnen.',
             'later' => 'Texte und Absprachen können wachsen, sobald die Figur gespielt wird.',
             'skip' => 'Du brauchst keine vollständige Romanbiografie und keine komplette Regelkenntnis. Ein spielbarer Ansatz reicht.',
@@ -568,7 +568,7 @@
                     </div>
 
                     <div>
-                        <label for="gm_secret" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Geheimnis (nur GM)</label>
+                        <label for="gm_secret" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Geheimnis (nur SL)</label>
                         <textarea
                             id="gm_secret"
                             name="gm_secret"
@@ -933,7 +933,7 @@
             </div>
 
             <div class="mt-4">
-                <label for="gm_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">GM-Notiz (Verhandlung Vorteile/Nachteile)</label>
+                <label for="gm_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">SL-Notiz (Verhandlung Vorteile/Nachteile)</label>
                 <textarea
                     id="gm_note"
                     name="gm_note"

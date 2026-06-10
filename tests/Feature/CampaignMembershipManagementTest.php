@@ -47,13 +47,13 @@ class CampaignMembershipManagementTest extends TestCase
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
             ->assertSee('Rolle setzen')
-            ->assertSee('Admins können Kampagnenrollen plattformseitig verwalten; der Owner bleibt unverändert.')
+            ->assertSee('Admins können Kampagnenrollen plattformseitig verwalten; die Kampagnenleitung bleibt unverändert.')
             ->assertSee((string) $playerMembership->user->email);
     }
 
     public function test_player_sees_active_participant_names_and_roles_but_not_emails(): void
     {
-        [$campaign, $owner, $gmMember, $playerMembership] = $this->seedCampaignWithMemberships();
+        [$campaign, $owner, $gmMember, $playerMembership, , $trustedMembership] = $this->seedCampaignWithMemberships();
 
         $this->actingAs($playerMembership->user)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
@@ -62,13 +62,20 @@ class CampaignMembershipManagementTest extends TestCase
             ->assertSee((string) $owner->name)
             ->assertSee((string) $gmMember->name)
             ->assertSee((string) $playerMembership->user->name)
-            ->assertSee('Owner')
-            ->assertSee('GM')
-            ->assertSee('Player')
+            ->assertSee((string) $trustedMembership->user->name)
+            ->assertSeeText('Kampagnenleitung')
+            ->assertSeeText('SL')
+            ->assertSeeText('Vertrauensspieler')
+            ->assertSeeText('Spieler')
+            ->assertDontSeeText('Owner')
+            ->assertDontSeeText('GM')
+            ->assertDontSeeText('Trusted Player')
+            ->assertDontSeeText('Player')
             ->assertDontSee('Rolle setzen')
             ->assertDontSee((string) $owner->email, false)
             ->assertDontSee((string) $gmMember->email, false)
-            ->assertDontSee((string) $playerMembership->user->email, false);
+            ->assertDontSee((string) $playerMembership->user->email, false)
+            ->assertDontSee((string) $trustedMembership->user->email, false);
     }
 
     public function test_owner_can_change_participant_role_from_player_to_gm(): void
@@ -251,9 +258,9 @@ class CampaignMembershipManagementTest extends TestCase
         $this->actingAs($owner)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
-            ->assertSee('Owner:')
+            ->assertSee('Kampagnenleitung:')
             ->assertSee((string) $owner->name)
-            ->assertSee('Owner');
+            ->assertSee('Kampagnenleitung');
     }
 
     public function test_membership_role_change_does_not_alter_campaign_owner_id(): void
@@ -277,13 +284,26 @@ class CampaignMembershipManagementTest extends TestCase
     }
 
     /**
-     * @return array{0: Campaign, 1: User, 2: User, 3: CampaignMembership, 4: CampaignMembership}
+     * @return array{0: Campaign, 1: User, 2: User, 3: CampaignMembership, 4: CampaignMembership, 5: CampaignMembership}
      */
     private function seedCampaignWithMemberships(): array
     {
-        $owner = User::factory()->gm()->create();
-        $gmMember = User::factory()->create();
-        $playerMember = User::factory()->create();
+        $owner = User::factory()->gm()->create([
+            'name' => 'Alraune Leitstern',
+            'email' => 'alraune-leitstern@example.test',
+        ]);
+        $gmMember = User::factory()->create([
+            'name' => 'Sina Erzählerin',
+            'email' => 'sina-erzaehlerin@example.test',
+        ]);
+        $playerMember = User::factory()->create([
+            'name' => 'Mira Chronistin',
+            'email' => 'mira-chronistin@example.test',
+        ]);
+        $trustedMember = User::factory()->create([
+            'name' => 'Taro Vertrauensperson',
+            'email' => 'taro-vertrauen@example.test',
+        ]);
 
         $campaign = Campaign::factory()->create([
             'owner_id' => $owner->id,
@@ -315,6 +335,14 @@ class CampaignMembershipManagementTest extends TestCase
             'assigned_at' => now(),
         ]);
 
-        return [$campaign, $owner, $gmMember, $playerMembership, $gmMembership];
+        $trustedMembership = CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $trustedMember->id,
+            'role' => CampaignMembershipRole::TRUSTED_PLAYER->value,
+            'assigned_by' => $owner->id,
+            'assigned_at' => now(),
+        ]);
+
+        return [$campaign, $owner, $gmMember, $playerMembership, $gmMembership, $trustedMembership];
     }
 }

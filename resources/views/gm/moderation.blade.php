@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'GM Moderationszentrale | C76-RPG')
+@section('title', 'SL-Moderationszentrale | C76-RPG')
 
 @section('content')
     @php($returnTo = request()->getRequestUri())
@@ -8,16 +8,16 @@
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">GM Moderation</p>
-                    <h1 class="font-heading text-3xl text-stone-100">Freigabe-Queue</h1>
-                    <p class="mt-2 text-sm text-stone-300">Prüfe Posts, filtere nach Status und setze Moderation mit einem Klick.</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">SL-Moderation</p>
+                    <h1 class="font-heading text-3xl text-stone-100">Freigabeliste</h1>
+                    <p class="mt-2 text-sm text-stone-300">Prüfe Beiträge, filtere nach Status und setze Moderation mit einem Klick.</p>
                 </div>
 
                 <a
                     href="{{ route('gm.index') }}"
                     class="ui-btn"
                 >
-                    Zum GM-Bereich
+                    Zum SL-Bereich
                 </a>
             </div>
 
@@ -47,7 +47,7 @@
                     type="text"
                     name="q"
                     value="{{ $search }}"
-                    placeholder="Suche: Post-ID, Autor, Szene, Kampagne, Inhalt ..."
+                    placeholder="Suche: Beitrags-ID, Autor, Szene, Kampagne, Inhalt ..."
                     class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-4 py-2.5 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                 >
 
@@ -94,7 +94,7 @@
                         type="text"
                         name="moderation_note"
                         maxlength="500"
-                        placeholder="Optionaler Hinweis für alle betroffenen Posts ..."
+                        placeholder="Optionaler Hinweis für alle betroffenen Beiträge ..."
                         class="w-full rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-2 text-sm text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                     >
 
@@ -110,7 +110,7 @@
 
         <section class="ui-card p-6 sm:p-8">
             @if ($posts->isEmpty())
-                <p class="text-sm text-stone-400">Keine Posts für den gewählten Filter.</p>
+                <p class="text-sm text-stone-400">Keine Beiträge für den gewählten Filter.</p>
             @else
                 <div class="space-y-4">
                     @foreach ($posts as $post)
@@ -118,7 +118,7 @@
                             <div class="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <p class="text-sm text-stone-100">
-                                        <span class="font-semibold">Post #{{ $post->id }}</span>
+                                        <span class="font-semibold">Beitrag #{{ $post->id }}</span>
                                         <span class="text-stone-500">• <x-relative-time :at="$post->created_at" /></span>
                                     </p>
                                     <p class="mt-1 text-sm text-stone-300">
@@ -142,11 +142,7 @@
                                             ? 'border-red-700/60 bg-red-900/20 text-red-300'
                                             : 'border-amber-700/60 bg-amber-900/20 text-amber-300')
                                 }}">
-                                    {{ match ($post->moderation_status) {
-                                        'approved' => 'freigegeben',
-                                        'rejected' => 'abgelehnt',
-                                        default => 'ausstehend',
-                                    } }}
+                                    {{ \App\Models\Post::moderationStatusLabelFor((string) $post->moderation_status) }}
                                 </span>
                             </div>
 

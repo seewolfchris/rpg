@@ -130,7 +130,7 @@
                                     type="submit"
                                     class="rounded-md border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-100 transition hover:bg-amber-500/30"
                                 >
-                                    Thread starten
+                                    Faden starten
                                 </button>
                             </form>
                         </div>
@@ -142,7 +142,7 @@
 
     @if (! $gmContactPanelData->canCreateThread)
         <p class="mt-5 text-sm text-stone-400">
-            Dieser Bereich ist nur für Kampagnen-Teilnehmer, Co-GMs, Kampagnenleitung oder Admins verfügbar.
+            Dieser Bereich ist nur für Kampagnen-Teilnehmer, Co-SL, Kampagnenleitung oder Admins verfügbar.
         </p>
     @elseif ($threads->isEmpty())
         <p class="mt-5 text-sm text-stone-400">Noch keine SL-Kontakte vorhanden.</p>

@@ -64,7 +64,7 @@ class StoreSceneInventoryActionRequest extends FormRequest
             if (! $canModerate) {
                 $validator->errors()->add(
                     'inventory_action_character_id',
-                    'Nur GM oder Co-GM dürfen Inventar-Schnellaktionen ausführen.'
+                    'Nur SL oder Co-SL dürfen Inventar-Schnellaktionen ausführen.'
                 );
 
                 return;

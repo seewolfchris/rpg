@@ -73,7 +73,7 @@
                 <p class="text-xs uppercase tracking-widest text-amber-300">Einsteigerpfad</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Wie spielt man?</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
-                    In 7 Schritten von der ersten Anmeldung bis zum ersten IC-Post in Ich-Perspektive.
+                    In 7 Schritten von der ersten Anmeldung bis zum ersten IC-Beitrag in Ich-Perspektive.
                 </p>
                 <a
                     href="{{ $howToPlayUrl }}"
@@ -87,7 +87,7 @@
                 <p class="text-xs uppercase tracking-widest text-amber-300">System</p>
                 <h2 class="mt-2 font-heading text-xl text-stone-100">Regelwerk</h2>
                 <p class="mt-3 text-sm leading-relaxed text-stone-300">
-                    IC/OOC-Konventionen, Posting-Standards, Prozentproben (d100), Moderation und Spoiler-Richtlinien.
+                    IC/OOC-Konventionen, Beitragsstandards, Prozentproben (d100), Moderation und Spoiler-Richtlinien.
                 </p>
                 <a
                     href="{{ $rulesUrl }}"
@@ -121,7 +121,7 @@
                 <li>2. Erstelle einen Charakter mit klarer Motivation und Grenzen.</li>
                 <li>3. Nimm dir danach nur die Regelwerk-Abschnitte zu IC/OOC und Prozentproben vor.</li>
                 <li>4. {{ $isWorldContext ? 'Nutze die Enzyklopädie als Nachschlagewerk während des Schreibens.' : 'Wähle dann eine Welt, bevor du weltbezogene Inhalte oder Kampagnen öffnest.' }}</li>
-                <li>5. Schreibe den ersten IC-Post kurz, konkret und in Ich-Perspektive.</li>
+                <li>5. Schreibe den ersten IC-Beitrag kurz, konkret und in Ich-Perspektive.</li>
             </ol>
         </section>
 

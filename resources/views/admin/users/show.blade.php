@@ -7,7 +7,7 @@
     @php($statusValue = $user->status instanceof \App\Enums\UserStatus ? $user->status->value : (string) $user->status)
     @php($statusLabel = match ($statusValue) {
         \App\Enums\UserStatus::ACTIVE->value => 'Aktiv',
-        \App\Enums\UserStatus::PENDING->value => 'Wartend',
+        \App\Enums\UserStatus::PENDING->value => 'Ausstehend',
         default => 'Gesperrt',
     })
     @php($isDeletedUserSystemAccount = $user->isDeletedUserSystemAccount())
@@ -79,7 +79,7 @@
                 </div>
                 <div>
                     <dt class="text-xs uppercase tracking-widest text-stone-500">Plattformrolle</dt>
-                    <dd class="mt-1 text-stone-100">{{ $roleValue === \App\Enums\UserRole::ADMIN->value ? 'Admin' : 'Player' }}</dd>
+                    <dd class="mt-1 text-stone-100">{{ \App\Enums\UserRole::labelFor($roleValue) }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs uppercase tracking-widest text-stone-500">Eigene Kampagnen leiten</dt>
@@ -106,7 +106,7 @@
                     <dd class="mt-1 text-stone-100">{{ $user->owned_campaigns_count }}</dd>
                 </div>
                 <div>
-                    <dt class="text-xs uppercase tracking-widest text-stone-500">Kampagnen-Memberships</dt>
+                    <dt class="text-xs uppercase tracking-widest text-stone-500">Kampagnen-Teilnahmen</dt>
                     <dd class="mt-1 text-stone-100">{{ $user->campaign_memberships_count }}</dd>
                 </div>
                 <div>
@@ -114,7 +114,7 @@
                     <dd class="mt-1 text-stone-100">{{ $user->characters_count }}</dd>
                 </div>
                 <div>
-                    <dt class="text-xs uppercase tracking-widest text-stone-500">Posts</dt>
+                    <dt class="text-xs uppercase tracking-widest text-stone-500">Beiträge</dt>
                     <dd class="mt-1 text-stone-100">{{ $user->posts_count }}</dd>
                 </div>
             </dl>
@@ -168,7 +168,7 @@
                     </p>
                     @if ($user->owned_campaigns_count > 0)
                         <p class="mt-2 max-w-3xl text-sm text-amber-200">
-                            Dieser Benutzer besitzt {{ $user->owned_campaigns_count }} {{ $user->owned_campaigns_count === 1 ? 'Kampagne' : 'Kampagnen' }}. Beim Entfernen wird der Kampagnen-Owner auf '{{ \App\Models\User::DELETED_USER_SYSTEM_NAME }}' übertragen.
+                            Dieser Benutzer besitzt {{ $user->owned_campaigns_count }} {{ $user->owned_campaigns_count === 1 ? 'Kampagne' : 'Kampagnen' }}. Beim Entfernen wird die Kampagnenleitung auf '{{ \App\Models\User::DELETED_USER_SYSTEM_NAME }}' übertragen.
                         </p>
                     @endif
                 </div>

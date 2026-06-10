@@ -62,12 +62,13 @@ class PostModerationStatusNotification extends Notification
         }
 
         [$world, $campaign, $scene] = $this->resolveContext();
+        $newStatusLabel = Post::moderationStatusLabelFor($this->newStatus);
 
         $mailMessage = (new MailMessage)
             ->subject('Moderationsstatus geändert')
             ->greeting('Hallo '.$notifiable->name.',')
             ->line('Dein Beitrag wurde von '.$this->moderator->name.' moderiert.')
-            ->line('Neuer Status: '.$this->newStatus)
+            ->line('Neuer Status: '.$newStatusLabel)
             ->action(
                 'Beitrag öffnen',
                 route('campaigns.scenes.show', [
@@ -88,6 +89,8 @@ class PostModerationStatusNotification extends Notification
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         [$world, $campaign, $scene] = $this->resolveContext();
+        $newStatusLabel = Post::moderationStatusLabelFor($this->newStatus);
+        $previousStatusLabel = Post::moderationStatusLabelFor($this->previousStatus);
         $actionUrl = route('campaigns.scenes.show', [
             'world' => $world,
             'campaign' => $campaign,
@@ -97,15 +100,15 @@ class PostModerationStatusNotification extends Notification
             kind: 'post_moderation',
             worldSlug: (string) $world->slug,
             context: [
-                'status' => $this->newStatus,
-                'previous_status' => $this->previousStatus,
+                'status' => $newStatusLabel,
+                'previous_status' => $previousStatusLabel,
                 'moderator' => $this->moderator->name,
                 'campaign' => $campaign->title,
                 'scene' => $scene->title,
             ],
             fallback: [
                 'title' => 'Moderationsstatus geaendert',
-                'body' => 'Dein Beitrag wurde auf "'.$this->newStatus.'" gesetzt.',
+                'body' => 'Dein Beitrag wurde auf "'.$newStatusLabel.'" gesetzt.',
                 'action_label' => 'Beitrag oeffnen',
             ],
         );
@@ -140,11 +143,13 @@ class PostModerationStatusNotification extends Notification
     public function toArray(object $notifiable): array
     {
         [$world, $campaign, $scene] = $this->resolveContext();
+        $newStatusLabel = Post::moderationStatusLabelFor($this->newStatus);
+        $previousStatusLabel = Post::moderationStatusLabelFor($this->previousStatus);
 
         return [
             'kind' => 'post_moderation',
             'title' => 'Moderationsstatus geändert',
-            'message' => 'Dein Beitrag wurde von '.$this->moderator->name.' auf "'.$this->newStatus.'" gesetzt.'
+            'message' => 'Dein Beitrag wurde von '.$this->moderator->name.' auf "'.$newStatusLabel.'" gesetzt.'
                 .($this->moderationNote ? ' Grund: '.$this->moderationNote : ''),
             'action_url' => route('campaigns.scenes.show', [
                 'world' => $world,
@@ -156,6 +161,8 @@ class PostModerationStatusNotification extends Notification
             'campaign_id' => $campaign->id,
             'previous_status' => $this->previousStatus,
             'new_status' => $this->newStatus,
+            'previous_status_label' => $previousStatusLabel,
+            'new_status_label' => $newStatusLabel,
             'moderator_id' => $this->moderator->id,
             'moderation_note' => $this->moderationNote,
         ];

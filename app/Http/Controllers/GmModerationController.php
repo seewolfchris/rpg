@@ -113,7 +113,7 @@ class GmModerationController extends Controller
                 'status' => $statusFilter,
                 'q' => $search !== '' ? $search : null,
             ])
-            ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Posts: '.$result->affected.'.');
+            ->with('status', 'Bulk-Moderation ausgeführt. Betroffene Beiträge: '.$result->affected.'.');
     }
 
     public function probe(Request $request, World $world, Post $post): View

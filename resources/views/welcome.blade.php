@@ -100,7 +100,7 @@
                     </a>
                     @auth
                         <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex !rounded-full sm:tracking-[0.14em]">
-                            Dashboard
+                            Übersicht
                         </a>
                     @else
                         <a href="{{ $loginUrl }}" class="ui-btn ui-btn-accent inline-flex !rounded-full sm:tracking-[0.14em]">
@@ -357,7 +357,7 @@
                         @guest
                             <a href="{{ $registerUrl }}" class="ui-btn ui-btn-accent inline-flex">Jetzt starten</a>
                         @else
-                            <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex">Zum Dashboard</a>
+                            <a href="{{ route('dashboard') }}" class="ui-btn ui-btn-success inline-flex">Zur Übersicht</a>
                         @endguest
                         <a href="#welten" class="ui-btn inline-flex">Welt auswählen</a>
                         <a href="{{ route('knowledge.global.how-to-play') }}" class="ui-btn inline-flex">Schnellstart lesen</a>

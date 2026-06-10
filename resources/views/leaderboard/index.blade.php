@@ -5,10 +5,10 @@
 @section('content')
     <section class="ui-page-wide space-y-6">
         <div class="rounded-2xl border border-stone-800 bg-black/45 p-6 shadow-xl shadow-black/40 backdrop-blur-sm sm:p-8">
-            <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Gamification</p>
+            <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Ruhmpunkte-System</p>
             <h1 class="font-heading text-3xl text-stone-100">Rangliste der Chronisten</h1>
             <p class="mt-3 text-sm text-stone-300">
-                Punkte entstehen durch freigegebene Posts. Dein aktueller Rang: <span class="font-semibold text-amber-200">#{{ $rank }}</span>
+                Punkte entstehen durch freigegebene Beiträge. Dein aktueller Rang: <span class="font-semibold text-amber-200">#{{ $rank }}</span>
             </p>
         </div>
 
@@ -24,7 +24,7 @@
                                 <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Spieler</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Rolle</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Punkte</th>
-                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Freigegebene Posts</th>
+                                <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Freigegebene Beiträge</th>
                                 <th class="px-3 py-2 text-xs uppercase tracking-widest text-stone-500">Charaktere</th>
                             </tr>
                         </thead>
@@ -38,7 +38,7 @@
                                             <span class="ml-2 rounded border border-amber-600/70 bg-amber-900/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.08em] text-amber-200">Du</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">{{ $leader->role->value }}</td>
+                                    <td class="px-3 py-3 text-xs uppercase tracking-[0.08em] text-stone-400">{{ $leader->role->label() }}</td>
                                     <td class="px-3 py-3 text-sm font-semibold text-amber-200">{{ $leader->points }}</td>
                                     <td class="px-3 py-3 text-sm text-stone-300">{{ $leader->approved_posts_count }}</td>
                                     <td class="px-3 py-3 text-sm text-stone-300">{{ $leader->characters_count }}</td>
@@ -56,7 +56,7 @@
                     <div>
                         <p class="mb-2 text-xs uppercase tracking-[0.16em] text-emerald-300/80">Welle 4</p>
                         <h2 class="font-heading text-2xl text-stone-100">Aktive Charaktere diese Woche</h2>
-                        <p class="mt-2 text-sm text-stone-300">Sortiert nach IC-Posts in den letzten 7 Tagen.</p>
+                        <p class="mt-2 text-sm text-stone-300">Sortiert nach IC-Beiträgen in den letzten 7 Tagen.</p>
                     </div>
                 </div>
 
@@ -69,7 +69,7 @@
                                 <p class="text-sm text-stone-100">
                                     <span class="font-semibold text-emerald-200">#{{ $index + 1 }}</span>
                                     <span class="ml-2 font-semibold">{{ $activeCharacter->name }}</span>
-                                    <span class="ml-2 text-stone-400">({{ $activeCharacter->weekly_posts_count }} IC-Posts)</span>
+                                    <span class="ml-2 text-stone-400">({{ $activeCharacter->weekly_posts_count }} IC-Beiträge)</span>
                                 </p>
                                 @if ($activeCharacter->user)
                                     <p class="mt-1 text-xs uppercase tracking-[0.08em] text-stone-500">

@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Dashboard | C76-RPG')
+@section('title', 'Übersicht | C76-RPG')
 
 @section('content')
     <section class="ui-page-wide space-y-6">
@@ -8,7 +8,7 @@
             <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">Sichere Zuflucht</p>
             <h1 class="font-heading break-words text-2xl text-stone-100 sm:text-3xl">Willkommen, {{ auth()->user()->name }}</h1>
             <p class="font-body mt-3 text-lg text-stone-300">
-                Dein Konto ist aktiv. Verwalte Charaktere, baue Kampagnen und sammle Ruhmpunkte für freigegebene Posts.
+                Dein Konto ist aktiv. Verwalte Charaktere, baue Kampagnen und sammle Ruhmpunkte für freigegebene Beiträge.
             </p>
             <p class="ui-badge mt-4 !rounded-md !border-amber-500/50 !bg-amber-500/10 !px-3 !py-1.5 !text-amber-100">
                 Ruhmpunkte: {{ auth()->user()->points }}
@@ -95,7 +95,7 @@
         <div class="grid gap-4 md:grid-cols-5">
             <article class="ui-card-soft p-4">
                 <h2 class="font-heading text-lg text-stone-100">Charaktere</h2>
-                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro User inkl. Eigenschaften, Biografie und Porträt.</p>
+                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro Nutzer inkl. Eigenschaften, Biografie und Porträt.</p>
                 <a
                     href="{{ route('characters.index') }}"
                     class="ui-btn ui-btn-accent mt-4"
@@ -105,7 +105,7 @@
             </article>
             <article class="ui-card-soft p-4">
                 <h2 class="font-heading text-lg text-stone-100">Kampagnen</h2>
-                <p class="mt-2 text-sm text-stone-300">Asynchrone IC/OOC-Szenen mit Edit-History.</p>
+                <p class="mt-2 text-sm text-stone-300">Asynchrone IC/OOC-Szenen mit Änderungshistorie.</p>
                 <a
                     href="{{ route('campaigns.index', ['world' => $selectedWorld]) }}"
                     class="ui-btn ui-btn-accent mt-4"
@@ -114,8 +114,8 @@
                 </a>
             </article>
             <article class="ui-card-soft p-4">
-                <h2 class="font-heading text-lg text-stone-100">GM-Proben</h2>
-                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur über GM-Posts: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
+                <h2 class="font-heading text-lg text-stone-100">SL-Proben</h2>
+                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur über SL-Beiträge: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
             </article>
             <article class="ui-card-soft p-4">
                 <h2 class="font-heading text-lg text-stone-100">Rangliste</h2>

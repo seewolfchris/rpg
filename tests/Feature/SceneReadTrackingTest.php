@@ -199,7 +199,7 @@ class SceneReadTrackingTest extends TestCase
         $response->assertViewIs('scenes.partials.thread-page');
         $response->assertSee('Ungelesen: 0');
         $response->assertSee('Du bist auf dem aktuellen Stand dieser Szene.');
-        $response->assertDontSee('Nächster ungelesener Post');
+        $response->assertDontSee('Nächster ungelesener Beitrag');
 
         $this->assertDatabaseHas('scene_subscriptions', [
             'scene_id' => $scene->id,
@@ -240,7 +240,7 @@ class SceneReadTrackingTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('scenes.partials.thread-page');
         $response->assertSee('Ungelesen: 2');
-        $response->assertSee('Nächster ungelesener Post');
+        $response->assertSee('Nächster ungelesener Beitrag');
 
         $this->assertDatabaseHas('scene_subscriptions', [
             'scene_id' => $scene->id,
@@ -281,7 +281,7 @@ class SceneReadTrackingTest extends TestCase
 
         $showResponse->assertOk();
         $showResponse->assertSee('2 neue Beitr');
-        $showResponse->assertSee('Thread gelesen');
+        $showResponse->assertSee('Faden gelesen');
 
         $threadResponse = $this->actingAs($user)
             ->get(route('campaigns.scenes.thread', [

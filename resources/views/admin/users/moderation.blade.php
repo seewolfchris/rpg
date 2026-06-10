@@ -10,7 +10,7 @@
                 <h1 class="mt-2 font-heading text-3xl text-stone-100 sm:text-4xl">Benutzer verwalten</h1>
                 <p class="mt-3 text-sm text-stone-300">
                     Diese Oberfläche steuert globale Plattformrechte und den Accountstatus.
-                    Benutzer mit SL-Recht dürfen eigene Kampagnen erstellen und werden dort automatisch Owner und GM.
+                    Benutzer mit SL-Recht dürfen eigene Kampagnen erstellen und werden dort automatisch Kampagnenleitung und SL.
                     Kampagnenrollen werden ausschließlich in der jeweiligen Kampagne verwaltet.
                 </p>
             </div>
@@ -41,7 +41,7 @@
             <table class="min-w-full divide-y divide-stone-800 text-sm">
                 <thead>
                     <tr class="text-left text-xs uppercase tracking-widest text-stone-400">
-                        <th class="px-3 py-3">User</th>
+                        <th class="px-3 py-3">Nutzer</th>
                         <th class="px-3 py-3">Accountstatus</th>
                         <th class="px-3 py-3">Plattformrolle</th>
                         <th class="px-3 py-3">Eigene Kampagnen leiten</th>
@@ -71,12 +71,12 @@
                                         border-red-500/70 text-red-200
                                     @endif
                                 ">
-                                    {{ $isActive ? 'Aktiv' : ($isPending ? 'Wartend' : 'Gesperrt') }}
+                                    {{ $isActive ? 'Aktiv' : ($isPending ? 'Ausstehend' : 'Gesperrt') }}
                                 </span>
                             </td>
                             <td class="px-3 py-3">
                                 <span class="inline-flex rounded-full border px-2 py-1 text-xs uppercase tracking-widest {{ $isAdmin ? 'border-amber-500/70 text-amber-200' : 'border-stone-600 text-stone-300' }}">
-                                    {{ $isAdmin ? 'Admin' : 'User' }}
+                                    {{ $isAdmin ? 'Admin' : 'Spieler' }}
                                 </span>
                             </td>
                             <td class="px-3 py-3">
@@ -158,7 +158,7 @@
                                             name="role"
                                             class="rounded-md border border-stone-600/80 bg-neutral-900/80 px-3 py-1.5 text-xs uppercase tracking-wider text-stone-100 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-500/40"
                                         >
-                                            <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($user->hasRole(\App\Enums\UserRole::PLAYER))>User</option>
+                                            <option value="{{ \App\Enums\UserRole::PLAYER->value }}" @selected($user->hasRole(\App\Enums\UserRole::PLAYER))>Spieler</option>
                                             <option value="{{ \App\Enums\UserRole::ADMIN->value }}" @selected($isAdmin)>Admin</option>
                                         </select>
 

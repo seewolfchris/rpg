@@ -207,8 +207,8 @@ class CharacterPolicyVisibilityTest extends TestCase
             ->assertOk()
             ->assertDontSeeText('VERBORGENES_GM_SECRET')
             ->assertDontSeeText('VERBORGENE_GM_NOTE')
-            ->assertDontSeeText('Geheimnis (GM)')
-            ->assertDontSeeText('GM-Notiz')
+            ->assertDontSeeText('Geheimnis (SL)')
+            ->assertDontSeeText('SL-Notiz')
             ->assertSeeText('Konzept:');
     }
 

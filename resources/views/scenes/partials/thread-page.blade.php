@@ -42,7 +42,7 @@
                         href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene, 'jump' => 'latest']) }}"
                         class="ui-btn !px-3 !py-1.5 !text-[0.68rem]"
                     >
-                        Neuester Post
+                        Neuester Beitrag
                     </a>
                 @endif
                 @if ($subscription && (int) ($subscription->last_read_post_id ?? 0) > 0)
@@ -61,7 +61,7 @@
                 href="{{ route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene, 'jump' => 'first_unread']) }}"
                 class="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-amber-500/70 bg-amber-500/20 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-amber-50 shadow-lg shadow-amber-950/30 transition hover:bg-amber-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60"
             >
-                Nächster ungelesener Post
+                Nächster ungelesener Beitrag
             </a>
         @else
             <p class="mt-3 text-xs uppercase tracking-[0.09em] text-emerald-300">Du bist auf dem aktuellen Stand dieser Szene.</p>
@@ -138,7 +138,7 @@
                 </button>
             </form>
             <p class="mt-2 text-[0.68rem] uppercase tracking-[0.08em] text-stone-500">
-                Auswahl erfolgt pro Post über die Checkbox "Sammel".
+                Auswahl erfolgt pro Beitrag über die Checkbox "Sammel".
             </p>
         @endif
     </section>
@@ -211,6 +211,6 @@
     </div>
 @elseif ($pagePosts->isNotEmpty())
     <div class="mt-6 text-center text-xs uppercase tracking-[0.08em] text-stone-500">
-        Thread-Ende erreicht.
+        Fadenende erreicht.
     </div>
 @endif

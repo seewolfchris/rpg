@@ -86,7 +86,7 @@ class PushNarrativeNotificationPayloadTest extends TestCase
         $message = $notification->toWebPush($author, $notification)->toArray();
 
         $this->assertSame('Das Archiv der Asche wurde geaendert', $message['title'] ?? null);
-        $this->assertStringContainsString('traegt nun den Stand "approved"', (string) ($message['body'] ?? ''));
+        $this->assertStringContainsString('traegt nun den Stand "Freigegeben"', (string) ($message['body'] ?? ''));
         $this->assertSame('Zum Eintrag', data_get($message, 'actions.0.title'));
     }
 
@@ -117,7 +117,12 @@ class PushNarrativeNotificationPayloadTest extends TestCase
         $message = $notification->toWebPush($invitee, $notification)->toArray();
 
         $this->assertSame('Neue Kampagneneinladung', $message['title'] ?? null);
-        $this->assertSame('Ilyas laedt dich zu "Schattenkueste" ein.', $message['body'] ?? null);
+        $this->assertSame('Ilyas laedt dich zu "Schattenkueste" als Spieler ein.', $message['body'] ?? null);
         $this->assertSame('Einladungen', data_get($message, 'actions.0.title'));
+
+        $payload = $notification->toArray($invitee);
+        $this->assertSame(CampaignInvitation::ROLE_PLAYER, $payload['role'] ?? null);
+        $this->assertSame('Spieler', $payload['role_label'] ?? null);
+        $this->assertStringContainsString('Rolle: Spieler', (string) ($payload['message'] ?? ''));
     }
 }

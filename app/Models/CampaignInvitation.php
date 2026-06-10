@@ -33,6 +33,24 @@ class CampaignInvitation extends Model
 
     public const ROLE_CO_GM = 'co_gm';
 
+    /**
+     * @var array<string, string>
+     */
+    private const ROLE_LABELS = [
+        self::ROLE_PLAYER => 'Spieler',
+        self::ROLE_TRUSTED_PLAYER => 'Vertrauensspieler',
+        self::ROLE_CO_GM => 'Co-SL',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const STATUS_LABELS = [
+        self::STATUS_PENDING => 'Ausstehend',
+        self::STATUS_ACCEPTED => 'Angenommen',
+        self::STATUS_DECLINED => 'Abgelehnt',
+    ];
+
     public $timestamps = false;
 
     /**
@@ -93,5 +111,25 @@ class CampaignInvitation extends Model
     public function isAccepted(): bool
     {
         return $this->status === self::STATUS_ACCEPTED;
+    }
+
+    public function roleLabel(): string
+    {
+        return self::roleLabelFor((string) $this->role);
+    }
+
+    public static function roleLabelFor(string $role): string
+    {
+        return self::ROLE_LABELS[$role] ?? $role;
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusLabelFor((string) $this->status);
+    }
+
+    public static function statusLabelFor(string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? $status;
     }
 }

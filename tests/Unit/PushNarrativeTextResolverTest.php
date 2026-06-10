@@ -32,10 +32,11 @@ class PushNarrativeTextResolverTest extends TestCase
         $resolved = $resolver->resolve('campaign_invitation', 'nachtmeer', [
             'inviter' => 'Ilyas',
             'campaign' => 'Schattenkueste',
+            'role' => 'Spieler',
         ]);
 
         $this->assertSame('Neue Kampagneneinladung', $resolved['title']);
-        $this->assertSame('Ilyas laedt dich zu "Schattenkueste" ein.', $resolved['body']);
+        $this->assertSame('Ilyas laedt dich zu "Schattenkueste" als Spieler ein.', $resolved['body']);
         $this->assertSame('Einladungen', $resolved['action_label']);
     }
 }

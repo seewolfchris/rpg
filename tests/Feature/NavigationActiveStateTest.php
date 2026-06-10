@@ -32,7 +32,7 @@ class NavigationActiveStateTest extends TestCase
     public static function authenticatedGlobalNavigationCases(): array
     {
         return [
-            'dashboard' => ['dashboard', 'Dashboard', false],
+            'dashboard' => ['dashboard', 'Übersicht', false],
             'leaderboard' => ['leaderboard.index', 'Rangliste', false],
             'campaigns' => ['campaigns.index', 'Kampagnen', true],
             'characters' => ['characters.index', 'Charaktere', false],
@@ -40,7 +40,7 @@ class NavigationActiveStateTest extends TestCase
             'subscriptions' => ['scene-subscriptions.index', 'Abos', true],
             'bookmarks' => ['bookmarks.index', 'Lesezeichen', true],
             'invitations' => ['campaign-invitations.index', 'Einladungen', false],
-            'gm' => ['gm.index', 'GM-Bereich', false],
+            'gm' => ['gm.index', 'SL-Bereich', false],
             'admin' => ['admin.users.index', 'Benutzerverwaltung', false],
         ];
     }

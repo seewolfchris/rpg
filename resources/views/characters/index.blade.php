@@ -53,7 +53,7 @@
         <div class="ui-card p-6 sm:p-8">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Charakterverwaltung (GM-Ansicht)' : 'Deine Charaktere' }}</p>
+                    <p class="mb-2 text-xs uppercase tracking-[0.16em] text-amber-400/80">{{ $isGmView ? 'Charakterverwaltung (SL-Ansicht)' : 'Deine Charaktere' }}</p>
                     <h1 class="font-heading break-words text-3xl text-stone-100">Charaktere</h1>
                     <p class="mt-2 break-words text-sm leading-relaxed text-stone-300 sm:text-base">
                         {{ $isGmView
@@ -118,7 +118,7 @@
                 :description="$hasCharacterFilter
                     ? 'Für den gewählten Status gibt es in dieser Welt keine sichtbaren Charaktere.'
                     : 'Erstelle deinen ersten Charakter, um einer Kampagne beizutreten und IC-Beiträge schreiben zu können.'"
-                :hint="$isGmView && ! $hasCharacterFilter ? 'In der GM-Ansicht erscheinen hier auch Charaktere anderer Spieler im gewählten Weltenkontext.' : ''"
+                :hint="$isGmView && ! $hasCharacterFilter ? 'In der SL-Ansicht erscheinen hier auch Charaktere anderer Spieler im gewählten Weltenkontext.' : ''"
             >
                 <x-slot name="actions">
                     @if (! $hasCharacterFilter)

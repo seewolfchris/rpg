@@ -64,7 +64,7 @@
                 class="{{ $standardLinkBase }} {{ $isDashboardCurrent ? $standardLinkActive : $standardLinkInactive }}"
                 @if ($isDashboardCurrent) aria-current="page" @endif
             >
-                Dashboard
+                Übersicht
             </a>
             <a
                 href="{{ route('campaigns.index') }}"
@@ -151,7 +151,7 @@
                     class="{{ $secondaryLinkBase }} {{ $isGmSection ? $secondaryLinkActive : $secondaryLinkInactive }}"
                     @if ($isGmCurrent) aria-current="page" @endif
                 >
-                    GM-Bereich
+                    SL-Bereich
                 </a>
             @endif
             @if (auth()->user()->hasRole(\App\Enums\UserRole::ADMIN))

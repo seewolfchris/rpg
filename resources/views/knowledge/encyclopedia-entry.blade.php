@@ -103,7 +103,7 @@
 
                     @if (!empty($entry->game_relevance['probe_hint']))
                         <article class="rounded-lg border border-red-900/60 bg-black/35 p-3">
-                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">GM-Proben</p>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-red-200">SL-Proben</p>
                             <p class="mt-1 text-sm leading-relaxed text-stone-200">{{ $entry->game_relevance['probe_hint'] }}</p>
                         </article>
                     @endif

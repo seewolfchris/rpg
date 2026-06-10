@@ -301,16 +301,16 @@ export function createQueueModule({
                 await renderOfflineQueueStatusPanel();
 
                 if (persistedEnabled) {
-                    showSyncNotice('Offline-Queue ist aktiv. Ungesendete Briefe können lokal zwischengespeichert werden.', 'success');
+                    showSyncNotice('Offline-Warteschlange ist aktiv. Ungesendete Briefe können lokal zwischengespeichert werden.', 'success');
                     return;
                 }
 
-                showSyncNotice('Offline-Queue deaktiviert. Lokale Queue-Daten wurden gelöscht.', 'warning');
+                showSyncNotice('Offline-Warteschlange deaktiviert. Lokale Warteschlangen-Daten wurden gelöscht.', 'warning');
             } catch (error) {
                 console.error('Offline queue preference update failed:', error);
                 optOutToggle.checked = !previousEnabled;
                 setOfflineQueueEnabledMetaContent(previousEnabled);
-                showSyncNotice('Offline-Queue-Einstellung konnte nicht gespeichert werden.', 'error');
+                showSyncNotice('Offline-Warteschlangen-Einstellung konnte nicht gespeichert werden.', 'error');
             } finally {
                 offlineQueueEnabled = resolveOfflineQueueEnabledFn();
                 optOutToggle.disabled = false;

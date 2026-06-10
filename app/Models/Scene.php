@@ -22,6 +22,15 @@ class Scene extends Model implements HasMedia
     public const CONTENT_IMAGES_COLLECTION = 'scene_content_images';
 
     /**
+     * @var array<string, string>
+     */
+    private const STATUS_LABELS = [
+        'open' => 'Offen',
+        'closed' => 'Geschlossen',
+        'archived' => 'Archiviert',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -194,6 +203,16 @@ class Scene extends Model implements HasMedia
                     ->values()
             )
             ->values();
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusLabelFor((string) $this->status);
+    }
+
+    public static function statusLabelFor(string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? $status;
     }
 
     public function registerMediaCollections(): void

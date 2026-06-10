@@ -809,9 +809,9 @@ abstract class CharacterSheetRequest extends FormRequest
     public function attributes(): array
     {
         $attributes = [
-            'gm_secret' => 'Geheimnis (nur GM)',
+            'gm_secret' => 'Geheimnis (nur SL)',
             'world_connection' => 'Besondere Verbindung zur Welt',
-            'gm_note' => 'GM-Notiz',
+            'gm_note' => 'SL-Notiz',
             'calling_custom_name' => 'Eigene Berufung (Name)',
             'calling_custom_description' => 'Eigene Berufung (Beschreibung)',
             'advantages' => 'Vorteile',
