@@ -1215,7 +1215,15 @@
 
                 @if ($isEdit && !empty($character?->avatar_path))
                     <div class="flex flex-wrap items-center gap-4 rounded-md border border-stone-700/80 bg-black/35 p-3">
-                        <img src="{{ $character->avatarUrl() }}" alt="Aktuelles Charakterbild" class="h-24 w-20 rounded object-cover">
+                        <a
+                            href="{{ $character->avatarUrl() }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Aktuelles Charakterbild von {{ $character->name }} in voller Größe öffnen"
+                            class="block"
+                        >
+                            <img src="{{ $character->avatarUrl() }}" alt="Aktuelles Charakterbild" class="h-24 w-20 rounded object-cover">
+                        </a>
                         <label class="flex items-center gap-2 text-sm text-stone-200">
                             <input type="checkbox" name="remove_avatar" value="1" @checked(old('remove_avatar')) class="h-4 w-4 rounded border-stone-500 bg-neutral-900 text-red-500 focus:ring-red-500/60">
                             Aktuelles Bild entfernen

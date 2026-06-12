@@ -140,11 +140,19 @@
 
         <div class="grid gap-6 lg:grid-cols-[20rem_1fr]">
             <aside class="character-paper-panel ui-card-soft space-y-4 rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4">
-                <img
-                    src="{{ $character->avatarUrl() }}"
-                    alt="Porträt von {{ $character->name }}"
-                    class="h-72 w-full rounded-lg object-cover"
+                <a
+                    href="{{ $character->avatarUrl() }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Porträt von {{ $character->name }} in voller Größe öffnen"
+                    class="block"
                 >
+                    <img
+                        src="{{ $character->avatarUrl() }}"
+                        alt="Porträt von {{ $character->name }}"
+                        class="h-72 w-full rounded-lg object-cover"
+                    >
+                </a>
 
                 <p class="inline-flex w-full items-center justify-center rounded border px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] {{ $statusBadgeClass }}">
                     Status: {{ $statusLabel }}

@@ -51,12 +51,20 @@
         <div class="min-w-0 flex-1">
             @if ($isCharacterIcPost)
                 <div class="thread-post-author-row">
-                    <img
-                        src="{{ $characterAvatarUrl }}"
-                        alt="Avatar von {{ $character->name }}"
-                        loading="lazy"
-                        class="thread-post-author-avatar"
+                    <a
+                        href="{{ $characterAvatarUrl }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Avatar von {{ $character->name }} in voller Größe öffnen"
+                        class="block shrink-0"
                     >
+                        <img
+                            src="{{ $characterAvatarUrl }}"
+                            alt="Avatar von {{ $character->name }}"
+                            loading="lazy"
+                            class="thread-post-author-avatar"
+                        >
+                    </a>
                     <div class="min-w-0 flex-1">
                         <p class="thread-post-author-character break-words">
                             @if ($characterProfileUrl)

@@ -141,12 +141,20 @@
                         $statusBadgeClass = (string) ($statusMeta['badge_class'] ?? 'border-stone-600/80 bg-stone-900/35 text-stone-200');
                     @endphp
                     <article class="ui-card-soft rounded-xl border border-stone-800/85 bg-neutral-900/70 p-4 shadow-lg shadow-black/25 transition duration-300 hover:-translate-y-0.5 hover:border-amber-600/55">
-                        <img
-                            src="{{ $character->avatarUrl() }}"
-                            alt="Porträt von {{ $character->name }}"
-                            class="h-48 w-full rounded-lg object-cover"
-                            loading="lazy"
+                        <a
+                            href="{{ $character->avatarUrl() }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Porträt von {{ $character->name }} in voller Größe öffnen"
+                            class="block"
                         >
+                            <img
+                                src="{{ $character->avatarUrl() }}"
+                                alt="Porträt von {{ $character->name }}"
+                                class="h-48 w-full rounded-lg object-cover"
+                                loading="lazy"
+                            >
+                        </a>
 
                         <div class="space-y-3 pt-4">
                             <div class="min-w-0">

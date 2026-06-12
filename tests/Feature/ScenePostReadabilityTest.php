@@ -90,8 +90,9 @@ class ScenePostReadabilityTest extends TestCase
             'user_id' => $author->id,
             'world_id' => $campaign->world_id,
             'name' => 'Talan vom Nordgrat',
-            'avatar_path' => null,
+            'avatar_path' => 'character-avatars/talan-vom-nordgrat.jpg',
         ]);
+        $avatarUrl = $character->avatarUrl();
 
         Post::factory()->create([
             'scene_id' => $scene->id,
@@ -114,7 +115,17 @@ class ScenePostReadabilityTest extends TestCase
             ->assertSeeText('Talan vom Nordgrat')
             ->assertSee('href="'.$characterUrl, false)
             ->assertSee('target="_blank"', false)
-            ->assertSee('rel="noopener noreferrer"', false);
+            ->assertSee('rel="noopener noreferrer"', false)
+            ->assertSeeInOrder([
+                'href="'.$avatarUrl.'"',
+                'target="_blank"',
+                'rel="noopener noreferrer"',
+                'aria-label="Avatar von Talan vom Nordgrat in voller Größe öffnen"',
+                'src="'.$avatarUrl.'"',
+                'alt="Avatar von Talan vom Nordgrat"',
+                'loading="lazy"',
+                'class="thread-post-author-avatar"',
+            ], false);
     }
 
     public function test_ic_character_name_stays_plain_text_for_viewer_without_character_permission(): void

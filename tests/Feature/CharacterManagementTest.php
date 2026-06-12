@@ -255,10 +255,13 @@ class CharacterManagementTest extends TestCase
             'name' => 'Spieler Eins',
         ]);
 
-        Character::factory()->create([
+        $avatarPath = 'character-avatars/index-sichtbarkeit.jpg';
+        $character = Character::factory()->create([
             'user_id' => $user->id,
             'name' => 'Index Sichtbarkeit',
+            'avatar_path' => $avatarPath,
         ]);
+        $avatarUrl = $character->avatarUrl();
 
         $response = $this->actingAs($user)->get(route('characters.index'));
 
@@ -266,6 +269,15 @@ class CharacterManagementTest extends TestCase
         $response->assertSeeText('Spieler:');
         $response->assertSeeText('Spieler Eins');
         $response->assertSeeText('Index Sichtbarkeit');
+        $response->assertSeeInOrder([
+            'href="'.$avatarUrl.'"',
+            'target="_blank"',
+            'rel="noopener noreferrer"',
+            'aria-label="Porträt von Index Sichtbarkeit in voller Größe öffnen"',
+            'src="'.$avatarUrl.'"',
+            'alt="Porträt von Index Sichtbarkeit"',
+            'loading="lazy"',
+        ], false);
     }
 
     public function test_character_show_displays_associated_player_name(): void
@@ -277,7 +289,9 @@ class CharacterManagementTest extends TestCase
         $character = Character::factory()->create([
             'user_id' => $user->id,
             'name' => 'Detail Sichtbarkeit',
+            'avatar_path' => 'character-avatars/detail-sichtbarkeit.jpg',
         ]);
+        $avatarUrl = $character->avatarUrl();
 
         $response = $this->actingAs($user)->get(route('characters.show', $character));
 
@@ -285,6 +299,14 @@ class CharacterManagementTest extends TestCase
         $response->assertSeeText('Spieler:');
         $response->assertSeeText('Spieler Detail');
         $response->assertSeeText('Detail Sichtbarkeit');
+        $response->assertSeeInOrder([
+            'href="'.$avatarUrl.'"',
+            'target="_blank"',
+            'rel="noopener noreferrer"',
+            'aria-label="Porträt von Detail Sichtbarkeit in voller Größe öffnen"',
+            'src="'.$avatarUrl.'"',
+            'alt="Porträt von Detail Sichtbarkeit"',
+        ], false);
     }
 
     public function test_character_show_normalizes_unicode_escape_sequences_for_visible_character_data(): void
@@ -750,9 +772,11 @@ class CharacterManagementTest extends TestCase
 
         $character = Character::factory()->create([
             'user_id' => $user->id,
+            'name' => 'Edit Sichtbarkeit',
             'origin' => 'native_vhaltor',
             'species' => 'elf',
             'calling' => 'gelehrter',
+            'avatar_path' => 'character-avatars/edit-sichtbarkeit.jpg',
             'concept' => 'Reliktjaeger aus den verbrannten Archiven.',
             'world_connection' => 'Verbindung zur Glutpforte von Erest.',
             'gm_secret' => 'Schwur im schwarzen Archiv.',
@@ -770,6 +794,7 @@ class CharacterManagementTest extends TestCase
                 'damage' => 12,
             ]],
         ]);
+        $avatarUrl = $character->avatarUrl();
 
         $response = $this->actingAs($user)->get(route('characters.edit', $character));
 
@@ -779,7 +804,15 @@ class CharacterManagementTest extends TestCase
             ->assertSeeText('Schwur im schwarzen Archiv.')
             ->assertSee('Alte Muenze aus Erest', false)
             ->assertSee('Speer', false)
-            ->assertSee('12', false);
+            ->assertSee('12', false)
+            ->assertSeeInOrder([
+                'href="'.$avatarUrl.'"',
+                'target="_blank"',
+                'rel="noopener noreferrer"',
+                'aria-label="Aktuelles Charakterbild von Edit Sichtbarkeit in voller Größe öffnen"',
+                'src="'.$avatarUrl.'"',
+                'alt="Aktuelles Charakterbild"',
+            ], false);
 
         $content = $response->getContent();
 
