@@ -48,6 +48,11 @@
                     ></textarea>
                 </label>
 
+                <label class="inline-flex items-center gap-2 text-sm text-stone-200">
+                    <input type="checkbox" name="probe_enabled" value="1">
+                    SL-Probe aktivieren
+                </label>
+
                 <button
                     type="submit"
                     class="ui-btn ui-btn-accent"

@@ -13,16 +13,20 @@
             @endif
         </div>
 
-        <a href="{{ $nextStep?->primaryUrl ?? route('worlds.index') }}" class="ui-btn ui-btn-accent inline-flex shrink-0">
+        <x-ui.action
+            :href="$nextStep?->primaryUrl ?? route('worlds.index')"
+            variant="accent"
+            class="shrink-0"
+        >
             {{ $nextStep?->primaryLabel ?? 'Welt wählen' }}
-        </a>
+        </x-ui.action>
     </div>
 
     @if ($nextStep?->secondaryLabel && $nextStep?->secondaryUrl)
         <div class="mt-4 flex flex-wrap gap-2">
-            <a href="{{ $nextStep->secondaryUrl }}" class="ui-btn inline-flex">
+            <x-ui.action :href="$nextStep->secondaryUrl">
                 {{ $nextStep->secondaryLabel }}
-            </a>
+            </x-ui.action>
         </div>
     @endif
 </section>

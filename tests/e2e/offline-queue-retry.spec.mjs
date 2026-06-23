@@ -228,6 +228,20 @@ test.beforeEach(async ({ page }) => {
     });
 });
 
+test('enabled probe remains in the form and is not queued while offline', async ({ page, context }) => {
+    const content = `E2E blocked probe ${Date.now()}`;
+
+    await context.setOffline(true);
+    await page.fill('textarea[name="content"]', content);
+    await page.check('input[name="probe_enabled"]');
+    await page.click('button[type="submit"]');
+
+    await expect.poll(async () => getQueuedPostCount(page), { timeout: 5_000 }).toBe(0);
+    await expect(page.locator('textarea[name="content"]')).toHaveValue(content);
+    await expect(page.locator('input[name="probe_enabled"]')).toBeChecked();
+    await expect(page.locator('#offline-sync-notices')).toContainText('SL-Proben können nicht offline vorgemerkt werden');
+});
+
 test('queued post retries after 419 via re-signing and syncs successfully', async ({ page, context }) => {
     const content = `E2E retry success ${Date.now()}`;
 

@@ -13,6 +13,7 @@ Stand: 2026-06-04
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
 - Security-Hardening (technisch): `SECURITY.md`
 - PWA/Offline-Details: `PWA_OFFLINE.md`
+- Frontend-Komponenten und Interaktionskonventionen: `FRONTEND.md`
 - Architekturstandard (Actions-first + Guardrails): `ARCHITECTURE.md`
 - Release-Historie: `../CHANGELOG.md`
 - Architekturentscheidungen: `adr/*`

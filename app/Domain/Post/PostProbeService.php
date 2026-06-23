@@ -120,43 +120,18 @@ class PostProbeService
 
         $probeRollToken = trim((string) ($data['probe_roll_token'] ?? ''));
 
-        if ($probeRollToken !== '') {
-            return $this->createForPostFromPreviewToken(
-                post: $post,
-                user: $user,
-                scene: $scene,
-                campaign: $campaign,
-                params: $params,
-                probeRollToken: $probeRollToken,
-            );
+        if ($probeRollToken === '') {
+            throw PostProbeInvariantViolationException::previewTokenMissingOrExpired();
         }
 
-        // TODO: Legacy-Fallback entfernen, sobald Vorabwurf mit Token verpflichtend ist.
-        $rolled = $this->normalizeRolledPayload(
-            $this->probeRoller->roll($params['roll_mode'], $params['modifier'])
-        );
-
-        $result = $this->persistProbeResult(
+        return $this->createForPostFromPreviewToken(
             post: $post,
-            scene: $scene,
             user: $user,
+            scene: $scene,
             campaign: $campaign,
             params: $params,
-            rolled: $rolled,
-            forcedProbeTargetValue: null,
-            forcedProbeSuccess: null,
+            probeRollToken: $probeRollToken,
         );
-
-        $this->logProbeApplied(
-            scene: $scene,
-            user: $user,
-            post: $post,
-            result: $result,
-            params: $params,
-            rolled: $rolled,
-        );
-
-        return true;
     }
 
     /**
@@ -542,6 +517,7 @@ class PostProbeService
             'applied_le_delta' => $result['applied_le_delta'],
             'requested_ae_delta' => $result['requested_ae_delta'],
             'applied_ae_delta' => $result['applied_ae_delta'],
+            'resolution_source' => 'preview_token',
             'outcome' => 'succeeded',
         ]);
     }

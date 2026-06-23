@@ -6,8 +6,9 @@ import {
     parsePostDraftPayload,
 } from '../post-editor-draft';
 import { getCsrfToken } from './csrf';
+import { hasValidProbeToken, probeSubmissionNeedsPreview } from './post-probe-policy';
 
-const POST_EDITOR_SELECTOR = 'form[data-post-editor]';
+const POST_EDITOR_SELECTOR = 'form[data-post-editor], form[data-probe-preview-editor]';
 const POST_PREVIEW_DEBOUNCE_MS = 450;
 const POST_DRAFT_DEBOUNCE_MS = 350;
 const PREVIEW_BLOCKED_TAGS = new Set([
@@ -104,10 +105,7 @@ export function setupPostEditorEnhancements() {
         }
 
         const hasActiveProbeToken = () => {
-            const tokenField = formNode.querySelector('input[name="probe_roll_token"]');
-
-            return tokenField instanceof HTMLInputElement
-                && tokenField.value.trim() !== '';
+            return hasValidProbeToken(formNode);
         };
 
         const clearProbePreviewResult = (statusMessage = '') => {
@@ -371,7 +369,22 @@ export function setupPostEditorEnhancements() {
             setProbePreviewStatus('Vorabwurf aktiv. Das Ergebnis wird beim Speichern unverändert übernommen.');
         }
 
-        formNode.addEventListener('submit', () => {
+        formNode.addEventListener('submit', (event) => {
+            if (probeSubmissionNeedsPreview(formNode)) {
+                event.preventDefault();
+                setProbePreviewStatus('Bitte würfle die aktivierte Probe vor dem Veröffentlichen.');
+
+                if (probePreviewTrigger instanceof HTMLElement) {
+                    probePreviewTrigger.focus();
+                }
+
+                return;
+            }
+
+            if (event.defaultPrevented) {
+                return;
+            }
+
             if (storageKey) {
                 removeLocalStorageValue(storageKey);
             }

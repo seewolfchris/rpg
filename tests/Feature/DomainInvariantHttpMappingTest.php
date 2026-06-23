@@ -63,6 +63,7 @@ class DomainInvariantHttpMappingTest extends TestCase
                 'character_id' => $character->id,
                 'content' => str_repeat('Probe-Invariant muss als Eingabefehler auftauchen. ', 2),
                 'probe_enabled' => '1',
+                'probe_roll_token' => str_repeat('a', 64),
                 'probe_character_id' => $character->id,
                 'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                 'probe_modifier' => 0,

@@ -40,14 +40,18 @@
                         />
                     @endif
                 </div>
-                <a href="{{ route('worlds.index') }}" class="ui-btn ui-btn-accent">Welten wechseln</a>
+                <x-ui.action :href="route('worlds.index')" variant="accent">Welten wechseln</x-ui.action>
             </div>
         </section>
 
         @php($tutorialTotal = max(count($tutorialSteps), 1))
         @php($tutorialProgress = (int) round(($tutorialCompletedCount / $tutorialTotal) * 100))
-        <section class="ui-card p-6 sm:p-8">
-            <div class="flex flex-wrap items-end justify-between gap-3">
+        <details
+            class="dashboard-disclosure ui-card overflow-hidden"
+            data-dashboard-section="tutorial"
+            @if ($tutorialCompletedCount < $tutorialTotal) open @endif
+        >
+            <summary class="flex min-h-14 flex-wrap items-center gap-3 px-6 py-5 sm:px-8">
                 <div>
                     <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Tutorial im Spiel</p>
                     <h2 class="mt-1 font-heading text-2xl text-stone-100">Erste Schritte</h2>
@@ -55,117 +59,110 @@
                         Fortschritt: {{ $tutorialCompletedCount }} / {{ $tutorialTotal }} abgeschlossen
                     </p>
                 </div>
-                <a
-                    href="{{ route('knowledge.index', ['world' => $selectedWorld]) }}"
-                    class="ui-btn"
-                >
-                    Wissenszentrum
-                </a>
-            </div>
-            <div class="mt-4 h-2 w-full rounded-full bg-stone-800">
-                <div
-                    class="h-2 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300"
-                    style="width: {{ max(0, min($tutorialProgress, 100)) }}%;"
-                ></div>
-            </div>
+            </summary>
 
-            <ol class="mt-5 space-y-3">
-                @foreach ($tutorialSteps as $step)
-                    <li class="ui-card-soft flex flex-wrap items-start justify-between gap-3 px-4 py-3">
-                        <div class="flex min-w-0 items-start gap-3">
-                            <span class="{{ $step['done'] ? 'border-emerald-500/80 bg-emerald-500/20 text-emerald-200' : 'border-stone-600/80 bg-stone-800/70 text-stone-300' }} inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase">
-                                {{ $step['done'] ? 'ok' : $loop->iteration }}
-                            </span>
-                            <div>
-                                <p class="text-sm font-semibold text-stone-100">{{ $step['title'] }}</p>
-                                <p class="mt-1 text-xs leading-relaxed text-stone-400">{{ $step['description'] }}</p>
+            <div class="border-t border-stone-800 px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
+                <div class="flex justify-end">
+                    <x-ui.action :href="route('knowledge.index', ['world' => $selectedWorld])">
+                        Wissenszentrum
+                    </x-ui.action>
+                </div>
+                <div class="mt-4 h-2 w-full rounded-full bg-stone-800">
+                    <div
+                        class="h-2 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300"
+                        style="width: {{ max(0, min($tutorialProgress, 100)) }}%;"
+                    ></div>
+                </div>
+
+                <ol class="mt-5 space-y-3">
+                    @foreach ($tutorialSteps as $step)
+                        <li class="ui-card-soft flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <span class="{{ $step['done'] ? 'border-emerald-500/80 bg-emerald-500/20 text-emerald-200' : 'border-stone-600/80 bg-stone-800/70 text-stone-300' }} inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold uppercase">
+                                    {{ $step['done'] ? 'ok' : $loop->iteration }}
+                                </span>
+                                <div>
+                                    <p class="text-sm font-semibold text-stone-100">{{ $step['title'] }}</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-stone-400">{{ $step['description'] }}</p>
+                                </div>
                             </div>
-                        </div>
-                        <a
-                            href="{{ $step['url'] }}"
-                            class="ui-btn ui-btn-accent shrink-0"
-                        >
-                            {{ $step['cta'] }}
-                        </a>
-                    </li>
-                @endforeach
-            </ol>
-        </section>
-
-        <div class="grid gap-4 md:grid-cols-5">
-            <article class="ui-card-soft p-4">
-                <h2 class="font-heading text-lg text-stone-100">Charaktere</h2>
-                <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro Nutzer inkl. Eigenschaften, Biografie und Porträt.</p>
-                <a
-                    href="{{ route('characters.index') }}"
-                    class="ui-btn ui-btn-accent mt-4"
-                >
-                    Verwalten
-                </a>
-            </article>
-            <article class="ui-card-soft p-4">
-                <h2 class="font-heading text-lg text-stone-100">Kampagnen</h2>
-                <p class="mt-2 text-sm text-stone-300">Asynchrone IC/OOC-Szenen mit Änderungshistorie.</p>
-                <a
-                    href="{{ route('campaigns.index', ['world' => $selectedWorld]) }}"
-                    class="ui-btn ui-btn-accent mt-4"
-                >
-                    Öffnen
-                </a>
-            </article>
-            <article class="ui-card-soft p-4">
-                <h2 class="font-heading text-lg text-stone-100">SL-Proben</h2>
-                <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur über SL-Beiträge: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
-            </article>
-            <article class="ui-card-soft p-4">
-                <h2 class="font-heading text-lg text-stone-100">Rangliste</h2>
-                <p class="mt-2 text-sm text-stone-300">Sieh deinen Rang und die aktivsten Chronisten.</p>
-                <a
-                    href="{{ route('leaderboard.index') }}"
-                    class="ui-btn ui-btn-accent mt-4"
-                >
-                    Öffnen
-                </a>
-            </article>
-            <article class="ui-card-soft p-4 !border-amber-700/40 !bg-amber-900/10">
-                <h2 class="font-heading text-lg text-amber-100">Ungelesene Szenen</h2>
-                <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beiträgen.</p>
-                <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Lesezeichen: {{ $bookmarkCount }}</p>
-                <a
-                    href="{{ route('scene-subscriptions.index', ['world' => $selectedWorld]) }}"
-                    class="ui-btn ui-btn-accent mt-4"
-                >
-                    Zur Abo-Übersicht
-                </a>
-                <a
-                    href="{{ route('bookmarks.index', ['world' => $selectedWorld]) }}"
-                    class="ui-btn ui-btn-success mt-2"
-                >
-                    Zu Lesezeichen
-                </a>
-            </article>
-        </div>
-
-        <section class="ui-card p-6 sm:p-8">
-            <h2 class="font-heading text-2xl text-stone-100">Top-Chronisten</h2>
-            @if ($topPlayers->isEmpty())
-                <p class="mt-3 text-sm text-stone-400">Noch keine Punkte gesammelt.</p>
-            @else
-                <ol class="mt-4 space-y-2">
-                    @foreach ($topPlayers as $rank => $topPlayer)
-                        <li class="ui-card-soft flex items-center justify-between px-4 py-2">
-                            <p class="text-sm text-stone-200">
-                                <span class="font-semibold text-amber-200">#{{ $rank + 1 }}</span>
-                                {{ $topPlayer->name }}
-                                @if ($topPlayer->id === auth()->id())
-                                    <span class="ml-2 text-xs uppercase tracking-[0.08em] text-amber-300">du</span>
-                                @endif
-                            </p>
-                            <p class="text-sm font-semibold text-amber-200">{{ $topPlayer->points }} Punkte</p>
+                            <x-ui.action :href="$step['url']" variant="accent" class="shrink-0">
+                                {{ $step['cta'] }}
+                            </x-ui.action>
                         </li>
                     @endforeach
                 </ol>
-            @endif
-        </section>
+            </div>
+        </details>
+
+        <details class="dashboard-disclosure ui-card overflow-hidden" data-dashboard-section="quick-access">
+            <summary class="flex min-h-14 items-center gap-3 px-6 py-5 sm:px-8">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Navigation</p>
+                    <h2 class="mt-1 font-heading text-2xl text-stone-100">Weitere Bereiche</h2>
+                </div>
+            </summary>
+            <div class="grid gap-4 border-t border-stone-800 p-6 md:grid-cols-5 sm:p-8">
+                <article class="ui-card-soft p-4">
+                    <h3 class="font-heading text-lg text-stone-100">Charaktere</h3>
+                    <p class="mt-2 text-sm text-stone-300">Mehrere Figuren pro Nutzer inkl. Eigenschaften, Biografie und Porträt.</p>
+                    <x-ui.action :href="route('characters.index')" variant="accent" class="mt-4">Verwalten</x-ui.action>
+                </article>
+                <article class="ui-card-soft p-4">
+                    <h3 class="font-heading text-lg text-stone-100">Kampagnen</h3>
+                    <p class="mt-2 text-sm text-stone-300">Asynchrone IC/OOC-Szenen mit Änderungshistorie.</p>
+                    <x-ui.action :href="route('campaigns.index', ['world' => $selectedWorld])" variant="accent" class="mt-4">Öffnen</x-ui.action>
+                </article>
+                <article class="ui-card-soft p-4">
+                    <h3 class="font-heading text-lg text-stone-100">SL-Proben</h3>
+                    <p class="mt-2 text-sm text-stone-300">d100-Proben laufen nur über SL-Beiträge: Anlass, Ziel-Held, Modifikator und Ergebnisblock inklusive.</p>
+                </article>
+                <article class="ui-card-soft p-4">
+                    <h3 class="font-heading text-lg text-stone-100">Rangliste</h3>
+                    <p class="mt-2 text-sm text-stone-300">Sieh deinen Rang und die aktivsten Chronisten.</p>
+                    <x-ui.action :href="route('leaderboard.index')" variant="accent" class="mt-4">Öffnen</x-ui.action>
+                </article>
+                <article class="ui-card-soft p-4 !border-amber-700/40 !bg-amber-900/10">
+                    <h3 class="font-heading text-lg text-amber-100">Ungelesene Szenen</h3>
+                    <p class="mt-2 text-sm text-amber-200">{{ $unreadSceneCount }} mit neuen Beiträgen.</p>
+                    <p class="mt-1 text-xs uppercase tracking-[0.08em] text-amber-300">Lesezeichen: {{ $bookmarkCount }}</p>
+                    <x-ui.action :href="route('scene-subscriptions.index', ['world' => $selectedWorld])" variant="accent" class="mt-4">
+                        Zur Abo-Übersicht
+                    </x-ui.action>
+                    <x-ui.action :href="route('bookmarks.index', ['world' => $selectedWorld])" variant="success" class="mt-2">
+                        Zu Lesezeichen
+                    </x-ui.action>
+                </article>
+            </div>
+        </details>
+
+        <details class="dashboard-disclosure ui-card overflow-hidden" data-dashboard-section="leaderboard">
+            <summary class="flex min-h-14 items-center gap-3 px-6 py-5 sm:px-8">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.14em] text-amber-400/80">Rangliste</p>
+                    <h2 class="mt-1 font-heading text-2xl text-stone-100">Top-Chronisten</h2>
+                </div>
+            </summary>
+            <div class="border-t border-stone-800 p-6 sm:p-8">
+                @if ($topPlayers->isEmpty())
+                    <p class="text-sm text-stone-400">Noch keine Punkte gesammelt.</p>
+                @else
+                    <ol class="space-y-2">
+                        @foreach ($topPlayers as $rank => $topPlayer)
+                            <li class="ui-card-soft flex items-center justify-between px-4 py-2">
+                                <p class="text-sm text-stone-200">
+                                    <span class="font-semibold text-amber-200">#{{ $rank + 1 }}</span>
+                                    {{ $topPlayer->name }}
+                                    @if ($topPlayer->id === auth()->id())
+                                        <span class="ml-2 text-xs uppercase tracking-[0.08em] text-amber-300">du</span>
+                                    @endif
+                                </p>
+                                <p class="text-sm font-semibold text-amber-200">{{ $topPlayer->points }} Punkte</p>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endif
+            </div>
+        </details>
     </section>
 @endsection

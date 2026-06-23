@@ -581,6 +581,46 @@
         color: rgb(254 242 242);
     }
 
+    .ui-action {
+        min-height: 2.75rem;
+    }
+
+    .ui-action-large {
+        min-height: 3rem;
+        padding-inline: 1.25rem;
+    }
+
+    .ui-action-compact {
+        min-height: 2.75rem;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.68rem;
+    }
+
+    .dashboard-disclosure > summary {
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .dashboard-disclosure > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .dashboard-disclosure > summary:focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: -3px;
+    }
+
+    .dashboard-disclosure > summary::after {
+        content: '+';
+        margin-left: auto;
+        font-family: 'DM Mono', monospace;
+        color: rgb(252 211 77);
+    }
+
+    .dashboard-disclosure[open] > summary::after {
+        content: '−';
+    }
+
     .app-nav {
         position: fixed;
         top: 0;
@@ -1752,6 +1792,18 @@
     }
 
     @media (min-width: 640px) {
+        .ui-action {
+            min-height: 2.3rem;
+        }
+
+        .ui-action-large {
+            min-height: 2.75rem;
+        }
+
+        .ui-action-compact {
+            min-height: 1.95rem;
+        }
+
         .app-header {
             row-gap: 0.55rem;
         }

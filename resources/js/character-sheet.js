@@ -178,6 +178,7 @@ export function characterSheetForm(payload = {}) {
         weapons: [],
         armors: [],
         currentWizardStep: 'basics',
+        wizardValidationMessage: '',
 
         wizardSteps: [
             {
@@ -526,6 +527,129 @@ export function characterSheetForm(payload = {}) {
             this.currentWizardStep = this.wizardSteps[nextIndex]?.key ?? this.currentWizardStep;
         },
 
+        validateCurrentWizardStep(event = null) {
+            const form = event?.currentTarget?.closest?.('form')
+                ?? (typeof document !== 'undefined' ? document.querySelector('form') : null);
+            const validation = this.wizardDomainValidation(this.currentWizardStep);
+
+            if (form?.querySelectorAll) {
+                form.querySelectorAll('[data-wizard-custom-validity="1"]').forEach((field) => {
+                    if (typeof field.setCustomValidity === 'function') {
+                        field.setCustomValidity('');
+                    }
+                    field.removeAttribute('data-wizard-custom-validity');
+                });
+            }
+
+            if (validation !== null) {
+                this.wizardValidationMessage = validation.message;
+                const target = this.findWizardField(form, validation.field);
+
+                if (target && typeof target.setCustomValidity === 'function') {
+                    target.setCustomValidity(validation.message);
+                    target.setAttribute('data-wizard-custom-validity', '1');
+                    target.focus?.();
+                    target.reportValidity?.();
+                }
+
+                return false;
+            }
+
+            const invalidField = this.firstInvalidNativeField(form, this.currentWizardStep);
+            if (invalidField) {
+                this.wizardValidationMessage = invalidField.validationMessage || 'Bitte prüfe die markierte Eingabe.';
+                invalidField.focus?.();
+                invalidField.reportValidity?.();
+
+                return false;
+            }
+
+            this.wizardValidationMessage = '';
+            this.nextWizardStep();
+
+            return true;
+        },
+
+        wizardDomainValidation(step) {
+            if (step === 'options') {
+                if (!this.species) {
+                    return { field: 'species', message: 'Bitte wähle eine Spezies.' };
+                }
+
+                if (!this.calling) {
+                    return { field: 'calling', message: 'Bitte wähle eine Berufung.' };
+                }
+
+                if (!this.customCallingValid) {
+                    return {
+                        field: 'calling_custom_name',
+                        message: 'Bitte benenne und beschreibe die eigene Berufung.',
+                    };
+                }
+
+            }
+
+            if (step === 'attributes') {
+                if (!this.averageValid) {
+                    return {
+                        field: this.attributeKeys[0] ?? 'mu',
+                        message: `Der Attributdurchschnitt darf höchstens ${this.averageMax} % betragen.`,
+                    };
+                }
+
+                const unmetRequirement = this.callingRequirementEntries.find((entry) => !entry.met);
+                if (unmetRequirement) {
+                    return {
+                        field: unmetRequirement.key,
+                        message: `${unmetRequirement.label} muss für die gewählte Berufung mindestens ${unmetRequirement.required} % erreichen.`,
+                    };
+                }
+            }
+
+            if (step === 'story' && !this.traitsValid) {
+                return {
+                    field: 'advantages',
+                    message: 'Vorteile und Nachteile müssen ausgefüllt, eindeutig und 1:1 gepaart sein.',
+                };
+            }
+
+            return null;
+        },
+
+        findWizardField(form, fieldName) {
+            if (!form?.querySelector || !fieldName) {
+                return null;
+            }
+
+            return form.querySelector(`[name="${fieldName}"]`)
+                ?? form.querySelector(`[name^="${fieldName}["]`);
+        },
+
+        firstInvalidNativeField(form, step) {
+            if (!form?.querySelectorAll) {
+                return null;
+            }
+
+            const stepEntry = this.wizardSteps.find((entry) => entry.key === step);
+            if (!stepEntry) {
+                return null;
+            }
+
+            for (const fieldName of stepEntry.fields) {
+                const candidates = form.querySelectorAll(
+                    `[name="${fieldName}"], [name^="${fieldName}["]`,
+                );
+
+                for (const candidate of candidates) {
+                    if (typeof candidate.checkValidity === 'function' && !candidate.checkValidity()) {
+                        return candidate;
+                    }
+                }
+            }
+
+            return null;
+        },
+
         previousWizardStep() {
             const previousIndex = Math.max(this.currentWizardIndex - 1, 0);
             this.currentWizardStep = this.wizardSteps[previousIndex]?.key ?? this.currentWizardStep;
@@ -817,8 +941,10 @@ export function characterSheetForm(payload = {}) {
         },
 
         get traitsValid() {
-            const advantageCount = this.advantages.length;
-            const disadvantageCount = this.disadvantages.length;
+            const advantages = normalizeStringArray(this.advantages);
+            const disadvantages = normalizeStringArray(this.disadvantages);
+            const advantageCount = advantages.length;
+            const disadvantageCount = disadvantages.length;
 
             if (advantageCount !== disadvantageCount) {
                 return false;
@@ -832,7 +958,8 @@ export function characterSheetForm(payload = {}) {
                 return false;
             }
 
-            return true;
+            return new Set(advantages).size === advantageCount
+                && new Set(disadvantages).size === disadvantageCount;
         },
 
         addTrait(type) {

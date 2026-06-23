@@ -10,6 +10,7 @@ import {
     mergeDeadLetterContent,
 } from '../offline-dead-letter.mjs';
 import { getCsrfToken } from '../app/csrf';
+import { hasEnabledProbe } from '../app/post-probe-policy';
 import { showSyncNotice, trapFocusInElements } from './utils';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
@@ -201,6 +202,14 @@ export function createQueueModule({
                 }
 
                 event.preventDefault();
+
+                if (hasEnabledProbe(form)) {
+                    showSyncNotice(
+                        'SL-Proben können nicht offline vorgemerkt werden. Bitte bleibe auf der Seite und würfle die Probe online.',
+                        'warning',
+                    );
+                    return;
+                }
 
                 if (formHasSelectedFiles(form)) {
                     showSyncNotice(

@@ -253,6 +253,65 @@ class DashboardNextStepTest extends TestCase
             ->assertSeeText('Top-Chronisten');
     }
 
+    public function test_dashboard_uses_native_progressive_disclosures_with_expected_defaults(): void
+    {
+        $newUser = User::factory()->create();
+
+        $newUserResponse = $this->actingAs($newUser)->get(route('dashboard'));
+        $newUserResponse->assertOk();
+
+        $newUserHtml = (string) $newUserResponse->getContent();
+        $newUserXpath = $this->toXPath($newUserHtml);
+
+        $openTutorial = $newUserXpath->query("//details[@data-dashboard-section='tutorial' and @open]");
+        $closedQuickAccess = $newUserXpath->query("//details[@data-dashboard-section='quick-access' and not(@open)]");
+        $closedLeaderboard = $newUserXpath->query("//details[@data-dashboard-section='leaderboard' and not(@open)]");
+
+        $this->assertSame(1, $openTutorial->length);
+        $this->assertSame(1, $closedQuickAccess->length);
+        $this->assertSame(1, $closedLeaderboard->length);
+
+        $completedUser = User::factory()->create();
+        Character::factory()->create(['user_id' => $completedUser->id]);
+        $campaign = Campaign::factory()->create(['is_public' => true, 'status' => 'active']);
+        $scene = Scene::factory()->create(['campaign_id' => $campaign->id]);
+        SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $completedUser->id,
+            'is_muted' => false,
+        ]);
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $completedUser->id,
+        ]);
+        \App\Models\DiceRoll::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $completedUser->id,
+            'roll_mode' => \App\Models\DiceRoll::MODE_NORMAL,
+            'modifier' => 0,
+            'label' => 'Dashboard complete',
+            'rolls' => [10],
+            'kept_roll' => 10,
+            'total' => 10,
+            'is_critical_success' => false,
+            'is_critical_failure' => false,
+        ]);
+        \App\Models\SceneBookmark::query()->create([
+            'user_id' => $completedUser->id,
+            'scene_id' => $scene->id,
+            'post_id' => $post->id,
+            'label' => 'Dashboard complete',
+        ]);
+
+        $completedHtml = (string) $this->actingAs($completedUser)
+            ->get(route('dashboard'))
+            ->getContent();
+        $completedXpath = $this->toXPath($completedHtml);
+
+        $closedTutorial = $completedXpath->query("//details[@data-dashboard-section='tutorial' and not(@open)]");
+        $this->assertSame(1, $closedTutorial->length);
+    }
+
     private function toXPath(string $html): \DOMXPath
     {
         $document = new \DOMDocument();
