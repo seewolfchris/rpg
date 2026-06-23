@@ -142,3 +142,70 @@ test('characterSheetForm exposes progressive wizard state without changing form 
     component.setWizardStep('unknown');
     assert.equal(component.currentWizardStep, 'gear');
 });
+
+test('characterSheetForm blocks wizard progress on domain validation failures', () => {
+    const component = characterSheetForm({
+        config: {
+            ...baseConfig,
+            average_max: 50,
+            callings: {
+                ...baseConfig.callings,
+                barde: {
+                    ...baseConfig.callings.barde,
+                    minimums: { mu: 50 },
+                },
+            },
+        },
+        worldConfigs: {
+            1: {
+                ...baseConfig,
+                average_max: 50,
+                callings: {
+                    ...baseConfig.callings,
+                    barde: {
+                        ...baseConfig.callings.barde,
+                        minimums: { mu: 50 },
+                    },
+                },
+            },
+        },
+        attributeKeys: ['mu'],
+        initial: {
+            worldId: '1',
+            origin: 'native_vhaltor',
+            species: 'mensch',
+            calling: 'barde',
+            attributes: { mu: 40 },
+            attributeNotes: {},
+            advantages: ['Diszipliniert'],
+            disadvantages: ['Misstrauisch'],
+            inventory: [],
+            weapons: [],
+            armors: [],
+        },
+    });
+
+    component.init();
+    component.setWizardStep('options');
+
+    assert.equal(component.wizardDomainValidation('options'), null);
+    assert.equal(component.validateCurrentWizardStep(), true);
+    assert.equal(component.currentWizardStep, 'attributes');
+
+    assert.deepEqual(component.wizardDomainValidation('attributes'), {
+        field: 'mu',
+        message: 'Mut muss für die gewählte Berufung mindestens 50 % erreichen.',
+    });
+
+    component.attributes.mu = 60;
+    assert.deepEqual(component.wizardDomainValidation('attributes'), {
+        field: 'mu',
+        message: 'Der Attributdurchschnitt darf höchstens 50 % betragen.',
+    });
+
+    component.attributes.mu = 40;
+    component.advantages = ['Doppelt', 'Doppelt'];
+    component.disadvantages = ['Eins', 'Zwei'];
+    assert.equal(component.traitsValid, false);
+    assert.equal(component.wizardDomainValidation('story')?.field, 'advantages');
+});

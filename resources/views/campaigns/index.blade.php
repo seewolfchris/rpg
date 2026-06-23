@@ -23,19 +23,17 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <a
-                    href="{{ route('worlds.index') }}"
-                    class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
-                >
+                <x-ui.action :href="route('worlds.index')" size="large">
                     Welt wechseln
-                </a>
+                </x-ui.action>
                 @can('create', App\Models\Campaign::class)
-                    <a
-                        href="{{ route('campaigns.create', ['world' => $world, 'return_to' => $returnTo]) }}"
-                        class="rounded-md border border-amber-400/70 bg-amber-500/20 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-400/30"
+                    <x-ui.action
+                        :href="route('campaigns.create', ['world' => $world, 'return_to' => $returnTo])"
+                        variant="accent"
+                        size="large"
                     >
                         Neue Kampagne
-                    </a>
+                    </x-ui.action>
                 @endcan
             </div>
         </div>
@@ -83,12 +81,13 @@
                             @endif
                         </div>
 
-                        <a
-                            href="{{ route('campaigns.show', ['world' => $world, 'campaign' => $campaign, 'return_to' => $returnTo]) }}"
-                            class="mt-5 inline-flex rounded-md border border-stone-600/80 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
+                        <x-ui.action
+                            :href="route('campaigns.show', ['world' => $world, 'campaign' => $campaign, 'return_to' => $returnTo])"
+                            class="mt-5"
+                            aria-label="Kampagne {{ $campaign->title }} öffnen"
                         >
                             Öffnen
-                        </a>
+                        </x-ui.action>
                     </article>
                 @endforeach
             </div>

@@ -170,7 +170,12 @@ $PHP_BIN artisan config:cache
 - Offline-Queue-Fehlerpfad prüfen (kurz):
   - Validierungsfehler (`422`) erzeugt einen Eintrag im Bereich "Offline-Entwürfe mit Fehler".
   - UI zeigt `error_summary` (z. B. `Text zu kurz`) und erlaubt "In Editor übernehmen" (Anhängen/Ersetzen/Abbrechen).
-- GM-Post mit Probe funktioniert (inkl. LE/AE-Update am Zielcharakter).
+- GM-Post mit Probe funktioniert (inkl. Vorabwurf-Token und LE/AE-Update am Zielcharakter).
+- Aktivierte Probe ohne Vorabwurf-Token wird ohne Post-, DiceRoll- oder Charakter-Mutation abgelehnt.
+- Aktivierte Probe wird offline nicht in IndexedDB vorgemerkt; Formularinhalt und Probe-Schalter bleiben erhalten.
+- Vor dem ersten produktiven Rollout der Token-Pflicht: mindestens sieben Tage Testbetrieb ohne
+  tokenlosen Aufruf aus der aktuellen UI und mindestens drei erfolgreiche manuelle GM-Proben-Smokes
+  dokumentieren. `probe.post_applied` muss dabei `resolution_source=preview_token` tragen.
 - Footer zeigt korrekte Version (`Build: vX.XX-beta`).
 
 ## 6a. Immersion Phase-A Gate (historisch, archiviert)

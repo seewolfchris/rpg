@@ -6,6 +6,7 @@ use App\Domain\Post\Exceptions\PostInventoryAwardInvariantViolationException;
 use App\Domain\Post\Exceptions\PostProbeInvariantViolationException;
 use App\Domain\Post\PostInventoryAwardService;
 use App\Domain\Post\PostProbeService;
+use App\Domain\Post\Contracts\ProbeRollTokenStore;
 use App\Domain\Scene\Exceptions\SceneInventoryQuickActionInvariantViolationException;
 use App\Domain\Scene\SceneInventoryQuickActionService;
 use App\Enums\CampaignMembershipRole;
@@ -54,12 +55,33 @@ class ServiceScopeInvariantTest extends TestCase
             'content_format' => 'markdown',
             'content' => 'GM test post',
         ]);
+        $token = app(ProbeRollTokenStore::class)->issue([
+            'user_id' => (int) $gm->id,
+            'campaign_id' => (int) $campaign->id,
+            'scene_id' => (int) $scene->id,
+            'character_id' => (int) $targetCharacter->id,
+            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+            'probe_modifier' => 0,
+            'probe_attribute_key' => 'mu',
+            'probe_explanation' => 'Invariant check world mismatch',
+            'probe_le_delta' => -5,
+            'probe_ae_delta' => 0,
+            'probe_target_value' => 50,
+            'rolls' => [25],
+            'kept_roll' => 25,
+            'total' => 25,
+            'probe_is_success' => true,
+            'is_critical_success' => false,
+            'is_critical_failure' => false,
+            'created_at' => now()->toIso8601String(),
+        ]);
 
         try {
             app(PostProbeService::class)->createForPost(
                 post: $post,
                 data: [
                     'probe_enabled' => true,
+                    'probe_roll_token' => $token,
                     'probe_character_id' => $targetCharacter->id,
                     'probe_roll_mode' => DiceRoll::MODE_NORMAL,
                     'probe_modifier' => 0,

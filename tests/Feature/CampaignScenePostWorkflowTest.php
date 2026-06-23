@@ -19,6 +19,7 @@ use App\Models\Scene;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -625,14 +626,15 @@ class CampaignScenePostWorkflowTest extends TestCase
             'post_mode' => 'gm',
             'content_format' => 'markdown',
             'content' => str_repeat('Der Spielleiter setzt die Szene unter Druck. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $playerCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => -4,
-            'probe_attribute_key' => 'mu',
-            'probe_le_delta' => -10,
-            'probe_ae_delta' => -3,
-            'probe_explanation' => 'Klettern am zerborstenen Ascheturm bei Sturm',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $playerCharacter,
+                explanation: 'Klettern am zerborstenen Ascheturm bei Sturm',
+                modifier: -4,
+                leDelta: -10,
+                aeDelta: -3,
+            ),
         ]);
 
         $post = DB::table('posts')
@@ -743,6 +745,8 @@ class CampaignScenePostWorkflowTest extends TestCase
 
     public function test_final_submit_with_valid_probe_token_persists_exact_preview_roll_values(): void
     {
+        Log::spy();
+
         $gm = User::factory()->gm()->create();
         $player = User::factory()->create();
 
@@ -850,6 +854,11 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertSame((bool) $tokenPayload['is_critical_failure'], (bool) $roll->is_critical_failure);
         $this->assertNotSame(999, (int) $roll->kept_roll);
         $this->assertNotSame(999, (int) $roll->total);
+        Log::shouldHaveReceived('info')
+            ->with('probe.post_applied', \Mockery::on(
+                static fn (array $context): bool => ($context['resolution_source'] ?? null) === 'preview_token'
+            ))
+            ->once();
     }
 
     public function test_player_cannot_preview_probe_in_composer(): void
@@ -1185,7 +1194,7 @@ class CampaignScenePostWorkflowTest extends TestCase
         $this->assertDatabaseCount('dice_rolls', 0);
     }
 
-    public function test_legacy_probe_fallback_still_works_when_token_is_missing(): void
+    public function test_missing_probe_token_is_rejected_without_mutations(): void
     {
         $gm = User::factory()->gm()->create();
         $player = User::factory()->create();
@@ -1210,40 +1219,89 @@ class CampaignScenePostWorkflowTest extends TestCase
             'mu' => 45,
         ]);
 
-        $response = $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', [
-            'world' => $campaign->world,
-            'campaign' => $campaign,
-            'scene' => $scene,
-        ]), [
-            'post_type' => 'ic',
-            'post_mode' => 'gm',
-            'content_format' => 'markdown',
-            'content' => str_repeat('Legacy-Fallback ohne Token bleibt vorerst aktiv. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $targetCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_explanation' => 'Legacy-Fallback-Test',
-            'probe_le_delta' => 0,
-            'probe_ae_delta' => 0,
-        ]);
-
-        $post = Post::query()
-            ->where('scene_id', $scene->id)
-            ->where('user_id', $gm->id)
-            ->latest('id')
-            ->firstOrFail();
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Tokenloser Vorabwurf muss scheitern. ', 2),
+                'probe_enabled' => '1',
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 0,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Token-Pflichttest',
+                'probe_le_delta' => 0,
+                'probe_ae_delta' => 0,
+            ]);
 
         $response->assertRedirect(route('campaigns.scenes.show', [
             'world' => $campaign->world,
             'campaign' => $campaign,
             'scene' => $scene,
-        ]).'#post-'.$post->id);
-        $this->assertDatabaseHas('dice_rolls', [
-            'post_id' => $post->id,
-            'character_id' => $targetCharacter->id,
+        ]));
+        $response->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+        $this->assertSame(45, (int) $targetCharacter->fresh()->mu);
+    }
+
+    public function test_malformed_probe_token_is_rejected_before_post_mutation(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
         ]);
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+        ]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+        $targetCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'mu' => 45,
+        ]);
+
+        $response = $this->actingAs($gm)
+            ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
+            ->post(route('campaigns.scenes.posts.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'gm',
+                'content_format' => 'markdown',
+                'content' => str_repeat('Ein fehlerhafter Token darf keine Mutation starten. ', 2),
+                'probe_enabled' => '1',
+                'probe_roll_token' => 'not-a-preview-token',
+                'probe_character_id' => $targetCharacter->id,
+                'probe_roll_mode' => DiceRoll::MODE_NORMAL,
+                'probe_modifier' => 0,
+                'probe_attribute_key' => 'mu',
+                'probe_explanation' => 'Token-Format-Test',
+                'probe_le_delta' => -5,
+                'probe_ae_delta' => 0,
+            ]);
+
+        $response->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]));
+        $response->assertSessionHasErrors('probe_roll_token');
+        $this->assertDatabaseCount('posts', 0);
+        $this->assertDatabaseCount('dice_rolls', 0);
+        $this->assertSame(45, (int) $targetCharacter->fresh()->mu);
     }
 
     public function test_probe_token_is_single_use(): void
@@ -1374,14 +1432,14 @@ class CampaignScenePostWorkflowTest extends TestCase
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
             'content' => str_repeat('Erste Probe folgt. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $targetCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_le_delta' => -10,
-            'probe_ae_delta' => -3,
-            'probe_explanation' => 'Erster Einschlag',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $targetCharacter,
+                explanation: 'Erster Einschlag',
+                leDelta: -10,
+                aeDelta: -3,
+            ),
         ])->assertRedirect();
 
         $this->actingAs($gm)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
@@ -1389,14 +1447,14 @@ class CampaignScenePostWorkflowTest extends TestCase
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
             'content' => str_repeat('Zweite Probe folgt. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $targetCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_le_delta' => -8,
-            'probe_ae_delta' => -4,
-            'probe_explanation' => 'Zweiter Einschlag',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $targetCharacter,
+                explanation: 'Zweiter Einschlag',
+                leDelta: -8,
+                aeDelta: -4,
+            ),
         ])->assertRedirect();
 
         $targetCharacter->refresh();
@@ -1447,14 +1505,13 @@ class CampaignScenePostWorkflowTest extends TestCase
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
             'content' => str_repeat('Der Angriff trifft den Helden mit voller Wucht. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $targetCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_le_delta' => -12,
-            'probe_ae_delta' => 0,
-            'probe_explanation' => 'Schwerttreffer auf den Torso',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $targetCharacter,
+                explanation: 'Schwerttreffer auf den Torso',
+                leDelta: -12,
+            ),
         ]);
 
         $post = Post::query()
@@ -1521,14 +1578,15 @@ class CampaignScenePostWorkflowTest extends TestCase
             'content_format' => 'markdown',
             'character_id' => $gmCharacter->id,
             'content' => str_repeat('Die Probe muss automatisch ausgewertet werden. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $playerCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 40,
-            'probe_attribute_key' => 'mu',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $playerCharacter,
+                explanation: 'Automatik-Test',
+                modifier: 40,
+            ),
             // Altes Feld wird absichtlich mitgesendet und muss ignoriert werden.
             'probe_outcome' => 'success',
-            'probe_explanation' => 'Automatik-Test',
         ]);
 
         $post = DB::table('posts')
@@ -1586,12 +1644,12 @@ class CampaignScenePostWorkflowTest extends TestCase
             'post_mode' => 'gm',
             'content_format' => 'markdown',
             'content' => str_repeat('Der Spielleiter setzt die Szene unter Druck. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $playerCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_explanation' => 'Standhafter Widerstand gegen die Brandung',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $playerCharacter,
+                explanation: 'Standhafter Widerstand gegen die Brandung',
+            ),
         ]);
 
         $post = Post::query()
@@ -1675,12 +1733,12 @@ class CampaignScenePostWorkflowTest extends TestCase
             'post_mode' => 'gm',
             'content_format' => 'markdown',
             'content' => str_repeat('Manipulationsversuch für Probe-Daten. ', 2),
-            'probe_enabled' => '1',
-            'probe_character_id' => $playerCharacter->id,
-            'probe_roll_mode' => DiceRoll::MODE_NORMAL,
-            'probe_modifier' => 0,
-            'probe_attribute_key' => 'mu',
-            'probe_explanation' => 'Wurf muss serverseitig erzeugt werden',
+            ...$this->probePayload(
+                user: $gm,
+                scene: $scene,
+                targetCharacter: $playerCharacter,
+                explanation: 'Wurf muss serverseitig erzeugt werden',
+            ),
             // Diese Felder dürfen nicht aus dem Request in dice_rolls übernommen werden.
             'rolls' => [999],
             'kept_roll' => 999,
@@ -2297,6 +2355,44 @@ class CampaignScenePostWorkflowTest extends TestCase
         }
 
         return (string) ($matches[1] ?? '');
+    }
+
+    /**
+     * @return array<string, int|string>
+     */
+    private function probePayload(
+        User $user,
+        Scene $scene,
+        Character $targetCharacter,
+        string $explanation,
+        string $attributeKey = 'mu',
+        int $modifier = 0,
+        int $leDelta = 0,
+        int $aeDelta = 0,
+        string $rollMode = DiceRoll::MODE_NORMAL,
+    ): array {
+        $payload = [
+            'probe_enabled' => '1',
+            'probe_character_id' => (int) $targetCharacter->id,
+            'probe_roll_mode' => $rollMode,
+            'probe_modifier' => $modifier,
+            'probe_attribute_key' => $attributeKey,
+            'probe_explanation' => $explanation,
+            'probe_le_delta' => $leDelta,
+            'probe_ae_delta' => $aeDelta,
+        ];
+
+        $preview = app(PostProbeService::class)->previewForComposer(
+            data: $payload,
+            user: $user,
+            scene: $scene,
+            isModerator: true,
+        );
+
+        return [
+            ...$payload,
+            'probe_roll_token' => (string) $preview['token'],
+        ];
     }
 
     private function grantMembership(

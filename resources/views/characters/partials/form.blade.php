@@ -408,14 +408,14 @@
 
             <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
                 @foreach ($wizardSteps as $wizardStepKey => $wizardStepLabel)
-                    <button
+                    <x-ui.action
                         type="button"
-                        class="rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] transition"
-                        :class="currentWizardStep === '{{ $wizardStepKey }}' ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-300 hover:border-stone-500 hover:text-stone-100'"
+                        size="compact"
+                        x-bind:class="currentWizardStep === '{{ $wizardStepKey }}' ? 'border-amber-500/70 bg-amber-500/20 text-amber-100' : 'border-stone-700/80 bg-black/35 text-stone-300 hover:border-stone-500 hover:text-stone-100'"
                         @click="setWizardStep('{{ $wizardStepKey }}')"
                     >
                         {{ $wizardStepLabel }}
-                    </button>
+                    </x-ui.action>
                 @endforeach
             </div>
 
@@ -464,9 +464,13 @@
                             value="{{ old('name', $character->name ?? '') }}"
                             maxlength="120"
                             required
+                            @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="z. B. Vaelis vom zerbrochenen Siegel"
                         >
+                        @error('name')
+                            <p id="name-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -477,9 +481,13 @@
                             type="text"
                             value="{{ old('epithet', $character->epithet ?? '') }}"
                             maxlength="120"
+                            @error('epithet') aria-invalid="true" aria-describedby="epithet-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="z. B. Die Aschenspur"
                         >
+                        @error('epithet')
+                            <p id="epithet-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -493,6 +501,7 @@
                             required
                             x-model="worldId"
                             @disabled($isEdit)
+                            @error('world_id') aria-invalid="true" aria-describedby="world-id-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                         >
                             @foreach ($worldOptions as $worldOption)
@@ -501,6 +510,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('world_id')
+                            <p id="world-id-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -509,6 +521,7 @@
                             id="status"
                             name="status"
                             required
+                            @error('status') aria-invalid="true" aria-describedby="status-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-2.5 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                         >
                             @foreach ($statusOptions as $statusKey => $statusMeta)
@@ -517,6 +530,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('status')
+                            <p id="status-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                 </div>
@@ -536,9 +552,15 @@
                             name="bio"
                             rows="6"
                             required
+                            minlength="20"
+                            maxlength="5000"
+                            @error('bio') aria-invalid="true" aria-describedby="bio-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Wer war deine Figur, bevor die Geschichte begann?"
                         >{{ old('bio', $character->bio ?? '') }}</textarea>
+                        @error('bio')
+                            <p id="bio-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -547,11 +569,16 @@
                             id="concept"
                             name="concept"
                             rows="2"
+                            minlength="8"
                             maxlength="180"
                             x-model="concept"
+                            @error('concept') aria-invalid="true" aria-describedby="concept-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Wer bist du in einem einzigen, klaren Satz?"
                         >{{ old('concept', $character->concept ?? '') }}</textarea>
+                        @error('concept')
+                            <p id="concept-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -560,11 +587,16 @@
                             id="world_connection"
                             name="world_connection"
                             rows="3"
+                            minlength="10"
                             maxlength="2000"
                             x-model="worldConnection"
+                            @error('world_connection') aria-invalid="true" aria-describedby="world-connection-error" @enderror
                             class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Fraktion, Ort, Blutlinie, Schuld oder Schwur"
                         >{{ old('world_connection', $character->world_connection ?? '') }}</textarea>
+                        @error('world_connection')
+                            <p id="world-connection-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -573,11 +605,16 @@
                             id="gm_secret"
                             name="gm_secret"
                             rows="3"
+                            minlength="10"
                             maxlength="3000"
                             x-model="gmSecret"
+                            @error('gm_secret') aria-invalid="true" aria-describedby="gm-secret-error" @enderror
                             class="w-full rounded-md border border-red-800/70 bg-red-950/25 px-4 py-3 text-red-100 outline-none transition placeholder:text-red-300/70 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                             placeholder="Was darf die Gruppe vorerst nicht wissen?"
                         >{{ old('gm_secret', $character->gm_secret ?? '') }}</textarea>
+                        @error('gm_secret')
+                            <p id="gm-secret-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </article>
@@ -612,6 +649,9 @@
                         </label>
                     @endforeach
                 </div>
+                @error('origin')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="mt-4 grid gap-3 lg:grid-cols-3">
@@ -631,6 +671,9 @@
                     </label>
                 </template>
             </div>
+            @error('species')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
         </section>
 
         @if ($useWizard)
@@ -700,8 +743,12 @@
                             :value="attributes['{{ $key }}']"
                             @input="setAttributeValue('{{ $key }}', $event.target.value)"
                             @readonly($isEdit)
+                            @error($key) aria-invalid="true" aria-describedby="attr-{{ $key }}-error" @enderror
                             class="mt-3 w-full rounded-md border border-stone-600/80 bg-stone-900/70 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                         >
+                        @error($key)
+                            <p id="attr-{{ $key }}-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
 
                         <label for="attr-note-{{ $key }}" class="mt-3 block text-[0.68rem] font-semibold uppercase tracking-widest text-stone-400">Narrative Ausprägung</label>
                         <textarea
@@ -711,9 +758,13 @@
                             maxlength="800"
                             :value="attributeNotes['{{ $key }}'] || ''"
                             @input="setAttributeNote('{{ $key }}', $event.target.value)"
+                            @error($key.'_note') aria-invalid="true" aria-describedby="attr-{{ $key }}-note-error" @enderror
                             class="mt-1 w-full rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-200 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                             placeholder="Wie zeigt sich {{ $label }} bei deiner Figur?"
                         ></textarea>
+                        @error($key.'_note')
+                            <p id="attr-{{ $key }}-note-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                        @enderror
                     </article>
                 @endforeach
             </div>
@@ -746,6 +797,9 @@
                         </label>
                     </template>
                 </div>
+                @error('calling')
+                    <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
 
                 <div class="mt-5 rounded-xl border border-stone-700/80 bg-black/45 p-4">
                     <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Gewählte Berufung</h3>
@@ -781,8 +835,13 @@
                                 type="text"
                                 maxlength="120"
                                 x-model="callingCustomName"
+                                x-bind:required="requiresCustomCalling"
+                                @error('calling_custom_name') aria-invalid="true" aria-describedby="calling-custom-name-error" @enderror
                                 class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                             >
+                            @error('calling_custom_name')
+                                <p id="calling-custom-name-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label for="calling_custom_description" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">Eigene Berufung (Beschreibung)</label>
@@ -792,8 +851,13 @@
                                 rows="3"
                                 maxlength="2000"
                                 x-model="callingCustomDescription"
+                                x-bind:required="requiresCustomCalling"
+                                @error('calling_custom_description') aria-invalid="true" aria-describedby="calling-custom-description-error" @enderror
                                 class="w-full rounded-md border border-stone-600/80 bg-black/45 px-3 py-2 text-stone-100 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-500/30"
                             ></textarea>
+                            @error('calling_custom_description')
+                                <p id="calling-custom-description-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                            @enderror
                         </div>
                         <p class="md:col-span-2 text-sm" :class="customCallingValid ? 'text-emerald-200' : 'text-red-300'">
                             <span x-show="customCallingValid">Eigene Berufung ist ausreichend beschrieben.</span>
@@ -931,6 +995,18 @@
                 <p class="mt-1 text-sm" x-show="!traitsValid">Warnung: Vorteile und Nachteile müssen 1:1 und im erlaubten Bereich liegen.</p>
                 <p class="mt-1 text-sm" x-show="traitsValid">Paarung ist gültig.</p>
             </div>
+            @error('advantages')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('advantages.*')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('disadvantages')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
+            @error('disadvantages.*')
+                <p class="mt-2 text-sm text-red-300">{{ $message }}</p>
+            @enderror
 
             <div class="mt-4">
                 <label for="gm_note" class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-stone-300">SL-Notiz (Verhandlung Vorteile/Nachteile)</label>
@@ -940,9 +1016,13 @@
                     rows="3"
                     maxlength="2000"
                     x-model="gmNote"
+                    @error('gm_note') aria-invalid="true" aria-describedby="gm-note-error" @enderror
                     class="w-full rounded-md border border-stone-700/80 bg-black/45 px-4 py-3 text-stone-100 outline-none transition placeholder:text-stone-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/35"
                     placeholder="Absprachen, Grenzen, Balance-Notizen"
                 >{{ old('gm_note', $character->gm_note ?? '') }}</textarea>
+                @error('gm_note')
+                    <p id="gm-note-error" class="mt-2 text-sm text-red-300">{{ $message }}</p>
+                @enderror
             </div>
         </section>
 
@@ -1209,9 +1289,13 @@
                     type="file"
                     name="avatar"
                     accept="image/jpeg,image/png,image/webp,image/avif"
+                    @error('avatar') aria-invalid="true" aria-describedby="avatar-error" @enderror
                     class="block w-full rounded-md border border-stone-700/80 bg-black/45 px-3 py-2 text-sm text-stone-200 file:mr-3 file:rounded file:border-0 file:bg-red-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:uppercase file:tracking-[0.08em] file:text-red-100 hover:file:bg-red-500/35"
                 >
                 <p class="text-xs text-stone-400">Erlaubt: JPG, PNG, WEBP, AVIF bis 3 MB.</p>
+                @error('avatar')
+                    <p id="avatar-error" class="text-sm text-red-300">{{ $message }}</p>
+                @enderror
 
                 @if ($isEdit && !empty($character?->avatar_path))
                     <div class="flex flex-wrap items-center gap-4 rounded-md border border-stone-700/80 bg-black/35 p-3">
@@ -1290,39 +1374,42 @@
 
         @if ($useWizard)
             <nav class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-800 bg-black/35 p-4" aria-label="Charakter-Assistent Navigation">
-                <button
+                <x-ui.action
                     type="button"
-                    class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100 disabled:opacity-40"
                     @click="previousWizardStep()"
-                    :disabled="currentWizardIndex === 0"
+                    x-bind:disabled="currentWizardIndex === 0"
                 >
                     <span x-text="previousWizardButtonLabel">Zurück im Assistenten</span>
-                </button>
-                <button
+                </x-ui.action>
+                <p
+                    class="order-last w-full text-sm text-red-300"
+                    x-show="wizardValidationMessage !== ''"
+                    x-text="wizardValidationMessage"
+                    aria-live="assertive"
+                ></p>
+                <x-ui.action
                     type="button"
-                    class="rounded-md border border-amber-500/70 bg-amber-500/15 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-amber-100 transition hover:bg-amber-500/25 disabled:opacity-40"
-                    @click="nextWizardStep()"
-                    :disabled="currentWizardIndex >= wizardSteps.length - 1"
+                    variant="accent"
+                    @click="validateCurrentWizardStep($event)"
+                    x-bind:disabled="currentWizardIndex >= wizardSteps.length - 1"
                 >
                     <span x-text="nextWizardButtonLabel">Weiter</span>
-                </button>
+                </x-ui.action>
             </nav>
         @endif
 
         <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-stone-800 pt-6">
-            <a
-                href="{{ $cancelUrl }}"
-                class="rounded-md border border-stone-600/80 px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-stone-200 transition hover:border-stone-400 hover:text-stone-100"
-            >
+            <x-ui.action :href="$cancelUrl" size="large">
                 Abbrechen
-            </a>
+            </x-ui.action>
 
-            <button
+            <x-ui.action
                 type="submit"
-                class="rounded-md border border-red-400/70 bg-red-500/20 px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-red-100 transition hover:bg-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                variant="danger"
+                size="large"
             >
                 {{ $submitLabel }}
-            </button>
+            </x-ui.action>
         </footer>
     </form>
 </section>

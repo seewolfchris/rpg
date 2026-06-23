@@ -557,7 +557,9 @@ class CharacterManagementTest extends TestCase
             ->get(route('characters.create'))
             ->assertOk()
             ->assertSeeText('Validierung fehlgeschlagen')
-            ->assertSee('data-validation-error-field="concept"', false);
+            ->assertSee('data-validation-error-field="concept"', false)
+            ->assertSee('aria-describedby="concept-error"', false)
+            ->assertSee('id="concept-error"', false);
     }
 
     public function test_character_sheet_shows_specific_required_messages_for_traits(): void
