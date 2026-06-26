@@ -45,7 +45,7 @@ class PostPolicy
             return false;
         }
 
-        return $campaign->isVisibleTo($user);
+        return $this->canWriteInCampaign($user, $campaign);
     }
 
     /**
@@ -62,8 +62,12 @@ class PostPolicy
             return false;
         }
 
+        if ($campaign->canModeratePosts($user)) {
+            return true;
+        }
+
         return (int) $post->user_id === (int) $user->id
-            || $campaign->canModeratePosts($user);
+            && $this->canWriteInCampaign($user, $campaign);
     }
 
     /**
@@ -80,8 +84,12 @@ class PostPolicy
             return false;
         }
 
+        if ($campaign->canModeratePosts($user)) {
+            return true;
+        }
+
         return (int) $post->user_id === (int) $user->id
-            || $campaign->canModeratePosts($user);
+            && $this->canWriteInCampaign($user, $campaign);
     }
 
     public function moderate(User $user, Post $post): bool
@@ -90,6 +98,17 @@ class PostPolicy
 
         return $campaign instanceof Campaign
             && $campaign->canModeratePosts($user);
+    }
+
+    public function react(User $user, Post $post): bool
+    {
+        $campaign = $this->resolveCampaignFromPost($post);
+        if (! $campaign instanceof Campaign) {
+            return false;
+        }
+
+        return $campaign->isVisibleTo($user)
+            && $this->canWriteInCampaign($user, $campaign);
     }
 
     private function resolveCampaignFromPost(Post $post): ?Campaign
@@ -107,5 +126,11 @@ class PostPolicy
         $campaign = $scene->campaign;
 
         return $campaign instanceof Campaign ? $campaign : null;
+    }
+
+    private function canWriteInCampaign(User $user, Campaign $campaign): bool
+    {
+        return $campaign->canModeratePosts($user)
+            || $campaign->hasMembership($user);
     }
 }

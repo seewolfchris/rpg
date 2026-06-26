@@ -187,25 +187,33 @@ class StorePostRequest extends FormRequest
                 );
             }
 
+            $probeEnabled = (bool) $this->boolean('probe_enabled');
+            $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');
+            $needsParticipantUserIds = ($postType === 'ic' && $postMode === 'character' && $characterId)
+                || $probeEnabled
+                || $inventoryAwardEnabled;
+            $campaignParticipantUserIds = $needsParticipantUserIds
+                ? $this->campaignParticipantResolver()->participantUserIds($campaign)
+                : collect();
+
             if ($postType === 'ic' && $postMode === 'character' && $characterId) {
                 /** @var Character|null $character */
                 $character = Character::query()->find($characterId);
+                $characterUserId = $character instanceof Character ? (int) $character->user_id : 0;
+                $characterWorldId = $character instanceof Character ? (int) $character->world_id : 0;
 
                 if (! $character instanceof Character) {
                     $validator->errors()->add('character_id', 'Charakter konnte nicht gefunden werden.');
-                } elseif ($character->user_id !== (int) $this->user()?->id) {
+                } elseif ($characterUserId <= 0) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter muss zu einem aktiven Kampagnen-Teilnehmer gehören.');
+                } elseif ($characterUserId !== (int) $this->user()?->id) {
                     $validator->errors()->add('character_id', 'Du kannst nur eigene Charaktere verwenden.');
-                } elseif ((int) $character->world_id !== (int) $campaign->world_id) {
+                } elseif ($characterWorldId !== (int) $campaign->world_id) {
                     $validator->errors()->add('character_id', 'Der gewählte Charakter gehört nicht zur Welt dieser Kampagne.');
+                } elseif (! $campaignParticipantUserIds->contains($characterUserId)) {
+                    $validator->errors()->add('character_id', 'Der gewählte Charakter muss zu einem aktiven Kampagnen-Teilnehmer gehören.');
                 }
             }
-
-            $probeEnabled = (bool) $this->boolean('probe_enabled');
-            $inventoryAwardEnabled = (bool) $this->boolean('inventory_award_enabled');
-
-            $campaignParticipantUserIds = ($probeEnabled || $inventoryAwardEnabled)
-                ? $this->campaignParticipantResolver()->participantUserIds($campaign)
-                : collect();
 
             if ($probeEnabled) {
                 if (! $canModerate) {

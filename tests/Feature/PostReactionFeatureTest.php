@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\PostReaction;
 use App\Models\Scene;
@@ -115,6 +117,47 @@ class PostReactionFeatureTest extends TestCase
         ])->assertNotFound();
     }
 
+    public function test_public_campaign_non_member_cannot_add_reaction(): void
+    {
+        config(['features.wave4.reactions' => true]);
+
+        $gm = User::factory()->gm()->create();
+        $outsider = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $gm->id,
+            'post_type' => 'ooc',
+            'content_format' => 'plain',
+            'content' => 'Oeffentlich lesbar, aber nicht frei beschreibbar.',
+            'moderation_status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $gm->id,
+        ]);
+
+        $this->actingAs($outsider)->post(route('posts.reactions.store', [
+            'world' => $campaign->world,
+            'post' => $post,
+        ]), [
+            'emoji' => 'heart',
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('post_reactions', 0);
+    }
+
     /**
      * @return array{0: Campaign, 1: Scene, 2: Post, 3: User}
      */
@@ -127,6 +170,14 @@ class PostReactionFeatureTest extends TestCase
             'owner_id' => $gm->id,
             'status' => 'active',
             'is_public' => true,
+        ]);
+
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $reactor->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
 
         $scene = Scene::factory()->create([

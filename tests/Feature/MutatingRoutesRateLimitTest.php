@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\Character;
 use App\Models\Post;
 use App\Models\Scene;
@@ -185,6 +187,14 @@ class MutatingRoutesRateLimitTest extends TestCase
             'is_public' => true,
         ]);
 
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
+        ]);
+
         $scene = Scene::factory()->create([
             'campaign_id' => $campaign->id,
             'created_by' => $gm->id,
@@ -194,6 +204,7 @@ class MutatingRoutesRateLimitTest extends TestCase
 
         $character = Character::factory()->create([
             'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
         ]);
 
         $post = Post::query()->create([

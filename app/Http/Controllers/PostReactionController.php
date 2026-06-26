@@ -27,7 +27,7 @@ class PostReactionController extends Controller
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
-        $this->authorize('view', $post->scene);
+        $this->authorize('react', $post);
 
         $data = $request->validated();
 
@@ -48,7 +48,7 @@ class PostReactionController extends Controller
 
         $post->loadMissing(Post::WORLD_CONTEXT_RELATIONS);
         $this->ensurePostBelongsToWorld($world, $post);
-        $this->authorize('view', $post->scene);
+        $this->authorize('react', $post);
 
         $data = $request->validated();
 

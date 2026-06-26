@@ -26,7 +26,7 @@ class PlayerNotePolicy
 
     public function create(User $user, Campaign $campaign): bool
     {
-        return $campaign->isVisibleTo($user);
+        return $this->canWriteInCampaign($user, $campaign);
     }
 
     public function update(User $user, PlayerNote $playerNote): bool
@@ -34,7 +34,7 @@ class PlayerNotePolicy
         $campaign = $this->resolveCampaign($playerNote);
 
         return $campaign instanceof Campaign
-            && $campaign->isVisibleTo($user)
+            && $this->canWriteInCampaign($user, $campaign)
             && $playerNote->belongsToUser($user);
     }
 
@@ -43,7 +43,7 @@ class PlayerNotePolicy
         $campaign = $this->resolveCampaign($playerNote);
 
         return $campaign instanceof Campaign
-            && $campaign->isVisibleTo($user)
+            && $this->canWriteInCampaign($user, $campaign)
             && $playerNote->belongsToUser($user);
     }
 
@@ -63,5 +63,11 @@ class PlayerNotePolicy
         }
 
         return $campaign;
+    }
+
+    private function canWriteInCampaign(User $user, Campaign $campaign): bool
+    {
+        return $campaign->canModeratePosts($user)
+            || $campaign->hasMembership($user);
     }
 }

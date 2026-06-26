@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
 use App\Models\User;
@@ -74,6 +76,14 @@ class SceneSubscriptionFlowTest extends TestCase
     {
         $author = User::factory()->create();
         [$campaign, $scene] = $this->seedCampaignAndScene();
+
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $author->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $campaign->owner_id,
+            'assigned_at' => now(),
+        ]);
 
         $this->actingAs($author)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ooc',

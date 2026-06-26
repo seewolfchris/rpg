@@ -33,6 +33,8 @@ class PostOocPolicyConsistencyTest extends TestCase
             'allow_ooc' => false,
         ]);
 
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
+
         $this->actingAs($player)
             ->post(route('campaigns.scenes.posts.store', [
                 'world' => $campaign->world,

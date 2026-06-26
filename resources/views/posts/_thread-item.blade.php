@@ -276,30 +276,36 @@
             @foreach ($reactionSymbols as $reactionKey => $reactionSymbol)
                 @php($currentCount = (int) ($reactionCounts[$reactionKey] ?? 0))
                 @php($hasReacted = in_array($reactionKey, $currentUserReactionKeys, true))
-                @if ($hasReacted)
-                    <form method="POST" action="{{ route('posts.reactions.destroy', ['world' => $campaign->world, 'post' => $post]) }}">
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="emoji" value="{{ $reactionKey }}">
-                        <button
-                            type="submit"
-                            class="rounded-full border border-amber-600/70 bg-amber-900/25 px-2.5 py-1 text-xs text-amber-100 transition hover:bg-amber-900/40"
-                        >
-                            {{ $reactionSymbol }} {{ $currentCount }}
-                        </button>
-                    </form>
+                @can('react', $post)
+                    @if ($hasReacted)
+                        <form method="POST" action="{{ route('posts.reactions.destroy', ['world' => $campaign->world, 'post' => $post]) }}">
+                            @csrf
+                            @method('DELETE')
+                            <input type="hidden" name="emoji" value="{{ $reactionKey }}">
+                            <button
+                                type="submit"
+                                class="rounded-full border border-amber-600/70 bg-amber-900/25 px-2.5 py-1 text-xs text-amber-100 transition hover:bg-amber-900/40"
+                            >
+                                {{ $reactionSymbol }} {{ $currentCount }}
+                            </button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('posts.reactions.store', ['world' => $campaign->world, 'post' => $post]) }}">
+                            @csrf
+                            <input type="hidden" name="emoji" value="{{ $reactionKey }}">
+                            <button
+                                type="submit"
+                                class="rounded-full border border-stone-600/80 bg-black/35 px-2.5 py-1 text-xs text-stone-200 transition hover:border-stone-400"
+                            >
+                                {{ $reactionSymbol }} {{ $currentCount }}
+                            </button>
+                        </form>
+                    @endif
                 @else
-                    <form method="POST" action="{{ route('posts.reactions.store', ['world' => $campaign->world, 'post' => $post]) }}">
-                        @csrf
-                        <input type="hidden" name="emoji" value="{{ $reactionKey }}">
-                        <button
-                            type="submit"
-                            class="rounded-full border border-stone-600/80 bg-black/35 px-2.5 py-1 text-xs text-stone-200 transition hover:border-stone-400"
-                        >
-                            {{ $reactionSymbol }} {{ $currentCount }}
-                        </button>
-                    </form>
-                @endif
+                    <span class="rounded-full border border-stone-700/80 bg-black/20 px-2.5 py-1 text-xs text-stone-400">
+                        {{ $reactionSymbol }} {{ $currentCount }}
+                    </span>
+                @endcan
             @endforeach
         </section>
     @endif

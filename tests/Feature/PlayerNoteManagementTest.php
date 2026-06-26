@@ -153,6 +153,56 @@ class PlayerNoteManagementTest extends TestCase
         $this->assertDatabaseCount('player_notes', 0);
     }
 
+    public function test_public_campaign_non_member_cannot_create_update_or_delete_player_note(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $outsider = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => true,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($outsider)->post(route('campaigns.player-notes.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+        ]), [
+            'title' => 'Public Non-Member Notiz',
+            'body' => 'Sollte trotz Public-Sichtbarkeit nicht erstellt werden.',
+        ])->assertForbidden();
+
+        $note = PlayerNote::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $outsider->id,
+            'scene_id' => null,
+            'character_id' => null,
+            'title' => 'Altbestand ohne Mitgliedschaft',
+            'body' => 'Unverändert.',
+        ]);
+
+        $this->actingAs($outsider)->patch(route('campaigns.player-notes.update', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'playerNote' => $note,
+        ]), [
+            'title' => 'Manipulation',
+            'body' => 'Sollte nicht gespeichert werden.',
+        ])->assertForbidden();
+
+        $this->actingAs($outsider)->delete(route('campaigns.player-notes.destroy', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'playerNote' => $note,
+        ]))->assertForbidden();
+
+        $this->assertDatabaseHas('player_notes', [
+            'id' => (int) $note->id,
+            'title' => 'Altbestand ohne Mitgliedschaft',
+            'body' => 'Unverändert.',
+        ]);
+    }
+
     public function test_store_and_update_reject_scene_id_from_other_campaign(): void
     {
         [$campaign, $scene, $player] = $this->seedCampaignContext();

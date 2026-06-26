@@ -67,6 +67,14 @@ class NotificationWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $author->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
+        ]);
+
         SceneSubscription::query()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,

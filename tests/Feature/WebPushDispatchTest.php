@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
+use App\Models\CampaignMembership;
 use App\Models\PushSubscription;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
@@ -47,6 +49,14 @@ class WebPushDispatchTest extends TestCase
             'created_by' => $gm->id,
             'status' => 'open',
             'allow_ooc' => true,
+        ]);
+
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $author->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $gm->id,
+            'assigned_at' => now(),
         ]);
 
         SceneSubscription::query()->create([

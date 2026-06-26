@@ -45,6 +45,12 @@ class PostImmersiveImagesFeatureTest extends TestCase
             'role' => CampaignMembershipRole::GM->value,
             'assigned_by' => $gm->id,
         ]);
+        CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $gm->id,
+        ]);
 
         Character::factory()->create([
             'user_id' => $player->id,
@@ -126,6 +132,12 @@ class PostImmersiveImagesFeatureTest extends TestCase
         $character = Character::factory()->create([
             'user_id' => $player->id,
             'world_id' => $campaign->world_id,
+        ]);
+        CampaignMembership::factory()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $player->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => $gm->id,
         ]);
 
         $response = $this->actingAs($player)

@@ -171,8 +171,11 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
         $character = Character::factory()->create([
             'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
         ]);
 
         $postResponse = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
@@ -210,6 +213,162 @@ class CampaignScenePostWorkflowTest extends TestCase
             'id' => $postId,
             'moderation_status' => 'approved',
             'approved_by' => $gm->id,
+        ]);
+    }
+
+    public function test_public_campaign_non_member_cannot_create_or_update_own_character_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $storeResponse = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $character->id,
+            'content' => str_repeat('Die Klinge singt im Nebel. ', 2),
+        ]);
+
+        $storeResponse->assertForbidden();
+        $this->assertDatabaseMissing('posts', [
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'character_id' => $character->id,
+        ]);
+
+        $post = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $player->id,
+            'character_id' => $character->id,
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'content' => 'Altbestand vor korrigierter Schreibregel.',
+        ]);
+
+        $updateResponse = $this->actingAs($player)
+            ->from(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->patch(route('posts.update', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'character',
+                'character_id' => $character->id,
+                'content_format' => 'markdown',
+                'content' => str_repeat('Die Klinge findet einen neuen Takt. ', 2),
+            ]);
+
+        $updateResponse->assertForbidden();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'character_id' => $character->id,
+            'content' => 'Altbestand vor korrigierter Schreibregel.',
+        ]);
+    }
+
+    public function test_public_campaign_member_can_create_and_update_own_character_post(): void
+    {
+        $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $gm->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $scene = Scene::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $gm->id,
+            'status' => 'open',
+            'allow_ooc' => true,
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
+
+        $storeResponse = $this->actingAs($player)->post(route('campaigns.scenes.posts.store', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]), [
+            'post_type' => 'ic',
+            'content_format' => 'markdown',
+            'character_id' => $character->id,
+            'content' => str_repeat('Die Klinge singt im Nebel. ', 2),
+        ]);
+
+        $post = Post::query()
+            ->where('scene_id', $scene->id)
+            ->where('user_id', $player->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $storeResponse->assertRedirect(route('campaigns.scenes.show', [
+            'world' => $campaign->world,
+            'campaign' => $campaign,
+            'scene' => $scene,
+        ]).'#post-'.$post->id);
+
+        $updateResponse = $this->actingAs($player)
+            ->from(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]))
+            ->patch(route('posts.update', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]), [
+                'post_type' => 'ic',
+                'post_mode' => 'character',
+                'character_id' => $character->id,
+                'content_format' => 'markdown',
+                'content' => str_repeat('Die Klinge findet einen neuen Takt. ', 2),
+            ]);
+
+        $updateResponse
+            ->assertRedirect(route('campaigns.scenes.show', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'scene' => $scene,
+            ]).'#post-'.$post->id)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
+            'character_id' => $character->id,
+            'content' => trim(str_repeat('Die Klinge findet einen neuen Takt. ', 2)),
         ]);
     }
 
@@ -281,6 +440,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'status' => 'open',
             'allow_ooc' => true,
         ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $response = $this->actingAs($player)
             ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
@@ -1874,7 +2035,12 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $playerCharacter = Character::factory()->create(['user_id' => $player->id]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $playerCharacter = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
 
         $response = $this->actingAs($player)
             ->from(route('campaigns.scenes.show', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]))
@@ -1966,7 +2132,12 @@ class CampaignScenePostWorkflowTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $character = Character::factory()->create(['user_id' => $player->id]);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
+
+        $character = Character::factory()->create([
+            'user_id' => $player->id,
+            'world_id' => $campaign->world_id,
+        ]);
 
         $this->actingAs($player)->post(route('campaigns.scenes.posts.store', ['world' => $campaign->world, 'campaign' => $campaign, 'scene' => $scene]), [
             'post_type' => 'ic',
@@ -2298,6 +2469,8 @@ class CampaignScenePostWorkflowTest extends TestCase
             'user_id' => $player->id,
             'world_id' => $campaign->world_id,
         ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $gm);
 
         $sceneNotificationService = $this->createMock(ScenePostNotificationService::class);
         $sceneNotificationService->expects($this->once())

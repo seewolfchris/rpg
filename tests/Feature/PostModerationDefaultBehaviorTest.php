@@ -171,15 +171,13 @@ class PostModerationDefaultBehaviorTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        if (! $isPublic) {
-            CampaignMembership::query()->create([
-                'campaign_id' => (int) $campaign->id,
-                'user_id' => (int) $player->id,
-                'role' => $membershipRole->value,
-                'assigned_by' => (int) $owner->id,
-                'assigned_at' => now(),
-            ]);
-        }
+        CampaignMembership::query()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $player->id,
+            'role' => $membershipRole->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
+        ]);
 
         $character = Character::factory()->create([
             'user_id' => $player->id,
