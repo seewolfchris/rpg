@@ -17,7 +17,9 @@ use App\Notifications\CampaignInvitationNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
+use Throwable;
 
 class CampaignInvitationController extends Controller
 {
@@ -120,7 +122,7 @@ class CampaignInvitationController extends Controller
             foreach ($pendingNotifications as $notificationPayload) {
                 $invitation = $notificationPayload['invitation'];
                 $invitation->loadMissing(['campaign.owner', 'inviter']);
-                $notificationPayload['invitee']->notify(new CampaignInvitationNotification($invitation));
+                $this->notifyInvitee($notificationPayload['invitee'], $invitation);
             }
 
             return redirect()
@@ -154,11 +156,10 @@ class CampaignInvitationController extends Controller
         );
 
         $invitation = $result->invitation;
-        $wasAccepted = $result->wasAccepted;
 
-        if (! $wasAccepted) {
+        if ($result->shouldNotify) {
             $invitation->loadMissing(['campaign.owner', 'inviter']);
-            $invitee->notify(new CampaignInvitationNotification($invitation));
+            $this->notifyInvitee($invitee, $invitation);
         }
 
         return redirect()
@@ -299,6 +300,15 @@ class CampaignInvitationController extends Controller
     private function ensureInvitationBelongsToCampaign(Campaign $campaign, CampaignInvitation $invitation): void
     {
         abort_unless((int) $invitation->campaign_id === (int) $campaign->id, 404);
+    }
+
+    private function notifyInvitee(User $invitee, CampaignInvitation $invitation): void
+    {
+        try {
+            Notification::send($invitee, new CampaignInvitationNotification($invitation));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
     }
 
     /**

@@ -59,9 +59,15 @@ final class UpsertCampaignInvitationAction
                 ->lockForUpdate()
                 ->first();
 
-            $isNew = ! $invitation instanceof CampaignInvitation;
+            $isNew = false;
+            $previousStatus = null;
+            $previousRole = null;
 
-            if ($isNew) {
+            if ($invitation instanceof CampaignInvitation) {
+                $previousStatus = (string) $invitation->status;
+                $previousRole = (string) $invitation->role;
+            } else {
+                $isNew = true;
                 $invitation = new CampaignInvitation([
                     'campaign_id' => (int) $campaign->id,
                     'user_id' => $inviteeUserId,
@@ -96,6 +102,11 @@ final class UpsertCampaignInvitationAction
                 invitation: $invitation,
                 isNew: $isNew,
                 wasAccepted: $wasAccepted,
+                shouldNotify: ! $wasAccepted && (
+                    $isNew
+                    || $previousStatus !== CampaignInvitation::STATUS_PENDING
+                    || $previousRole !== $requestedRole
+                ),
             );
         }, 3);
 

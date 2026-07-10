@@ -9,6 +9,9 @@ use App\Models\CampaignGmContactThread;
 use App\Models\CampaignMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Notification;
+use RuntimeException;
 use Tests\TestCase;
 
 class CampaignGmContactFeatureTest extends TestCase
@@ -220,6 +223,107 @@ class CampaignGmContactFeatureTest extends TestCase
         $this->assertSame(1, $coGm->fresh()->notifications()->count());
         $this->assertSame(2, $player->fresh()->notifications()->count());
         $this->assertSame(0, $admin->fresh()->notifications()->count());
+    }
+
+    public function test_thread_creation_keeps_db_write_when_gm_contact_notification_fails(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => false,
+            'status' => 'active',
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
+
+        Exceptions::fake();
+        Notification::shouldReceive('send')
+            ->once()
+            ->andThrow(new RuntimeException('Forced GM contact notification failure.'));
+
+        $this->actingAs($player)
+            ->post(route('campaigns.gm-contacts.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'subject' => 'Notification-Ausfall',
+                'content' => 'Die Nachricht muss trotz Notification-Fehler gespeichert werden.',
+            ])
+            ->assertRedirect();
+
+        /** @var CampaignGmContactThread $thread */
+        $thread = CampaignGmContactThread::query()->where('subject', 'Notification-Ausfall')->firstOrFail();
+
+        $this->assertDatabaseHas('campaign_gm_contact_threads', [
+            'id' => $thread->id,
+            'campaign_id' => $campaign->id,
+            'created_by' => $player->id,
+            'status' => CampaignGmContactThread::STATUS_WAITING_FOR_GM,
+        ]);
+        $this->assertDatabaseHas('campaign_gm_contact_messages', [
+            'thread_id' => $thread->id,
+            'user_id' => $player->id,
+            'content' => 'Die Nachricht muss trotz Notification-Fehler gespeichert werden.',
+        ]);
+
+        Exceptions::assertReported(
+            fn (RuntimeException $exception): bool => $exception->getMessage() === 'Forced GM contact notification failure.'
+        );
+    }
+
+    public function test_reply_keeps_db_write_when_gm_contact_notification_fails(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $player = User::factory()->create();
+
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'is_public' => false,
+            'status' => 'active',
+        ]);
+
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
+
+        $thread = CampaignGmContactThread::factory()->create([
+            'campaign_id' => $campaign->id,
+            'created_by' => $player->id,
+            'status' => CampaignGmContactThread::STATUS_WAITING_FOR_GM,
+            'subject' => 'Antwort-Ausfall',
+        ]);
+
+        CampaignGmContactMessage::factory()->create([
+            'thread_id' => $thread->id,
+            'user_id' => $player->id,
+            'content' => 'Ursprungsnachricht.',
+        ]);
+
+        Exceptions::fake();
+        Notification::shouldReceive('send')
+            ->once()
+            ->andThrow(new RuntimeException('Forced GM contact reply notification failure.'));
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.gm-contacts.messages.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+                'gmContactThread' => $thread,
+            ]), [
+                'content' => 'Antwort bleibt gespeichert.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('campaign_gm_contact_messages', [
+            'thread_id' => $thread->id,
+            'user_id' => $owner->id,
+            'content' => 'Antwort bleibt gespeichert.',
+        ]);
+        $this->assertDatabaseHas('campaign_gm_contact_threads', [
+            'id' => $thread->id,
+            'status' => CampaignGmContactThread::STATUS_WAITING_FOR_PLAYER,
+        ]);
+
+        Exceptions::assertReported(
+            fn (RuntimeException $exception): bool => $exception->getMessage() === 'Forced GM contact reply notification failure.'
+        );
     }
 
     public function test_panel_list_is_hard_scoped_to_current_campaign_for_gm_side_and_admin(): void

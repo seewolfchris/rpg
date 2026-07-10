@@ -63,7 +63,7 @@ final class InviteRegisteredCampaignUsersAction
                     ),
                 );
 
-                if ($result->wasAccepted) {
+                if (! $result->shouldNotify) {
                     continue;
                 }
 

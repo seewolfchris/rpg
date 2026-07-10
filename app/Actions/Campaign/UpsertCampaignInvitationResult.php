@@ -12,6 +12,6 @@ final class UpsertCampaignInvitationResult
         public readonly CampaignInvitation $invitation,
         public readonly bool $isNew,
         public readonly bool $wasAccepted,
+        public readonly bool $shouldNotify,
     ) {}
 }
-

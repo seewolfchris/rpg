@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\CampaignGmContactMessageNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 final class NotifyCampaignGmContactMessageAction
 {
@@ -31,11 +32,15 @@ final class NotifyCampaignGmContactMessageAction
             return;
         }
 
-        Notification::send($recipients, new CampaignGmContactMessageNotification(
-            thread: $thread,
-            author: $author,
-            content: $content,
-        ));
+        try {
+            Notification::send($recipients, new CampaignGmContactMessageNotification(
+                thread: $thread,
+                author: $author,
+                content: $content,
+            ));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
     }
 
     /**

@@ -34,6 +34,7 @@ class UpsertCampaignInvitationActionTest extends TestCase
 
         $this->assertTrue($result->isNew);
         $this->assertFalse($result->wasAccepted);
+        $this->assertTrue($result->shouldNotify);
         $this->assertDatabaseHas('campaign_invitations', [
             'campaign_id' => $campaign->id,
             'user_id' => $invitee->id,
@@ -88,6 +89,7 @@ class UpsertCampaignInvitationActionTest extends TestCase
 
         $this->assertFalse($result->isNew);
         $this->assertTrue($result->wasAccepted);
+        $this->assertFalse($result->shouldNotify);
         $this->assertSame(CampaignInvitation::STATUS_ACCEPTED, $existing->status);
         $this->assertSame(CampaignInvitation::ROLE_CO_GM, $existing->role);
         $this->assertSame($acceptedAt->toDateTimeString(), optional($existing->accepted_at)?->toDateTimeString());
@@ -144,6 +146,7 @@ class UpsertCampaignInvitationActionTest extends TestCase
 
         $this->assertFalse($result->isNew);
         $this->assertFalse($result->wasAccepted);
+        $this->assertTrue($result->shouldNotify);
         $this->assertSame(CampaignInvitation::STATUS_PENDING, $invitation->status);
         $this->assertNull($invitation->accepted_at);
         $this->assertNull($invitation->responded_at);
@@ -163,19 +166,22 @@ class UpsertCampaignInvitationActionTest extends TestCase
             'is_public' => false,
         ]);
 
-        app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
+        $firstResult = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
         ));
 
-        app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
+        $secondResult = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
             campaign: $campaign,
             inviteeUserId: (int) $invitee->id,
             inviterUserId: (int) $owner->id,
             requestedRole: CampaignInvitation::ROLE_PLAYER,
         ));
+
+        $this->assertTrue($firstResult->shouldNotify);
+        $this->assertFalse($secondResult->shouldNotify);
 
         $this->assertSame(
             1,
@@ -184,6 +190,43 @@ class UpsertCampaignInvitationActionTest extends TestCase
                 ->where('user_id', $invitee->id)
                 ->count()
         );
+    }
+
+    public function test_it_marks_pending_invitation_role_changes_for_notification(): void
+    {
+        $owner = User::factory()->gm()->create();
+        $invitee = User::factory()->create();
+        $campaign = Campaign::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+
+        CampaignInvitation::query()->create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_PENDING,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'created_at' => now()->subDay(),
+        ]);
+
+        $result = app(UpsertCampaignInvitationAction::class)->execute(new UpsertCampaignInvitationInput(
+            campaign: $campaign,
+            inviteeUserId: (int) $invitee->id,
+            inviterUserId: (int) $owner->id,
+            requestedRole: CampaignInvitation::ROLE_TRUSTED_PLAYER,
+        ));
+
+        $this->assertFalse($result->isNew);
+        $this->assertFalse($result->wasAccepted);
+        $this->assertTrue($result->shouldNotify);
+        $this->assertDatabaseHas('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+            'status' => CampaignInvitation::STATUS_PENDING,
+            'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+        ]);
     }
 
     public function test_it_keeps_owner_gm_membership_stable_when_legacy_owner_invitation_is_mutated(): void

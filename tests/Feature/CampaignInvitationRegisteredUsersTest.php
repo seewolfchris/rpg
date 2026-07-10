@@ -8,7 +8,11 @@ use App\Models\CampaignInvitation;
 use App\Models\CampaignMembership;
 use App\Models\User;
 use App\Models\World;
+use App\Notifications\CampaignInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Notification;
+use RuntimeException;
 use Tests\TestCase;
 
 class CampaignInvitationRegisteredUsersTest extends TestCase
@@ -103,6 +107,45 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
         );
     }
 
+    public function test_bulk_invitation_keeps_db_writes_when_notification_fails(): void
+    {
+        [$campaign, $owner, $coGm] = $this->seedCampaignContext();
+        $candidateA = User::factory()->create(['email' => 'bulk-failure-a@example.test']);
+        $candidateB = User::factory()->create(['email' => 'bulk-failure-b@example.test']);
+
+        Exceptions::fake();
+        Notification::shouldReceive('send')
+            ->twice()
+            ->andThrowExceptions([
+                new RuntimeException('Forced bulk invitation notification failure A.'),
+                new RuntimeException('Forced bulk invitation notification failure B.'),
+            ]);
+
+        $this->actingAs($coGm)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'user_ids' => [(int) $candidateA->id, (int) $candidateB->id],
+                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            ])
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        foreach ([$candidateA, $candidateB] as $candidate) {
+            $this->assertDatabaseHas('campaign_invitations', [
+                'campaign_id' => $campaign->id,
+                'user_id' => $candidate->id,
+                'invited_by' => $coGm->id,
+                'status' => CampaignInvitation::STATUS_PENDING,
+                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            ]);
+        }
+
+        Exceptions::assertReported(
+            fn (RuntimeException $exception): bool => str_starts_with(
+                $exception->getMessage(),
+                'Forced bulk invitation notification failure'
+            )
+        );
+    }
+
     public function test_email_fallback_invitation_still_works(): void
     {
         [$campaign, $owner] = $this->seedCampaignContext();
@@ -121,6 +164,66 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
             'status' => CampaignInvitation::STATUS_PENDING,
             'role' => CampaignInvitation::ROLE_PLAYER,
         ]);
+    }
+
+    public function test_email_invitation_keeps_db_write_when_notification_fails(): void
+    {
+        [$campaign, $owner] = $this->seedCampaignContext();
+        $invitee = User::factory()->create(['email' => 'fallback-failure@example.test']);
+
+        Exceptions::fake();
+        Notification::shouldReceive('send')
+            ->once()
+            ->andThrow(new RuntimeException('Forced invitation notification failure.'));
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => $invitee->email,
+                'role' => CampaignInvitation::ROLE_PLAYER,
+            ])
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->assertDatabaseHas('campaign_invitations', [
+            'campaign_id' => $campaign->id,
+            'user_id' => $invitee->id,
+            'invited_by' => $owner->id,
+            'status' => CampaignInvitation::STATUS_PENDING,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ]);
+
+        Exceptions::assertReported(
+            fn (RuntimeException $exception): bool => $exception->getMessage() === 'Forced invitation notification failure.'
+        );
+    }
+
+    public function test_repeated_identical_email_invitation_does_not_send_duplicate_notification(): void
+    {
+        [$campaign, $owner] = $this->seedCampaignContext();
+        $invitee = User::factory()->create(['email' => 'fallback-repeat@example.test']);
+
+        Notification::fake();
+
+        $payload = [
+            'email' => $invitee->email,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+        ];
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), $payload)
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), $payload)
+            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
+
+        Notification::assertSentToTimes($invitee, CampaignInvitationNotification::class, 1);
+        $this->assertSame(
+            1,
+            CampaignInvitation::query()
+                ->where('campaign_id', (int) $campaign->id)
+                ->where('user_id', (int) $invitee->id)
+                ->count()
+        );
     }
 
     public function test_server_blocks_manipulated_user_ids_for_existing_members(): void
