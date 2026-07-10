@@ -262,7 +262,7 @@ class CampaignMembershipReadSwitchTest extends TestCase
         ]);
     }
 
-    public function test_admin_is_not_implicitly_campaign_gm_without_membership(): void
+    public function test_admin_can_manage_private_campaign_without_membership(): void
     {
         $owner = User::factory()->gm()->create();
         $admin = User::factory()->admin()->create();
@@ -292,27 +292,43 @@ class CampaignMembershipReadSwitchTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
-            ->assertForbidden();
+            ->assertOk();
 
-        $this->actingAs($admin)->post(route('campaigns.scenes.store', [
-            'world' => $campaign->world,
-            'campaign' => $campaign,
-        ]), [
-            'title' => 'Admin blocked',
+        $this->actingAs($admin)
+            ->post(route('campaigns.scenes.store', [
+                'world' => $campaign->world,
+                'campaign' => $campaign,
+            ]), [
+                'title' => 'Admin scene',
+                'slug' => 'admin-blocked',
+                'summary' => 'Admin managed',
+                'status' => 'open',
+                'mood' => 'neutral',
+                'position' => 1,
+                'allow_ooc' => true,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('scenes', [
+            'campaign_id' => $campaign->id,
             'slug' => 'admin-blocked',
-            'summary' => 'Blocked',
-            'status' => 'open',
-            'mood' => 'neutral',
-            'position' => 1,
-            'allow_ooc' => true,
-        ])->assertForbidden();
+            'created_by' => $admin->id,
+        ]);
 
-        $this->actingAs($admin)->patch(route('posts.moderate', [
-            'world' => $campaign->world,
-            'post' => $post,
-        ]), [
+        $this->actingAs($admin)
+            ->patch(route('posts.moderate', [
+                'world' => $campaign->world,
+                'post' => $post,
+            ]), [
+                'moderation_status' => 'approved',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('posts', [
+            'id' => $post->id,
             'moderation_status' => 'approved',
-        ])->assertForbidden();
+            'approved_by' => $admin->id,
+        ]);
     }
 
     public function test_gm_membership_can_post_ic_gm_without_character(): void

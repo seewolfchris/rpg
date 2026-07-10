@@ -8,6 +8,7 @@ use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\CampaignMembership;
+use App\Models\Character;
 use App\Models\User;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,6 +23,10 @@ class CampaignAccess
      */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
         return $query->where(fn (Builder $innerQuery) => $this->applyVisibleCampaignConstraint($innerQuery, $user));
     }
 
@@ -31,6 +36,12 @@ class CampaignAccess
      */
     public function applyVisibleCampaignConstraint(Builder $campaignQuery, User $user): void
     {
+        if ($user->isAdmin()) {
+            $campaignQuery->whereRaw('1 = 1');
+
+            return;
+        }
+
         $campaignQuery
             ->where('is_public', true)
             ->orWhere('owner_id', (int) $user->id)
@@ -41,6 +52,10 @@ class CampaignAccess
 
     public function isVisibleTo(Campaign $campaign, User $user): bool
     {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         if ((bool) $campaign->is_public) {
             return true;
         }
@@ -118,12 +133,51 @@ class CampaignAccess
 
     public function canManageCampaign(Campaign $campaign, User $user): bool
     {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         return $this->isOwnedBy($campaign, $user) || $this->isGm($campaign, $user);
     }
 
     public function canModeratePosts(Campaign $campaign, User $user): bool
     {
         return $this->canManageCampaign($campaign, $user);
+    }
+
+    public function canDeleteCampaign(Campaign $campaign, User $user): bool
+    {
+        return $user->isAdmin() || $this->isOwnedBy($campaign, $user);
+    }
+
+    public function canManageCharacterThroughCampaign(User $user, Character $character): bool
+    {
+        $characterUserId = (int) $character->user_id;
+        $characterWorldId = (int) $character->world_id;
+
+        if ($characterUserId <= 0 || $characterWorldId <= 0) {
+            return false;
+        }
+
+        return Campaign::query()
+            ->where('world_id', $characterWorldId)
+            ->where(function (Builder $managedCampaignQuery) use ($user): void {
+                $managedCampaignQuery
+                    ->where('owner_id', (int) $user->id)
+                    ->orWhereHas('memberships', function (Builder $membershipQuery) use ($user): void {
+                        $membershipQuery
+                            ->where('user_id', (int) $user->id)
+                            ->where('role', CampaignMembershipRole::GM->value);
+                    });
+            })
+            ->where(function (Builder $participantQuery) use ($characterUserId): void {
+                $participantQuery
+                    ->where('owner_id', $characterUserId)
+                    ->orWhereHas('memberships', function (Builder $membershipQuery) use ($characterUserId): void {
+                        $membershipQuery->where('user_id', $characterUserId);
+                    });
+            })
+            ->exists();
     }
 
     public function hasParticipantRole(Campaign $campaign, User $user, string $role): bool
@@ -200,44 +254,6 @@ class CampaignAccess
     public function hasCoGmAccessInWorld(User $user, World $world): bool
     {
         return $this->moderatableCampaignIdsForWorld($user, $world)->isNotEmpty();
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function coGmWorldIds(User $user): array
-    {
-        /** @var list<int> $worldIds */
-        $worldIds = Campaign::query()
-            ->whereHas('memberships', function (Builder $membershipQuery) use ($user): void {
-                $membershipQuery
-                    ->where('user_id', (int) $user->id)
-                    ->where('role', CampaignMembershipRole::GM->value);
-            })
-            ->pluck('world_id')
-            ->map(static fn (mixed $worldId): int => (int) $worldId)
-            ->filter(static fn (int $worldId): bool => $worldId > 0)
-            ->unique()
-            ->values()
-            ->all();
-
-        return $worldIds;
-    }
-
-    public function hasAcceptedCoGmAccessForWorld(User $user, int $worldId): bool
-    {
-        if ($worldId <= 0) {
-            return false;
-        }
-
-        return Campaign::query()
-            ->where('world_id', $worldId)
-            ->whereHas('memberships', function (Builder $membershipQuery) use ($user): void {
-                $membershipQuery
-                    ->where('user_id', (int) $user->id)
-                    ->where('role', CampaignMembershipRole::GM->value);
-            })
-            ->exists();
     }
 
     /**

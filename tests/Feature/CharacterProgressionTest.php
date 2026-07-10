@@ -256,6 +256,7 @@ class CharacterProgressionTest extends TestCase
     {
         $owner = User::factory()->create();
         $gm = User::factory()->gm()->create();
+        $player = User::factory()->create();
         $campaign = Campaign::factory()->create([
             'owner_id' => $owner->id,
             'status' => 'active',
@@ -263,9 +264,10 @@ class CharacterProgressionTest extends TestCase
         ]);
 
         $this->grantMembership($campaign, $gm, CampaignMembershipRole::GM, $owner);
+        $this->grantMembership($campaign, $player, CampaignMembershipRole::PLAYER, $owner);
 
         $character = Character::factory()->create([
-            'user_id' => $owner->id,
+            'user_id' => $player->id,
             'world_id' => $campaign->world_id,
             'species' => 'mensch',
             'calling' => 'heiler',
@@ -274,6 +276,11 @@ class CharacterProgressionTest extends TestCase
             'xp_total' => 120,
             'attribute_points_unspent' => 4,
         ]);
+
+        $this->actingAs($gm)
+            ->get(route('characters.show', $character))
+            ->assertOk()
+            ->assertSeeText('AP verteilen');
 
         $response = $this->actingAs($gm)->post(route('characters.progression.spend', $character), [
             'attribute_allocations' => [
@@ -293,6 +300,106 @@ class CharacterProgressionTest extends TestCase
             'actor_user_id' => $gm->id,
             'event_type' => CharacterProgressionEvent::EVENT_AP_SPEND,
             'ap_delta' => -1,
+        ]);
+    }
+
+    public function test_admin_can_spend_attribute_points_for_foreign_character(): void
+    {
+        $owner = User::factory()->create();
+        $admin = User::factory()->admin()->create();
+
+        $character = Character::factory()->create([
+            'user_id' => $owner->id,
+            'species' => 'mensch',
+            'calling' => 'heiler',
+            'mu' => 40,
+            'level' => 2,
+            'xp_total' => 120,
+            'attribute_points_unspent' => 4,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('characters.show', $character))
+            ->assertOk()
+            ->assertSeeText('AP verteilen');
+
+        $this->actingAs($admin)
+            ->post(route('characters.progression.spend', $character), [
+                'attribute_allocations' => [
+                    'mu' => 1,
+                ],
+                'note' => 'Admin spend test',
+            ])
+            ->assertRedirect(route('characters.show', $character));
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'mu' => 41,
+            'attribute_points_unspent' => 3,
+        ]);
+        $this->assertDatabaseHas('character_progression_events', [
+            'character_id' => $character->id,
+            'actor_user_id' => $admin->id,
+            'event_type' => CharacterProgressionEvent::EVENT_AP_SPEND,
+            'ap_delta' => -1,
+        ]);
+    }
+
+    public function test_gm_cannot_spend_attribute_points_for_same_world_character_outside_their_campaign(): void
+    {
+        $ownerA = User::factory()->create();
+        $gm = User::factory()->gm()->create();
+        $ownerB = User::factory()->create();
+        $playerB = User::factory()->create();
+
+        $campaignA = Campaign::factory()->create([
+            'owner_id' => $ownerA->id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+        $campaignB = Campaign::factory()->create([
+            'owner_id' => $ownerB->id,
+            'world_id' => $campaignA->world_id,
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $this->grantMembership($campaignA, $gm, CampaignMembershipRole::GM, $ownerA);
+        $this->grantMembership($campaignB, $playerB, CampaignMembershipRole::PLAYER, $ownerB);
+
+        $character = Character::factory()->create([
+            'user_id' => $playerB->id,
+            'world_id' => $campaignA->world_id,
+            'species' => 'mensch',
+            'calling' => 'heiler',
+            'mu' => 40,
+            'level' => 2,
+            'xp_total' => 120,
+            'attribute_points_unspent' => 4,
+        ]);
+
+        $this->actingAs($gm)
+            ->get(route('characters.show', $character))
+            ->assertForbidden();
+
+        $this->actingAs($gm)
+            ->post(route('characters.progression.spend', $character), [
+                'attribute_allocations' => [
+                    'mu' => 1,
+                ],
+                'note' => 'GM scope test',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('characters', [
+            'id' => $character->id,
+            'mu' => 40,
+            'attribute_points_unspent' => 4,
+        ]);
+        $this->assertDatabaseMissing('character_progression_events', [
+            'character_id' => $character->id,
+            'actor_user_id' => $gm->id,
+            'event_type' => CharacterProgressionEvent::EVENT_AP_SPEND,
         ]);
     }
 

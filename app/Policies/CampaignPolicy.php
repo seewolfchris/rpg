@@ -44,6 +44,6 @@ class CampaignPolicy
      */
     public function delete(User $user, Campaign $campaign): bool
     {
-        return $campaign->isOwnedBy($user);
+        return $campaign->canDeleteCampaign($user);
     }
 }

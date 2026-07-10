@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Domain\Campaign\CampaignAccess;
-use App\Enums\UserRole;
 use App\Models\Character;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,11 +44,11 @@ class CharacterPolicy
             return true;
         }
 
-        if ($user->hasRole(UserRole::ADMIN)) {
+        if ($user->isAdmin()) {
             return true;
         }
 
-        return $this->hasAcceptedCoGmAccessForWorld($user, (int) $character->world_id);
+        return $this->campaignAccess->canManageCharacterThroughCampaign($user, $character);
     }
 
     private function hasParticipantAccessViaCharacterPosts(User $user, Character $character): bool
@@ -72,11 +71,6 @@ class CharacterPolicy
             ->exists();
     }
 
-    private function hasAcceptedCoGmAccessForWorld(User $user, int $worldId): bool
-    {
-        return $this->campaignAccess->hasAcceptedCoGmAccessForWorld($user, $worldId);
-    }
-
     /**
      * @param  Builder<Model>  $campaignQuery
      */
@@ -84,5 +78,4 @@ class CharacterPolicy
     {
         $this->campaignAccess->applyParticipantCampaignConstraint($campaignQuery, $user);
     }
-
 }

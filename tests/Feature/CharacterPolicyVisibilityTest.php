@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
 use App\Models\World;
+use App\Support\CharacterViewPermissionResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -279,6 +280,46 @@ class CharacterPolicyVisibilityTest extends TestCase
             ->assertSeeText('Sichtbarer oeffentlicher Szenenpost.');
 
         $this->actingAs($outsider)
+            ->get(route('characters.show', $character))
+            ->assertForbidden();
+    }
+
+    public function test_cogm_in_same_world_cannot_view_or_link_character_from_other_campaign(): void
+    {
+        $world = World::factory()->create();
+        $ownerA = User::factory()->gm()->create();
+        $ownerB = User::factory()->gm()->create();
+        $gmA = User::factory()->create();
+        $authorB = User::factory()->create();
+
+        [$campaignA] = $this->createCampaignWithScene($world, $ownerA, false);
+        [$campaignB, $sceneB] = $this->createCampaignWithScene($world, $ownerB, true);
+
+        $this->addMembership($campaignA, $gmA, CampaignMembershipRole::GM);
+        $this->addMembership($campaignB, $authorB, CampaignMembershipRole::PLAYER);
+
+        $character = Character::factory()->create([
+            'user_id' => $authorB->id,
+            'world_id' => $world->id,
+        ]);
+        $this->createCharacterPost($sceneB, $authorB, $character, 'Fremdkampagnen-Charakterpost.');
+
+        /** @var CharacterViewPermissionResolver $resolver */
+        $resolver = app(CharacterViewPermissionResolver::class);
+
+        $this->assertSame([], $resolver->resolveViewableIdsForUser([(int) $character->id], $gmA));
+
+        $this->actingAs($gmA)
+            ->get(route('campaigns.scenes.show', [
+                'world' => $campaignB->world,
+                'campaign' => $campaignB,
+                'scene' => $sceneB,
+            ]))
+            ->assertOk()
+            ->assertSeeText('Fremdkampagnen-Charakterpost.')
+            ->assertDontSee(route('characters.show', $character), false);
+
+        $this->actingAs($gmA)
             ->get(route('characters.show', $character))
             ->assertForbidden();
     }

@@ -44,25 +44,21 @@ class CharacterViewPermissionResolver
             return $this->normalizeCharacterIds($ownedCharacterIds);
         }
 
-        $coGmWorldIds = $this->campaignAccess->coGmWorldIds($user);
+        $managedCampaignCharacterIds = Character::query()
+            ->whereIn('id', $remainingCharacterIds)
+            ->get(['id', 'user_id', 'world_id'])
+            ->filter(fn (Character $character): bool => $this->campaignAccess->canManageCharacterThroughCampaign($user, $character))
+            ->pluck('id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
 
-        $coGmWorldCharacterIds = [];
-        if ($coGmWorldIds !== []) {
-            $coGmWorldCharacterIds = Character::query()
-                ->whereIn('id', $remainingCharacterIds)
-                ->whereIn('world_id', $coGmWorldIds)
-                ->pluck('id')
-                ->map(static fn (mixed $id): int => (int) $id)
-                ->all();
-        }
-
-        $remainingAfterCoGmIds = array_values(array_diff($remainingCharacterIds, $coGmWorldCharacterIds));
-        if ($remainingAfterCoGmIds === []) {
-            return $this->normalizeCharacterIds(array_merge($ownedCharacterIds, $coGmWorldCharacterIds));
+        $remainingAfterManagedCampaignIds = array_values(array_diff($remainingCharacterIds, $managedCampaignCharacterIds));
+        if ($remainingAfterManagedCampaignIds === []) {
+            return $this->normalizeCharacterIds(array_merge($ownedCharacterIds, $managedCampaignCharacterIds));
         }
 
         $participantCampaignCharacterIds = Character::query()
-            ->whereIn('id', $remainingAfterCoGmIds)
+            ->whereIn('id', $remainingAfterManagedCampaignIds)
             ->whereHas('posts.scene.campaign', function (Builder $campaignQuery) use ($user): void {
                 $campaignQuery
                     ->whereColumn('campaigns.world_id', 'characters.world_id');
@@ -74,7 +70,7 @@ class CharacterViewPermissionResolver
 
         return $this->normalizeCharacterIds(array_merge(
             $ownedCharacterIds,
-            $coGmWorldCharacterIds,
+            $managedCampaignCharacterIds,
             $participantCampaignCharacterIds
         ));
     }

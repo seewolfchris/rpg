@@ -215,6 +215,11 @@ class Campaign extends Model
         return app(CampaignAccess::class)->canModeratePosts($this, $user);
     }
 
+    public function canDeleteCampaign(User $user): bool
+    {
+        return app(CampaignAccess::class)->canDeleteCampaign($this, $user);
+    }
+
     public function hasParticipantRole(User $user, string $role): bool
     {
         return app(CampaignAccess::class)->hasParticipantRole($this, $user, $role);

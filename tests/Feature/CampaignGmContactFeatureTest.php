@@ -283,7 +283,9 @@ class CampaignGmContactFeatureTest extends TestCase
                 'campaign' => $campaignA,
                 'gm_contact_thread' => $threadB->id,
             ]))
-            ->assertForbidden();
+            ->assertOk()
+            ->assertSee('Panel-Nur-Kampagne-A')
+            ->assertDontSee('Panel-Kampagnenfremd-B');
 
         $this->actingAs($admin)
             ->get(route('campaigns.gm-contacts.show', [

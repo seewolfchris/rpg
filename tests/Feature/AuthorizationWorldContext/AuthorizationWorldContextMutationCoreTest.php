@@ -19,7 +19,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 403],
+            'admin' => [$admin, 302],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -91,7 +91,7 @@ class AuthorizationWorldContextMutationCoreTest extends AuthorizationWorldContex
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 403],
+            'admin' => [$admin, 302],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];

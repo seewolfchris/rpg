@@ -346,7 +346,7 @@ class AccessMatrixTest extends TestCase
 
     private function expectedCampaignVisible(string $role, bool $isPublic, string $accessSource): bool
     {
-        if ($role === 'owner') {
+        if ($role === 'owner' || $role === 'admin') {
             return true;
         }
 
@@ -363,7 +363,7 @@ class AccessMatrixTest extends TestCase
 
     private function expectedCanManage(string $role, string $accessSource): bool
     {
-        if ($role === 'owner') {
+        if ($role === 'owner' || $role === 'admin') {
             return true;
         }
 

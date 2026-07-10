@@ -87,7 +87,7 @@
         $xpToNextLevel = max(0, (int) ($progressionState['xp_to_next_level'] ?? 0));
         $progressPercent = (float) ($progressionState['progress_percent'] ?? 0);
         $attributePointsUnspent = max(0, (int) ($progressionState['attribute_points_unspent'] ?? 0));
-        $canSpendAttributePoints = auth()->id() === (int) $character->user_id || auth()->user()->isGmOrAdmin();
+        $canSpendAttributePoints = auth()->user()?->can('spendAttributePoints', $character) ?? false;
         $playerName = trim((string) data_get($character, 'user.name', ''));
         $playerEmail = trim((string) data_get($character, 'user.email', ''));
         $showPlayerEmail = auth()->user()->isAdmin() || auth()->user()->hasAnyCoGmCampaignAccess();

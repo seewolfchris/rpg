@@ -10,8 +10,10 @@ use App\Models\PostMention;
 use App\Models\Scene;
 use App\Models\User;
 use App\Notifications\CharacterMentionNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class PostMentionNotificationService
 {
@@ -106,13 +108,12 @@ class PostMentionNotificationService
             }
 
             foreach ($mentionedCharacters as $characterId => $characterName) {
-                $mentionRecord = PostMention::query()->firstOrCreate([
-                    'post_id' => $post->id,
-                    'mentioned_character_id' => (int) $characterId,
-                ], [
-                    'mentioned_user_id' => (int) $recipient->id,
-                    'mentioned_character_name' => $characterName,
-                ]);
+                $mentionRecord = $this->findOrCreateMentionRecord(
+                    post: $post,
+                    recipient: $recipient,
+                    characterId: (int) $characterId,
+                    characterName: $characterName,
+                );
 
                 if ($mentionRecord->wasRecentlyCreated) {
                     $newMentionNames[] = $characterName;
@@ -142,6 +143,57 @@ class PostMentionNotificationService
         }
 
         return $notifiedUsers;
+    }
+
+    private function findOrCreateMentionRecord(
+        Post $post,
+        User $recipient,
+        int $characterId,
+        string $characterName,
+    ): PostMention {
+        try {
+            return PostMention::query()->firstOrCreate([
+                'post_id' => (int) $post->id,
+                'mentioned_character_id' => $characterId,
+            ], [
+                'mentioned_user_id' => (int) $recipient->id,
+                'mentioned_character_name' => $characterName,
+            ]);
+        } catch (QueryException $exception) {
+            if (! $this->isDuplicateMentionKey($exception)) {
+                throw $exception;
+            }
+        }
+
+        $existingMention = PostMention::query()
+            ->where('post_id', (int) $post->id)
+            ->where('mentioned_character_id', $characterId)
+            ->first();
+
+        if ($existingMention instanceof PostMention) {
+            return $existingMention;
+        }
+
+        throw new RuntimeException('Post mention duplicate key recovery failed.');
+    }
+
+    private function isDuplicateMentionKey(QueryException $exception): bool
+    {
+        $errorInfo = $exception->errorInfo;
+        $driverCode = is_array($errorInfo) && isset($errorInfo[1])
+            ? (int) $errorInfo[1]
+            : 0;
+        $message = strtolower($exception->getMessage());
+
+        if ($driverCode === 1062) {
+            return true;
+        }
+
+        if (str_contains($message, 'duplicate entry')) {
+            return true;
+        }
+
+        return str_contains($message, 'unique constraint failed');
     }
 
     private function normalizeMentionToken(string $value): string

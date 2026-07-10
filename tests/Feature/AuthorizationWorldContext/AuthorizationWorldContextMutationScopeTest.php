@@ -28,7 +28,7 @@ class AuthorizationWorldContextMutationScopeTest extends AuthorizationWorldConte
         $cases = [
             'owner' => [$owner, true],
             'co-gm' => [$coGm, true],
-            'admin' => [$admin, false],
+            'admin' => [$admin, true],
             'player' => [$player, false],
             'outsider' => [$outsider, false],
         ];
@@ -372,7 +372,7 @@ class AuthorizationWorldContextMutationScopeTest extends AuthorizationWorldConte
         $cases = [
             'owner' => [$owner, 302],
             'co-gm' => [$coGm, 302],
-            'admin' => [$admin, 403],
+            'admin' => [$admin, 302],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
         ];
@@ -505,7 +505,7 @@ class AuthorizationWorldContextMutationScopeTest extends AuthorizationWorldConte
         $cases = [
             'owner' => [$owner, 302],
             'foreign-gm' => [$foreignGm, 403],
-            'admin' => [$admin, 403],
+            'admin' => [$admin, 302],
             'co-gm' => [$coGm, 302],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],
@@ -593,7 +593,7 @@ class AuthorizationWorldContextMutationScopeTest extends AuthorizationWorldConte
         $cases = [
             'owner' => [$owner, 302],
             'foreign-gm' => [$foreignGm, 403],
-            'admin' => [$admin, 403],
+            'admin' => [$admin, 302],
             'co-gm' => [$coGm, 302],
             'player' => [$player, 403],
             'outsider' => [$outsider, 403],

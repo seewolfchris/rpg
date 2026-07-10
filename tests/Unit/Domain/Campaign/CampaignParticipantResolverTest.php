@@ -16,7 +16,7 @@ class CampaignParticipantResolverTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_moderate_campaign_allows_owner_and_campaign_gm_but_not_admin_or_global_gm(): void
+    public function test_can_moderate_campaign_allows_admin_owner_and_campaign_gm_but_not_global_gm(): void
     {
         $resolver = app(CampaignParticipantResolver::class);
         $owner = User::factory()->gm()->create();
@@ -55,7 +55,7 @@ class CampaignParticipantResolverTest extends TestCase
         $this->assertTrue($resolver->canModerateCampaign($membershipGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($membershipPlayer, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($acceptedInvitationOnlyCoGm, $campaign));
-        $this->assertFalse($resolver->canModerateCampaign($admin, $campaign));
+        $this->assertTrue($resolver->canModerateCampaign($admin, $campaign));
         $this->assertFalse($resolver->canModerateCampaign($globalGm, $campaign));
         $this->assertFalse($resolver->canModerateCampaign(null, $campaign));
     }
