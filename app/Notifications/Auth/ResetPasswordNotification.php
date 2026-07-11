@@ -3,10 +3,10 @@
 namespace App\Notifications\Auth;
 
 use App\Models\User;
-use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Auth\Notifications\ResetPassword as BaseResetPassword;
-use InvalidArgumentException;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
+use InvalidArgumentException;
 
 class ResetPasswordNotification extends BaseResetPassword
 {
@@ -43,9 +43,11 @@ class ResetPasswordNotification extends BaseResetPassword
             return call_user_func(static::$createUrlCallback, $notifiable, $this->token);
         }
 
-        return url(route('password.reset', [
+        $resetPath = route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
-        ], false));
+        ], false);
+
+        return rtrim((string) config('app.url'), '/').$resetPath;
     }
 }

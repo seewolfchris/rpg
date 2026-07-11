@@ -549,7 +549,9 @@ class AdminUserControllerTest extends TestCase
     public function test_admin_can_reset_password(): void
     {
         $admin = User::factory()->admin()->create();
-        $target = User::factory()->create();
+        $target = User::factory()->create([
+            'remember_token' => 'existing-remember-token',
+        ]);
 
         $this->actingAs($admin)
             ->patch(route('admin.users.update', $target), $this->updatePayload($target, [
@@ -561,6 +563,8 @@ class AdminUserControllerTest extends TestCase
         $target->refresh();
 
         $this->assertTrue(Hash::check('ReplacementPassword123!', (string) $target->password));
+        $this->assertNotSame('existing-remember-token', (string) $target->remember_token);
+        $this->assertSame(60, strlen((string) $target->remember_token));
     }
 
     public function test_admin_can_change_platform_role(): void

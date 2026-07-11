@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\World;
+use App\Rules\WebPushEndpointAllowed;
 use App\Support\Observability\StructuredLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
 class WebPushSubscriptionControllerTest extends TestCase
@@ -141,6 +143,44 @@ class WebPushSubscriptionControllerTest extends TestCase
             'auth_token' => 'auth-token-1',
             'content_encoding' => 'aes128gcm',
         ])->assertUnprocessable()->assertJsonValidationErrors(['endpoint']);
+    }
+
+    public function test_empty_push_endpoint_allowlist_remains_permissive_in_testing(): void
+    {
+        config()->set('webpush.endpoint_allowed_hosts', []);
+
+        $user = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+
+        $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => 'https://example.push.local/subscription/testing-endpoint',
+            'public_key' => 'public-key-testing',
+            'auth_token' => 'auth-token-testing',
+            'content_encoding' => 'aes128gcm',
+        ])->assertOk();
+    }
+
+    public function test_empty_push_endpoint_allowlist_fails_closed_in_production(): void
+    {
+        config()->set('webpush.endpoint_allowed_hosts', []);
+
+        $originalEnvironment = $this->app['env'];
+        $this->app['env'] = 'production';
+
+        try {
+            $validator = Validator::make(
+                ['endpoint' => 'https://fcm.googleapis.com/fcm/send/production-endpoint'],
+                ['endpoint' => [new WebPushEndpointAllowed]],
+            );
+
+            $this->assertSame(
+                ['Die Push-Endpunkt-Allowlist ist nicht konfiguriert.'],
+                $validator->errors()->get('endpoint')
+            );
+        } finally {
+            $this->app['env'] = $originalEnvironment;
+        }
     }
 
     public function test_webpush_subscribe_log_context_contains_standardized_domain_event_fields(): void

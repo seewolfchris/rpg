@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'active-account'])->scopeBindings()->group(function (): void {
+Route::middleware(['auth', 'auth.session', 'active-account'])->scopeBindings()->group(function (): void {
     require __DIR__.'/auth/core.php';
     require __DIR__.'/auth/notifications.php';
     require __DIR__.'/auth/webpush.php';

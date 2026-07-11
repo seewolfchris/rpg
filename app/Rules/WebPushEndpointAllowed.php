@@ -12,10 +12,12 @@ class WebPushEndpointAllowed implements ValidationRule
      */
     private array $allowedHosts;
 
+    private bool $requiresConfiguredAllowlist;
+
     /**
      * @param  list<string>|null  $allowedHosts
      */
-    public function __construct(?array $allowedHosts = null)
+    public function __construct(?array $allowedHosts = null, ?bool $requiresConfiguredAllowlist = null)
     {
         $hosts = $allowedHosts ?? config('webpush.endpoint_allowed_hosts', []);
 
@@ -30,6 +32,9 @@ class WebPushEndpointAllowed implements ValidationRule
             ),
             static fn (string $host): bool => $host !== ''
         ));
+
+        $this->requiresConfiguredAllowlist = $requiresConfiguredAllowlist
+            ?? app()->environment(['production', 'prod']);
     }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -58,6 +63,10 @@ class WebPushEndpointAllowed implements ValidationRule
         }
 
         if ($this->allowedHosts === []) {
+            if ($this->requiresConfiguredAllowlist) {
+                $fail('Die Push-Endpunkt-Allowlist ist nicht konfiguriert.');
+            }
+
             return;
         }
 

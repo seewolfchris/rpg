@@ -35,6 +35,32 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPasswordNotification::class);
     }
 
+    public function test_reset_link_uses_configured_app_url_instead_of_request_host(): void
+    {
+        Notification::fake();
+        config(['app.url' => 'https://rpg.example.test']);
+
+        $user = User::factory()->create();
+
+        $this->withHeader('Host', 'attacker.example.test')
+            ->post(route('password.email'), [
+                'email' => $user->email,
+            ])
+            ->assertSessionHas('status');
+
+        Notification::assertSentTo(
+            $user,
+            ResetPasswordNotification::class,
+            function (ResetPasswordNotification $notification, array $channels) use ($user): bool {
+                $resetUrl = (string) $notification->toMail($user)->viewData['resetUrl'];
+
+                return $channels === ['mail']
+                    && str_starts_with($resetUrl, 'https://rpg.example.test/reset-password/')
+                    && ! str_contains($resetUrl, 'attacker.example.test');
+            },
+        );
+    }
+
     public function test_reset_password_screen_can_be_rendered(): void
     {
         $user = User::factory()->create();

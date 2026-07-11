@@ -9,6 +9,7 @@ use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class UpdateAdminManagedUserAction
@@ -158,6 +159,7 @@ final class UpdateAdminManagedUserAction
         $password = (string) ($attributes['password'] ?? '');
         if ($password !== '') {
             $updates['password'] = Hash::make($password);
+            $updates['remember_token'] = Str::random(60);
         }
 
         if ($nextStatus === UserStatus::ACTIVE) {

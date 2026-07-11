@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -47,6 +48,25 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/');
+    }
+
+    public function test_password_change_invalidates_existing_authenticated_session(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk();
+
+        User::query()->whereKey($user->id)->update([
+            'password' => Hash::make('changed-password'),
+        ]);
+        $this->app['auth']->forgetGuards();
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest();
     }
 
     public function test_pending_users_cannot_authenticate(): void
