@@ -7,6 +7,7 @@ Produktive Live-Instanz: https://rpg.c76.org. Release-, Entwicklungs-, Live- und
 `docs/STATUS.md`.
 
 ## Verbindliche Produktions-Defaults (Security/Betrieb)
+- `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://<host>`.
 - `QUEUE_CONNECTION=redis`.
 - `CACHE_STORE=redis`.
 - `SESSION_DRIVER=redis`.
@@ -14,12 +15,13 @@ Produktive Live-Instanz: https://rpg.c76.org. Release-, Entwicklungs-, Live- und
 - `QUEUE_AFTER_COMMIT=true` fuer commit-sicheres Dispatching asynchroner Jobs.
 - `TRUSTED_PROXIES=<proxy-ip/cidr,...>` (oder `*` nur bei voll vertrauenswuerdiger Proxy-Kette).
 - `SECURITY_HSTS_MAX_AGE > 0` (empfohlen `31536000`).
+- `WEBPUSH_ENDPOINT_ALLOWED_HOSTS=<explizite hostliste>` (nicht leer).
 
 Schnellcheck auf dem Zielhost:
 
 ```bash
 cd /var/www/<app>
-grep -E '^(APP_ENV|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
+grep -E '^(APP_ENV|APP_DEBUG|APP_URL|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|CACHE_STORE|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE|WEBPUSH_ENDPOINT_ALLOWED_HOSTS)=' .env
 ```
 
 ## Medien-Privacy-Grenze
@@ -70,6 +72,8 @@ grep -E "webpush\\.(subscription_upserted|subscription_deleted|scene_post_sent|d
 
 Hinweis:
 - `webpush.delivery_failed` mit Status `404` oder `410` führt zur automatischen Löschung der ungültigen Subscription.
+- App-Logout widerruft eine bestehende Browser-Subscription nicht serverseitig. Auf
+  geteilten Browserprofilen Push-Berechtigung/Subscription im Browser entfernen.
 
 ## Notification-Retry-Queue Schnellcheck
 Wenn Szenen-/Mention-Benachrichtigungen ausfallen:

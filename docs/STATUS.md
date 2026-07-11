@@ -1,78 +1,78 @@
 # STATUS - C76-RPG (kanonische Statusquelle)
 
-Diese Datei ist die einzige kanonische Quelle fuer:
-- Release-, Entwicklungs- und Live-Status
-- operativen Gate-Stand
-- letzten dokumentierten Release-Zeitpunkt
-- Audit-Basis aktueller Dokumentationspruefungen
+Diese Datei ist die einzige kanonische Quelle fuer Release-, Entwicklungs-, Live- und Gate-Status.
 
 ## Statusachsen
 
-- Statusdatum: **2026-06-04**
+- Statusdatum: **2026-07-11**
 - Produktstatus: **Beta (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich)**
-- Audit-Basis dieser Dokumentationspruefung: **`d442c0c`**
+- Audit-Basis dieser Dokumentationspruefung: **Implementierungs-Commits `a1b490d` bis `7cfd52e` auf Basis von `d34e4de`**
 - Letztes veröffentlichtes Release: **`v0.32-beta` am 2026-06-03** (Quelle: `CHANGELOG.md`)
-- Entwicklungsstand: **Branch `main`** (kein statischer Commit; konkrete Commits altern mit jedem Merge)
+- Entwicklungsstand: **Branch `main`; Review-Aenderungen sind lokal committed, aber noch nicht gepusht**
 - Produktive Live-Instanz: **https://rpg.c76.org**
 - Produktiver Live-Stand: **unbekannt / extern zu verifizieren**
 
-Ein produktiver Commit darf hier nur genannt werden, wenn er ueber einen sichtbaren Build-Hinweis,
-ein Deployment-Protokoll oder `APP_BUILD` tatsaechlich belegt ist. Der bestehende dokumentierte
-Release- und Live-Stand ist `v0.32-beta`; post-release Aenderungen auf `main` sind nicht automatisch
-als live zu behaupten.
+Die lokale Commit-Serie ist kein veroeffentlichtes Release und darf nicht als live behauptet werden.
+Ein produktiver Commit darf hier nur mit Build-Hinweis, Deployment-Protokoll oder `APP_BUILD`
+eingetragen werden.
 
-## Integrationsstand (post-release)
+## Review-Stand 2026-07-11
 
-- Rollenmodell-Reihe PR1-PR6 ist umgesetzt:
-  - globale Plattformrolle effektiv `admin`/`player`; globales `gm` entfernt
-  - Plattformflags `can_create_campaigns` und `can_post_without_moderation`
-  - kampagnenbezogene Rollen ueber `campaign_memberships` (`gm`, `trusted_player`, `player`)
-  - Kampagnen-Owner bleibt getrennt auf `campaigns.owner_id`
-  - Kampagnenerstellung auf `admin || can_create_campaigns` umgestellt
-  - Membership-first Lesepfade fuer Kampagne/Szene/Post
-  - UI-Trennung: Admin-Bereich fuer Plattformrechte, Kampagnenbereich owner-only fuer Teilnehmerrollen
-- UI-Fix SL-Kontakte: Kontaktformular oeffnet als viewportweiter Modal ueber `x-teleport="body"`.
-- Lizenz-/Dokumentationsstand: proprietaer / all rights reserved; keine Open-Source-Nutzungserlaubnis.
-- Letzter dokumentierter Stabilisierungs-/Auditlauf vor `v0.32-beta`: **2026-05-04**, Ergebnis **gruen**.
-- Ein neuer vollstaendiger Release-Gate-Lauf fuer `v0.32-beta` ist in dieser Datei noch nicht protokolliert.
+In den lokalen Review-Commits wurden folgende bestaetigte Befunde behoben:
+
+- `pending`/`rejected` Posts sind fuer andere Spieler zentral aus Thread, Pins, Sprungzielen,
+  Bookmarks und Read-State ausgeblendet; Autor und Moderatoren behalten Zugriff.
+- Szenen- und Mention-Benachrichtigungen entstehen erst bei Freigabe; Scene-Delivery bleibt
+  per Ledger idempotent.
+- Einzel- und Bulk-Moderation sperren Posts, schreiben Status, Audit und Punkte atomar und
+  dispatchen externe Effekte erst nach Commit.
+- Co-SL duerfen nur neue Player-Einladungen anlegen; Rollen- und angenommene
+  Membership-Aenderungen bleiben Owner/Admin vorbehalten.
+- Autoren duerfen Posts in archivierten Szenen nicht mehr bearbeiten oder loeschen.
+- Reset-Links sind an `APP_URL` gebunden; Trusted Hosts und `auth.session` sind aktiv;
+  Passwortwechsel rotieren Remember-Tokens.
+- Alpine-Postformular, Admin-Confirm und PWA-Boot sind CSP-kompatibel; die Offline-Boundary
+  stoppt persistente Offline-Funktionen fail-closed, ohne sichere Basisnavigation abzuschalten.
+- Produktions-Deploy verlangt Production-Env, Debug off, HTTPS, Redis, Secure Cookie,
+  Trusted Proxies, positives HSTS und eine Web-Push-Endpoint-Allowlist.
+- Composer- und npm-Abhaengigkeiten wurden innerhalb bestehender Major-Constraints auf
+  advisory-freie Versionen aktualisiert.
+
+Offene Bugs und technische Schulden sind kanonisch in
+[`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) und [`TECHNICAL_DEBT.md`](TECHNICAL_DEBT.md) erfasst.
 
 ## Verifikations- und Gate-Stand
 
-- Letzter dokumentierter Vollstand: **2026-04-04**
-- Gesamtstatus dieses Vollstands: **gruen**
-- Pflichtgates im Vollstand:
-  - `scripts/check_status_drift.sh`
-  - `composer validate --strict`
-  - `composer analyse`
-  - `php artisan test --without-tty --do-not-cache-result tests/Feature/Architecture/ArchitectureGuardrailsTest.php`
-  - `php artisan test --without-tty --do-not-cache-result --exclude-group=mysql-concurrency --exclude-group=mysql-critical`
-  - `php artisan test --without-tty --do-not-cache-result --group=mysql-concurrency` (CI-MySQL-Job)
-  - `php artisan test --without-tty --do-not-cache-result --group=mysql-critical` (CI-MySQL-Job)
-  - `npm run test:js`
-  - `npm run test:e2e`
-  - `npm run build`
-  - `SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh`
-  - `git diff --exit-code -- public/build public/js/character-sheet.global.js`
-- Letzter dokumentierter Stabilisierungs-/Auditlauf (2026-05-04):
-  - `composer validate --strict`
-  - `composer analyse`
-  - `php artisan test --without-tty --do-not-cache-result --filter=PostImmersiveImagesFeature`
-  - `php artisan test --without-tty --do-not-cache-result --filter=Handout`
-  - `php artisan test --without-tty --do-not-cache-result --filter=StoryLog`
-  - `php artisan test --without-tty --do-not-cache-result --filter=PlayerNote`
-  - `php artisan test --without-tty --do-not-cache-result --filter=SceneHandoutPanel`
-  - `php artisan test --without-tty --do-not-cache-result --filter=SceneStoryLogPanel`
-  - `php artisan test --without-tty --do-not-cache-result --filter=ScenePlayerNotePanel`
-  - `php artisan test --without-tty --do-not-cache-result --filter=SceneReadingModeReplyCta`
-  - `php artisan test --without-tty --do-not-cache-result --filter=CampaignScenePostWorkflow`
-  - `php artisan test --without-tty --do-not-cache-result --filter=AuthorizationWorldContextMutationScope`
-  - `php artisan test --without-tty --do-not-cache-result --filter=MutatingRoutesRateLimit`
-  - `php artisan test --without-tty --do-not-cache-result --filter=CharacterProgression`
-  - `npm run build`
+Vollstaendiger lokaler Abschlusslauf am **2026-07-10**:
+
+- `composer validate --strict`: **PASS**
+- `composer analyse`: **PASS, 0 Fehler**
+- Architektur-Guardrails: **6 Tests, 8 Assertions, PASS**
+- PHP ohne MySQL-Gruppen: **1098 Tests, 6144 Assertions, PASS**
+- JavaScript: **43 Tests, PASS**
+- Chromium-E2E: **8 Tests, PASS**
+- `npm run build`: **PASS** (Vite 7.3.6)
+- `composer audit --locked`: **0 Advisories, 0 abandoned packages**
+- `npm audit`: **0 Vulnerabilities**
+- Artisan-Smoke: **PASS**
+- Pint fuer alle im Diff beruehrten PHP-Dateien: **PASS**
+- `scripts/release_prepare.sh --version v0.33-beta --build audit --dry-run`: **PASS**, keine Dateiaenderung
+
+Nicht lokal ausgefuehrt:
+
+- Gruppe `mysql-concurrency`: **9 Tests**
+- Gruppe `mysql-critical`: **5 Tests**
+- Grund: PHP besitzt `pdo_mysql`/`mysqli`, aber lokal laufen weder MySQL/MariaDB auf Port 3306
+  noch Docker/Podman oder ein MySQL-Client. Diese 14 Tests bleiben vor Release ein verbindliches
+  CI-/MySQL-Gate.
+
+- Status- und Config-Drift: **PASS** (Config-Check ohne Warnungen)
+- Finaler Build-Artefakt-Status nach erneutem Vite-Build: **stabil, PASS**
+- `git diff --check`: **PASS**
 
 ## Pflege-Regel
 
-- `docs/STATUS.md` bleibt kanonisch fuer Release-Status, Entwicklungsstand, Live-Stand, Build und Gate-Stand.
-- README und ROADMAP duerfen nur knappe Orientierung enthalten und muessen auf diese Datei verweisen.
-- Historische Release-Historie bleibt in `CHANGELOG.md`.
+- `docs/STATUS.md` bleibt kanonisch fuer Release-, Entwicklungs-, Live-, Build- und Gate-Stand.
+- README und Roadmaps duerfen nur knapp orientieren und muessen hierher verweisen.
+- Historische Releases bleiben in `CHANGELOG.md`.
 - Exakte Gate-Befehle bleiben in `docs/RELEASE-CHECKLISTE.md`.

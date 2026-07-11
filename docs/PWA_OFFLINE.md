@@ -50,6 +50,14 @@ Aktueller Build- und Beta-Status der Live-Instanz: siehe `STATUS.md`.
 ## Privacy-Boundary
 - Bei Logout und Auth-Boundary-Wechsel wird private Offline-Persistenz aktiv bereinigt.
 - Ziel: keine persistente Uebernahme privater Daten zwischen Sessions/Users.
+- Schlaegt die Boundary-Initialisierung fehl, werden Service Worker, Offline-Queue und
+  Browser-Push nicht initialisiert. Sichere Navigation und normale Online-Formulare bleiben
+  bedienbar; die UI zeigt einen zugaenglichen Fehlerhinweis.
+- Restrisiko: Der App-Logout loescht lokale private PWA-Daten, widerruft aber eine bereits
+  beim Push-Dienst registrierte Browser-Subscription nicht serverseitig. Auf geteilten
+  Browserprofilen Push-Berechtigung/Subscription zusaetzlich entfernen.
+- Offline-Datensaetze sind aktuell an die Browser-Boundary, nicht kryptografisch an eine
+  serverseitige User-ID gebunden; siehe [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
 
 ## Tests
 - JS: `tests/js/sw.offline-queue.test.mjs`

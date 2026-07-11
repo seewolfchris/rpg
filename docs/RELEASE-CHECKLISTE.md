@@ -23,6 +23,9 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
   - `php artisan optimize:clear`
 - Composer-Validierung:
   - `composer validate --strict`
+- Dependency-Security:
+  - `composer audit --locked`
+  - `npm audit`
 - Status-Drift-Guard:
   - `bash scripts/check_status_drift.sh`
 - Statische Analyse:
@@ -43,6 +46,8 @@ Die folgenden Punkte sind der manuelle Referenzablauf bzw. für Sonderfälle.
   - `npm run test:e2e`
 - Frontend-Build:
   - `npm run build`
+- Pint nur fuer im Diff beruehrte PHP-Dateien:
+  - `git diff --name-only --diff-filter=ACMR -z -- '*.php' ':(exclude)*.blade.php' | xargs -0 vendor/bin/pint --test`
 - CI-Smoke und Build-Artefakt-Driftcheck:
   - `SMOKE_MODE=artisan SMOKE_START_SERVER=0 scripts/release_smoke.sh`
   - `git diff --exit-code -- public/build public/js/character-sheet.global.js`
@@ -83,6 +88,8 @@ scripts/release_prepare.sh --version vX.XX-beta --build "$(git rev-parse --short
   - `VAPID_PUBLIC_KEY`
   - `VAPID_PRIVATE_KEY`
   - optional `VAPID_SUBJECT`
+- Endpoint-Allowlist muss nichtleer und auf die verwendeten Push-Dienste begrenzt sein:
+  - `WEBPUSH_ENDPOINT_ALLOWED_HOSTS`
 - DB-Connection:
   - Standard: folgt `DB_CONNECTION` (empfohlen)
   - optionaler Override nur falls nötig: `WEBPUSH_DB_CONNECTION=mysql`
@@ -124,6 +131,7 @@ SESSION_DRIVER=redis
 SESSION_SECURE_COOKIE=true
 TRUSTED_PROXIES=<proxy-ip/cidr,...>
 SECURITY_HSTS_MAX_AGE=31536000
+WEBPUSH_ENDPOINT_ALLOWED_HOSTS=fcm.googleapis.com,fcmregistrations.googleapis.com,*.push.services.mozilla.com,web.push.apple.com,*.web.push.apple.com
 
 # Worker (Scheduled Task/Prozess)
 PHP_BIN=php
@@ -133,7 +141,7 @@ $PHP_BIN artisan queue:work --queue=default --tries=4 --sleep=1 --timeout=90
 Preflight-Werte vor Deploy gegenpruefen:
 
 ```bash
-grep -E '^(APP_ENV|APP_VERSION|APP_BUILD|WORLD_DEFAULT_SLUG|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE)=' .env
+grep -E '^(APP_ENV|APP_DEBUG|APP_URL|APP_VERSION|APP_BUILD|WORLD_DEFAULT_SLUG|SESSION_SECURE_COOKIE|QUEUE_CONNECTION|QUEUE_AFTER_COMMIT|CACHE_STORE|TRUSTED_PROXIES|SECURITY_HSTS_MAX_AGE|WEBPUSH_ENDPOINT_ALLOWED_HOSTS)=' .env
 ```
 
 Wenn `.env` nach dem Deploy angepasst wurde (z. B. VAPID, Version/Build), danach einmal:

@@ -51,6 +51,7 @@ SESSION_DRIVER=redis
 SESSION_SECURE_COOKIE=true
 TRUSTED_PROXIES=<proxy-ip/cidr,...>
 SECURITY_HSTS_MAX_AGE=31536000
+WEBPUSH_ENDPOINT_ALLOWED_HOSTS=fcm.googleapis.com,fcmregistrations.googleapis.com,*.push.services.mozilla.com,web.push.apple.com,*.web.push.apple.com
 MEDIA_DISK=public
 ```
 
@@ -65,7 +66,10 @@ COMPOSER_PATH=composer
 
 Hinweise:
 - `PHP_BIN` und `COMPOSER_PATH` sind optional und können an das Zielsystem angepasst werden.
-- Das Deploy-Skript führt Guard-Checks aus und bricht bei unsicheren Produktionswerten ab.
+- Das Deploy-Skript fuehrt Guard-Checks aus und bricht insbesondere ab, wenn `APP_ENV`
+  nicht `production`/`prod`, `APP_DEBUG` nicht `false`, `APP_URL` nicht HTTPS,
+  Queue/Cache nicht Redis, Secure Cookie/Trusted Proxies nicht gesetzt, HSTS nicht positiv
+  numerisch oder die Web-Push-Allowlist leer ist.
 
 ## 4) Queue-Worker starten
 
@@ -86,5 +90,6 @@ SMOKE_BASE_URL="https://example.org" SMOKE_WORLD_SLUG="<world-slug>" SMOKE_REPOR
 
 - `APP_KEY` fehlt/ungültig: in `.env` setzen, nicht automatisch pro Deploy rotieren.
 - `QUEUE_CONNECTION` oder `CACHE_STORE` ungleich `redis`: auf Redis korrigieren.
-- `SESSION_SECURE_COOKIE`/`TRUSTED_PROXIES`/`SECURITY_HSTS_MAX_AGE` prüfen.
+- `APP_ENV`/`APP_DEBUG`/`APP_URL`, `SESSION_SECURE_COOKIE`, `TRUSTED_PROXIES`,
+  `SECURITY_HSTS_MAX_AGE` und `WEBPUSH_ENDPOINT_ALLOWED_HOSTS` pruefen.
 - Logs: `storage/logs/laravel.log` plus Host-Logs.

@@ -46,7 +46,7 @@ Der Fokus liegt auf asynchronem Storytelling, klaren Weltkontexten und einem sch
 | Runtime | PHP 8.5+, Laravel 12 |
 | Frontend | Blade, HTMX 2.x, Alpine.js 3.x, Tailwind (Vite) |
 | Datenbank | MySQL/MariaDB empfohlen (Produktion) |
-| Queue/Cache (Produktion) | Redis empfohlen |
+| Queue/Cache (Produktion) | Redis erforderlich |
 | SQLite | nur für bestimmte lokale/CI-Pfade |
 
 Bewusst kein Livewire, Inertia oder Vue/React als Grundvoraussetzung.
@@ -154,6 +154,8 @@ Build-Artefakt-Drift und Release-Pipeline): siehe [docs/RELEASE-CHECKLISTE.md](d
 - Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - PWA/Offline-Details: [docs/PWA_OFFLINE.md](docs/PWA_OFFLINE.md)
 - Security-Hardening (technisch): [docs/SECURITY.md](docs/SECURITY.md)
+- Bekannte Bugs/Risiken: [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
+- Technische Schulden: [docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)
 - Security-Disclosure: [SECURITY.md](SECURITY.md)
 - Architektur-Entscheidungen: [docs/adr](docs/adr)
 

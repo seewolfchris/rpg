@@ -1,6 +1,6 @@
 # Docs-Übersicht
 
-Stand: 2026-06-04
+Stand: 2026-07-11
 
 ## Source of Truth je Thema
 - Einstieg + lokale Kernkommandos: `../README.md`
@@ -12,6 +12,8 @@ Stand: 2026-06-04
 - Release-Flow + Qualitätsgates: `RELEASE-CHECKLISTE.md`
 - Betrieb/Incident + Security-Header-Anbindung: `OPERATIONS_RUNBOOK.md`
 - Security-Hardening (technisch): `SECURITY.md`
+- Bekannte Bugs und Betriebsrisiken: `KNOWN_ISSUES.md`
+- Technische Schulden: `TECHNICAL_DEBT.md`
 - PWA/Offline-Details: `PWA_OFFLINE.md`
 - Frontend-Komponenten und Interaktionskonventionen: `FRONTEND.md`
 - Architekturstandard (Actions-first + Guardrails): `ARCHITECTURE.md`
