@@ -8,7 +8,7 @@ Diese Datei ist die einzige kanonische Quelle fuer Release-, Entwicklungs-, Live
 - Produktstatus: **Beta (kontrollierte Nutzung/Testbetrieb; weitere Aenderungen moeglich)**
 - Audit-Basis dieser Dokumentationspruefung: **Implementierungs-Commits `a1b490d` bis `7cfd52e` auf Basis von `d34e4de`**
 - Letztes veröffentlichtes Release: **`v0.32-beta` am 2026-06-03** (Quelle: `CHANGELOG.md`)
-- Entwicklungsstand: **Branch `main`; Review-Aenderungen sind lokal committed, aber noch nicht gepusht**
+- Entwicklungsstand (geprueft am 2026-07-11): **Branch `main`; Commit `1b29d20043b403599acf127dd7d9fd7f1889d9f7` entspricht `origin/main`**
 - Produktive Live-Instanz: **https://rpg.c76.org**
 - Produktiver Live-Stand: **unbekannt / extern zu verifizieren**
 

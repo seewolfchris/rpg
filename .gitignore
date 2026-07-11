@@ -2,6 +2,9 @@
 .DS_Store
 *.goutputstream-*
 .env
+.env.*
+!.env.example
+!.env.production.example
 .env.backup
 .env.production
 .phpactor.json

@@ -5,7 +5,7 @@
 - Laravel 12 mit PHP 8.5
 - Blade, HTMX, Alpine.js und Tailwind CSS
 - MariaDB/MySQL, Redis für Cache, Queue und Sessions
-- PHPUnit/Pest, PHPStan Level 8 und Playwright
+- PHPUnit, PHPStan Level 8 und Playwright
 - Keine externen CDNs verwenden
 - Das Projekt wird lokal in VS Code bearbeitet
 
@@ -16,6 +16,8 @@
 - Änderungen auf den ausdrücklich angeforderten Umfang beschränken.
 - Keine benachbarten Funktionen ohne fachlichen Grund umgestalten.
 - Bestehende Projektkonventionen bevorzugen.
+- Bestehende uncommittete Änderungen des Benutzers niemals überschreiben, zurücksetzen oder ungefragt umformatieren.
+- Keine neuen Composer-, NPM- oder sonstigen Abhängigkeiten ohne ausdrückliche Zustimmung hinzufügen.
 - Keine Commits und keinen Push durchführen, außer der Benutzer fordert dies ausdrücklich an.
 - Ohne ausdrücklichen Auftrag prüft der Benutzer Änderungen und führt Git-Commit und Push selbst aus.
 
@@ -23,32 +25,38 @@
 
 - Bei Unklarheiten zuerst vorhandenen Code, Tests und Dokumentation als Quelle verwenden.
 - Nur nachfragen, wenn mehrere fachlich unterschiedliche Lösungen möglich sind oder eine Änderung nicht sicher rückgängig gemacht werden kann.
-- Keine neuen Abhängigkeiten ohne ausdrückliche Zustimmung hinzufügen.
-- Öffentliche Schnittstellen, Routen, Events und Datenbankschemata nicht unbeabsichtigt brechen.
-- Bestehende uncommittete Änderungen des Benutzers nicht überschreiben, zurücksetzen oder ungefragt umformatieren.
-- Kommentare sollen fachliche Gründe erläutern und nicht lediglich den sichtbaren Code wiederholen.
+- Öffentliche Routen, APIs, Events und Datenbankschemata nicht unbeabsichtigt brechen.
+- Kommentare sollen fachliche Gründe oder nicht offensichtliche Randbedingungen erläutern und nicht lediglich den sichtbaren Code wiederholen.
 - Keine spekulativen Abstraktionen für nur hypothetische zukünftige Anforderungen einführen.
+
+## Maßgebliche Projektdokumentation
+
+- Architektur sowie Controller-, Action- und Mutationsgrenzen: `docs/ARCHITECTURE.md`
+- Blade-, HTMX- und Alpine-Konventionen: `docs/FRONTEND.md`
+- Exakte Release- und Qualitäts-Gates: `docs/RELEASE-CHECKLISTE.md`
+- Release-, Entwicklungs-, Live-, Build- und Gate-Status: `docs/STATUS.md`
+- Bekannte Fehler und Risiken: `docs/KNOWN_ISSUES.md`
+- Technische Schulden: `docs/TECHNICAL_DEBT.md`
+- Architekturentscheidungen: `docs/adr/`
+- Diese Inhalte nicht vollständig in `AGENTS.md` duplizieren.
 
 ## Architektur
 
 - Keine Geschäftslogik in Controllern.
 - Keine direkten Datenbanktransaktionen oder umfangreiche Persistenzlogik in Controllern.
-- Bestehende Actions, Services, Policies und Resolver verwenden oder sinnvoll erweitern.
+- Mutationen Actions-first umsetzen; mutierende Actions sind grundsätzlich `final`.
+- Für weitere Controller-, Action- und Mutationsgrenzen ist `docs/ARCHITECTURE.md` maßgeblich.
 - Autorisierung grundsätzlich über Policies und kampagnengebundene Rollen prüfen.
 - Globale Adminrechte und kampagnengebundene Rollen getrennt behandeln.
 - Kein globaler Spielleiterstatus als Voraussetzung für Kampagnenrechte.
 - Datenbankänderungen müssen migrationsfähig, rückwärtsverträglich und getestet sein.
 - Nebenläufigkeit, Idempotenz und Duplicate-Key-Situationen berücksichtigen.
 
-## Projektstruktur und Konventionen
+## Frontend und Build-Artefakte
 
-- Anwendungsfälle und schreibende Abläufe bevorzugt in `app/Actions` abbilden.
-- Fachliche Logik in den bestehenden Bereichen unter `app/Domain` platzieren.
-- Wiederverwendbare technische Logik in `app/Services` oder `app/Support` einordnen.
-- Eingabevalidierung in Form Requests und Autorisierung in Policies belassen.
-- Bestehende Blade-, HTMX- und Alpine.js-Muster des jeweiligen Bereichs fortführen.
-- HTMX für serverseitige Interaktionen und partielle Aktualisierungen verwenden; Alpine.js nur für lokalen UI-Zustand und kleine clientseitige Interaktionen einsetzen.
-- Generierte Dateien, gebaute Assets und Abhängigkeitsverzeichnisse nicht manuell bearbeiten.
+- Bestehende Blade-, HTMX- und Alpine.js-Muster sowie `docs/FRONTEND.md` befolgen.
+- `public/build` und `public/js/character-sheet.global.js` sind generierte, aber versionierte Build-Artefakte.
+- Diese Artefakte nicht manuell bearbeiten, nach relevanten Quelländerungen mit `npm run build` regenerieren und anschließend gemäß `docs/RELEASE-CHECKLISTE.md` auf Drift prüfen.
 
 ## Sprache und Fachbegriffe
 
@@ -70,18 +78,16 @@
 
 ## Verbindliche Prüfkommandos
 
-- Fokussierte PHP-Tests: `php artisan test --filter=<Name>` oder `php artisan test <Testdatei>`
-- Gesamte PHP-Testsuite: `composer test`
+- Fokussierter PHP-Test: `php artisan test --without-tty --do-not-cache-result --filter=<Name>` oder mit dem Pfad einer Testdatei.
 - Statische Analyse: `composer analyse`
 - JavaScript-Tests: `npm run test:js`
-- HTMX-Sicherheitstests: `npm run test:htmx-safety`
-- Service-Worker-Tests: `npm run test:sw`
-- Frontend-Build: `npm run build`
 - End-to-End-Tests: `npm run test:e2e`
-- PHP-Formatierung prüfen: `vendor/bin/pint --test`
-- PHP-Formatierung nur bei ausdrücklich gewünschter oder für die Änderung erforderlicher Formatierung ausführen: `vendor/bin/pint`
-- Abschließende Whitespace-Prüfung: `git diff --check`
-- Umfangreiche oder langsame Prüfungen nur dann auslassen, wenn sie für die Änderung nicht relevant sind; dies im Abschlussbericht begründen.
+- Frontend-Build: `npm run build`
+- Schneller Pre-Push-Check: `scripts/pre_push_check.sh`
+- Umfangreicher Pre-Push-Check: `scripts/pre_push_check.sh --full --with-build`
+- MySQL-spezifische Änderungen benötigen zusätzlich die separaten, in `docs/RELEASE-CHECKLISTE.md` dokumentierten MySQL-Testgruppen.
+- Für die vollständigen exakten Qualitäts- und Release-Gates ist `docs/RELEASE-CHECKLISTE.md` maßgeblich.
+- `scripts/release_flow.sh` nur bei einem ausdrücklichen Release-Auftrag ausführen; das Skript kann Commits, Pushes und Tags erzeugen.
 
 ## Datenbank und Tests
 
@@ -93,7 +99,10 @@
 
 ## Dokumentation
 
-- Dokumentation nur aktualisieren, wenn sich Einrichtung, Bedienung, Architektur, öffentliche Schnittstellen oder fachlich relevante Abläufe ändern.
+- `docs/STATUS.md` ist die einzige kanonische Quelle für Release-, Entwicklungs-, Live-, Build- und Gate-Status.
+- README und Roadmaps dürfen Status nur knapp einordnen und müssen auf `docs/STATUS.md` verweisen.
+- Statusangaben nur mit entsprechendem Nachweis aktualisieren; produktive Versionen oder Commits nur mit externem Deployment- oder Build-Nachweis als live kennzeichnen.
+- Exakte Gate-Befehle bleiben in `docs/RELEASE-CHECKLISTE.md`.
 - Bestehende Dokumentationsstruktur und Terminologie beibehalten.
 
 ## Sicherheit
