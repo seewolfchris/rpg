@@ -54,7 +54,7 @@ class WebPushDispatchTest extends TestCase
         CampaignMembership::query()->create([
             'campaign_id' => (int) $campaign->id,
             'user_id' => (int) $author->id,
-            'role' => CampaignMembershipRole::PLAYER->value,
+            'role' => CampaignMembershipRole::TRUSTED_PLAYER->value,
             'assigned_by' => (int) $gm->id,
             'assigned_at' => now(),
         ]);

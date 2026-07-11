@@ -7,6 +7,7 @@ namespace Tests\Feature\MySqlConcurrency;
 use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignMembership;
+use App\Models\PointEvent;
 use App\Models\Post;
 use App\Models\PostModerationLog;
 use App\Models\PostRevision;
@@ -161,14 +162,23 @@ class PostModerationCollisionMysqlTest extends TestCase
         if ((string) $targetPost->moderation_status === 'approved') {
             $this->assertSame((int) $owner->id, (int) $targetPost->approved_by);
             $this->assertNotNull($targetPost->approved_at);
+            $this->assertSame(1, PointEvent::query()
+                ->where('user_id', (int) $author->id)
+                ->where('source_type', 'post')
+                ->where('source_id', (int) $targetPost->id)
+                ->where('event_key', 'approved')
+                ->count());
+            $this->assertSame((int) config('gamification.post_approved_points', 10), (int) $author->fresh()->points);
         } else {
-            // Characterization: in single-vs-bulk races, rejected may still carry prior approval metadata.
-            $this->assertContains((int) ($targetPost->approved_by ?? 0), [0, (int) $owner->id]);
-            if ((int) ($targetPost->approved_by ?? 0) === 0) {
-                $this->assertNull($targetPost->approved_at);
-            } else {
-                $this->assertNotNull($targetPost->approved_at);
-            }
+            $this->assertNull($targetPost->approved_by);
+            $this->assertNull($targetPost->approved_at);
+            $this->assertSame(0, PointEvent::query()
+                ->where('user_id', (int) $author->id)
+                ->where('source_type', 'post')
+                ->where('source_id', (int) $targetPost->id)
+                ->where('event_key', 'approved')
+                ->count());
+            $this->assertSame(0, (int) $author->fresh()->points);
         }
 
         $this->assertSame('pending', (string) $controlPost->moderation_status);

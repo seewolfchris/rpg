@@ -61,7 +61,7 @@ class BuildSceneShowNavigationDataAction
             ),
             static fn (int $postId): bool => $postId > 0
         ));
-        $postAnchorUrls = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, $anchorTargetIds);
+        $postAnchorUrls = $this->scenePostAnchorUrlService->build($world, $campaign, $scene, $user, $anchorTargetIds);
 
         $pinnedPostJumpUrls = [];
         foreach ($pinnedPosts as $pinnedPost) {

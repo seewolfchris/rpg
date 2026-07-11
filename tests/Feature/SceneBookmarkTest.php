@@ -33,11 +33,11 @@ class SceneBookmarkTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $firstPost = Post::factory()->create([
+        $firstPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -104,7 +104,7 @@ class SceneBookmarkTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $foreignPost = Post::factory()->create([
+        $foreignPost = Post::factory()->approved()->create([
             'scene_id' => $sceneB->id,
             'user_id' => $gm->id,
         ]);
@@ -140,7 +140,7 @@ class SceneBookmarkTest extends TestCase
             'allow_ooc' => true,
         ]);
 
-        $post = Post::factory()->create([
+        $post = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -215,11 +215,11 @@ class SceneBookmarkTest extends TestCase
                 'allow_ooc' => true,
             ]);
 
-            $bookmarkPost = Post::factory()->create([
+            $bookmarkPost = Post::factory()->approved()->create([
                 'scene_id' => $scene->id,
                 'user_id' => $gm->id,
             ]);
-            Post::factory()->create([
+            Post::factory()->approved()->create([
                 'scene_id' => $scene->id,
                 'user_id' => $gm->id,
             ]);

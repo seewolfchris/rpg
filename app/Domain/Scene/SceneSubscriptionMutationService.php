@@ -11,9 +11,13 @@ use App\Models\User;
 
 class SceneSubscriptionMutationService
 {
+    public function __construct(
+        private readonly ScenePostVisibility $scenePostVisibility,
+    ) {}
+
     public function subscribe(User $user, Scene $scene): SceneSubscription
     {
-        $latestPostId = $this->latestScenePostId($scene);
+        $latestPostId = $this->latestScenePostId($scene, $user);
 
         return SceneSubscription::query()->updateOrCreate([
             'scene_id' => $scene->id,
@@ -38,7 +42,7 @@ class SceneSubscriptionMutationService
      */
     public function markRead(User $user, Scene $scene): array
     {
-        $latestPostId = $this->latestScenePostId($scene);
+        $latestPostId = $this->latestScenePostId($scene, $user);
 
         $subscription = SceneSubscription::query()->firstOrCreate([
             'scene_id' => $scene->id,
@@ -85,7 +89,7 @@ class SceneSubscriptionMutationService
 
     public function toggleMute(User $user, Scene $scene): SceneSubscription
     {
-        $latestPostId = $this->latestScenePostId($scene);
+        $latestPostId = $this->latestScenePostId($scene, $user);
 
         $subscription = SceneSubscription::query()->firstOrCreate([
             'scene_id' => $scene->id,
@@ -102,11 +106,14 @@ class SceneSubscriptionMutationService
         return $subscription;
     }
 
-    private function latestScenePostId(Scene $scene): int
+    private function latestScenePostId(Scene $scene, User $user): int
     {
-        return (int) Post::query()
+        $query = Post::query()
             ->withTrashed()
-            ->where('scene_id', $scene->id)
+            ->where('scene_id', (int) $scene->id);
+
+        return (int) $this->scenePostVisibility
+            ->apply($query, $scene, $user)
             ->max('id');
     }
 }

@@ -106,13 +106,15 @@ class PostControllerActionDeflationTest extends TestCase
 
         $postModerationService = $this->createMock(PostModerationService::class);
         $postModerationService->expects($this->once())
-            ->method('synchronize')
+            ->method('synchronizePersistentState')
             ->with(
                 $this->callback(static fn (Post $resolvedPost): bool => $resolvedPost->is($post)),
                 $this->callback(static fn (User $resolvedModerator): bool => $resolvedModerator->is($gm)),
                 'pending',
                 'Freigabe',
             );
+        $postModerationService->expects($this->once())
+            ->method('dispatchAfterCommitEffects');
         $this->app->instance(PostModerationService::class, $postModerationService);
 
         $response = $this->actingAs($gm)

@@ -58,7 +58,9 @@ final class BulkModeratePostsAction
         $this->applyCandidateSelection($postsQuery, $input);
 
         /** @var EloquentCollection<int, Post> $posts */
-        $posts = $postsQuery->get();
+        $posts = $postsQuery
+            ->orderBy('posts.id')
+            ->get();
 
         return $posts;
     }
@@ -113,39 +115,43 @@ final class BulkModeratePostsAction
      */
     private function applyBulkModeration(EloquentCollection $posts, BulkModeratePostsInput $input): int
     {
-        return $this->db->transaction(function () use ($posts, $input): int {
-            $affected = 0;
+        /** @var list<PostModerationTransitionResult> $transitions */
+        $transitions = $this->db->transaction(function () use ($posts, $input): array {
+            $resolvedTransitions = [];
 
             foreach ($posts as $post) {
-                $affected += $this->moderateSinglePost($post, $input);
+                $transition = $this->moderateSinglePost($post, $input);
+
+                if ($transition->changed) {
+                    $resolvedTransitions[] = $transition;
+                }
             }
 
-            return $affected;
+            return $resolvedTransitions;
         });
+
+        foreach ($transitions as $transition) {
+            $this->applyPostModerationTransitionAction->dispatchAfterCommitEffects($transition, $input->moderator);
+        }
+
+        return count($transitions);
     }
 
     /**
      * @throws AuthorizationException
      */
-    private function moderateSinglePost(Post $post, BulkModeratePostsInput $input): int
+    private function moderateSinglePost(Post $post, BulkModeratePostsInput $input): PostModerationTransitionResult
     {
         if (! $input->moderator->can('moderate', $post)) {
             throw new AuthorizationException('Mindestens ein Beitrag liegt außerhalb deiner Moderationsrechte.');
         }
 
-        $previousStatus = (string) $post->moderation_status;
-
-        if ($previousStatus === $input->targetStatus && $input->moderationNote === null) {
-            return 0;
-        }
-
-        $this->applyPostModerationTransitionAction->execute(
+        return $this->applyPostModerationTransitionAction->execute(
             post: $post,
             moderator: $input->moderator,
             targetStatus: $input->targetStatus,
             moderationNote: $input->moderationNote,
+            dispatchAfterCommitEffects: false,
         );
-
-        return 1;
     }
 }

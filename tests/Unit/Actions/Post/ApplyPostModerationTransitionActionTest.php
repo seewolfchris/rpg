@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Post;
 
 use App\Actions\Post\ApplyPostModerationTransitionAction;
+use App\Domain\Post\PostModerationService;
+use App\Domain\Post\PostNotificationOrchestrator;
 use App\Jobs\Post\SendPostModerationStatusNotificationJob;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\User;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use RuntimeException;
 use Tests\TestCase;
 
 class ApplyPostModerationTransitionActionTest extends TestCase
@@ -97,6 +101,45 @@ class ApplyPostModerationTransitionActionTest extends TestCase
         ]);
     }
 
+    public function test_it_rolls_back_status_when_moderation_synchronization_fails(): void
+    {
+        [$gm, , $post] = $this->seedModerationContext();
+
+        $moderationService = $this->createMock(PostModerationService::class);
+        $moderationService->expects($this->once())
+            ->method('synchronizePersistentState')
+            ->willThrowException(new RuntimeException('forced synchronization failure'));
+        $moderationService->expects($this->never())->method('dispatchAfterCommitEffects');
+        $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
+        $notificationOrchestrator->expects($this->never())->method('notifySceneParticipantsWithRetry');
+        $notificationOrchestrator->expects($this->never())->method('notifyMentionsWithRetry');
+
+        $action = new ApplyPostModerationTransitionAction(
+            $moderationService,
+            app(DatabaseManager::class),
+            $notificationOrchestrator,
+        );
+
+        try {
+            $action->execute(
+                post: $post,
+                moderator: $gm,
+                targetStatus: 'approved',
+                moderationNote: null,
+            );
+
+            $this->fail('Expected moderation synchronization failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced synchronization failure', $exception->getMessage());
+        }
+
+        $post->refresh();
+
+        $this->assertSame('pending', (string) $post->moderation_status);
+        $this->assertNull($post->approved_at);
+        $this->assertNull($post->approved_by);
+    }
+
     /**
      * @return array{0: User, 1: User, 2: Post}
      */
@@ -130,4 +173,3 @@ class ApplyPostModerationTransitionActionTest extends TestCase
         return [$gm, $player, $post];
     }
 }
-

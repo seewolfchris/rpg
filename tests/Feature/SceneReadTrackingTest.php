@@ -19,11 +19,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        $firstPost = Post::factory()->create([
+        $firstPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -54,11 +54,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        $firstPost = Post::factory()->create([
+        $firstPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -102,7 +102,7 @@ class SceneReadTrackingTest extends TestCase
             'last_read_at' => null,
         ]);
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -127,11 +127,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -171,11 +171,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -213,11 +213,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -255,11 +255,11 @@ class SceneReadTrackingTest extends TestCase
         $user = User::factory()->create();
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $gm->id,
         ]);
@@ -308,6 +308,7 @@ class SceneReadTrackingTest extends TestCase
         [$campaign, $scene, $gm] = $this->seedCampaignAndScene();
 
         $posts = Post::factory()
+            ->approved()
             ->count(25)
             ->sequence(fn () => [
                 'scene_id' => $scene->id,
@@ -337,7 +338,7 @@ class SceneReadTrackingTest extends TestCase
     {
         [$campaign, $scene, $owner] = $this->seedCampaignAndScene();
 
-        $existingPost = Post::factory()->create([
+        $existingPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
             'post_type' => 'ooc',

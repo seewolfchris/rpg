@@ -278,14 +278,17 @@ class BulkModeratePostsActionTest extends TestCase
         $invocationCount = 0;
         $failingModerationService = $this->createMock(PostModerationService::class);
         $failingModerationService->expects($this->exactly(2))
-            ->method('synchronize')
-            ->willReturnCallback(function () use (&$invocationCount): void {
+            ->method('synchronizePersistentState')
+            ->willReturnCallback(function () use (&$invocationCount): bool {
                 $invocationCount++;
 
                 if ($invocationCount === 2) {
                     throw new RuntimeException('Forced synchronization failure');
                 }
+
+                return true;
             });
+        $failingModerationService->expects($this->never())->method('dispatchAfterCommitEffects');
         $this->app->instance(PostModerationService::class, $failingModerationService);
 
         try {

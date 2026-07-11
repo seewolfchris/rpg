@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Scene;
 
+use App\Domain\Scene\ScenePostVisibility;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
@@ -19,6 +20,7 @@ final class ToggleSceneBookmarkAction
 {
     public function __construct(
         private readonly DatabaseManager $db,
+        private readonly ScenePostVisibility $scenePostVisibility,
     ) {}
 
     public function create(
@@ -71,7 +73,7 @@ final class ToggleSceneBookmarkAction
         ): SceneBookmark {
             $lockedScene = $this->lockAndVerifyContext($world, $campaign, $scene);
             $existingBookmark = $this->lockExistingBookmark($lockedScene, $user);
-            $resolvedPostId = $this->resolveAndValidatePostId($lockedScene, $requestedPostId);
+            $resolvedPostId = $this->resolveAndValidatePostId($lockedScene, $user, $requestedPostId);
 
             return $this->persistBookmark(
                 bookmark: $existingBookmark,
@@ -113,12 +115,14 @@ final class ToggleSceneBookmarkAction
         return $bookmark;
     }
 
-    private function resolveAndValidatePostId(Scene $scene, ?int $requestedPostId): ?int
+    private function resolveAndValidatePostId(Scene $scene, User $user, ?int $requestedPostId): ?int
     {
         if ($requestedPostId !== null && $requestedPostId > 0) {
-            $post = Post::query()
+            $postQuery = Post::query()
                 ->where('scene_id', (int) $scene->id)
-                ->whereKey($requestedPostId)
+                ->whereKey($requestedPostId);
+            $post = $this->scenePostVisibility
+                ->apply($postQuery, $scene, $user)
                 ->lockForUpdate()
                 ->first();
 
@@ -131,8 +135,10 @@ final class ToggleSceneBookmarkAction
             return (int) $post->id;
         }
 
-        $latestPostId = (int) Post::query()
-            ->where('scene_id', (int) $scene->id)
+        $latestPostQuery = Post::query()
+            ->where('scene_id', (int) $scene->id);
+        $latestPostId = (int) $this->scenePostVisibility
+            ->apply($latestPostQuery, $scene, $user)
             ->orderByDesc('id')
             ->lockForUpdate()
             ->value('id');

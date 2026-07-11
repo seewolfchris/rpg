@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\Scene;
 
 use App\Actions\Scene\ToggleSceneBookmarkAction;
+use App\Domain\Scene\ScenePostVisibility;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
@@ -27,11 +28,11 @@ class ToggleSceneBookmarkActionTest extends TestCase
     public function test_it_creates_and_updates_bookmark_with_valid_scene_post_context(): void
     {
         [$world, $campaign, $scene, $user] = $this->seedContext();
-        $firstPost = Post::factory()->create([
+        $firstPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $campaign->owner_id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $campaign->owner_id,
         ]);
@@ -178,7 +179,7 @@ class ToggleSceneBookmarkActionTest extends TestCase
             'post_id' => null,
             'label' => 'Before failure',
         ]);
-        $post = Post::factory()->create([
+        $post = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $campaign->owner_id,
         ]);
@@ -203,7 +204,7 @@ class ToggleSceneBookmarkActionTest extends TestCase
                 }
             });
 
-        $action = new ToggleSceneBookmarkAction($mockedDb);
+        $action = new ToggleSceneBookmarkAction($mockedDb, app(ScenePostVisibility::class));
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Forced bookmark transaction failure');

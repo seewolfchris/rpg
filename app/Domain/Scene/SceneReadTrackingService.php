@@ -5,18 +5,21 @@ namespace App\Domain\Scene;
 use App\Models\Post;
 use App\Models\Scene;
 use App\Models\SceneSubscription;
+use App\Models\User;
 
 class SceneReadTrackingService
 {
+    public function __construct(
+        private readonly ScenePostVisibility $scenePostVisibility,
+    ) {}
+
     public function synchronize(
         Scene $scene,
+        User $user,
         ?SceneSubscription $subscription,
         int $lastReadPostIdBeforeOpen,
     ): SceneReadTrackingResult {
-        $latestPostId = (int) Post::query()
-            ->withTrashed()
-            ->where('scene_id', $scene->id)
-            ->max('id');
+        $latestPostId = (int) $this->visiblePostQuery($scene, $user)->max('id');
 
         $newPostsSinceLastRead = 0;
         $hasUnreadPosts = false;
@@ -27,19 +30,13 @@ class SceneReadTrackingService
 
             if ($hasUnreadPosts) {
                 $newPostsSinceLastRead = $lastReadPostIdBeforeOpen > 0
-                    ? Post::query()
-                        ->withTrashed()
-                        ->where('scene_id', $scene->id)
+                    ? $this->visiblePostQuery($scene, $user)
                         ->where('id', '>', $lastReadPostIdBeforeOpen)
                         ->count()
-                    : Post::query()
-                        ->withTrashed()
-                        ->where('scene_id', $scene->id)
+                    : $this->visiblePostQuery($scene, $user)
                         ->count();
 
-                $firstUnreadPostId = (int) Post::query()
-                    ->withTrashed()
-                    ->where('scene_id', $scene->id)
+                $firstUnreadPostId = (int) $this->visiblePostQuery($scene, $user)
                     ->when(
                         $lastReadPostIdBeforeOpen > 0,
                         fn ($query) => $query->where('id', '>', $lastReadPostIdBeforeOpen),
@@ -60,5 +57,17 @@ class SceneReadTrackingService
             hasUnreadPosts: $hasUnreadPosts,
             firstUnreadPostId: $firstUnreadPostId,
         );
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<Post>
+     */
+    private function visiblePostQuery(Scene $scene, User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Post::query()
+            ->withTrashed()
+            ->where('scene_id', (int) $scene->id);
+
+        return $this->scenePostVisibility->apply($query, $scene, $user);
     }
 }

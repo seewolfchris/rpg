@@ -4,7 +4,6 @@ namespace App\Domain\Post;
 
 use App\Domain\Campaign\CampaignAccess;
 use App\Models\Campaign;
-use App\Models\CampaignMembership;
 use App\Models\Post;
 use App\Models\PostSceneNotificationDelivery;
 use App\Models\PushSubscription;
@@ -36,6 +35,14 @@ class ScenePostNotificationService
      */
     public function notifySceneParticipants(Post $post, User $author): array
     {
+        if ((string) $post->moderation_status !== 'approved') {
+            return [
+                'in_app_recipients' => 0,
+                'webpush_recipients' => 0,
+                'has_failures' => false,
+            ];
+        }
+
         $post->loadMissing(['scene.campaign']);
         /** @var Scene $scene */
         $scene = $post->scene;

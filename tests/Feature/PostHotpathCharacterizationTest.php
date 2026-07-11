@@ -168,8 +168,7 @@ class PostHotpathCharacterizationTest extends TestCase
 
         $this->assertSame('rejected', $post->moderation_status);
         $this->assertNull($post->approved_by);
-        // Characterization: current behavior clears approved_by on rejection but keeps approved_at.
-        $this->assertNotNull($post->approved_at);
+        $this->assertNull($post->approved_at);
         $this->assertSame(0, (int) DB::table('post_revisions')->where('post_id', $post->id)->count());
     }
 

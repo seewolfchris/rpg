@@ -8,6 +8,7 @@ use App\Actions\SceneSubscription\MarkSceneSubscriptionReadAction;
 use App\Models\Campaign;
 use App\Models\Post;
 use App\Models\Scene;
+use App\Models\SceneSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +16,34 @@ use Tests\TestCase;
 class MarkSceneSubscriptionReadActionTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_stale_mark_read_cannot_move_last_read_post_backwards(): void
+    {
+        $user = User::factory()->create();
+        [, $scene] = $this->seedCampaignAndScene();
+        $firstPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+        ]);
+        $latestPost = Post::factory()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+        ]);
+        $subscription = SceneSubscription::query()->create([
+            'scene_id' => $scene->id,
+            'user_id' => $user->id,
+            'last_read_post_id' => null,
+            'last_read_at' => null,
+            'is_muted' => false,
+        ]);
+        $staleSubscription = $subscription->fresh();
+
+        $subscription->markRead((int) $latestPost->id);
+        $staleSubscription?->markRead((int) $firstPost->id);
+
+        $this->assertSame((int) $latestPost->id, (int) $subscription->fresh()?->last_read_post_id);
+        $this->assertSame((int) $latestPost->id, (int) $staleSubscription?->last_read_post_id);
+    }
 
     public function test_it_marks_subscription_read_to_latest_post(): void
     {

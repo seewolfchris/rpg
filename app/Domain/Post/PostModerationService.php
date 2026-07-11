@@ -19,12 +19,12 @@ class PostModerationService
         private readonly DomainEventLogger $logger,
     ) {}
 
-    public function synchronize(
+    public function synchronizePersistentState(
         Post $post,
         ?User $moderator,
         string $previousStatus,
         ?string $moderationNote = null,
-    ): void {
+    ): bool {
         $newStatus = (string) $post->moderation_status;
         $hasModerationChange = $previousStatus !== $newStatus || $moderationNote !== null;
 
@@ -38,35 +38,51 @@ class PostModerationService
                 'created_at' => now(),
             ]);
 
-            if ($moderator && $post->user_id !== $moderator->id) {
-                try {
-                    $this->postModerationNotificationDispatcher->dispatch(
-                        post: $post,
-                        moderator: $moderator,
-                        previousStatus: $previousStatus,
-                        newStatus: $newStatus,
-                        moderationNote: $moderationNote,
-                    );
-                } catch (Throwable $throwable) {
-                    $this->logger->info('moderation.post_notification_dispatch_failed', [
-                        'moderator_id' => $moderator->id,
-                        ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
-                        'error' => $throwable->getMessage(),
-                        'outcome' => 'failed',
-                    ]);
-                }
-            }
-
-            $this->logger->info('moderation.post_status_changed', [
-                'world_slug' => (string) data_get($post, 'scene.campaign.world.slug', 'unknown'),
-                'moderator_id' => $moderator?->id,
-                ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
-                'has_reason' => $moderationNote !== null,
-                'outcome' => 'succeeded',
-            ]);
         }
 
         $this->pointService->syncApprovedPost($post);
+
+        return $hasModerationChange;
+    }
+
+    public function dispatchAfterCommitEffects(
+        Post $post,
+        ?User $moderator,
+        string $previousStatus,
+        ?string $moderationNote = null,
+    ): void {
+        $newStatus = (string) $post->moderation_status;
+
+        if ($previousStatus === $newStatus && $moderationNote === null) {
+            return;
+        }
+
+        if ($moderator && $post->user_id !== $moderator->id) {
+            try {
+                $this->postModerationNotificationDispatcher->dispatch(
+                    post: $post,
+                    moderator: $moderator,
+                    previousStatus: $previousStatus,
+                    newStatus: $newStatus,
+                    moderationNote: $moderationNote,
+                );
+            } catch (Throwable $throwable) {
+                $this->logSafely('moderation.post_notification_dispatch_failed', [
+                    'moderator_id' => $moderator->id,
+                    ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
+                    'error' => $throwable->getMessage(),
+                    'outcome' => 'failed',
+                ]);
+            }
+        }
+
+        $this->logSafely('moderation.post_status_changed', [
+            'world_slug' => (string) data_get($post, 'scene.campaign.world.slug', 'unknown'),
+            'moderator_id' => $moderator?->id,
+            ...$this->buildPostModerationLogContext($post, $previousStatus, $newStatus),
+            'has_reason' => $moderationNote !== null,
+            'outcome' => 'succeeded',
+        ]);
     }
 
     /**
@@ -90,5 +106,17 @@ class PostModerationService
             'previous_status' => $previousStatus,
             'new_status' => $newStatus,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    private function logSafely(string $event, array $context): void
+    {
+        try {
+            $this->logger->info($event, $context);
+        } catch (Throwable) {
+            // Observability must never turn an already committed moderation write into an HTTP failure.
+        }
     }
 }

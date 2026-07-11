@@ -27,8 +27,13 @@ class PostPolicy
             return (int) $post->user_id === (int) $user->id;
         }
 
-        return $campaign->isVisibleTo($user)
-            || (int) $post->user_id === (int) $user->id;
+        if ((int) $post->user_id === (int) $user->id) {
+            return true;
+        }
+
+        return ((string) $post->moderation_status === 'approved'
+                && $campaign->isVisibleTo($user))
+            || $campaign->canModeratePosts($user);
     }
 
     /**
@@ -66,6 +71,10 @@ class PostPolicy
             return true;
         }
 
+        if ((string) $post->scene?->status === 'archived') {
+            return false;
+        }
+
         return (int) $post->user_id === (int) $user->id
             && $this->canWriteInCampaign($user, $campaign);
     }
@@ -86,6 +95,10 @@ class PostPolicy
 
         if ($campaign->canModeratePosts($user)) {
             return true;
+        }
+
+        if ((string) $post->scene?->status === 'archived') {
+            return false;
         }
 
         return (int) $post->user_id === (int) $user->id

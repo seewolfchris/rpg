@@ -14,6 +14,7 @@ final class SceneThreadReadStateService
 {
     public function __construct(
         private readonly SceneReadTrackingService $sceneReadTrackingService,
+        private readonly ScenePostVisibility $scenePostVisibility,
     ) {}
 
     public function resolveForShowAndMarkRead(Scene $scene, User $user): SceneThreadReadState
@@ -25,6 +26,7 @@ final class SceneThreadReadStateService
 
         $readTracking = $this->sceneReadTrackingService->synchronize(
             scene: $scene,
+            user: $user,
             subscription: $subscription,
             lastReadPostIdBeforeOpen: $lastReadPostIdBeforeOpen,
         );
@@ -43,7 +45,7 @@ final class SceneThreadReadStateService
     public function resolveForThreadRender(Scene $scene, User $user): SceneThreadReadState
     {
         $subscription = $this->sceneSubscription($scene, $user);
-        $latestPostId = $this->latestScenePostId($scene);
+        $latestPostId = $this->latestScenePostId($scene, $user);
         $lastReadPostIdBeforeOpen = $subscription instanceof SceneSubscription
             ? (int) ($subscription->last_read_post_id ?? 0)
             : 0;
@@ -60,14 +62,10 @@ final class SceneThreadReadStateService
             );
         }
 
-        $unreadPostsCount = (int) Post::query()
-            ->withTrashed()
-            ->where('scene_id', $scene->id)
+        $unreadPostsCount = (int) $this->visiblePostQuery($scene, $user)
             ->where('id', '>', $lastReadPostIdBeforeOpen)
             ->count();
-        $firstUnreadPostId = (int) Post::query()
-            ->withTrashed()
-            ->where('scene_id', $scene->id)
+        $firstUnreadPostId = (int) $this->visiblePostQuery($scene, $user)
             ->where('id', '>', $lastReadPostIdBeforeOpen)
             ->orderBy('id')
             ->value('id');
@@ -94,6 +92,7 @@ final class SceneThreadReadStateService
                 $query->selectRaw('1')
                     ->from('posts')
                     ->whereColumn('posts.scene_id', 'scene_subscriptions.scene_id')
+                    ->where('posts.moderation_status', 'approved')
                     ->whereRaw('posts.id > COALESCE(scene_subscriptions.last_read_post_id, 0)');
             })
             ->count();
@@ -107,11 +106,20 @@ final class SceneThreadReadStateService
             ->first();
     }
 
-    private function latestScenePostId(Scene $scene): int
+    private function latestScenePostId(Scene $scene, User $user): int
     {
-        return (int) Post::query()
+        return (int) $this->visiblePostQuery($scene, $user)->max('id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<Post>
+     */
+    private function visiblePostQuery(Scene $scene, User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Post::query()
             ->withTrashed()
-            ->where('scene_id', $scene->id)
-            ->max('id');
+            ->where('scene_id', (int) $scene->id);
+
+        return $this->scenePostVisibility->apply($query, $scene, $user);
     }
 }

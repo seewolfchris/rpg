@@ -25,8 +25,6 @@ final class MarkSceneSubscriptionUnreadAction
             );
         }
 
-        $subscription->markUnread();
-
         return new MarkSceneSubscriptionUnreadResult(
             subscription: $subscription,
             statusMessage: 'Szene als ungelesen markiert.',

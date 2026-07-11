@@ -33,7 +33,14 @@ class PostModerationServiceTest extends TestCase
         $post->approved_by = $gm->id;
         $post->save();
 
-        app(PostModerationService::class)->synchronize(
+        $service = app(PostModerationService::class);
+        $service->synchronizePersistentState(
+            post: $post,
+            moderator: $gm,
+            previousStatus: 'pending',
+            moderationNote: 'Freigabe nach Pruefung.',
+        );
+        $service->dispatchAfterCommitEffects(
             post: $post,
             moderator: $gm,
             previousStatus: 'pending',
@@ -64,7 +71,14 @@ class PostModerationServiceTest extends TestCase
             ->willThrowException(new RuntimeException('Queue transport unavailable'));
         $this->app->instance(PostModerationNotificationDispatcher::class, $dispatcher);
 
-        app(PostModerationService::class)->synchronize(
+        $service = app(PostModerationService::class);
+        $service->synchronizePersistentState(
+            post: $post,
+            moderator: $gm,
+            previousStatus: 'pending',
+            moderationNote: 'Technischer Fehler darf Moderation nicht blockieren.',
+        );
+        $service->dispatchAfterCommitEffects(
             post: $post,
             moderator: $gm,
             previousStatus: 'pending',
@@ -114,7 +128,13 @@ class PostModerationServiceTest extends TestCase
 
         $service = new PostModerationService($dispatcher, $pointService, $logger);
 
-        $service->synchronize(
+        $service->synchronizePersistentState(
+            post: $post,
+            moderator: $gm,
+            previousStatus: 'pending',
+            moderationNote: 'Freigabe nach Pruefung.',
+        );
+        $service->dispatchAfterCommitEffects(
             post: $post,
             moderator: $gm,
             previousStatus: 'pending',

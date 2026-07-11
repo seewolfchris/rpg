@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Enums\CampaignMembershipRole;
 use App\Domain\Post\PostMentionNotificationService;
+use App\Enums\CampaignMembershipRole;
 use App\Jobs\Post\RetryPostMentionNotificationsJob;
 use App\Models\Campaign;
 use App\Models\CampaignMembership;
@@ -32,7 +32,7 @@ class PostUpdateNotificationFailureTest extends TestCase
         $campaign = Campaign::factory()->create([
             'owner_id' => $gm->id,
             'status' => 'active',
-            'is_public' => true,
+            'is_public' => false,
         ]);
         $scene = Scene::factory()->create([
             'campaign_id' => $campaign->id,
@@ -52,7 +52,7 @@ class PostUpdateNotificationFailureTest extends TestCase
             'assigned_by' => $gm->id,
             'source' => 'test_fixture',
         ]);
-        $post = Post::factory()->create([
+        $post = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $player->id,
             'character_id' => $character->id,
@@ -60,9 +60,6 @@ class PostUpdateNotificationFailureTest extends TestCase
             'content_format' => 'markdown',
             'content' => 'Alter Inhalt',
             'meta' => ['ic_quote' => 'Alt'],
-            'moderation_status' => 'pending',
-            'approved_at' => null,
-            'approved_by' => null,
             'is_edited' => false,
             'edited_at' => null,
         ]);

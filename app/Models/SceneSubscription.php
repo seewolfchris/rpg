@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -74,9 +75,22 @@ class SceneSubscription extends Model
             return;
         }
 
-        $this->last_read_post_id = max(0, $latestPostId);
-        $this->last_read_at = Carbon::now();
-        $this->save();
+        $targetPostId = max(0, $latestPostId);
+
+        self::query()
+            ->whereKey((int) $this->id)
+            ->where(static function (Builder $query) use ($targetPostId): void {
+                $query
+                    ->whereNull('last_read_post_id')
+                    ->orWhere('last_read_post_id', '<', $targetPostId);
+            })
+            ->update([
+                'last_read_post_id' => $targetPostId,
+                'last_read_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+        $this->refresh();
     }
 
     public function markUnread(): void

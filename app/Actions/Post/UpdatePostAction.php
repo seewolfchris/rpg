@@ -89,8 +89,7 @@ final class UpdatePostAction
         Post $post,
         User $editor,
         PostUpdateMutationInput $mutation,
-    ): PostUpdateTransactionResult
-    {
+    ): PostUpdateTransactionResult {
         $lockedPost = $this->lockAndVerifyContext($post);
         $lockedPost->loadMissing('scene.campaign');
 
@@ -108,6 +107,12 @@ final class UpdatePostAction
 
         $this->runInTransactionEffectsPhase($lockedPost, $editor, $hasContentChange);
         $this->persistPostMutationPhase($lockedPost, $mutation, $normalizedMeta, $hasContentChange, $moderationContext);
+        $this->postModerationService->synchronizePersistentState(
+            post: $lockedPost,
+            moderator: $moderationContext->isModerator ? $editor : null,
+            previousStatus: $moderationContext->previousStatus,
+            moderationNote: $moderationContext->moderationNote,
+        );
 
         return new PostUpdateTransactionResult($lockedPost, $moderationContext, $hasContentChange);
     }
@@ -123,14 +128,38 @@ final class UpdatePostAction
 
     private function runAfterCommitEffectsPhase(PostUpdateTransactionResult $result, User $editor): void
     {
-        $this->postModerationService->synchronize(
+        $this->postModerationService->dispatchAfterCommitEffects(
             post: $result->post,
             moderator: $result->moderationContext->isModerator ? $editor : null,
             previousStatus: $result->moderationContext->previousStatus,
             moderationNote: $result->moderationContext->moderationNote,
         );
 
-        if ($result->hasContentChange) {
+        $isApproved = (string) $result->post->moderation_status === 'approved';
+        $wasPublished = $result->moderationContext->previousStatus !== 'approved'
+            && $isApproved;
+
+        if ($wasPublished) {
+            $result->post->loadMissing('user');
+            $author = $result->post->user;
+
+            if ($author instanceof User) {
+                $this->postNotificationOrchestrator->notifySceneParticipantsWithRetry(
+                    $result->post,
+                    $author,
+                    'update_post_approved',
+                );
+                $this->postNotificationOrchestrator->notifyMentionsWithRetry(
+                    $result->post,
+                    $author,
+                    'update_post_approved',
+                );
+            }
+
+            return;
+        }
+
+        if ($isApproved && $result->hasContentChange) {
             $this->postNotificationOrchestrator->notifyMentionsWithRetry($result->post, $editor, 'update_post');
         }
     }
@@ -193,8 +222,7 @@ final class UpdatePostAction
         Post $post,
         User $editor,
         PostUpdateMutationInput $mutation,
-    ): PostUpdateModerationContext
-    {
+    ): PostUpdateModerationContext {
         $isModerator = $editor->can('moderate', $post);
         $requiresApproval = $campaign->requiresPostModeration()
             && ! $campaign->userCanPostWithoutModeration($editor)
@@ -214,6 +242,9 @@ final class UpdatePostAction
             if ($moderationStatus === 'approved') {
                 $approvedAt = Carbon::now();
                 $approvedBy = (int) $editor->id;
+            } else {
+                $approvedAt = null;
+                $approvedBy = null;
             }
         }
 

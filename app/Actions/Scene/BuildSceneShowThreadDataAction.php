@@ -28,12 +28,12 @@ class BuildSceneShowThreadDataAction
      */
     public function execute(Scene $scene, User $user): array
     {
-        $posts = $this->sceneThreadPostQuery->paginate($scene);
+        $posts = $this->sceneThreadPostQuery->paginate($scene, $user);
         $viewableCharacterIds = $this->resolveViewableCharacterIds($posts, $user);
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, Post> $pinnedPosts */
-        $pinnedPosts = Post::query()
-            ->where('scene_id', $scene->id)
+        $pinnedPosts = $this->sceneThreadPostQuery
+            ->visibleQuery($scene, $user)
             ->where('is_pinned', true)
             ->with(['user', 'character', 'pinnedBy'])
             ->orderByDesc('pinned_at')

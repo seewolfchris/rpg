@@ -22,7 +22,7 @@ class BuildSceneThreadPageDataAction
 
     public function execute(Scene $scene, Campaign $campaign, User $user): SceneThreadPageData
     {
-        $posts = $this->sceneThreadPostQuery->paginate($scene);
+        $posts = $this->sceneThreadPostQuery->paginate($scene, $user);
         $viewableCharacterIds = $this->resolveViewableCharacterIds($posts, $user);
         $threadReadState = $this->sceneThreadReadStateService->resolveForThreadRender(
             scene: $scene,

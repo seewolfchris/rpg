@@ -20,7 +20,7 @@ class SceneSubscriptionCharacterizationTest extends TestCase
     public function test_authorized_campaign_member_can_subscribe_and_unsubscribe_scene(): void
     {
         [$campaign, $scene, $owner, $member] = $this->seedPrivateCampaignSceneContext();
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
         ]);
@@ -50,11 +50,11 @@ class SceneSubscriptionCharacterizationTest extends TestCase
     {
         [$campaign, $scene, $owner, $member] = $this->seedPrivateCampaignSceneContext();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
         ]);
-        $latestPost = Post::factory()->create([
+        $latestPost = Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
         ]);
@@ -119,7 +119,7 @@ class SceneSubscriptionCharacterizationTest extends TestCase
         [$campaign, $scene, $owner, $member] = $this->seedPrivateCampaignSceneContext();
         $sceneUrl = route('campaigns.scenes.show', $this->routeParams($campaign, $scene));
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
         ]);
@@ -154,7 +154,7 @@ class SceneSubscriptionCharacterizationTest extends TestCase
     {
         [$campaign, $scene, $owner, $member] = $this->seedPrivateCampaignSceneContext();
 
-        Post::factory()->create([
+        Post::factory()->approved()->create([
             'scene_id' => $scene->id,
             'user_id' => $owner->id,
         ]);

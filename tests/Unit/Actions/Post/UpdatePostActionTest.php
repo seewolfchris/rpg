@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 class UpdatePostActionTest extends TestCase
@@ -28,7 +29,7 @@ class UpdatePostActionTest extends TestCase
 
         $moderationService = $this->createMock(PostModerationService::class);
         $moderationService->expects($this->once())
-            ->method('synchronize')
+            ->method('synchronizePersistentState')
             ->with(
                 $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
                 null,
@@ -37,14 +38,10 @@ class UpdatePostActionTest extends TestCase
             );
 
         $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
-        $notificationOrchestrator->expects($this->once())
-            ->method('notifyMentionsWithRetry')
-            ->with(
-                $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
-                $this->callback(static fn (User $author): bool => $author->is($player)),
-                'update_post',
-            )
-            ->willReturn(0);
+        $notificationOrchestrator->expects($this->never())
+            ->method('notifyMentionsWithRetry');
+        $notificationOrchestrator->expects($this->never())
+            ->method('notifySceneParticipantsWithRetry');
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
@@ -89,10 +86,12 @@ class UpdatePostActionTest extends TestCase
         ]);
 
         $moderationService = $this->createMock(PostModerationService::class);
-        $moderationService->expects($this->never())->method('synchronize');
+        $moderationService->expects($this->never())->method('synchronizePersistentState');
+        $moderationService->expects($this->never())->method('dispatchAfterCommitEffects');
 
         $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
         $notificationOrchestrator->expects($this->never())->method('notifyMentionsWithRetry');
+        $notificationOrchestrator->expects($this->never())->method('notifySceneParticipantsWithRetry');
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
@@ -127,7 +126,7 @@ class UpdatePostActionTest extends TestCase
 
         $moderationService = $this->createMock(PostModerationService::class);
         $moderationService->expects($this->once())
-            ->method('synchronize')
+            ->method('synchronizePersistentState')
             ->with(
                 $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
                 $this->callback(static fn (User $moderator): bool => $moderator->is($gm)),
@@ -136,7 +135,22 @@ class UpdatePostActionTest extends TestCase
             );
 
         $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
-        $notificationOrchestrator->expects($this->never())->method('notifyMentionsWithRetry');
+        $notificationOrchestrator->expects($this->once())
+            ->method('notifySceneParticipantsWithRetry')
+            ->with(
+                $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
+                $this->callback(static fn (User $author): bool => $author->is($post->user)),
+                'update_post_approved',
+            )
+            ->willReturn(['in_app_recipients' => 0, 'webpush_recipients' => 0]);
+        $notificationOrchestrator->expects($this->once())
+            ->method('notifyMentionsWithRetry')
+            ->with(
+                $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
+                $this->callback(static fn (User $author): bool => $author->is($post->user)),
+                'update_post_approved',
+            )
+            ->willReturn(0);
 
         $action = new UpdatePostAction(
             app(DatabaseManager::class),
@@ -172,7 +186,7 @@ class UpdatePostActionTest extends TestCase
 
         $moderationService = $this->createMock(PostModerationService::class);
         $moderationService->expects($this->once())
-            ->method('synchronize')
+            ->method('synchronizePersistentState')
             ->with(
                 $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
                 $this->callback(static fn (User $moderator): bool => $moderator->is($gm)),
@@ -182,11 +196,14 @@ class UpdatePostActionTest extends TestCase
 
         $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
         $notificationOrchestrator->expects($this->once())
+            ->method('notifySceneParticipantsWithRetry')
+            ->willReturn(['in_app_recipients' => 0, 'webpush_recipients' => 0]);
+        $notificationOrchestrator->expects($this->once())
             ->method('notifyMentionsWithRetry')
             ->with(
                 $this->callback(static fn (Post $updatedPost): bool => $updatedPost->is($post)),
-                $this->callback(static fn (User $editor): bool => $editor->is($gm)),
-                'update_post',
+                $this->callback(static fn (User $author): bool => $author->is($post->user)),
+                'update_post_approved',
             )
             ->willReturn(0);
 
@@ -222,6 +239,49 @@ class UpdatePostActionTest extends TestCase
             'character_id' => $originalCharacterId,
             'content' => 'Alter Inhalt',
         ]);
+    }
+
+    public function test_it_rolls_back_post_and_revision_when_moderation_synchronization_fails(): void
+    {
+        [, $player, $post] = $this->seedPostContext();
+
+        $moderationService = $this->createMock(PostModerationService::class);
+        $moderationService->expects($this->once())
+            ->method('synchronizePersistentState')
+            ->willThrowException(new RuntimeException('forced synchronization failure'));
+        $moderationService->expects($this->never())->method('dispatchAfterCommitEffects');
+
+        $notificationOrchestrator = $this->createMock(PostNotificationOrchestrator::class);
+        $notificationOrchestrator->expects($this->never())->method('notifyMentionsWithRetry');
+        $notificationOrchestrator->expects($this->never())->method('notifySceneParticipantsWithRetry');
+
+        $action = new UpdatePostAction(
+            app(DatabaseManager::class),
+            app(PostImmersiveImageService::class),
+            $moderationService,
+            $notificationOrchestrator,
+        );
+
+        try {
+            $action->execute($post, $player, [
+                'post_type' => 'ic',
+                'character_id' => (int) $post->character_id,
+                'content_format' => 'markdown',
+                'content' => 'Dieser Inhalt darf nicht committen.',
+                'ic_quote' => 'Rollback',
+            ]);
+
+            $this->fail('Expected moderation synchronization failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced synchronization failure', $exception->getMessage());
+        }
+
+        $post->refresh();
+
+        $this->assertSame('Alter Inhalt', (string) $post->content);
+        $this->assertSame('pending', (string) $post->moderation_status);
+        $this->assertFalse((bool) $post->is_edited);
+        $this->assertDatabaseCount('post_revisions', 0);
     }
 
     /**

@@ -26,7 +26,8 @@ class PostMentionNotificationService
      */
     public function notifyMentions(Post $post, User $author): int
     {
-        if (! (bool) config('features.wave4.mentions', false)) {
+        if ((string) $post->moderation_status !== 'approved'
+            || ! (bool) config('features.wave4.mentions', false)) {
             return 0;
         }
 
