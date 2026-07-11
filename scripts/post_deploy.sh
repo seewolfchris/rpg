@@ -44,6 +44,37 @@ is_empty_or_falsy_env() {
   is_falsy_env "$value"
 }
 
+app_env="$(read_env_var_from_dotenv "APP_ENV")"
+normalized_app_env="$(printf '%s' "${app_env:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [[ "$normalized_app_env" != "production" && "$normalized_app_env" != "prod" ]]; then
+  echo "ERROR: APP_ENV=$app_env ist fuer dieses Produktions-Deploy nicht zulaessig."
+  echo "Setze APP_ENV=production (oder prod)."
+  exit 1
+fi
+
+app_debug="$(read_env_var_from_dotenv "APP_DEBUG")"
+if ! is_falsy_env "$app_debug"; then
+  echo "ERROR: APP_DEBUG fehlt oder ist fuer ein Produktions-Deploy aktiviert."
+  echo "Setze APP_DEBUG=false."
+  exit 1
+fi
+
+app_url="$(read_env_var_from_dotenv "APP_URL")"
+normalized_app_url="$(printf '%s' "${app_url:-}" | xargs)"
+if [[ ! "$normalized_app_url" =~ ^https://[^/[:space:]]+(/[^[:space:]]*)?$ ]]; then
+  echo "ERROR: APP_URL fehlt, ist ungueltig oder verwendet kein HTTPS."
+  echo "Setze APP_URL auf die kanonische HTTPS-URL der Produktion."
+  exit 1
+fi
+
+webpush_endpoint_allowed_hosts="$(read_env_var_from_dotenv "WEBPUSH_ENDPOINT_ALLOWED_HOSTS")"
+normalized_webpush_endpoint_allowed_hosts="$(printf '%s' "${webpush_endpoint_allowed_hosts:-}" | tr -d '[:space:],')"
+if [[ -z "$normalized_webpush_endpoint_allowed_hosts" ]]; then
+  echo "ERROR: WEBPUSH_ENDPOINT_ALLOWED_HOSTS fehlt oder enthaelt keine Hosts."
+  echo "Setze eine explizite Allowlist der verwendeten Push-Dienste."
+  exit 1
+fi
+
 PHP_BIN="${PHP_BIN:-php}"
 
 if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'; then
@@ -138,29 +169,25 @@ if is_empty_or_falsy_env "$queue_after_commit"; then
   exit 1
 fi
 
-app_env="$(read_env_var_from_dotenv "APP_ENV")"
-normalized_app_env="$(printf '%s' "${app_env:-}" | tr '[:upper:]' '[:lower:]' | xargs)"
-if [[ "$normalized_app_env" == "production" || "$normalized_app_env" == "prod" ]]; then
-  session_secure_cookie="$(read_env_var_from_dotenv "SESSION_SECURE_COOKIE")"
-  if is_empty_or_falsy_env "$session_secure_cookie"; then
-    echo "ERROR: SESSION_SECURE_COOKIE fehlt, ist leer oder in Produktion deaktiviert."
-    echo "Setze SESSION_SECURE_COOKIE=true (oder entferne den Key fuer sicheren Fallback)."
-    exit 1
-  fi
+session_secure_cookie="$(read_env_var_from_dotenv "SESSION_SECURE_COOKIE")"
+if is_empty_or_falsy_env "$session_secure_cookie"; then
+  echo "ERROR: SESSION_SECURE_COOKIE fehlt, ist leer oder in Produktion deaktiviert."
+  echo "Setze SESSION_SECURE_COOKIE=true (oder entferne den Key fuer sicheren Fallback)."
+  exit 1
+fi
 
-  trusted_proxies="$(read_env_var_from_dotenv "TRUSTED_PROXIES")"
-  if [[ -z "$trusted_proxies" ]]; then
-    echo "ERROR: TRUSTED_PROXIES fehlt in Produktion."
-    echo "Setze TRUSTED_PROXIES auf Proxy-IP(s)/CIDR (oder '*' nur bei voll vertrauenswuerdiger Proxy-Kette)."
-    exit 1
-  fi
+trusted_proxies="$(read_env_var_from_dotenv "TRUSTED_PROXIES")"
+if [[ -z "$trusted_proxies" ]]; then
+  echo "ERROR: TRUSTED_PROXIES fehlt in Produktion."
+  echo "Setze TRUSTED_PROXIES auf Proxy-IP(s)/CIDR (oder '*' nur bei voll vertrauenswuerdiger Proxy-Kette)."
+  exit 1
+fi
 
-  hsts_max_age="$(read_env_var_from_dotenv "SECURITY_HSTS_MAX_AGE")"
-  if [[ -n "$hsts_max_age" && "$hsts_max_age" =~ ^[0-9]+$ && "$hsts_max_age" -le 0 ]]; then
-    echo "ERROR: SECURITY_HSTS_MAX_AGE ist in Produktion <= 0."
-    echo "Setze SECURITY_HSTS_MAX_AGE auf einen positiven Wert (z. B. 31536000)."
-    exit 1
-  fi
+hsts_max_age="$(read_env_var_from_dotenv "SECURITY_HSTS_MAX_AGE")"
+if [[ ! "$hsts_max_age" =~ ^[0-9]+$ || "$hsts_max_age" -le 0 ]]; then
+  echo "ERROR: SECURITY_HSTS_MAX_AGE fehlt, ist ungueltig oder in Produktion <= 0."
+  echo "Setze SECURITY_HSTS_MAX_AGE auf einen positiven Wert (z. B. 31536000)."
+  exit 1
 fi
 
 echo "[7/10] Datenbank migrieren..."

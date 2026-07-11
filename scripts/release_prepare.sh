@@ -192,8 +192,7 @@ $replaceRegex('config/app.php', "/'version'\\s*=>\\s*env\\('APP_VERSION',\\s*'[^
 $replaceRegex('resources/views/layouts/app.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'app layout fallback version');
 $replaceRegex('resources/views/partials/version-footer.blade.php', "/config\\('app\\.version',\\s*'[^']*'\\)/", "config('app.version', '".$version."')", 'footer fallback version');
 $replaceRegex('docs/STATUS.md', '/^- Statusdatum:\s+\*\*[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*$/m', '- Statusdatum: **'.$releaseDate.'**', 'status date');
-$replaceRegex('docs/STATUS.md', '/^- Versionslinie:\s+\*\*`[^`]+`\*\*$/m', '- Versionslinie: **`'.$version.'`**', 'status version line');
-$replaceRegex('docs/STATUS.md', '/^- Letzter Release-Eintrag:\s+\*\*`[^`]+`\s+am\s+[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*\s+\(Quelle:\s+`CHANGELOG\.md`\)$/m', '- Letzter Release-Eintrag: **`'.$version.'` am '.$releaseDate.'** (Quelle: `CHANGELOG.md`)', 'status release entry');
+$replaceRegex('docs/STATUS.md', '/^- Letztes veröffentlichtes Release:\s+\*\*`[^`]+`\s+am\s+[0-9]{4}-[0-9]{2}-[0-9]{2}\*\*\s+\(Quelle:\s+`CHANGELOG\.md`\)$/mu', '- Letztes veröffentlichtes Release: **`'.$version.'` am '.$releaseDate.'** (Quelle: `CHANGELOG.md`)', 'latest published release');
 
 if ($updateDotenv) {
     $upsertEnvKey('.env', 'APP_VERSION', $version);

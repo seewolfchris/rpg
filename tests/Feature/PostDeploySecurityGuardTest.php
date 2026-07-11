@@ -10,16 +10,9 @@ class PostDeploySecurityGuardTest extends TestCase
 {
     public function test_deploy_guard_fails_when_queue_after_commit_is_empty(): void
     {
-        $result = $this->runPostDeployScript([
-            'APP_ENV=production',
-            'APP_KEY=base64:guard-test-key',
-            'QUEUE_CONNECTION=redis',
-            'CACHE_STORE=redis',
-            'QUEUE_AFTER_COMMIT=',
-            'SESSION_SECURE_COOKIE=true',
-            'TRUSTED_PROXIES=127.0.0.1',
-            'SECURITY_HSTS_MAX_AGE=31536000',
-        ]);
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'QUEUE_AFTER_COMMIT' => '',
+        ]));
 
         $this->assertSame(1, $result['exit_code']);
         $this->assertStringContainsString(
@@ -30,16 +23,9 @@ class PostDeploySecurityGuardTest extends TestCase
 
     public function test_deploy_guard_fails_when_session_secure_cookie_is_empty_in_production(): void
     {
-        $result = $this->runPostDeployScript([
-            'APP_ENV=production',
-            'APP_KEY=base64:guard-test-key',
-            'QUEUE_CONNECTION=redis',
-            'CACHE_STORE=redis',
-            'QUEUE_AFTER_COMMIT=true',
-            'SESSION_SECURE_COOKIE=',
-            'TRUSTED_PROXIES=127.0.0.1',
-            'SECURITY_HSTS_MAX_AGE=31536000',
-        ]);
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'SESSION_SECURE_COOKIE' => '',
+        ]));
 
         $this->assertSame(1, $result['exit_code']);
         $this->assertStringContainsString(
@@ -51,15 +37,10 @@ class PostDeploySecurityGuardTest extends TestCase
     #[DataProvider('productionEnvironmentProvider')]
     public function test_deploy_guard_requires_trusted_proxies_for_prod_and_production(string $appEnv): void
     {
-        $result = $this->runPostDeployScript([
-            "APP_ENV={$appEnv}",
-            'APP_KEY=base64:guard-test-key',
-            'QUEUE_CONNECTION=redis',
-            'CACHE_STORE=redis',
-            'QUEUE_AFTER_COMMIT=true',
-            'SESSION_SECURE_COOKIE=true',
-            'SECURITY_HSTS_MAX_AGE=31536000',
-        ]);
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'APP_ENV' => $appEnv,
+            'TRUSTED_PROXIES' => '',
+        ]));
 
         $this->assertSame(1, $result['exit_code']);
         $this->assertStringContainsString(
@@ -81,16 +62,9 @@ class PostDeploySecurityGuardTest extends TestCase
 
     public function test_deploy_guard_requires_redis_queue_connection(): void
     {
-        $result = $this->runPostDeployScript([
-            'APP_ENV=production',
-            'APP_KEY=base64:guard-test-key',
-            'QUEUE_CONNECTION=database',
-            'CACHE_STORE=redis',
-            'QUEUE_AFTER_COMMIT=true',
-            'SESSION_SECURE_COOKIE=true',
-            'TRUSTED_PROXIES=127.0.0.1',
-            'SECURITY_HSTS_MAX_AGE=31536000',
-        ]);
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'QUEUE_CONNECTION' => 'database',
+        ]));
 
         $this->assertSame(1, $result['exit_code']);
         $this->assertStringContainsString(
@@ -101,22 +75,90 @@ class PostDeploySecurityGuardTest extends TestCase
 
     public function test_deploy_guard_requires_redis_cache_store(): void
     {
-        $result = $this->runPostDeployScript([
-            'APP_ENV=production',
-            'APP_KEY=base64:guard-test-key',
-            'QUEUE_CONNECTION=redis',
-            'CACHE_STORE=database',
-            'QUEUE_AFTER_COMMIT=true',
-            'SESSION_SECURE_COOKIE=true',
-            'TRUSTED_PROXIES=127.0.0.1',
-            'SECURITY_HSTS_MAX_AGE=31536000',
-        ]);
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'CACHE_STORE' => 'database',
+        ]));
 
         $this->assertSame(1, $result['exit_code']);
         $this->assertStringContainsString(
             'CACHE_STORE=database ist fuer Produktion nicht zulaessig.',
             $result['output']
         );
+    }
+
+    public function test_deploy_guard_rejects_non_production_environment(): void
+    {
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'APP_ENV' => 'local',
+        ]));
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'APP_ENV=local ist fuer dieses Produktions-Deploy nicht zulaessig.',
+            $result['output']
+        );
+    }
+
+    public function test_deploy_guard_requires_disabled_app_debug(): void
+    {
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'APP_DEBUG' => 'true',
+        ]));
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'APP_DEBUG fehlt oder ist fuer ein Produktions-Deploy aktiviert.',
+            $result['output']
+        );
+    }
+
+    public function test_deploy_guard_requires_https_app_url(): void
+    {
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'APP_URL' => 'http://rpg.c76.org',
+        ]));
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'APP_URL fehlt, ist ungueltig oder verwendet kein HTTPS.',
+            $result['output']
+        );
+    }
+
+    public function test_deploy_guard_requires_non_empty_webpush_endpoint_allowlist(): void
+    {
+        $result = $this->runPostDeployScript($this->validProductionEnvironment([
+            'WEBPUSH_ENDPOINT_ALLOWED_HOSTS' => ' , , ',
+        ]));
+
+        $this->assertSame(1, $result['exit_code']);
+        $this->assertStringContainsString(
+            'WEBPUSH_ENDPOINT_ALLOWED_HOSTS fehlt oder enthaelt keine Hosts.',
+            $result['output']
+        );
+    }
+
+    public function test_deploy_guard_requires_positive_numeric_hsts_max_age(): void
+    {
+        foreach (['', 'disabled', '0'] as $invalidMaxAge) {
+            $result = $this->runPostDeployScript($this->validProductionEnvironment([
+                'SECURITY_HSTS_MAX_AGE' => $invalidMaxAge,
+            ]));
+
+            $this->assertSame(1, $result['exit_code']);
+            $this->assertStringContainsString(
+                'SECURITY_HSTS_MAX_AGE fehlt, ist ungueltig oder in Produktion <= 0.',
+                $result['output']
+            );
+        }
+    }
+
+    public function test_deploy_guard_accepts_complete_production_configuration(): void
+    {
+        $result = $this->runPostDeployScript($this->validProductionEnvironment());
+
+        $this->assertSame(0, $result['exit_code'], $result['output']);
+        $this->assertStringContainsString('Deploy abgeschlossen.', $result['output']);
     }
 
     /**
@@ -146,6 +188,35 @@ class PostDeploySecurityGuardTest extends TestCase
         } finally {
             $this->deleteDirectoryRecursive($projectRoot);
         }
+    }
+
+    /**
+     * @param  array<string, string>  $overrides
+     * @return list<string>
+     */
+    private function validProductionEnvironment(array $overrides = []): array
+    {
+        $variables = array_replace([
+            'APP_ENV' => 'production',
+            'APP_DEBUG' => 'false',
+            'APP_URL' => 'https://rpg.c76.org',
+            'APP_KEY' => 'base64:guard-test-key',
+            'QUEUE_CONNECTION' => 'redis',
+            'CACHE_STORE' => 'redis',
+            'QUEUE_AFTER_COMMIT' => 'true',
+            'SESSION_SECURE_COOKIE' => 'true',
+            'TRUSTED_PROXIES' => '127.0.0.1',
+            'SECURITY_HSTS_MAX_AGE' => '31536000',
+            'WEBPUSH_ENDPOINT_ALLOWED_HOSTS' => 'fcm.googleapis.com,*.push.services.mozilla.com',
+        ], $overrides);
+
+        $lines = [];
+
+        foreach ($variables as $key => $value) {
+            $lines[] = $key.'='.$value;
+        }
+
+        return $lines;
     }
 
     /**
@@ -243,6 +314,7 @@ BASH;
 
             if (is_dir($path)) {
                 $this->deleteDirectoryRecursive($path);
+
                 continue;
             }
 
