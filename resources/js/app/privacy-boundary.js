@@ -7,6 +7,44 @@ const AUTH_USER_BOUNDARY_PENDING_STORAGE_KEY = 'c76:auth-user-boundary-pending';
 const PRIVATE_PAGE_CACHE_PREFIX = 'chroniken-pages-';
 const PRIVATE_CONTENT_CACHE_PREFIX = 'chroniken-content-';
 const OFFLINE_QUEUE_DB_NAME = 'chroniken-pbp';
+const PRIVATE_DATA_BOUNDARY_FAILURE_SELECTOR = '[data-private-data-boundary-failure]';
+
+export function renderPrivateDataBoundaryFailure() {
+    const mainContent = document.querySelector('#app-main');
+
+    if (!(mainContent instanceof HTMLElement)) {
+        return null;
+    }
+
+    const existingFailure = mainContent.querySelector(PRIVATE_DATA_BOUNDARY_FAILURE_SELECTOR);
+
+    if (existingFailure instanceof HTMLElement) {
+        existingFailure.focus();
+
+        return existingFailure;
+    }
+
+    const failure = document.createElement('section');
+    failure.dataset.privateDataBoundaryFailure = 'true';
+    failure.className = 'mb-6 rounded-xl border border-red-500/70 bg-red-950/35 p-4 text-red-100';
+    failure.setAttribute('role', 'alert');
+    failure.setAttribute('aria-live', 'assertive');
+    failure.setAttribute('tabindex', '-1');
+
+    const heading = document.createElement('h2');
+    heading.className = 'font-heading text-lg';
+    heading.textContent = 'Offline-Schutz konnte nicht aktiviert werden';
+
+    const explanation = document.createElement('p');
+    explanation.className = 'mt-2 text-sm';
+    explanation.textContent = 'Private Offline-Daten konnten nicht sicher bereinigt werden. Offline-Funktionen bleiben deaktiviert. Lösche die Website-Daten in deinem Browser und lade die Seite neu.';
+
+    failure.append(heading, explanation);
+    mainContent.prepend(failure);
+    failure.focus();
+
+    return failure;
+}
 
 export async function enforcePrivateDataBoundaryOnAuthChange({ postMessageToActiveServiceWorker } = {}) {
     const currentBoundary = resolveCurrentAuthBoundary();

@@ -9,7 +9,11 @@ import { setupInlineImageControls } from './app/inline-image-controls';
 import { setupAtmosphericParallax } from './app/parallax';
 import { setupMobileSheetNavigation } from './app/navigation/mobile-sheet';
 import { setupPostEditorEnhancements } from './app/post-editor-enhancements';
-import { enforcePrivateDataBoundaryOnAuthChange } from './app/privacy-boundary';
+import { registerPostFormStateComponent } from './app/post-form-state';
+import {
+    enforcePrivateDataBoundaryOnAuthChange,
+    renderPrivateDataBoundaryFailure,
+} from './app/privacy-boundary';
 import { setupPwaInstallPrompt } from './app/pwa-install';
 import { createServiceWorkerRuntime } from './app/service-worker-runtime';
 import {
@@ -53,6 +57,7 @@ window.characterSheetForm = characterSheetForm;
 
 if (window.Alpine) {
     registerCharacterSheetComponent(window.Alpine);
+    registerPostFormStateComponent(window.Alpine);
     window.Alpine.start();
 }
 
@@ -78,7 +83,7 @@ const {
     resolveOfflineQueueEnabled: resolveOfflineQueueEnabledFromDocument,
 });
 
-document.addEventListener('htmx:afterSwap', (event) => {
+const handleHtmxAfterSwap = (event) => {
     const target = event.detail?.target;
 
     if (window.Alpine && target instanceof HTMLElement) {
@@ -95,25 +100,34 @@ document.addEventListener('htmx:afterSwap', (event) => {
     setupOfflineQueuePreferenceToggle();
     void renderDeadLetterPanel();
     void renderOfflineQueueStatusPanel();
-});
+};
 
 const bootApplication = async () => {
     setupFormSubmitConfirmDialogs();
-    persistActiveWorldSlugContext();
-    setupSceneThreadReadingMode();
-    setupAtmosphericParallax();
     setupMobileSheetNavigation();
     setupPostEditorEnhancements();
     setupInlineImageControls();
+
+    const privateDataBoundaryReady = await enforcePrivateDataBoundaryOnAuthChange({
+        postMessageToActiveServiceWorker: serviceWorkerRuntime.postMessageToActiveServiceWorker,
+    });
+
+    if (!privateDataBoundaryReady) {
+        renderPrivateDataBoundaryFailure();
+
+        return;
+    }
+
+    document.addEventListener('htmx:afterSwap', handleHtmxAfterSwap);
+    persistActiveWorldSlugContext();
+    setupSceneThreadReadingMode();
+    setupAtmosphericParallax();
     setupPwaInstallPrompt();
     setupOfflinePostQueue();
     setupOnlineSyncTrigger();
     setupServiceWorkerMessageHandling();
     setupOfflineQueuePreferenceToggle();
     serviceWorkerRuntime.setupServiceWorkerLogoutCleanup();
-    await enforcePrivateDataBoundaryOnAuthChange({
-        postMessageToActiveServiceWorker: serviceWorkerRuntime.postMessageToActiveServiceWorker,
-    });
     await renderDeadLetterPanel();
     await renderOfflineQueueStatusPanel();
 

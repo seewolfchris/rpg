@@ -173,13 +173,16 @@
                     @endif
                 </div>
 
-                <form method="POST" action="{{ route('admin.users.destroy', $user) }}">
+                <form
+                    method="POST"
+                    action="{{ route('admin.users.destroy', $user) }}"
+                    data-confirm="Benutzer endgültig entfernen? Erhaltenswerte Spielinhalte werden auf {{ \App\Models\User::DELETED_USER_SYSTEM_NAME }} übertragen."
+                >
                     @csrf
                     @method('DELETE')
                     <button
                         type="submit"
                         class="rounded-md border border-red-500/80 bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/25"
-                        onclick="return confirm('Benutzer endgültig entfernen? Erhaltenswerte Spielinhalte werden auf {{ \App\Models\User::DELETED_USER_SYSTEM_NAME }} übertragen.')"
                     >
                         Benutzer endgültig entfernen
                     </button>

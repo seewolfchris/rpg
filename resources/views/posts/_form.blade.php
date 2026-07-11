@@ -67,36 +67,12 @@
 
 <div
     class="space-y-5"
-    x-data="{
-        postType: '{{ $currentType }}',
-        postMode: '{{ $currentPostMode }}',
-        contentFormat: '{{ $currentFormat }}',
-        probeEnabled: {{ $currentProbeEnabled ? 'true' : 'false' }},
-        isGmMode() {
-            return this.postType === 'ic' && this.postMode === 'gm';
-        },
-        syncPostModeState() {
-            if (this.postType !== 'ic') {
-                this.postMode = 'character';
-            }
-
-            if (this.isGmMode() && this.$refs.characterIdField) {
-                this.$refs.characterIdField.value = '';
-            }
-        },
-        formatHint() {
-            if (this.contentFormat === 'markdown') {
-                return 'Markdown aktiv: Vorschau und Format-Hotkeys sind freigeschaltet.';
-            }
-
-            if (this.contentFormat === 'bbcode') {
-                return 'BBCode aktiv: Vorschau ist deaktiviert, klassische Foren-Tags bleiben nutzbar.';
-            }
-
-            return 'Klartext aktiv: roher Text ohne Markdown/BBCode-Rendering.';
-        }
-    }"
-    x-init="$watch('postType', () => syncPostModeState()); $watch('postMode', () => syncPostModeState()); syncPostModeState()"
+    x-data="postFormState({{ json_encode([
+        'postType' => $currentType,
+        'postMode' => $currentPostMode,
+        'contentFormat' => $currentFormat,
+        'probeEnabled' => $currentProbeEnabled,
+    ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) }})"
 >
     <div class="grid gap-4 sm:grid-cols-3">
         <div>

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Character;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -12,6 +13,21 @@ use Tests\TestCase;
 class SecurityHeadersTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_blade_views_do_not_use_inline_event_handlers(): void
+    {
+        $violations = [];
+
+        foreach (File::allFiles(resource_path('views')) as $view) {
+            $contents = $view->getContents();
+
+            if (preg_match('/\son[a-z]+\s*=/i', $contents) === 1) {
+                $violations[] = $view->getRelativePathname();
+            }
+        }
+
+        $this->assertSame([], $violations, 'Inline event handlers violate the script-src CSP: '.implode(', ', $violations));
+    }
 
     public function test_home_response_contains_security_headers_and_hardened_csp(): void
     {

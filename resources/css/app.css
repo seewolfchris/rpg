@@ -1791,6 +1791,33 @@
         }
     }
 
+    @media (max-width: 639px) and (scripting: none) {
+        .app-mobile-nav-trigger,
+        .app-mobile-nav-backdrop {
+            display: none !important;
+        }
+
+        .app-nav {
+            position: static;
+            top: auto;
+            right: auto;
+            z-index: auto;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            overflow-y: visible;
+            border: 1px solid rgb(82 82 91 / 70%);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            box-shadow: none;
+            transform: none;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: none;
+        }
+    }
+
     @media (min-width: 640px) {
         .ui-action {
             min-height: 2.3rem;

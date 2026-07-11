@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { enforcePrivateDataBoundaryOnAuthChange } from '../../resources/js/app/privacy-boundary.js';
+import {
+    enforcePrivateDataBoundaryOnAuthChange,
+    renderPrivateDataBoundaryFailure,
+} from '../../resources/js/app/privacy-boundary.js';
 
 const BOUNDARY_KEY = 'c76:auth-user-boundary';
 const BOUNDARY_PENDING_KEY = 'c76:auth-user-boundary-pending';
@@ -38,6 +42,66 @@ test('auth boundary is finalized and pending state removed after successful clea
     assert.equal(cleanupCompleted, true);
     assert.equal(harness.localStorage.getItem(BOUNDARY_KEY), '17|session-final');
     assert.equal(harness.localStorage.getItem(BOUNDARY_PENDING_KEY), null);
+});
+
+test('application boot fails closed before offline queue and service worker setup', async () => {
+    const source = await readFile(new URL('../../resources/js/app.js', import.meta.url), 'utf8');
+    const bootSource = source.slice(source.indexOf('const bootApplication = async () =>'));
+    const boundaryIndex = bootSource.indexOf('await enforcePrivateDataBoundaryOnAuthChange');
+    const failureGuardIndex = bootSource.indexOf('if (!privateDataBoundaryReady)');
+    const failureMessageIndex = bootSource.indexOf('renderPrivateDataBoundaryFailure();');
+    const failureReturnIndex = bootSource.indexOf('return;', failureMessageIndex);
+
+    assert.ok(boundaryIndex >= 0, 'boot must enforce the private-data boundary');
+    assert.ok(failureGuardIndex > boundaryIndex, 'boot must check the boundary result');
+    assert.ok(failureMessageIndex > failureGuardIndex, 'failed cleanup must render an accessible warning');
+    assert.ok(failureReturnIndex > failureMessageIndex, 'failed cleanup must stop application boot');
+
+    for (const setupCall of [
+        "document.addEventListener('htmx:afterSwap'",
+        'setupOfflinePostQueue();',
+        'setupOnlineSyncTrigger();',
+        'setupServiceWorkerMessageHandling();',
+        'setupOfflineQueuePreferenceToggle();',
+        'serviceWorkerRuntime.setupServiceWorkerLogoutCleanup();',
+        'await serviceWorkerRuntime.registerServiceWorker();',
+    ]) {
+        const setupIndex = bootSource.indexOf(setupCall);
+
+        assert.ok(setupIndex > failureReturnIndex, `${setupCall} must only run after successful cleanup`);
+    }
+});
+
+test('boundary failure keeps non-persistent navigation and form controls available', async () => {
+    const source = await readFile(new URL('../../resources/js/app.js', import.meta.url), 'utf8');
+    const bootSource = source.slice(source.indexOf('const bootApplication = async () =>'));
+    const boundaryIndex = bootSource.indexOf('await enforcePrivateDataBoundaryOnAuthChange');
+
+    for (const safeSetupCall of [
+        'setupFormSubmitConfirmDialogs();',
+        'setupMobileSheetNavigation();',
+        'setupPostEditorEnhancements();',
+        'setupInlineImageControls();',
+    ]) {
+        const setupIndex = bootSource.indexOf(safeSetupCall);
+
+        assert.ok(setupIndex >= 0 && setupIndex < boundaryIndex, `${safeSetupCall} must remain available on boundary failure`);
+    }
+});
+
+test('boundary failure renders one focusable assertive alert', () => {
+    const harness = createFailureMessageHarness();
+
+    const firstFailure = renderPrivateDataBoundaryFailure();
+    const secondFailure = renderPrivateDataBoundaryFailure();
+
+    assert.equal(firstFailure, secondFailure);
+    assert.equal(harness.mainContent.children.length, 1);
+    assert.equal(firstFailure?.attributes.get('role'), 'alert');
+    assert.equal(firstFailure?.attributes.get('aria-live'), 'assertive');
+    assert.equal(firstFailure?.attributes.get('tabindex'), '-1');
+    assert.equal(firstFailure?.focused, true);
+    assert.match(firstFailure?.children[1]?.textContent || '', /Offline-Funktionen bleiben deaktiviert/);
 });
 
 function createBrowserHarness({
@@ -121,5 +185,55 @@ function createBrowserHarness({
 
     return {
         localStorage,
+    };
+}
+
+function createFailureMessageHarness() {
+    class FakeElement {
+        constructor(tagName) {
+            this.tagName = String(tagName).toUpperCase();
+            this.attributes = new Map();
+            this.children = [];
+            this.className = '';
+            this.dataset = {};
+            this.focused = false;
+            this.textContent = '';
+        }
+
+        append(...children) {
+            this.children.push(...children);
+        }
+
+        prepend(child) {
+            this.children.unshift(child);
+        }
+
+        focus() {
+            this.focused = true;
+        }
+
+        querySelector(selector) {
+            if (selector !== '[data-private-data-boundary-failure]') {
+                return null;
+            }
+
+            return this.children.find((child) => child.dataset.privateDataBoundaryFailure === 'true') || null;
+        }
+
+        setAttribute(name, value) {
+            this.attributes.set(name, String(value));
+        }
+    }
+
+    const mainContent = new FakeElement('main');
+
+    globalThis.HTMLElement = FakeElement;
+    globalThis.document = {
+        createElement: (tagName) => new FakeElement(tagName),
+        querySelector: (selector) => selector === '#app-main' ? mainContent : null,
+    };
+
+    return {
+        mainContent,
     };
 }

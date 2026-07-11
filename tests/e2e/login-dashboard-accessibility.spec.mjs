@@ -67,3 +67,41 @@ test('dashboard disclosures are keyboard operable and keep priority defaults', a
     await page.keyboard.press('Space');
     await expect(leaderboard).toHaveAttribute('open', '');
 });
+
+test('scene post form initializes with the Alpine CSP build', async ({ page }) => {
+    const cspParserErrors = [];
+    const captureCspParserError = (message) => {
+        if (/CSP Parser Error/i.test(String(message))) {
+            cspParserErrors.push(String(message));
+        }
+    };
+
+    page.on('console', (message) => captureCspParserError(message.text()));
+    page.on('pageerror', (error) => captureCspParserError(error.message));
+
+    await page.goto('/login');
+    await page.getByLabel('E-Mail').fill(GM_EMAIL);
+    await page.getByLabel('Passwort').fill(PASSWORD);
+    await page.getByLabel('Passwort').press('Enter');
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    await page.goto('/w/chroniken-der-asche/campaigns/1/scenes/1');
+
+    const postFormStateRoot = page.locator('[x-data^="postFormState"]');
+    const postType = page.getByLabel('Beitragstyp');
+    const postMode = page.getByLabel('IC-Modus');
+    const character = page.getByLabel(/Charakter/);
+
+    await expect(postFormStateRoot).toBeVisible();
+    await expect(postFormStateRoot.locator('[x-cloak]')).toHaveCount(0);
+    await expect(postMode).toBeVisible();
+
+    await postMode.selectOption('gm');
+    await expect(character).toBeDisabled();
+    await expect(page.getByText('Im Spielleitungsmodus wird kein Charakter')).toBeVisible();
+
+    await postType.selectOption('ooc');
+    await expect(postMode).toBeHidden();
+    await expect(character).toBeDisabled();
+    expect(cspParserErrors).toEqual([]);
+});
