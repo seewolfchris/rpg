@@ -225,7 +225,7 @@ class CampaignInvitationMembershipLifecycleCharacterizationTest extends TestCase
         ]);
     }
 
-    public function test_co_gm_can_delete_accepted_invitation_and_revoke_membership(): void
+    public function test_co_gm_cannot_delete_accepted_invitation_or_revoke_membership(): void
     {
         $owner = User::factory()->create();
         $coGm = User::factory()->create();
@@ -264,26 +264,69 @@ class CampaignInvitationMembershipLifecycleCharacterizationTest extends TestCase
                 'campaign' => $campaign,
                 'invitation' => $invitation,
             ]))
-            ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
-            ->assertSessionHas('status', 'Einladung entfernt.');
+            ->assertForbidden();
 
-        $this->assertDatabaseMissing('campaign_invitations', [
+        $this->assertDatabaseHas('campaign_invitations', [
             'id' => (int) $invitation->id,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
         ]);
-        $this->assertDatabaseMissing('campaign_memberships', [
+        $this->assertDatabaseHas('campaign_memberships', [
             'campaign_id' => (int) $campaign->id,
             'user_id' => (int) $invitee->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
         ]);
+        $this->assertDatabaseCount('campaign_role_events', 0);
+    }
 
-        $this->assertDatabaseHas('campaign_role_events', [
+    public function test_co_gm_cannot_change_role_through_accepted_invitation_upsert(): void
+    {
+        $owner = User::factory()->create();
+        $coGm = User::factory()->create();
+        $invitee = User::factory()->create();
+        $campaign = $this->createPrivateCampaign($owner);
+
+        CampaignMembership::factory()->create([
             'campaign_id' => (int) $campaign->id,
-            'actor_user_id' => (int) $coGm->id,
-            'target_user_id' => (int) $invitee->id,
-            'event_type' => CampaignRoleEvent::EVENT_MEMBERSHIP_REVOKED,
-            'old_role' => CampaignMembershipRole::PLAYER->value,
-            'new_role' => null,
-            'source' => 'invitation_delete_accepted',
+            'user_id' => (int) $coGm->id,
+            'role' => CampaignMembershipRole::GM->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
         ]);
+        CampaignMembership::factory()->create([
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $invitee->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+            'assigned_by' => (int) $owner->id,
+            'assigned_at' => now(),
+        ]);
+        $invitation = $this->createInvitation(
+            campaign: $campaign,
+            invitee: $invitee,
+            inviter: $owner,
+            status: CampaignInvitation::STATUS_ACCEPTED,
+            role: CampaignInvitation::ROLE_PLAYER,
+            acceptedAt: now()->subHour(),
+            respondedAt: now()->subHour(),
+        );
+
+        $this->actingAs($coGm)
+            ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                'email' => (string) $invitee->email,
+                'role' => CampaignInvitation::ROLE_CO_GM,
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('campaign_invitations', [
+            'id' => (int) $invitation->id,
+            'role' => CampaignInvitation::ROLE_PLAYER,
+            'status' => CampaignInvitation::STATUS_ACCEPTED,
+        ]);
+        $this->assertDatabaseHas('campaign_memberships', [
+            'campaign_id' => (int) $campaign->id,
+            'user_id' => (int) $invitee->id,
+            'role' => CampaignMembershipRole::PLAYER->value,
+        ]);
+        $this->assertDatabaseCount('campaign_role_events', 0);
     }
 
     public function test_owner_deleting_declined_invitation_keeps_existing_membership_row(): void

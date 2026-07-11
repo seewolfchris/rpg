@@ -61,7 +61,9 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
             ->assertOk()
             ->assertSeeText('Registrierte Spieler einladen')
-            ->assertSee('value="'.$candidate->id.'"', false);
+            ->assertSee('value="'.$candidate->id.'"', false)
+            ->assertDontSee('<option value="trusted_player"', false)
+            ->assertDontSee('<option value="co_gm"', false);
 
         $this->actingAs($actorPlayer)
             ->get(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]))
@@ -69,7 +71,7 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
             ->assertDontSeeText('Registrierte Spieler einladen');
     }
 
-    public function test_co_gm_can_invite_multiple_registered_users_with_single_role(): void
+    public function test_co_gm_can_invite_multiple_registered_users_as_players(): void
     {
         [$campaign, $owner, $coGm] = $this->seedCampaignContext();
         $candidateA = User::factory()->create(['email' => 'bulk-a@example.test']);
@@ -78,7 +80,7 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
         $this->actingAs($coGm)
             ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
                 'user_ids' => [(int) $candidateA->id, (int) $candidateB->id],
-                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+                'role' => CampaignInvitation::ROLE_PLAYER,
             ])
             ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
@@ -87,14 +89,14 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
             'user_id' => $candidateA->id,
             'invited_by' => $coGm->id,
             'status' => CampaignInvitation::STATUS_PENDING,
-            'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            'role' => CampaignInvitation::ROLE_PLAYER,
         ]);
         $this->assertDatabaseHas('campaign_invitations', [
             'campaign_id' => $campaign->id,
             'user_id' => $candidateB->id,
             'invited_by' => $coGm->id,
             'status' => CampaignInvitation::STATUS_PENDING,
-            'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+            'role' => CampaignInvitation::ROLE_PLAYER,
         ]);
 
         $this->assertSame(
@@ -105,6 +107,27 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
                 ->where('status', CampaignInvitation::STATUS_PENDING)
                 ->count()
         );
+    }
+
+    public function test_co_gm_cannot_assign_privileged_invitation_roles(): void
+    {
+        [$campaign, , $coGm] = $this->seedCampaignContext();
+
+        foreach ([CampaignInvitation::ROLE_TRUSTED_PLAYER, CampaignInvitation::ROLE_CO_GM] as $role) {
+            $candidate = User::factory()->create();
+
+            $this->actingAs($coGm)
+                ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
+                    'user_ids' => [(int) $candidate->id],
+                    'role' => $role,
+                ])
+                ->assertForbidden();
+
+            $this->assertDatabaseMissing('campaign_invitations', [
+                'campaign_id' => (int) $campaign->id,
+                'user_id' => (int) $candidate->id,
+            ]);
+        }
     }
 
     public function test_bulk_invitation_keeps_db_writes_when_notification_fails(): void
@@ -124,7 +147,7 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
         $this->actingAs($coGm)
             ->post(route('campaigns.invitations.store', ['world' => $campaign->world, 'campaign' => $campaign]), [
                 'user_ids' => [(int) $candidateA->id, (int) $candidateB->id],
-                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+                'role' => CampaignInvitation::ROLE_PLAYER,
             ])
             ->assertRedirect(route('campaigns.show', ['world' => $campaign->world, 'campaign' => $campaign]));
 
@@ -134,7 +157,7 @@ class CampaignInvitationRegisteredUsersTest extends TestCase
                 'user_id' => $candidate->id,
                 'invited_by' => $coGm->id,
                 'status' => CampaignInvitation::STATUS_PENDING,
-                'role' => CampaignInvitation::ROLE_TRUSTED_PLAYER,
+                'role' => CampaignInvitation::ROLE_PLAYER,
             ]);
         }
 

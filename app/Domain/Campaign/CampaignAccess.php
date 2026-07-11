@@ -32,6 +32,7 @@ class CampaignAccess
 
     /**
      * @template TModel of Model
+     *
      * @param  Builder<TModel>  $campaignQuery
      */
     public function applyVisibleCampaignConstraint(Builder $campaignQuery, User $user): void
@@ -138,6 +139,11 @@ class CampaignAccess
         }
 
         return $this->isOwnedBy($campaign, $user) || $this->isGm($campaign, $user);
+    }
+
+    public function canManageMembershipRoles(Campaign $campaign, User $user): bool
+    {
+        return $user->isAdmin() || $this->isOwnedBy($campaign, $user);
     }
 
     public function canModeratePosts(Campaign $campaign, User $user): bool

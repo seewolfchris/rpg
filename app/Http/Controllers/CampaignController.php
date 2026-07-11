@@ -152,7 +152,7 @@ class CampaignController extends Controller
         $pendingInvitations = collect();
         $registeredInviteCandidates = collect();
         $canManageInvitations = $campaign->canManageCampaign($user);
-        $canManageMembershipRoles = $campaign->isOwnedBy($user) || $user->isAdmin();
+        $canManageMembershipRoles = $campaign->canManageMembershipRoles($user);
 
         if ($canManageInvitations) {
             $pendingInvitations = $campaign->invitations()

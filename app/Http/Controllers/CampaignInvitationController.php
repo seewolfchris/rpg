@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Actions\Campaign\DeleteCampaignInvitationAction;
 use App\Actions\Campaign\InviteRegisteredCampaignUsersAction;
 use App\Actions\Campaign\RespondToCampaignInvitationAction;
-use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Actions\Campaign\UpsertCampaignInvitationAction;
+use App\Actions\Campaign\UpsertCampaignInvitationInput;
 use App\Http\Controllers\Concerns\EnsuresWorldContext;
 use App\Http\Requests\CampaignInvitation\StoreCampaignInvitationRequest;
 use App\Models\Campaign;
@@ -14,9 +14,9 @@ use App\Models\CampaignInvitation;
 use App\Models\User;
 use App\Models\World;
 use App\Notifications\CampaignInvitationNotification;
-use Illuminate\Support\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 use Throwable;
@@ -82,6 +82,12 @@ class CampaignInvitationController extends Controller
         }
 
         $requestedRole = (string) $request->validated('role');
+        $canManageMembershipRoles = $campaign->canManageMembershipRoles($user);
+
+        if (! $canManageMembershipRoles && $requestedRole !== CampaignInvitation::ROLE_PLAYER) {
+            abort(403);
+        }
+
         $validatedUserIds = $request->validated('user_ids');
         if (! is_array($validatedUserIds)) {
             $validatedUserIds = [];
@@ -144,6 +150,10 @@ class CampaignInvitationController extends Controller
             return back()->withErrors([
                 'email' => 'Der Kampagnenleiter benötigt keine Einladung.',
             ]);
+        }
+
+        if (! $canManageMembershipRoles && $campaign->memberships()->where('user_id', (int) $invitee->id)->exists()) {
+            abort(403);
         }
 
         $result = $this->upsertCampaignInvitationAction->execute(
@@ -259,6 +269,11 @@ class CampaignInvitationController extends Controller
         $user = $this->authenticatedUser($request);
 
         if (! $this->canManageInvitations($user, $campaign)) {
+            abort(403);
+        }
+
+        if ((string) $invitation->status === CampaignInvitation::STATUS_ACCEPTED
+            && ! $campaign->canManageMembershipRoles($user)) {
             abort(403);
         }
 

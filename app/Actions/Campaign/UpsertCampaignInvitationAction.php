@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Campaign;
 
+use App\Enums\CampaignMembershipRole;
 use App\Models\Campaign;
 use App\Models\CampaignInvitation;
+use App\Models\CampaignMembership;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
 
@@ -74,6 +78,16 @@ final class UpsertCampaignInvitationAction
                 ]);
             }
 
+            $this->assertInviterCanUpsertInvitation(
+                campaign: $campaign,
+                invitation: $invitation,
+                isNew: $isNew,
+                previousRole: $previousRole,
+                inviteeUserId: $inviteeUserId,
+                inviterUserId: $inviterUserId,
+                requestedRole: $requestedRole,
+            );
+
             $wasAccepted = $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
             $invitation->invited_by = $inviterUserId;
             $invitation->role = $requestedRole;
@@ -111,6 +125,46 @@ final class UpsertCampaignInvitationAction
         }, 3);
 
         return $result;
+    }
+
+    private function assertInviterCanUpsertInvitation(
+        Campaign $campaign,
+        CampaignInvitation $invitation,
+        bool $isNew,
+        ?string $previousRole,
+        int $inviteeUserId,
+        int $inviterUserId,
+        string $requestedRole,
+    ): void {
+        $inviter = User::query()->findOrFail($inviterUserId);
+        $canManageMembershipRoles = $inviter->isAdmin()
+            || (int) $campaign->owner_id === $inviterUserId;
+
+        if ($canManageMembershipRoles) {
+            return;
+        }
+
+        $isCampaignGm = CampaignMembership::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where('user_id', $inviterUserId)
+            ->where('role', CampaignMembershipRole::GM->value)
+            ->exists();
+
+        if (! $isCampaignGm || $requestedRole !== CampaignInvitation::ROLE_PLAYER) {
+            throw new AuthorizationException('Nur Kampagnenleitung oder Admin dürfen privilegierte Rollen vergeben.');
+        }
+
+        $hasActiveMembership = CampaignMembership::query()
+            ->where('campaign_id', (int) $campaign->id)
+            ->where('user_id', $inviteeUserId)
+            ->exists();
+        $isAccepted = (string) $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
+        $changesExistingPrivilegedInvitation = ! $isNew
+            && $previousRole !== CampaignInvitation::ROLE_PLAYER;
+
+        if ($hasActiveMembership || $isAccepted || $changesExistingPrivilegedInvitation) {
+            throw new AuthorizationException('Bestehende Teilnahmen und Rollen dürfen nur Kampagnenleitung oder Admin ändern.');
+        }
     }
 
     private function isDuplicateCampaignInvitationKey(QueryException $exception): bool

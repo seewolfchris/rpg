@@ -210,6 +210,11 @@ class Campaign extends Model
         return app(CampaignAccess::class)->canManageCampaign($this, $user);
     }
 
+    public function canManageMembershipRoles(User $user): bool
+    {
+        return app(CampaignAccess::class)->canManageMembershipRoles($this, $user);
+    }
+
     public function canModeratePosts(User $user): bool
     {
         return app(CampaignAccess::class)->canModeratePosts($this, $user);

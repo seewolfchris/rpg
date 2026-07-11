@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Campaign;
 
+use App\Models\Campaign;
 use App\Models\CampaignInvitation;
 use App\Models\Scene;
 use App\Models\SceneBookmark;
 use App\Models\SceneSubscription;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -24,6 +27,7 @@ final class DeleteCampaignInvitationAction
             $lockedInvitation = $this->lockAndVerifyContext($invitation);
 
             if ($this->isAcceptedInvitation($lockedInvitation)) {
+                $this->assertActorCanRevokeAcceptedMembership($lockedInvitation, $actorUserId);
                 $this->cleanupAcceptedInvitationAccessData($lockedInvitation);
                 $this->syncCampaignMembershipFromInvitationAction->revokeForAcceptedInvitation(
                     invitation: $lockedInvitation,
@@ -51,6 +55,20 @@ final class DeleteCampaignInvitationAction
     private function isAcceptedInvitation(CampaignInvitation $invitation): bool
     {
         return (string) $invitation->status === CampaignInvitation::STATUS_ACCEPTED;
+    }
+
+    private function assertActorCanRevokeAcceptedMembership(CampaignInvitation $invitation, ?int $actorUserId): void
+    {
+        if ($actorUserId === null) {
+            return;
+        }
+
+        $actor = User::query()->findOrFail($actorUserId);
+        $campaign = Campaign::query()->findOrFail((int) $invitation->campaign_id);
+
+        if (! $actor->isAdmin() && (int) $campaign->owner_id !== $actorUserId) {
+            throw new AuthorizationException('Nur Kampagnenleitung oder Admin dürfen angenommene Teilnahmen entfernen.');
+        }
     }
 
     private function cleanupAcceptedInvitationAccessData(CampaignInvitation $invitation): void
