@@ -3,11 +3,14 @@ import { showSyncNotice } from '../immersion/utils';
 const BROWSER_NOTIFICATION_ROOT_SELECTOR = '[data-browser-notifications]';
 const BROWSER_NOTIFICATION_STATUS_SELECTOR = '[data-browser-notifications-status]';
 const BROWSER_NOTIFICATION_ENABLE_SELECTOR = '[data-browser-notifications-enable]';
+const LOGOUT_FORM_SELECTOR = 'form[data-logout-form]';
+const PUSH_DEVICE_OPT_OUT_KEY = 'c76:push-device-opt-out';
 
 let browserNotificationConfig = null;
 
 export function setupBrowserNotifications({
     getActiveServiceWorkerRegistration,
+    ensureActiveServiceWorkerRegistration,
     resolveActiveWorldSlug,
     resolveStoredWorldSlugContext,
     defaultWorldSlug = 'default',
@@ -22,6 +25,9 @@ export function setupBrowserNotifications({
     const resolveRegistrationFn = typeof getActiveServiceWorkerRegistration === 'function'
         ? getActiveServiceWorkerRegistration
         : async () => null;
+    const ensureRegistrationFn = typeof ensureActiveServiceWorkerRegistration === 'function'
+        ? ensureActiveServiceWorkerRegistration
+        : resolveRegistrationFn;
     const fallbackWorldSlug = typeof defaultWorldSlug === 'string' && defaultWorldSlug.trim() !== ''
         ? defaultWorldSlug.trim()
         : 'default';
@@ -51,9 +57,11 @@ export function setupBrowserNotifications({
         statusNode: document.querySelector(BROWSER_NOTIFICATION_STATUS_SELECTOR),
         enableButton: document.querySelector(BROWSER_NOTIFICATION_ENABLE_SELECTOR),
         resolveRegistrationFn,
+        ensureRegistrationFn,
         resolveActiveWorldSlugFn,
         resolveStoredWorldSlugContextFn,
         fallbackWorldSlug,
+        deviceOptedOut: readPushDeviceOptOut(),
     };
 
     if (browserNotificationConfig.enableButton instanceof HTMLButtonElement) {
@@ -61,6 +69,8 @@ export function setupBrowserNotifications({
             await requestBrowserNotificationPermission();
         });
     }
+
+    setupBrowserNotificationLogoutCleanup();
 
     window.addEventListener('online', () => {
         if (isBrowserPushReady()) {
@@ -70,6 +80,34 @@ export function setupBrowserNotifications({
 
     updateBrowserNotificationStatus();
     void syncBrowserNotificationSubscriptionState();
+}
+
+function setupBrowserNotificationLogoutCleanup() {
+    document.querySelectorAll(LOGOUT_FORM_SELECTOR).forEach((form) => {
+        if (!(form instanceof HTMLFormElement) || form.dataset.pushLogoutCleanupBound === '1') {
+            return;
+        }
+
+        form.dataset.pushLogoutCleanupBound = '1';
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            try {
+                const registration = await browserNotificationConfig?.resolveRegistrationFn?.();
+                const subscription = registration?.pushManager && typeof registration.pushManager.getSubscription === 'function'
+                    ? await registration.pushManager.getSubscription().catch(() => null)
+                    : null;
+
+                if (subscription) {
+                    await unsubscribeBrowserPush(subscription, true);
+                }
+            } catch (error) {
+                console.error('Browser push logout cleanup failed:', error);
+            } finally {
+                HTMLFormElement.prototype.submit.call(form);
+            }
+        });
+    });
 }
 
 function normalizeBrowserNotificationKinds(rawKinds) {
@@ -113,6 +151,9 @@ function updateBrowserNotificationStatus() {
     if (!hasBrowserKinds) {
         statusMessage = 'Browser-Push ist in den Mitteilungs-Präferenzen aktuell deaktiviert.';
         disableEnableButton = true;
+    } else if (browserNotificationConfig.deviceOptedOut) {
+        statusMessage = 'Dieses Gerät ist nicht mehr mit Browser-Push verknüpft.';
+        enableButtonLabel = 'Gerät erneut verknüpfen';
     } else if (!supportsNotifications) {
         statusMessage = 'Dieser Browser unterstützt Web Push nicht vollständig.';
         disableEnableButton = true;
@@ -172,6 +213,8 @@ async function requestBrowserNotificationPermission() {
         return;
     }
 
+    setPushDeviceOptOut(false);
+
     if (Notification.permission === 'granted') {
         await syncBrowserNotificationSubscriptionState();
         updateBrowserNotificationStatus();
@@ -202,6 +245,7 @@ function supportsWebPush() {
 function isBrowserPushReady() {
     return (
         Boolean(browserNotificationConfig) &&
+        !browserNotificationConfig.deviceOptedOut &&
         browserNotificationConfig.enabledKinds.length > 0 &&
         supportsWebPush() &&
         browserNotificationConfig.vapidPublicKey.trim() !== '' &&
@@ -214,13 +258,18 @@ async function syncBrowserNotificationSubscriptionState() {
         return;
     }
 
-    const registration = await browserNotificationConfig.resolveRegistrationFn();
+    let registration = await browserNotificationConfig.resolveRegistrationFn();
+
+    if (!registration && isBrowserPushReady()) {
+        registration = await browserNotificationConfig.ensureRegistrationFn();
+    }
 
     if (!registration || !registration.pushManager) {
         return;
     }
 
     const currentSubscription = await registration.pushManager.getSubscription().catch(() => null);
+    await bindPushDeviceControls(currentSubscription);
 
     if (!isBrowserPushReady()) {
         if (currentSubscription) {
@@ -252,12 +301,18 @@ async function syncBrowserNotificationSubscriptionState() {
     updateBrowserNotificationStatus();
 }
 
-async function unsubscribeBrowserPush(subscription, silent = false) {
+async function unsubscribeBrowserPush(
+    subscription,
+    silent = false,
+    rememberDeviceOptOut = false,
+    syncServer = true,
+) {
     if (!browserNotificationConfig) {
         return;
     }
 
     const endpoint = typeof subscription?.endpoint === 'string' ? subscription.endpoint : '';
+    const payload = normalizePushSubscriptionPayload(subscription);
 
     try {
         await subscription.unsubscribe();
@@ -265,15 +320,21 @@ async function unsubscribeBrowserPush(subscription, silent = false) {
         console.error('Browser push unsubscribe failed:', error);
     }
 
-    if (endpoint !== '') {
+    if (endpoint !== '' && syncServer) {
         try {
             await postJson(browserNotificationConfig.unsubscribeUrl, {
                 world_slug: resolveBrowserNotificationWorldSlug(),
                 endpoint,
+                public_key: payload?.publicKey || null,
+                auth_token: payload?.authToken || null,
             });
         } catch (error) {
             console.error('Browser push unsubscribe sync failed:', error);
         }
+    }
+
+    if (rememberDeviceOptOut) {
+        setPushDeviceOptOut(true);
     }
 
     if (!silent) {
@@ -298,7 +359,104 @@ async function syncBrowserPushSubscriptionWithServer(subscription) {
         public_key: payload.publicKey,
         auth_token: payload.authToken,
         content_encoding: payload.contentEncoding,
+        device_name: resolvePushDeviceName(),
     });
+}
+
+function resolvePushDeviceName() {
+    const userAgent = String(navigator.userAgent || '').toLowerCase();
+    const browser = userAgent.includes('firefox/')
+        ? 'Firefox'
+        : (userAgent.includes('edg/') ? 'Edge' : (userAgent.includes('chrome/') ? 'Chrome' : (userAgent.includes('safari/') ? 'Safari' : 'Browser')));
+    const device = /android|iphone|ipad|mobile/.test(userAgent) ? 'Mobilgerät' : 'Computer';
+
+    return `${browser} auf ${device}`;
+}
+
+async function bindPushDeviceControls(subscription) {
+    if (!subscription || typeof subscription.endpoint !== 'string' || subscription.endpoint === '') {
+        return;
+    }
+
+    const endpointHash = await sha256Hex(subscription.endpoint);
+
+    if (endpointHash === '') {
+        return;
+    }
+
+    document.querySelectorAll('[data-push-device]').forEach((deviceNode) => {
+        if (!(deviceNode instanceof HTMLElement) || deviceNode.dataset.endpointHash !== endpointHash) {
+            return;
+        }
+
+        const badge = deviceNode.querySelector('[data-push-current-badge]');
+        if (badge instanceof HTMLElement) {
+            badge.classList.remove('hidden');
+        }
+
+        const removeForm = deviceNode.querySelector('[data-push-device-remove-form]');
+        if (!(removeForm instanceof HTMLFormElement) || removeForm.dataset.pushCurrentBound === '1') {
+            return;
+        }
+
+        removeForm.dataset.pushCurrentBound = '1';
+        removeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await unsubscribeBrowserPush(subscription, false, true, false);
+            HTMLFormElement.prototype.submit.call(removeForm);
+        });
+    });
+
+    const removeAllForm = document.querySelector('[data-push-device-remove-all-form]');
+    if (removeAllForm instanceof HTMLFormElement && removeAllForm.dataset.pushCurrentBound !== '1') {
+        removeAllForm.dataset.pushCurrentBound = '1';
+        removeAllForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await unsubscribeBrowserPush(subscription, true, true, false);
+            HTMLFormElement.prototype.submit.call(removeAllForm);
+        });
+    }
+}
+
+function readPushDeviceOptOut() {
+    try {
+        return window.localStorage.getItem(PUSH_DEVICE_OPT_OUT_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
+function setPushDeviceOptOut(optedOut) {
+    if (browserNotificationConfig) {
+        browserNotificationConfig.deviceOptedOut = Boolean(optedOut);
+    }
+
+    try {
+        if (optedOut) {
+            window.localStorage.setItem(PUSH_DEVICE_OPT_OUT_KEY, '1');
+            return;
+        }
+
+        window.localStorage.removeItem(PUSH_DEVICE_OPT_OUT_KEY);
+    } catch {
+        // Keep browser push usable when local storage is unavailable.
+    }
+}
+
+async function sha256Hex(value) {
+    if (!window.crypto?.subtle || typeof TextEncoder !== 'function') {
+        return '';
+    }
+
+    try {
+        const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+
+        return Array.from(new Uint8Array(digest))
+            .map((byte) => byte.toString(16).padStart(2, '0'))
+            .join('');
+    } catch {
+        return '';
+    }
 }
 
 function normalizePushSubscriptionPayload(subscription) {

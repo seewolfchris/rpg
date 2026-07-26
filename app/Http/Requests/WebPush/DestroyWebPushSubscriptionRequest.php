@@ -25,7 +25,9 @@ class DestroyWebPushSubscriptionRequest extends FormRequest
                 'string',
                 Rule::exists('worlds', 'slug')->where(fn ($query) => $query->where('is_active', true)),
             ],
-            'endpoint' => ['required', 'string', 'url:https', 'max:500', new WebPushEndpointAllowed()],
+            'endpoint' => ['required', 'string', 'url:https', 'max:500', new WebPushEndpointAllowed],
+            'public_key' => ['nullable', 'string', 'max:500'],
+            'auth_token' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -40,5 +42,19 @@ class DestroyWebPushSubscriptionRequest extends FormRequest
     public function endpoint(): string
     {
         return (string) $this->validated('endpoint');
+    }
+
+    public function publicKey(): ?string
+    {
+        $publicKey = trim((string) $this->validated('public_key', ''));
+
+        return $publicKey !== '' ? $publicKey : null;
+    }
+
+    public function authToken(): ?string
+    {
+        $authToken = trim((string) $this->validated('auth_token', ''));
+
+        return $authToken !== '' ? $authToken : null;
     }
 }

@@ -19,7 +19,7 @@ export function createServiceWorkerRuntime({
         : 'default';
     const resolveOfflineQueueEnabledFn = typeof resolveOfflineQueueEnabled === 'function'
         ? resolveOfflineQueueEnabled
-        : () => true;
+        : () => false;
     const resolveAuthBoundaryKeyFn = typeof resolveAuthBoundaryKey === 'function'
         ? resolveAuthBoundaryKey
         : () => 'guest|session-unknown';
@@ -99,14 +99,47 @@ export function createServiceWorkerRuntime({
             return swRegistration;
         }
 
-        const readyRegistration = await navigator.serviceWorker.ready.catch(() => null);
+        const existingRegistration = typeof navigator.serviceWorker.getRegistration === 'function'
+            ? await navigator.serviceWorker.getRegistration().catch(() => null)
+            : null;
 
-        if (readyRegistration?.active) {
-            swRegistration = readyRegistration;
-            return readyRegistration;
+        if (existingRegistration?.active) {
+            swRegistration = existingRegistration;
+            return existingRegistration;
         }
 
         return null;
+    }
+
+    async function unregisterServiceWorkerWhenUnused() {
+        if (resolveOfflineQueueEnabledFn()) {
+            return false;
+        }
+
+        const registration = await getActiveServiceWorkerRegistration();
+
+        if (!registration) {
+            return false;
+        }
+
+        const pushSubscription = registration.pushManager
+            && typeof registration.pushManager.getSubscription === 'function'
+            ? await registration.pushManager.getSubscription().catch(() => null)
+            : null;
+
+        if (pushSubscription) {
+            return false;
+        }
+
+        await syncOfflineQueuePreference(false);
+
+        const unregistered = await registration.unregister().catch(() => false);
+
+        if (unregistered) {
+            swRegistration = null;
+        }
+
+        return unregistered;
     }
 
     async function postMessageToActiveServiceWorker(message) {
@@ -163,6 +196,7 @@ export function createServiceWorkerRuntime({
         registerServiceWorker,
         warmOfflineReadingCache,
         getActiveServiceWorkerRegistration,
+        unregisterServiceWorkerWhenUnused,
         postMessageToActiveServiceWorker,
         syncOfflineQueuePreference,
         setupServiceWorkerLogoutCleanup,

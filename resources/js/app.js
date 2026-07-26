@@ -27,7 +27,7 @@ function resolveOfflineQueueEnabledFromDocument() {
     const preferenceNode = document.querySelector('meta[name="offline-queue-enabled"]');
 
     if (!(preferenceNode instanceof HTMLMetaElement)) {
-        return true;
+        return false;
     }
 
     const rawValue = String(preferenceNode.content || '').trim().toLowerCase();
@@ -36,7 +36,7 @@ function resolveOfflineQueueEnabledFromDocument() {
         return false;
     }
 
-    return true;
+    return rawValue === '1' || rawValue === 'true' || rawValue === 'on' || rawValue === 'yes';
 }
 
 function resolveAuthBoundaryKeyFromDocument() {
@@ -79,6 +79,7 @@ const {
     triggerQueuedPostSync,
 } = createQueueModule({
     getActiveServiceWorkerRegistration: serviceWorkerRuntime.getActiveServiceWorkerRegistration,
+    ensureActiveServiceWorkerRegistration: serviceWorkerRuntime.registerServiceWorker,
     postMessageToActiveServiceWorker: serviceWorkerRuntime.postMessageToActiveServiceWorker,
     resolveOfflineQueueEnabled: resolveOfflineQueueEnabledFromDocument,
 });
@@ -131,11 +132,18 @@ const bootApplication = async () => {
     await renderDeadLetterPanel();
     await renderOfflineQueueStatusPanel();
 
-    await serviceWorkerRuntime.registerServiceWorker();
-    await serviceWorkerRuntime.syncOfflineQueuePreference();
-    await serviceWorkerRuntime.warmOfflineReadingCache();
+    if (resolveOfflineQueueEnabledFromDocument()) {
+        await serviceWorkerRuntime.registerServiceWorker();
+        await serviceWorkerRuntime.syncOfflineQueuePreference(true);
+        await serviceWorkerRuntime.warmOfflineReadingCache();
+    } else {
+        await serviceWorkerRuntime.syncOfflineQueuePreference(false);
+        await serviceWorkerRuntime.unregisterServiceWorkerWhenUnused();
+    }
+
     setupBrowserNotifications({
         getActiveServiceWorkerRegistration: serviceWorkerRuntime.getActiveServiceWorkerRegistration,
+        ensureActiveServiceWorkerRegistration: serviceWorkerRuntime.registerServiceWorker,
         resolveActiveWorldSlug,
         resolveStoredWorldSlugContext,
         defaultWorldSlug: DEFAULT_WORLD_SLUG,

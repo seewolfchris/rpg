@@ -21,6 +21,9 @@ test('auth boundary change clears private caches and offline queue database', as
         const contentCache = await caches.open('chroniken-content-e2e-private');
         await contentCache.put('/_e2e/private-content-probe', new Response('private-content'));
 
+        const staticCache = await caches.open('chroniken-static-e2e-private');
+        await staticCache.put('/_e2e/private-static-probe', new Response('private-static'));
+
         await new Promise((resolve, reject) => {
             const openRequest = indexedDB.open('chroniken-pbp', 2);
 
@@ -73,7 +76,9 @@ test('auth boundary change clears private caches and offline queue database', as
         return page.evaluate(async () => {
             const cacheKeys = await caches.keys();
             const privateCacheCount = cacheKeys.filter((cacheKey) => (
-                cacheKey.startsWith('chroniken-pages-') || cacheKey.startsWith('chroniken-content-')
+                cacheKey.startsWith('chroniken-static-')
+                || cacheKey.startsWith('chroniken-pages-')
+                || cacheKey.startsWith('chroniken-content-')
             )).length;
 
             const queueCount = await new Promise((resolve) => {
@@ -123,7 +128,9 @@ test('auth boundary change clears private caches and offline queue database', as
     const state = await page.evaluate(async () => {
         const cacheKeys = await caches.keys();
         const privateCacheKeys = cacheKeys.filter((cacheKey) => (
-            cacheKey.startsWith('chroniken-pages-') || cacheKey.startsWith('chroniken-content-')
+            cacheKey.startsWith('chroniken-static-')
+            || cacheKey.startsWith('chroniken-pages-')
+            || cacheKey.startsWith('chroniken-content-')
         ));
 
         const queueState = await new Promise((resolve) => {

@@ -37,6 +37,7 @@ test('htmx bootstrap disables eval and script-tag execution', async () => {
     assert.match(source, /htmx\.config\.allowEval\s*=\s*false/);
     assert.match(source, /htmx\.config\.allowScriptTags\s*=\s*false/);
     assert.match(source, /htmx\.config\.selfRequestsOnly\s*=\s*true/);
+    assert.match(source, /htmx\.config\.historyEnabled\s*=\s*false/);
 });
 
 test('blade templates avoid eval-dependent htmx attributes', async () => {

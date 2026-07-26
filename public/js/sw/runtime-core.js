@@ -96,16 +96,16 @@ function resolveOfflineQueuePreferenceFromQuery() {
         const rawPreference = parsed.searchParams.get('offline_queue');
 
         if (rawPreference === null) {
-            return true;
+            return false;
         }
 
-        return normalizeOfflineQueuePreference(rawPreference, true);
+        return normalizeOfflineQueuePreference(rawPreference, false);
     } catch {
-        return true;
+        return false;
     }
 }
 
-function normalizeOfflineQueuePreference(value, fallbackValue = true) {
+function normalizeOfflineQueuePreference(value, fallbackValue = false) {
     if (typeof value === 'boolean') {
         return value;
     }
@@ -134,7 +134,7 @@ function isOfflineQueueEnabled() {
 }
 
 async function setOfflineQueuePreference(value) {
-    OFFLINE_QUEUE_ENABLED = normalizeOfflineQueuePreference(value, true);
+    OFFLINE_QUEUE_ENABLED = normalizeOfflineQueuePreference(value, false);
 
     if (!OFFLINE_QUEUE_ENABLED) {
         await clearPrivateSessionData();
@@ -144,23 +144,19 @@ async function setOfflineQueuePreference(value) {
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
-            const cache = await caches.open(STATIC_CACHE);
-            await Promise.all(
-                STATIC_ASSETS.map(async (asset) => {
-                    try {
-                        await cache.add(asset);
-                    } catch {
-                        // Keep service worker install resilient if a single asset is missing.
-                    }
-                }),
-            );
+            if (isOfflineQueueEnabled()) {
+                await cacheStaticAssets();
+            }
+
             await self.skipWaiting();
         })(),
     );
 });
 
 self.addEventListener('activate', (event) => {
-    const allowedCaches = [STATIC_CACHE, PAGE_CACHE, CONTENT_CACHE];
+    const allowedCaches = isOfflineQueueEnabled()
+        ? [STATIC_CACHE, PAGE_CACHE, CONTENT_CACHE]
+        : [];
 
     event.waitUntil(
         caches
@@ -191,13 +187,7 @@ function isManagedCacheKey(key) {
 }
 
 function isPrivateManagedCacheKey(key) {
-    return (
-        typeof key === 'string'
-        && (
-            key.startsWith('chroniken-pages-')
-            || key.startsWith('chroniken-content-')
-        )
-    );
+    return isManagedCacheKey(key);
 }
 
 async function clearPrivateSessionData() {
@@ -276,14 +266,13 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    const requestUrl = new URL(event.request.url);
-
-    if (requestUrl.origin !== self.location.origin) {
+    if (!isOfflineQueueEnabled()) {
         return;
     }
 
-    if (!isOfflineQueueEnabled() && isOfflineReadablePath(requestUrl.pathname)) {
-        event.respondWith(networkOnlyWithOfflineFallback(event.request));
+    const requestUrl = new URL(event.request.url);
+
+    if (requestUrl.origin !== self.location.origin) {
         return;
     }
 
@@ -325,6 +314,15 @@ self.addEventListener('message', (event) => {
         }
 
         event.waitUntil(cacheProvidedUrls(data.urls));
+        return;
+    }
+
+    if (data.type === 'CACHE_STATIC_ASSETS') {
+        if (!isOfflineQueueEnabled()) {
+            return;
+        }
+
+        event.waitUntil(cacheStaticAssets());
         return;
     }
 
@@ -718,6 +716,20 @@ async function cacheProvidedUrls(urls) {
                 }
             } catch {
                 // Ignore network errors while warming up cache.
+            }
+        }),
+    );
+}
+
+async function cacheStaticAssets() {
+    const cache = await caches.open(STATIC_CACHE);
+
+    await Promise.all(
+        STATIC_ASSETS.map(async (asset) => {
+            try {
+                await cache.add(asset);
+            } catch {
+                // Keep opt-in activation resilient if a single asset is missing.
             }
         }),
     );

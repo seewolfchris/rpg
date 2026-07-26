@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/_e2e')->group(function (): void {
     Route::get('/offline-queue', function () {
-        return view('e2e.offline-queue');
+        return view('e2e.offline-queue', [
+            'offlineQueueEnabledForE2e' => true,
+        ]);
     })->name('e2e.offline-queue');
 
     Route::post('/offline-queue/submit', function (Request $request): JsonResponse {

@@ -52,13 +52,15 @@ Repository-Branch: `main`
 | Kampagnen-Einladungen | Beta-nutzbar | Einladungslifecycle bleibt separat; aktive Rollen laufen ueber `campaign_memberships` |
 | SL-Kontakt (privacy-first) | Beta-nutzbar | Kampagnengebundene Threads/Messages nur in `campaigns.show`, kein Dashboard-/Realtime-Flow; Kontaktformular als viewportweiter Modal (`x-teleport="body"`) |
 | Wissenszentrum / Enzyklopädie | Beta-nutzbar | Öffentliche Seiten + Admin-Redaktion + Community-Vorschlagsworkflow (pending/review) |
-| Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID) + Service-Worker Click |
-| PWA-Basis | Beta-nutzbar | Manifest, Offline-Lesen, Offline-Post-Queue inkl. Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
+| Browser-Benachrichtigungen | Aktiv | Echte Web Push Zustellung (VAPID), Service-Worker Click, geraeteweise Verwaltung und Logout-Unsubscribe |
+| PWA-Basis | Beta-nutzbar | Opt-in-Offline-Lesen und -Post-Queue inkl. User-/Welt-Zuordnung, Same-Origin-POST-Gate, Payload-Redaction sensibler Keys und transientem 419-Re-Signing + Retry-Backoff |
 | Domänen-Invarianten + Retry-Resilienz | Beta-nutzbar | Harte Service-Guards (Welt/Teilnahme), Invariant-Exceptions, Queue-Retry für Notification-Fehler |
 | Recht / Compliance | Aktiv | Zentrale Links auf c76.org, Footer vereinheitlicht |
 
 ## Datenschutz & Offline-Funktion
-- Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
+- Offline-Speicherung ist standardmaessig aus. Nach ausdruecklichem Opt-in werden fuer
+  Offline-Lesen und -Schreiben private Inhalte lokal gespeichert. Ausschalten, Logout und
+  Kontowechsel loeschen alle verwalteten Caches, Queue-Daten und lokalen Entwuerfe.
 - Mediengrenze: Immersive Bilder in Spielleitungsbeitraegen und Szenen-Inhaltsbilder liegen bewusst auf der Public-Disk. Direkte Datei-URLs sind unabhaengig von Post- oder Szenenberechtigungen erreichbar. Vertrauliche Medien gehoeren in kontrollierte Handouts.
 
 ## 3) Multi-Welt-Umstellung (neu)

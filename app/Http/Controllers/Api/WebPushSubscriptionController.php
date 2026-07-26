@@ -33,6 +33,7 @@ class WebPushSubscriptionController extends Controller
             publicKey: $request->publicKey(),
             authToken: $request->authToken(),
             contentEncoding: $request->contentEncoding(),
+            deviceName: $request->deviceName(),
         );
 
         return response()->json([
@@ -51,6 +52,8 @@ class WebPushSubscriptionController extends Controller
             user: $user,
             world: $world,
             endpoint: $request->endpoint(),
+            publicKey: $request->publicKey(),
+            authToken: $request->authToken(),
         );
 
         return response()->json([

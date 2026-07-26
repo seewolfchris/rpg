@@ -18,7 +18,7 @@ if (window.htmx) {
     window.htmx.config.allowEval = false;
     window.htmx.config.allowScriptTags = false;
     window.htmx.config.selfRequestsOnly = true;
-    window.htmx.config.historyEnabled = true;
+    window.htmx.config.historyEnabled = false;
     window.htmx.config.globalViewTransitions = false;
     window.htmx.config.defaultSwapStyle = 'innerHTML';
 

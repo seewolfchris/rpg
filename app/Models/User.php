@@ -316,7 +316,7 @@ class User extends Authenticatable
         $value = $this->offline_queue_enabled;
 
         if ($value === null) {
-            return true;
+            return false;
         }
 
         return (bool) $value;

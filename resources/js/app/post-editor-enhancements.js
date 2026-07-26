@@ -27,6 +27,16 @@ const PREVIEW_BLOCKED_TAGS = new Set([
 const PREVIEW_URL_ATTRIBUTES = new Set(['href', 'src', 'xlink:href', 'formaction', 'action', 'poster']);
 const PREVIEW_UNSAFE_URL_PATTERN = /^\s*(?:javascript|vbscript|data:text\/html)/i;
 
+function isOfflineStorageEnabled() {
+    const preferenceNode = document.querySelector('meta[name="offline-queue-enabled"]');
+
+    if (!(preferenceNode instanceof HTMLMetaElement)) {
+        return false;
+    }
+
+    return ['1', 'true', 'on', 'yes'].includes(String(preferenceNode.content || '').trim().toLowerCase());
+}
+
 function sanitizePreviewHtml(rawHtml) {
     if (typeof rawHtml !== 'string' || rawHtml.trim() === '') {
         return '';
@@ -133,7 +143,7 @@ export function setupPostEditorEnhancements() {
         };
 
         const restoreDraftIfNeeded = () => {
-            if (!storageKey || contentField.value.trim() !== '') {
+            if (!storageKey || !isOfflineStorageEnabled() || contentField.value.trim() !== '') {
                 return;
             }
 
@@ -187,6 +197,11 @@ export function setupPostEditorEnhancements() {
 
         const persistDraft = debounce(() => {
             if (!storageKey) {
+                return;
+            }
+
+            if (!isOfflineStorageEnabled()) {
+                removeLocalStorageValue(storageKey);
                 return;
             }
 

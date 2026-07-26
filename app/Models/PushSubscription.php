@@ -15,6 +15,8 @@ use NotificationChannels\WebPush\PushSubscription as BasePushSubscription;
  * @property string|null $public_key
  * @property string|null $auth_token
  * @property string|null $content_encoding
+ * @property string|null $device_name
+ * @property \Illuminate\Support\Carbon|null $last_used_at
  */
 class PushSubscription extends BasePushSubscription
 {
@@ -28,6 +30,8 @@ class PushSubscription extends BasePushSubscription
         'public_key',
         'auth_token',
         'content_encoding',
+        'device_name',
+        'last_used_at',
         'user_id',
         'world_id',
     ];
@@ -40,6 +44,7 @@ class PushSubscription extends BasePushSubscription
         return [
             'user_id' => 'integer',
             'world_id' => 'integer',
+            'last_used_at' => 'datetime',
         ];
     }
 

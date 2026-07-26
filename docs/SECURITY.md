@@ -32,9 +32,13 @@
 - `webpush-subscriptions`: 20 Requests/Minute je Nutzer/IP und Welt
 
 ## PWA / Offline Security
+- Offline-Speicherung ist Opt-in und standardmaessig deaktiviert.
 - Offline-Queue speichert keine sensiblen Formkeys.
 - Queue akzeptiert nur Same-Origin-`POST`.
-- Auth-Boundary-/Logout-Cleanup loescht private Caches + Queue-Daten.
+- Queue-/Dead-Letter-Datensaetze tragen eine explizite Auth-, User- und Weltzuordnung.
+- Auth-Boundary-/Logout-/Opt-out-Cleanup loescht alle verwalteten Caches, Queue-Daten,
+  lokale Post-Entwuerfe und sitzungsbezogene UI-Werte.
+- HTMX-History und -History-Cache sind deaktiviert.
 - Schlaegt die Boundary-Initialisierung fehl, bleiben Service Worker, Offline-Queue und
   Browser-Push fail-closed; nichtpersistente Basisnavigation bleibt bedienbar.
 - Details: [PWA_OFFLINE.md](PWA_OFFLINE.md)
@@ -49,7 +53,6 @@
 
 ## Bekannte Restrisiken
 - Public-Disk-Medien besitzen keine route-basierte Autorisierung.
-- App-Logout widerruft vorhandene Browser-Push-Subscriptions nicht serverseitig.
 - MySQL-spezifische Concurrency-/Critical-Gates muessen in CI oder einer lokalen
   MySQL/MariaDB-Umgebung laufen.
 - Kanonische Listen: [KNOWN_ISSUES.md](KNOWN_ISSUES.md) und

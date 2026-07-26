@@ -99,13 +99,17 @@ Log-Hinweise:
 ## Offline-Post-Queue Schnellcheck
 Wenn Offline-Posts nicht synchronisiert werden:
 
-Offline-Modus & PWA: Ungesendete Posts werden lokal im Browser (IndexedDB) gespeichert, damit du auch ohne Internetverbindung schreiben kannst. Auf geteilten Geräten, bei Browser-Export oder Kompromittierung des Geräts können andere Personen diese Inhalte lesen. Bei Logout werden alle privaten Caches und die Offline-Queue automatisch gelöscht. Du kannst die Offline-Queue in den Einstellungen jederzeit deaktivieren.
+Offline-Speicherung ist standardmaessig aus. Nur nach ausdruecklichem Opt-in werden
+Seiteninhalte, lokale Entwuerfe und ungesendete Posts im Browser gespeichert. Beim Ausschalten,
+Logout oder Kontowechsel werden die verwalteten lokalen Daten geloescht.
 
 1. Browser-Konsole auf Service-Worker-Events prüfen (`POST_SYNC_*`).
-2. IndexedDB `chroniken-pbp` / Store `postQueue` prüfen (`retry_count`, `next_retry_at`, `last_error_status`).
-3. Sicherstellen, dass Queue-Einträge keine sensiblen Keys enthalten (`_token`, `password`, `*_token`, `csrf*`).
-4. Sicherstellen, dass Queue-Ziele nur gleiche Origin und `POST` sind (keine Fremd-Hosts, keine GET/PUT/DELETE-Syncs).
-5. Bei `POST_SYNC_AUTH_REQUIRED`: Login-Status prüfen, Seite neu laden, Sync erneut anstoßen.
+2. Pruefen, ob die Offline-Speicherung im Account ausdruecklich aktiviert ist.
+3. IndexedDB `chroniken-pbp` / Store `postQueue` prüfen (`auth_boundary`, `user_id`,
+   `world_slug`, `retry_count`, `next_retry_at`, `last_error_status`).
+4. Sicherstellen, dass Queue-Einträge keine sensiblen Keys enthalten (`_token`, `password`, `*_token`, `csrf*`).
+5. Sicherstellen, dass Queue-Ziele nur gleiche Origin und `POST` sind (keine Fremd-Hosts, keine GET/PUT/DELETE-Syncs).
+6. Bei `POST_SYNC_AUTH_REQUIRED`: Login-Status prüfen, Seite neu laden, Sync erneut anstoßen.
 
 Erwartete Event-Reihenfolgen:
 - 419 mit erfolgreichem Re-Signing:
@@ -142,7 +146,10 @@ php artisan test --without-tty --do-not-cache-result
 5. Falls Dateninkonsistenz: betroffene `post_id`, `scene_id`, `character_id` dokumentieren.
 
 ## Browser-Kompromittierung / Geräte-Teilung
-Bei Incident ‚Browser-Kompromittierung‘ oder Verdacht auf Geräte-Teilung: User anweisen, im Browser ‚IndexedDB löschen‘ (Entwicklertools → Application → IndexedDB → chroniken-pbp) oder die Seite im Inkognito-Modus neu zu laden. Danach Logout erzwingen.
+Bei Incident ‚Browser-Kompromittierung‘ oder Verdacht auf Geräte-Teilung: Offline-Speicherung
+ausschalten, in den Mitteilungs-Einstellungen die betroffenen Push-Geraete einzeln oder gesammelt
+entfernen und Logout erzwingen. Falls der Cleanup fehlschlaegt, Website-Daten inklusive
+IndexedDB `chroniken-pbp` und Notification-Permission im Browser loeschen.
 
 ## Release Smoke
 Verwende das Skript:

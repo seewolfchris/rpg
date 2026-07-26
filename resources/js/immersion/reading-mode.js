@@ -5,8 +5,8 @@
 import {
     hasInteractiveTypingTarget,
     hasOpenOverlayDialog,
-    readLocalStorageValue,
-    writeLocalStorageValue,
+    readSessionStorageValue,
+    writeSessionStorageValue,
 } from './utils';
 
 const SCENE_THREAD_READING_MODE_SELECTOR = '[data-scene-thread-reading-mode]';
@@ -42,8 +42,8 @@ export function setupSceneThreadReadingMode() {
 
         const oocStorageKey = `c76:scene-ooc-open:${sceneId}`;
         const readingStorageKey = `c76:scene-reading-mode:${sceneId}`;
-        const oocStored = readLocalStorageValue(oocStorageKey);
-        const readingStored = readLocalStorageValue(readingStorageKey) === '1';
+        const oocStored = readSessionStorageValue(oocStorageKey);
+        const readingStored = readSessionStorageValue(readingStorageKey) === '1';
 
         if (oocDetailsList.length > 0) {
             oocDetailsList.forEach((oocDetails) => {
@@ -59,7 +59,7 @@ export function setupSceneThreadReadingMode() {
 
                 oocDetails.dataset.readingModeBound = '1';
                 oocDetails.addEventListener('toggle', () => {
-                    writeLocalStorageValue(oocStorageKey, oocDetails.open ? '1' : '0');
+                    writeSessionStorageValue(oocStorageKey, oocDetails.open ? '1' : '0');
                 });
             });
         }
@@ -167,7 +167,7 @@ function applyReadingModeState(root, enabled, persist = true, storageKey = '') {
     });
 
     if (persist && storageKey !== '') {
-        writeLocalStorageValue(storageKey, enabled ? '1' : '0');
+        writeSessionStorageValue(storageKey, enabled ? '1' : '0');
     }
 
     updateReadingProgressBookmark(root);

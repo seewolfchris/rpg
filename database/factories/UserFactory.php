@@ -34,7 +34,7 @@ class UserFactory extends Factory
             'status' => UserStatus::ACTIVE->value,
             'can_post_without_moderation' => false,
             'can_create_campaigns' => false,
-            'offline_queue_enabled' => true,
+            'offline_queue_enabled' => false,
             'remember_token' => Str::random(10),
         ];
     }

@@ -44,6 +44,30 @@ test('auth boundary is finalized and pending state removed after successful clea
     assert.equal(harness.localStorage.getItem(BOUNDARY_PENDING_KEY), null);
 });
 
+test('auth boundary cleanup removes managed drafts and session context but preserves boundary keys', async () => {
+    const harness = createBrowserHarness({
+        userBoundary: '23',
+        sessionBoundary: 'session-current',
+        previousBoundary: 'guest|session-old',
+        deleteDatabaseMode: 'success',
+    });
+    harness.localStorage.setItem('c76:post-draft:scene-7-user-23-new', '{"content":"private"}');
+    harness.localStorage.setItem('unrelated-preference', 'keep');
+    harness.sessionStorage.setItem('c76:last-world-slug', 'chroniken-der-asche');
+    harness.sessionStorage.setItem('c76:scene-reading-mode:7', '1');
+
+    const cleanupCompleted = await enforcePrivateDataBoundaryOnAuthChange({
+        postMessageToActiveServiceWorker: async () => undefined,
+    });
+
+    assert.equal(cleanupCompleted, true);
+    assert.equal(harness.localStorage.getItem('c76:post-draft:scene-7-user-23-new'), null);
+    assert.equal(harness.sessionStorage.getItem('c76:last-world-slug'), null);
+    assert.equal(harness.sessionStorage.getItem('c76:scene-reading-mode:7'), null);
+    assert.equal(harness.localStorage.getItem('unrelated-preference'), 'keep');
+    assert.equal(harness.localStorage.getItem(BOUNDARY_KEY), '23|session-current');
+});
+
 test('application boot fails closed before offline queue and service worker setup', async () => {
     const source = await readFile(new URL('../../resources/js/app.js', import.meta.url), 'utf8');
     const bootSource = source.slice(source.indexOf('const bootApplication = async () =>'));
@@ -125,17 +149,25 @@ function createBrowserHarness({
         storage.set(BOUNDARY_PENDING_KEY, pendingBoundary);
     }
 
-    const localStorage = {
+    const buildStorage = (storageMap = new Map()) => ({
+        get length() {
+            return storageMap.size;
+        },
+        key(index) {
+            return Array.from(storageMap.keys())[index] ?? null;
+        },
         getItem(key) {
-            return storage.has(key) ? storage.get(key) : null;
+            return storageMap.has(key) ? storageMap.get(key) : null;
         },
         setItem(key, value) {
-            storage.set(String(key), String(value));
+            storageMap.set(String(key), String(value));
         },
         removeItem(key) {
-            storage.delete(String(key));
+            storageMap.delete(String(key));
         },
-    };
+    });
+    const localStorage = buildStorage(storage);
+    const sessionStorage = buildStorage();
 
     const document = {
         querySelector(selector) {
@@ -153,6 +185,7 @@ function createBrowserHarness({
 
     const window = {
         localStorage,
+        sessionStorage,
         caches: {
             keys: async () => ['chroniken-pages-e2e-private', 'chroniken-content-e2e-private'],
             delete: async () => true,
@@ -185,6 +218,7 @@ function createBrowserHarness({
 
     return {
         localStorage,
+        sessionStorage,
     };
 }
 

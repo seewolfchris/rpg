@@ -1,6 +1,6 @@
 # Bekannte Probleme
 
-Stand: 2026-07-11. Diese Liste enthaelt bestaetigte, noch nicht sicher klein behebbare
+Stand: 2026-07-26. Diese Liste enthaelt bestaetigte, noch nicht sicher klein behebbare
 Produkt- oder Betriebsprobleme. Security-Details stehen zusaetzlich in `docs/SECURITY.md`.
 
 ## KI-001: Spaet freigegebener aelterer Post kann als gelesen gelten
@@ -12,17 +12,6 @@ Produkt- oder Betriebsprobleme. Security-Details stehen zusaetzlich in `docs/SEC
   dennoch erzeugt.
 - **Naechster Schritt:** Read-State um eine Publikationssequenz oder einen per Post gefuehrten
   Gelesen-Status erweitern; nicht durch Ruecksetzen des monotonen Cursors kaschieren.
-
-## KI-002: Browser-Push bleibt nach Logout serverseitig registriert
-
-- **Schweregrad:** Mittel (Privacy auf gemeinsam genutzten Browserprofilen)
-- **Auswirkung:** Logout loescht Offline-Caches und Queue, entfernt aber den Push-Endpunkt nicht
-  geraetespezifisch vom Server. Ein ausgeloggtes gemeinsames Browserprofil kann daher weiter
-  Benachrichtigungen des vorherigen Accounts empfangen.
-- **Workaround:** Browser-Push vor Logout in den Einstellungen deaktivieren oder Website-Daten
-  samt Notification-Permission loeschen.
-- **Naechster Schritt:** Geraetegebundene Subscription-ID und bestaetigten Logout-Unsubscribe-
-  Handshake entwickeln; nicht pauschal alle Geraete eines Users abmelden.
 
 ## KI-003: Charakter-Editor ist ohne JavaScript nur eingeschraenkt nutzbar
 

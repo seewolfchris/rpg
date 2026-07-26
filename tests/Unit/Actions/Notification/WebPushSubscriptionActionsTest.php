@@ -40,7 +40,7 @@ class WebPushSubscriptionActionsTest extends TestCase
         ]);
     }
 
-    public function test_upsert_reassigns_foreign_owned_endpoint_to_current_user(): void
+    public function test_upsert_reassigns_foreign_owned_endpoint_on_verified_account_switch(): void
     {
         $world = World::factory()->create(['is_active' => true]);
         $ownerA = User::factory()->create();
@@ -62,8 +62,8 @@ class WebPushSubscriptionActionsTest extends TestCase
             user: $ownerB,
             world: $world,
             endpoint: $endpoint,
-            publicKey: 'new-key',
-            authToken: 'new-token',
+            publicKey: 'old-key',
+            authToken: 'old-token',
             contentEncoding: 'aes128gcm',
         );
 
@@ -74,13 +74,13 @@ class WebPushSubscriptionActionsTest extends TestCase
         $this->assertDatabaseHas('push_subscriptions', [
             'user_id' => $ownerB->id,
             'endpoint' => $endpoint,
-            'public_key' => 'new-key',
-            'auth_token' => 'new-token',
+            'public_key' => 'old-key',
+            'auth_token' => 'old-token',
             'content_encoding' => 'aes128gcm',
         ]);
     }
 
-    public function test_delete_only_removes_subscription_from_matching_world(): void
+    public function test_delete_removes_owned_device_independently_of_current_world(): void
     {
         $user = User::factory()->create();
         $worldA = World::factory()->create(['is_active' => true]);
@@ -98,11 +98,9 @@ class WebPushSubscriptionActionsTest extends TestCase
             'content_encoding' => 'aes128gcm',
         ]);
 
-        $deletedWrongWorld = app(DeleteWebPushSubscriptionAction::class)->execute($user, $worldB, $endpoint);
-        $deletedRightWorld = app(DeleteWebPushSubscriptionAction::class)->execute($user, $worldA, $endpoint);
+        $deletedFromOtherWorld = app(DeleteWebPushSubscriptionAction::class)->execute($user, $worldB, $endpoint);
 
-        $this->assertFalse($deletedWrongWorld);
-        $this->assertTrue($deletedRightWorld);
+        $this->assertTrue($deletedFromOtherWorld);
         $this->assertDatabaseMissing('push_subscriptions', [
             'user_id' => $user->id,
             'world_id' => $worldA->id,

@@ -12,12 +12,17 @@
         @php($appVersion = (string) config('app.version', 'v0.30-beta'))
         @php($appBuild = (string) config('app.build', ''))
         @php($swVersion = $appBuild !== '' ? $appVersion.'-'.$appBuild : $appVersion)
+        @php(
+            $offlineStorageOptIn = app()->environment('testing') && isset($offlineQueueEnabledForE2e)
+                ? (bool) $offlineQueueEnabledForE2e
+                : auth()->check() && auth()->user()->offlineQueueEnabled()
+        )
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="auth-user-id" content="{{ auth()->check() ? (string) auth()->id() : 'guest' }}">
         <meta name="auth-session-boundary" content="{{ $authSessionBoundary ?? 'guest' }}">
-        <meta name="offline-queue-enabled" content="{{ auth()->check() ? (auth()->user()->offlineQueueEnabled() ? '1' : '0') : '1' }}">
+        <meta name="offline-queue-enabled" content="{{ $offlineStorageOptIn ? '1' : '0' }}">
         <meta name="theme-color" content="{{ data_get($activeWorldTheme ?? [], 'theme_color', '#0f0f14') }}">
         <meta name="application-version" content="{{ $appVersion }}{{ $appBuild !== '' ? ' ('.$appBuild.')' : '' }}">
         <meta name="sw-version" content="{{ $swVersion }}">
@@ -37,7 +42,7 @@
         @php(
             $htmxConfig = json_encode([
                 'selfRequestsOnly' => true,
-                'historyCacheSize' => 15,
+                'historyCacheSize' => 0,
             ], JSON_UNESCAPED_SLASHES)
         )
         @php($characterSheetGlobalPath = public_path('js/character-sheet.global.js'))

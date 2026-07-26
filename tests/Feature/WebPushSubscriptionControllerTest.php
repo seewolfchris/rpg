@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\PushSubscription;
 use App\Models\User;
 use App\Models\World;
 use App\Rules\WebPushEndpointAllowed;
@@ -53,7 +54,10 @@ class WebPushSubscriptionControllerTest extends TestCase
             'endpoint' => $endpoint,
             'subscribable_type' => $user->getMorphClass(),
             'subscribable_id' => $user->id,
+            'device_name' => null,
         ]);
+
+        $this->assertNotNull(PushSubscription::query()->where('endpoint', $endpoint)->value('last_used_at'));
 
         $this->actingAs($user)->postJson(route('api.webpush.subscribe'), [
             'world_slug' => $otherWorld->slug,
@@ -231,5 +235,174 @@ class WebPushSubscriptionControllerTest extends TestCase
         ])->assertOk();
 
         $this->assertTrue($sawExpectedEvent);
+    }
+
+    public function test_verified_browser_credentials_transfer_device_on_account_switch(): void
+    {
+        $owner = User::factory()->create();
+        $nextUser = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/account-switch';
+
+        PushSubscription::query()->create([
+            'subscribable_type' => $owner->getMorphClass(),
+            'subscribable_id' => $owner->id,
+            'user_id' => $owner->id,
+            'world_id' => $world->id,
+            'endpoint' => $endpoint,
+            'public_key' => 'same-browser-key',
+            'auth_token' => 'same-browser-token',
+            'content_encoding' => 'aes128gcm',
+        ]);
+
+        $this->actingAs($nextUser)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => $endpoint,
+            'public_key' => 'same-browser-key',
+            'auth_token' => 'same-browser-token',
+            'content_encoding' => 'aes128gcm',
+            'device_name' => 'Firefox auf Computer',
+        ])->assertOk();
+
+        $this->assertDatabaseMissing('push_subscriptions', [
+            'user_id' => $owner->id,
+            'endpoint' => $endpoint,
+        ]);
+        $this->assertDatabaseHas('push_subscriptions', [
+            'user_id' => $nextUser->id,
+            'endpoint' => $endpoint,
+            'device_name' => 'Firefox auf Computer',
+        ]);
+    }
+
+    public function test_account_switch_cannot_take_over_device_with_wrong_credentials(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/account-switch-blocked';
+
+        PushSubscription::query()->create([
+            'subscribable_type' => $owner->getMorphClass(),
+            'subscribable_id' => $owner->id,
+            'user_id' => $owner->id,
+            'world_id' => $world->id,
+            'endpoint' => $endpoint,
+            'public_key' => 'owner-key',
+            'auth_token' => 'owner-token',
+            'content_encoding' => 'aes128gcm',
+        ]);
+
+        $this->actingAs($otherUser)->postJson(route('api.webpush.subscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => $endpoint,
+            'public_key' => 'wrong-key',
+            'auth_token' => 'wrong-token',
+            'content_encoding' => 'aes128gcm',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['endpoint']);
+
+        $this->assertDatabaseHas('push_subscriptions', [
+            'user_id' => $owner->id,
+            'endpoint' => $endpoint,
+        ]);
+    }
+
+    public function test_browser_credentials_can_release_previous_account_device_association(): void
+    {
+        $owner = User::factory()->create();
+        $currentUser = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/release-previous-account';
+
+        PushSubscription::query()->create([
+            'subscribable_type' => $owner->getMorphClass(),
+            'subscribable_id' => $owner->id,
+            'user_id' => $owner->id,
+            'world_id' => $world->id,
+            'endpoint' => $endpoint,
+            'public_key' => 'browser-key',
+            'auth_token' => 'browser-token',
+            'content_encoding' => 'aes128gcm',
+        ]);
+
+        $this->actingAs($currentUser)->postJson(route('api.webpush.unsubscribe'), [
+            'world_slug' => $world->slug,
+            'endpoint' => $endpoint,
+            'public_key' => 'browser-key',
+            'auth_token' => 'browser-token',
+        ])->assertOk()->assertJsonPath('deleted', true);
+
+        $this->assertDatabaseMissing('push_subscriptions', [
+            'endpoint' => $endpoint,
+        ]);
+    }
+
+    public function test_user_can_list_and_remove_own_push_devices_but_not_foreign_devices(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $world = World::query()->where('slug', 'chroniken-der-asche')->firstOrFail();
+
+        $ownDevice = PushSubscription::query()->create([
+            'subscribable_type' => $user->getMorphClass(),
+            'subscribable_id' => $user->id,
+            'user_id' => $user->id,
+            'world_id' => $world->id,
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/own-device-a',
+            'public_key' => 'own-key-a',
+            'auth_token' => 'own-token-a',
+            'content_encoding' => 'aes128gcm',
+            'device_name' => 'Firefox auf Computer',
+            'last_used_at' => now(),
+        ]);
+        $otherOwnDevice = PushSubscription::query()->create([
+            'subscribable_type' => $user->getMorphClass(),
+            'subscribable_id' => $user->id,
+            'user_id' => $user->id,
+            'world_id' => $world->id,
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/own-device-b',
+            'public_key' => 'own-key-b',
+            'auth_token' => 'own-token-b',
+            'content_encoding' => 'aes128gcm',
+            'device_name' => 'Safari auf Mobilgerät',
+            'last_used_at' => now(),
+        ]);
+        $foreignDevice = PushSubscription::query()->create([
+            'subscribable_type' => $otherUser->getMorphClass(),
+            'subscribable_id' => $otherUser->id,
+            'user_id' => $otherUser->id,
+            'world_id' => $world->id,
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/foreign-device',
+            'public_key' => 'foreign-key',
+            'auth_token' => 'foreign-token',
+            'content_encoding' => 'aes128gcm',
+            'device_name' => 'Fremdes Gerät',
+            'last_used_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('notifications.preferences'))
+            ->assertOk()
+            ->assertSee('Firefox auf Computer')
+            ->assertSee('Safari auf Mobilgerät')
+            ->assertDontSee('Fremdes Gerät')
+            ->assertDontSee($ownDevice->endpoint);
+
+        $this->actingAs($user)
+            ->delete(route('notifications.preferences.push-devices.destroy', $foreignDevice))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->delete(route('notifications.preferences.push-devices.destroy', $ownDevice))
+            ->assertRedirect(route('notifications.preferences'));
+
+        $this->assertDatabaseMissing('push_subscriptions', ['id' => $ownDevice->id]);
+
+        $this->actingAs($user)
+            ->delete(route('notifications.preferences.push-devices.destroy-all'))
+            ->assertRedirect(route('notifications.preferences'));
+
+        $this->assertDatabaseMissing('push_subscriptions', ['id' => $otherOwnDevice->id]);
+        $this->assertDatabaseHas('push_subscriptions', ['id' => $foreignDevice->id]);
     }
 }

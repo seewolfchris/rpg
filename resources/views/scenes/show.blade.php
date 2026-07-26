@@ -726,7 +726,7 @@
                     @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif
                     @if ($canModerateScene) data-probe-preview-editor @endif
                     @if ($wave3EditorPreviewEnabled) data-preview-url="{{ route('posts.preview', ['world' => $campaign->world]) }}" @endif
-                    @if ($wave3DraftAutosaveEnabled) data-draft-key="scene-{{ $scene->id }}-user-{{ auth()->id() }}-new" @endif
+                    @if ($wave3DraftAutosaveEnabled && auth()->user()?->offlineQueueEnabled()) data-draft-key="scene-{{ $scene->id }}-user-{{ auth()->id() }}-new" @endif
                 >
                     @csrf
                     @include('posts._form', [

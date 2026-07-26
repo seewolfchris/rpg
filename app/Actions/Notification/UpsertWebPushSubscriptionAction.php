@@ -10,6 +10,7 @@ use App\Models\World;
 use App\Support\Observability\DomainEventLogger;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 
 final class UpsertWebPushSubscriptionAction
 {
@@ -25,6 +26,7 @@ final class UpsertWebPushSubscriptionAction
         string $publicKey,
         string $authToken,
         string $contentEncoding,
+        ?string $deviceName = null,
     ): PushSubscription {
         try {
             $subscription = $this->runUpsertTransaction(
@@ -34,6 +36,7 @@ final class UpsertWebPushSubscriptionAction
                 publicKey: $publicKey,
                 authToken: $authToken,
                 contentEncoding: $contentEncoding,
+                deviceName: $deviceName,
             );
         } catch (QueryException $exception) {
             if (! $this->isDuplicateEndpointKey($exception)) {
@@ -47,6 +50,7 @@ final class UpsertWebPushSubscriptionAction
                 publicKey: $publicKey,
                 authToken: $authToken,
                 contentEncoding: $contentEncoding,
+                deviceName: $deviceName,
             );
         }
 
@@ -56,9 +60,9 @@ final class UpsertWebPushSubscriptionAction
             'user_id' => (int) $user->id,
             'world_id' => (int) $world->id,
             'world_slug' => (string) $world->slug,
-            'endpoint_hash' => sha1($endpoint),
+            'endpoint_hash' => hash('sha256', $endpoint),
             'target_type' => 'push_endpoint',
-            'target_id' => sha1($endpoint),
+            'target_id' => hash('sha256', $endpoint),
             'outcome' => 'succeeded',
         ]);
 
@@ -72,6 +76,7 @@ final class UpsertWebPushSubscriptionAction
         string $publicKey,
         string $authToken,
         string $contentEncoding,
+        ?string $deviceName,
     ): PushSubscription {
         /** @var PushSubscription $subscription */
         $subscription = $this->db->transaction(function () use (
@@ -81,12 +86,19 @@ final class UpsertWebPushSubscriptionAction
             $publicKey,
             $authToken,
             $contentEncoding,
+            $deviceName,
         ): PushSubscription {
             $lockedWorld = $this->lockAndVerifyWorldContext($world);
             $lockedUser = $this->lockAndVerifyUserContext($user);
             $lockedSubscription = $this->lockExistingSubscription($endpoint);
 
             if ($lockedSubscription instanceof PushSubscription && ! $this->isOwnedByUser($lockedSubscription, $lockedUser)) {
+                if (! $this->credentialsMatch($lockedSubscription, $publicKey, $authToken)) {
+                    throw ValidationException::withMessages([
+                        'endpoint' => 'Dieses Push-Gerät ist bereits mit einem anderen Konto verknüpft.',
+                    ]);
+                }
+
                 $lockedSubscription->delete();
                 $lockedSubscription = null;
             }
@@ -98,6 +110,7 @@ final class UpsertWebPushSubscriptionAction
                 publicKey: $publicKey,
                 authToken: $authToken,
                 contentEncoding: $contentEncoding,
+                deviceName: $deviceName,
                 subscription: $lockedSubscription,
             );
         }, 3);
@@ -146,6 +159,17 @@ final class UpsertWebPushSubscriptionAction
             && (string) $subscription->subscribable_type === (string) $user->getMorphClass();
     }
 
+    private function credentialsMatch(
+        PushSubscription $subscription,
+        string $publicKey,
+        string $authToken,
+    ): bool {
+        return is_string($subscription->public_key)
+            && is_string($subscription->auth_token)
+            && hash_equals($subscription->public_key, $publicKey)
+            && hash_equals($subscription->auth_token, $authToken);
+    }
+
     private function persistSubscription(
         User $user,
         World $world,
@@ -153,6 +177,7 @@ final class UpsertWebPushSubscriptionAction
         string $publicKey,
         string $authToken,
         string $contentEncoding,
+        ?string $deviceName,
         ?PushSubscription $subscription,
     ): PushSubscription {
         $target = $subscription ?? new PushSubscription;
@@ -165,6 +190,8 @@ final class UpsertWebPushSubscriptionAction
         $target->public_key = $publicKey;
         $target->auth_token = $authToken;
         $target->content_encoding = $contentEncoding;
+        $target->device_name = $deviceName;
+        $target->last_used_at = now();
         $target->save();
 
         return $target;

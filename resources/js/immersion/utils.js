@@ -82,6 +82,42 @@ export function removeLocalStorageValue(key) {
     }
 }
 
+export function readSessionStorageValue(key) {
+    if (!key) {
+        return null;
+    }
+
+    try {
+        return window.sessionStorage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+export function writeSessionStorageValue(key, value) {
+    if (!key) {
+        return;
+    }
+
+    try {
+        window.sessionStorage.setItem(key, value);
+    } catch {
+        // Ignore storage write errors.
+    }
+}
+
+export function removeSessionStorageValue(key) {
+    if (!key) {
+        return;
+    }
+
+    try {
+        window.sessionStorage.removeItem(key);
+    } catch {
+        // Ignore storage remove errors.
+    }
+}
+
 export function debounce(callback, waitMs) {
     let timeoutId = null;
 

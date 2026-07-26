@@ -632,6 +632,11 @@ async function buildDeadLetterEntry(item, attempt, status) {
         last_error_status: status || null,
         last_error_reason: attempt?.reason || null,
         error_summary: errorSummary,
+        auth_boundary: item.auth_boundary || null,
+        user_id: item.user_id || null,
+        world_slug: item.world_slug || null,
+        campaign_id: item.campaign_id || null,
+        scene_id: item.scene_id || null,
     };
 }
 
@@ -811,9 +816,9 @@ function notifyClients(type, payload = {}) {
 
 function openQueueDatabase() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(QUEUE_DB_NAME, 2);
+        const request = indexedDB.open(QUEUE_DB_NAME, 3);
 
-        request.onupgradeneeded = () => {
+        request.onupgradeneeded = (event) => {
             const database = request.result;
 
             if (!database.objectStoreNames.contains(QUEUE_STORE_NAME)) {
@@ -828,6 +833,11 @@ function openQueueDatabase() {
                     keyPath: 'id',
                     autoIncrement: true,
                 });
+            }
+
+            if (Number(event.oldVersion || 0) > 0 && Number(event.oldVersion || 0) < 3) {
+                request.transaction.objectStore(QUEUE_STORE_NAME).clear();
+                request.transaction.objectStore(DEAD_LETTER_STORE_NAME).clear();
             }
         };
 
@@ -845,7 +855,12 @@ async function getQueuedPosts() {
         const request = store.getAll();
 
         request.onsuccess = () => {
-            resolve(Array.isArray(request.result) ? request.result : []);
+            const records = Array.isArray(request.result) ? request.result : [];
+            resolve(records.filter((record) => (
+                record
+                && typeof record === 'object'
+                && record.auth_boundary === AUTH_BOUNDARY_TAG
+            )));
         };
 
         request.onerror = () => {

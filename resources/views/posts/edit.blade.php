@@ -26,7 +26,7 @@
             class="mt-8"
             @if ($wave3EditorEnhancementsEnabled) data-post-editor @endif
             @if ($wave3EditorPreviewEnabled) data-preview-url="{{ route('posts.preview', ['world' => $post->scene->campaign->world]) }}" @endif
-            @if ($wave3DraftAutosaveEnabled) data-draft-key="scene-{{ $post->scene_id }}-user-{{ auth()->id() }}-edit-{{ $post->id }}" @endif
+            @if ($wave3DraftAutosaveEnabled && auth()->user()?->offlineQueueEnabled()) data-draft-key="scene-{{ $post->scene_id }}-user-{{ auth()->id() }}-edit-{{ $post->id }}" @endif
         >
             @csrf
             @method('PATCH')

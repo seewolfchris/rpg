@@ -3,6 +3,15 @@
 Alle nennenswerten Produktaenderungen an C76-RPG.
 
 ## Unreleased
+- Private Offline-Speicherung auf ausdrueckliches Opt-in umgestellt: ohne Einwilligung kein
+  Service-Worker-Cache, keine lokalen Entwuerfe und keine Offline-Queue; benutzer-, welt- und
+  sitzungsbezogene Browserdaten werden bei Opt-out, Logout und Kontowechsel bereinigt.
+- Offline-Queue und Dead-Letter-Daten auf Schema 3 mit expliziter Auth-, User-, Welt- und
+  Szenenzuordnung gehoben; alte, nicht sicher zuordenbare Queue-Daten werden verworfen.
+- Browser-Push um geraeteweise Verwaltung, „alle entfernen“, aktuellen Geraeteabgleich und
+  credential-gesicherten Konto-/Logout-Wechsel erweitert.
+- Advisory-betroffene Composer- und npm-Abhaengigkeiten innerhalb bestehender Major-Grenzen
+  aktualisiert.
 - Veraltete Bild-Prompt-Vorschlaege aus oeffentlichen Enzyklopaedie-Eintraegen entfernt.
 - Dokumentationsdrift bereinigt: Statusachsen fuer Release, Entwicklungsstand und produktiven Live-Stand getrennt, Produktions-Env-Vorlage aktualisiert und Action-Finality-Guardrail ergaenzt.
 - Bilder im Text erweitert: Spielleitungsbeitraege und Szenenbeschreibungen unterstuetzen stabile Marker `[bild:1]` bis `[bild:4]`, bestehende Post-Bilder bleiben kompatibel, Szenen-Inhaltsbilder nutzen bewusst die Public-Disk.

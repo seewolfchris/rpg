@@ -4,10 +4,19 @@ const AUTH_USER_BOUNDARY_META_SELECTOR = 'meta[name="auth-user-id"]';
 const AUTH_SESSION_BOUNDARY_META_SELECTOR = 'meta[name="auth-session-boundary"]';
 const AUTH_USER_BOUNDARY_STORAGE_KEY = 'c76:auth-user-boundary';
 const AUTH_USER_BOUNDARY_PENDING_STORAGE_KEY = 'c76:auth-user-boundary-pending';
+const MANAGED_STATIC_CACHE_PREFIX = 'chroniken-static-';
 const PRIVATE_PAGE_CACHE_PREFIX = 'chroniken-pages-';
 const PRIVATE_CONTENT_CACHE_PREFIX = 'chroniken-content-';
 const OFFLINE_QUEUE_DB_NAME = 'chroniken-pbp';
 const PRIVATE_DATA_BOUNDARY_FAILURE_SELECTOR = '[data-private-data-boundary-failure]';
+const PRIVATE_BROWSER_STORAGE_PREFIXES = [
+    'c76:post-draft:',
+    'c76:scene-ooc-open:',
+    'c76:scene-reading-mode:',
+];
+const PRIVATE_BROWSER_STORAGE_KEYS = new Set([
+    'c76:last-world-slug',
+]);
 
 export function renderPrivateDataBoundaryFailure() {
     const mainContent = document.querySelector('#app-main');
@@ -88,11 +97,12 @@ function resolveBoundaryMetaContent(selector, fallbackValue) {
     return value !== '' ? value : fallbackValue;
 }
 
-async function clearPrivateOfflineData({ postMessageToActiveServiceWorker } = {}) {
+export async function clearPrivateOfflineData({ postMessageToActiveServiceWorker } = {}) {
     const postMessageFn = typeof postMessageToActiveServiceWorker === 'function'
         ? postMessageToActiveServiceWorker
         : async () => undefined;
 
+    const browserStorageCleared = clearPrivateClientStorage();
     const [cachesCleared, queueDatabaseCleared] = await Promise.all([
         clearPrivateOfflineCaches(),
         clearPrivateOfflineQueueDatabase(),
@@ -102,7 +112,44 @@ async function clearPrivateOfflineData({ postMessageToActiveServiceWorker } = {}
         type: 'CLEAR_PRIVATE_DATA',
     }).catch(() => undefined);
 
-    return cachesCleared && queueDatabaseCleared;
+    return browserStorageCleared && cachesCleared && queueDatabaseCleared;
+}
+
+export function clearPrivateClientStorage() {
+    try {
+        return [
+            window.localStorage,
+            window.sessionStorage,
+        ].every((storage) => clearPrivateStorageKeys(storage));
+    } catch {
+        return false;
+    }
+}
+
+function clearPrivateStorageKeys(storage) {
+    try {
+        const keysToRemove = [];
+
+        for (let index = 0; index < storage.length; index += 1) {
+            const key = storage.key(index);
+
+            if (
+                typeof key === 'string'
+                && (
+                    PRIVATE_BROWSER_STORAGE_KEYS.has(key)
+                    || PRIVATE_BROWSER_STORAGE_PREFIXES.some((prefix) => key.startsWith(prefix))
+                )
+            ) {
+                keysToRemove.push(key);
+            }
+        }
+
+        keysToRemove.forEach((key) => storage.removeItem(key));
+
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 async function clearPrivateOfflineCaches() {
@@ -121,7 +168,8 @@ async function clearPrivateOfflineCaches() {
     const privateCacheKeys = cacheKeys.filter((cacheKey) => (
         typeof cacheKey === 'string'
         && (
-            cacheKey.startsWith(PRIVATE_PAGE_CACHE_PREFIX)
+            cacheKey.startsWith(MANAGED_STATIC_CACHE_PREFIX)
+            || cacheKey.startsWith(PRIVATE_PAGE_CACHE_PREFIX)
             || cacheKey.startsWith(PRIVATE_CONTENT_CACHE_PREFIX)
         )
     ));

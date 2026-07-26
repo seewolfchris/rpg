@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const SERVICE_WORKER_PATH = new URL('../../public/sw.js', import.meta.url);
+const SERVICE_WORKER_CORE_PATH = new URL('../../public/js/sw/runtime-core.js', import.meta.url);
+const SERVICE_WORKER_QUEUE_PATH = new URL('../../public/js/sw/runtime-queue.js', import.meta.url);
+const CLIENT_QUEUE_PATH = new URL('../../resources/js/immersion/queue.js', import.meta.url);
 const APP_ORIGIN = 'https://example.test';
 const SCENE_PATH = '/w/chroniken-der-asche/campaigns/1/scenes/1';
 const POSTS_PATH = `${SCENE_PATH}/posts`;
@@ -13,6 +16,30 @@ const SOURCE_URL = `${APP_ORIGIN}${SCENE_PATH}`;
 const POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}`;
 const RESIGNED_POSTS_URL = `${APP_ORIGIN}${POSTS_PATH}?signature=fresh`;
 const PROJECT_ROOT_URL = new URL('../../', import.meta.url);
+
+test('service worker defaults to no caching without explicit offline opt-in', async () => {
+    const source = await readFile(SERVICE_WORKER_CORE_PATH, 'utf8');
+    const appSource = await readFile(new URL('../../resources/js/app.js', import.meta.url), 'utf8');
+
+    assert.match(source, /if \(rawPreference === null\) \{\s*return false;/);
+    assert.match(source, /if \(!isOfflineQueueEnabled\(\)\) \{\s*return;\s*\}\s*\n\s*const requestUrl/);
+    assert.match(source, /if \(isOfflineQueueEnabled\(\)\) \{\s*await cacheStaticAssets\(\);/);
+    assert.match(source, /function isPrivateManagedCacheKey\(key\) \{\s*return isManagedCacheKey\(key\);/);
+    assert.match(appSource, /if \(resolveOfflineQueueEnabledFromDocument\(\)\) \{\s*await serviceWorkerRuntime\.registerServiceWorker\(\);/);
+    assert.match(appSource, /await serviceWorkerRuntime\.unregisterServiceWorkerWhenUnused\(\);/);
+});
+
+test('offline queue version 3 stores and filters explicit account ownership', async () => {
+    const clientSource = await readFile(CLIENT_QUEUE_PATH, 'utf8');
+    const workerSource = await readFile(SERVICE_WORKER_QUEUE_PATH, 'utf8');
+
+    assert.match(clientSource, /const QUEUE_DB_VERSION = 3;/);
+    assert.match(clientSource, /\.\.\.resolveQueueOwnershipContext\(\)/);
+    assert.match(clientSource, /record\.auth_boundary === resolveQueueOwnershipContext\(\)\.auth_boundary/);
+    assert.match(workerSource, /indexedDB\.open\(QUEUE_DB_NAME, 3\)/);
+    assert.match(workerSource, /record\.auth_boundary === AUTH_BOUNDARY_TAG/);
+    assert.match(workerSource, /auth_boundary: item\.auth_boundary \|\| null/);
+});
 
 test('resolveOfflineFallbackUrl adds world and path context for scene routes', async () => {
     const harness = await createServiceWorkerHarness({
@@ -28,7 +55,7 @@ test('resolveOfflineFallbackUrl adds world and path context for scene routes', a
     );
 });
 
-test('resolveOfflineFallbackUrl keeps default world context for non-world routes', async () => {
+test('resolveOfflineFallbackUrl keeps configured world context for non-world routes', async () => {
     const harness = await createServiceWorkerHarness({
         queueItems: [],
         fetchImpl: async () => new Response('ok', { status: 200 }),
@@ -38,7 +65,7 @@ test('resolveOfflineFallbackUrl keeps default world context for non-world routes
 
     assert.equal(
         fallbackUrl,
-        '/offline.html?world=default&path=%2Fcharacters%2F42',
+        '/offline.html?world=chroniken-der-asche&path=%2Fcharacters%2F42',
     );
 });
 
@@ -128,7 +155,7 @@ test('clearPrivateSessionData removes private caches and queue database state', 
 
     assert.deepEqual(
         deletedCacheKeys.sort(),
-        ['chroniken-content-v2', 'chroniken-pages-v1', 'chroniken-pages-v2'],
+        ['chroniken-content-v2', 'chroniken-pages-v1', 'chroniken-pages-v2', 'chroniken-static-v1'],
     );
     assert.equal(deletedDatabaseName, 'chroniken-pbp');
     assert.ok(harness.eventTypes().includes('PRIVATE_DATA_CLEARED'));
@@ -481,6 +508,11 @@ function createQueuedPost({ id, url, source_url, source_path }) {
         queued_at: '2026-03-12T00:00:00.000Z',
         source_url,
         source_path,
+        auth_boundary: '42-session-test',
+        user_id: '42',
+        world_slug: 'chroniken-der-asche',
+        campaign_id: '1',
+        scene_id: '1',
     };
 }
 
@@ -522,7 +554,7 @@ async function createServiceWorkerHarness({ queueItems, fetchImpl, randomValue =
             },
         },
         self: {
-            location: new URL(APP_ORIGIN),
+            location: new URL(`${APP_ORIGIN}/sw.js?offline_queue=1&boundary=42%7Csession-test&world=chroniken-der-asche`),
             addEventListener: () => undefined,
             skipWaiting: async () => undefined,
             clients: {

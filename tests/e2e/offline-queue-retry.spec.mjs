@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 async function getQueuedPostCount(page) {
     return page.evaluate(async () => {
         return new Promise((resolve, reject) => {
-            const openRequest = indexedDB.open('chroniken-pbp', 2);
+            const openRequest = indexedDB.open('chroniken-pbp', 3);
 
             openRequest.onsuccess = () => {
                 const database = openRequest.result;
@@ -41,7 +41,7 @@ async function getQueuedPostCount(page) {
 async function getFirstQueuedPost(page) {
     return page.evaluate(async () => {
         return new Promise((resolve, reject) => {
-            const openRequest = indexedDB.open('chroniken-pbp', 2);
+            const openRequest = indexedDB.open('chroniken-pbp', 3);
 
             openRequest.onsuccess = () => {
                 const database = openRequest.result;
@@ -81,7 +81,7 @@ async function getFirstQueuedPost(page) {
 async function mutateFirstQueuedPost(page, mutate) {
     await page.evaluate(async (mutateType) => {
         await new Promise((resolve, reject) => {
-            const openRequest = indexedDB.open('chroniken-pbp', 2);
+            const openRequest = indexedDB.open('chroniken-pbp', 3);
 
             openRequest.onsuccess = () => {
                 const database = openRequest.result;
@@ -195,7 +195,9 @@ test.beforeEach(async ({ page }) => {
             throw new Error('Service workers are not supported in this browser context.');
         }
 
-        await navigator.serviceWorker.register('/sw.js?v=e2e-playwright&world=default');
+        await navigator.serviceWorker.register(
+            '/sw.js?v=e2e-playwright&world=default&offline_queue=1&boundary=guest%7Cguest',
+        );
         await navigator.serviceWorker.ready;
     });
     await page.reload({ waitUntil: 'networkidle' });

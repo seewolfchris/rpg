@@ -10,10 +10,12 @@ import {
     mergeDeadLetterContent,
 } from '../offline-dead-letter.mjs';
 import { getCsrfToken } from '../app/csrf';
+import { clearPrivateOfflineData } from '../app/privacy-boundary';
 import { hasEnabledProbe } from '../app/post-probe-policy';
 import { showSyncNotice, trapFocusInElements } from './utils';
 
 const QUEUE_DB_NAME = 'chroniken-pbp';
+const QUEUE_DB_VERSION = 3;
 const QUEUE_STORE_NAME = 'postQueue';
 const DEAD_LETTER_STORE_NAME = 'postDeadLetters';
 const SYNC_TAG_POSTS = 'pbp-sync-posts';
@@ -74,7 +76,7 @@ function resolveOfflineQueueEnabledFromDocument() {
     const preferenceNode = document.querySelector(OFFLINE_QUEUE_ENABLED_META_SELECTOR);
 
     if (!(preferenceNode instanceof HTMLMetaElement)) {
-        return true;
+        return false;
     }
 
     const rawValue = String(preferenceNode.content || '').trim().toLowerCase();
@@ -83,7 +85,7 @@ function resolveOfflineQueueEnabledFromDocument() {
         return false;
     }
 
-    return true;
+    return rawValue === '1' || rawValue === 'true' || rawValue === 'on' || rawValue === 'yes';
 }
 
 function setOfflineQueueEnabledMetaContent(enabled) {
@@ -96,8 +98,52 @@ function setOfflineQueueEnabledMetaContent(enabled) {
     preferenceNode.content = enabled ? '1' : '0';
 }
 
+function resolveQueueOwnershipContext() {
+    const userBoundaryNode = document.querySelector('meta[name="auth-user-id"]');
+    const sessionBoundaryNode = document.querySelector('meta[name="auth-session-boundary"]');
+    const userId = userBoundaryNode instanceof HTMLMetaElement
+        ? String(userBoundaryNode.content || '').trim() || 'guest'
+        : 'guest';
+    const sessionBoundary = sessionBoundaryNode instanceof HTMLMetaElement
+        ? String(sessionBoundaryNode.content || '').trim() || 'session-unknown'
+        : 'session-unknown';
+    const authBoundary = `${userId}|${sessionBoundary}`
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 96) || 'guest-session-unknown';
+    const pathMatch = window.location.pathname.match(/^\/w\/([^/]+)/);
+    const worldSlug = String(
+        document.documentElement?.dataset?.worldSlug
+        || document.body?.dataset?.worldSlug
+        || pathMatch?.[1]
+        || 'default',
+    ).trim().toLowerCase();
+    const scenePathMatch = window.location.pathname.match(
+        /\/campaigns\/([^/]+)\/scenes\/([^/]+)/,
+    );
+
+    return {
+        auth_boundary: authBoundary,
+        user_id: userId,
+        world_slug: worldSlug,
+        campaign_id: scenePathMatch?.[1] || null,
+        scene_id: scenePathMatch?.[2] || null,
+    };
+}
+
+function isOwnedQueueRecord(record) {
+    return (
+        record
+        && typeof record === 'object'
+        && record.auth_boundary === resolveQueueOwnershipContext().auth_boundary
+    );
+}
+
 export function createQueueModule({
     getActiveServiceWorkerRegistration,
+    ensureActiveServiceWorkerRegistration,
     postMessageToActiveServiceWorker,
     resolveOfflineQueueEnabled,
 }) {
@@ -107,6 +153,9 @@ export function createQueueModule({
     const postMessageToServiceWorker = typeof postMessageToActiveServiceWorker === 'function'
         ? postMessageToActiveServiceWorker
         : async () => undefined;
+    const ensureServiceWorkerRegistration = typeof ensureActiveServiceWorkerRegistration === 'function'
+        ? ensureActiveServiceWorkerRegistration
+        : resolveActiveServiceWorkerRegistration;
     const resolveOfflineQueueEnabledFn = typeof resolveOfflineQueueEnabled === 'function'
         ? resolveOfflineQueueEnabled
         : resolveOfflineQueueEnabledFromDocument;
@@ -121,19 +170,28 @@ export function createQueueModule({
         offlineQueueEnabled = normalizedEnabled;
         setOfflineQueueEnabledMetaContent(normalizedEnabled);
 
+        if (normalizedEnabled) {
+            await ensureServiceWorkerRegistration();
+        }
+
         await postMessageToServiceWorker({
             type: 'SET_OFFLINE_QUEUE_PREFERENCE',
             enabled: normalizedEnabled,
         });
 
-        if (!normalizedEnabled || clearPrivateData) {
-            await Promise.all([
-                clearOfflineQueueStorage(),
-                postMessageToServiceWorker({
-                    type: 'CLEAR_PRIVATE_DATA',
-                }),
-            ]);
+        if (normalizedEnabled) {
+            await postMessageToServiceWorker({
+                type: 'CACHE_STATIC_ASSETS',
+            });
         }
+
+        if (!normalizedEnabled || clearPrivateData) {
+            return clearPrivateOfflineData({
+                postMessageToActiveServiceWorker: postMessageToServiceWorker,
+            });
+        }
+
+        return true;
     }
 
     async function triggerQueuedPostSync() {
@@ -258,24 +316,23 @@ export function createQueueModule({
 
     function setupOfflineQueuePreferenceToggle() {
         const preferencesForm = document.querySelector(OFFLINE_QUEUE_PREFERENCE_FORM_SELECTOR);
-        const optOutToggle = document.querySelector(OFFLINE_QUEUE_PREFERENCE_TOGGLE_SELECTOR);
+        const optInToggle = document.querySelector(OFFLINE_QUEUE_PREFERENCE_TOGGLE_SELECTOR);
 
-        if (!(preferencesForm instanceof HTMLFormElement) || !(optOutToggle instanceof HTMLInputElement)) {
+        if (!(preferencesForm instanceof HTMLFormElement) || !(optInToggle instanceof HTMLInputElement)) {
             return;
         }
 
-        if (optOutToggle.dataset.offlineQueuePreferenceBound === '1') {
+        if (optInToggle.dataset.offlineQueuePreferenceBound === '1') {
             return;
         }
 
-        optOutToggle.dataset.offlineQueuePreferenceBound = '1';
+        optInToggle.dataset.offlineQueuePreferenceBound = '1';
 
-        optOutToggle.addEventListener('change', async () => {
+        optInToggle.addEventListener('change', async () => {
             const previousEnabled = isOfflineQueueEnabled();
-            const shouldDisableQueue = optOutToggle.checked;
-            const desiredEnabled = !shouldDisableQueue;
+            const desiredEnabled = optInToggle.checked;
 
-            optOutToggle.disabled = true;
+            optInToggle.disabled = true;
 
             try {
                 const formData = new FormData(preferencesForm);
@@ -303,7 +360,7 @@ export function createQueueModule({
                     persistedEnabled = desiredEnabled;
                 }
 
-                await setOfflineQueueEnabled(persistedEnabled, {
+                const cleanupCompleted = await setOfflineQueueEnabled(persistedEnabled, {
                     clearPrivateData: !persistedEnabled,
                 });
                 await renderDeadLetterPanel();
@@ -314,15 +371,20 @@ export function createQueueModule({
                     return;
                 }
 
-                showSyncNotice('Offline-Warteschlange deaktiviert. Lokale Warteschlangen-Daten wurden gelöscht.', 'warning');
+                if (cleanupCompleted) {
+                    showSyncNotice('Offline-Warteschlange deaktiviert. Lokale Warteschlangen-Daten wurden gelöscht.', 'warning');
+                    return;
+                }
+
+                showSyncNotice('Offline-Warteschlange ist deaktiviert, aber nicht alle lokalen Daten konnten gelöscht werden. Schließe weitere Tabs, lösche die Website-Daten im Browser und lade die Seite neu.', 'error');
             } catch (error) {
                 console.error('Offline queue preference update failed:', error);
-                optOutToggle.checked = !previousEnabled;
+                optInToggle.checked = previousEnabled;
                 setOfflineQueueEnabledMetaContent(previousEnabled);
                 showSyncNotice('Offline-Warteschlangen-Einstellung konnte nicht gespeichert werden.', 'error');
             } finally {
                 offlineQueueEnabled = resolveOfflineQueueEnabledFn();
-                optOutToggle.disabled = false;
+                optInToggle.disabled = false;
             }
         });
     }
@@ -468,6 +530,7 @@ export function createQueueModule({
             queued_at: new Date().toISOString(),
             source_path: window.location.pathname,
             source_url: `${window.location.pathname}${window.location.search}`,
+            ...resolveQueueOwnershipContext(),
         };
 
         const database = await openQueueDatabase();
@@ -561,9 +624,12 @@ export function createQueueModule({
         return new Promise((resolve, reject) => {
             const transaction = database.transaction(QUEUE_STORE_NAME, 'readonly');
             const store = transaction.objectStore(QUEUE_STORE_NAME);
-            const request = store.count();
+            const request = store.getAll();
 
-            request.onsuccess = () => resolve(Number(request.result || 0));
+            request.onsuccess = () => {
+                const records = Array.isArray(request.result) ? request.result : [];
+                resolve(records.filter(isOwnedQueueRecord).length);
+            };
             request.onerror = () => reject(request.error || new Error('Could not read offline queue count.'));
 
             transaction.oncomplete = () => {
@@ -853,9 +919,9 @@ export function createQueueModule({
                 return;
             }
 
-            const request = indexedDB.open(QUEUE_DB_NAME, 2);
+            const request = indexedDB.open(QUEUE_DB_NAME, QUEUE_DB_VERSION);
 
-            request.onupgradeneeded = () => {
+            request.onupgradeneeded = (event) => {
                 const database = request.result;
 
                 if (!database.objectStoreNames.contains(QUEUE_STORE_NAME)) {
@@ -870,6 +936,11 @@ export function createQueueModule({
                         keyPath: 'id',
                         autoIncrement: true,
                     });
+                }
+
+                if (Number(event.oldVersion || 0) > 0 && Number(event.oldVersion || 0) < QUEUE_DB_VERSION) {
+                    request.transaction.objectStore(QUEUE_STORE_NAME).clear();
+                    request.transaction.objectStore(DEAD_LETTER_STORE_NAME).clear();
                 }
             };
 
@@ -887,7 +958,8 @@ export function createQueueModule({
             const request = store.getAll();
 
             request.onsuccess = () => {
-                const result = Array.isArray(request.result) ? request.result : [];
+                const result = (Array.isArray(request.result) ? request.result : [])
+                    .filter(isOwnedQueueRecord);
                 result.sort((left, right) => {
                     const leftTs = Date.parse(String(left.dead_lettered_at || ''));
                     const rightTs = Date.parse(String(right.dead_lettered_at || ''));
@@ -928,27 +1000,6 @@ export function createQueueModule({
             transaction.oncomplete = () => {
                 database.close();
             };
-        });
-    }
-
-    async function clearOfflineQueueStorage() {
-        if (!('indexedDB' in window) || typeof indexedDB.deleteDatabase !== 'function') {
-            return;
-        }
-
-        await new Promise((resolve) => {
-            let request;
-
-            try {
-                request = indexedDB.deleteDatabase(QUEUE_DB_NAME);
-            } catch {
-                resolve(undefined);
-                return;
-            }
-
-            request.onsuccess = () => resolve(undefined);
-            request.onerror = () => resolve(undefined);
-            request.onblocked = () => resolve(undefined);
         });
     }
 

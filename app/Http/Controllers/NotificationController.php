@@ -7,11 +7,12 @@ use App\Actions\Notification\MarkNotificationReadAction;
 use App\Actions\Notification\UpdateNotificationPreferencesAction;
 use App\Http\Controllers\Concerns\BuildsVisibleCampaignSubquery;
 use App\Http\Requests\Notification\UpdateNotificationPreferencesRequest;
+use App\Models\PushSubscription;
 use App\Models\SceneSubscription;
-use App\Support\Navigation\SafeReturnUrl;
-use App\Support\NavigationCounters;
 use App\Models\User;
 use App\Models\World;
+use App\Support\Navigation\SafeReturnUrl;
+use App\Support\NavigationCounters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -35,10 +36,22 @@ class NotificationController extends Controller
         $user = $this->authenticatedUser($request);
         $preferences = $user->resolvedNotificationPreferences();
         $offlineQueueEnabled = $user->offlineQueueEnabled();
+        $pushSubscriptions = PushSubscription::query()
+            ->forUser($user)
+            ->with('world')
+            ->orderByDesc('last_used_at')
+            ->orderByDesc('updated_at')
+            ->get();
         $backUrl = $this->safeReturnUrl->resolve($request, route('notifications.index'));
         $returnTo = $this->safeReturnUrl->carry($request);
 
-        return view('notifications.preferences', compact('preferences', 'offlineQueueEnabled', 'backUrl', 'returnTo'));
+        return view('notifications.preferences', compact(
+            'preferences',
+            'offlineQueueEnabled',
+            'pushSubscriptions',
+            'backUrl',
+            'returnTo',
+        ));
     }
 
     public function updatePreferences(UpdateNotificationPreferencesRequest $request): RedirectResponse|JsonResponse

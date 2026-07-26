@@ -25,10 +25,11 @@ class StoreWebPushSubscriptionRequest extends FormRequest
                 'string',
                 Rule::exists('worlds', 'slug')->where(fn ($query) => $query->where('is_active', true)),
             ],
-            'endpoint' => ['required', 'string', 'url:https', 'max:500', new WebPushEndpointAllowed()],
+            'endpoint' => ['required', 'string', 'url:https', 'max:500', new WebPushEndpointAllowed],
             'public_key' => ['required', 'string', 'max:500'],
             'auth_token' => ['required', 'string', 'max:500'],
             'content_encoding' => ['nullable', 'string', Rule::in(['aesgcm', 'aes128gcm'])],
+            'device_name' => ['nullable', 'string', 'max:80'],
         ];
     }
 
@@ -58,5 +59,12 @@ class StoreWebPushSubscriptionRequest extends FormRequest
     public function contentEncoding(): string
     {
         return (string) $this->validated('content_encoding', 'aes128gcm');
+    }
+
+    public function deviceName(): ?string
+    {
+        $deviceName = trim((string) $this->validated('device_name', ''));
+
+        return $deviceName !== '' ? $deviceName : null;
     }
 }

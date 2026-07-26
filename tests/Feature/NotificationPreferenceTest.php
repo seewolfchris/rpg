@@ -16,6 +16,17 @@ class NotificationPreferenceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_offline_storage_is_disabled_by_default_and_for_legacy_null_values(): void
+    {
+        $defaultUser = User::factory()->create();
+        $legacyUser = new User([
+            'offline_queue_enabled' => null,
+        ]);
+
+        $this->assertFalse($defaultUser->fresh()->offlineQueueEnabled());
+        $this->assertFalse($legacyUser->offlineQueueEnabled());
+    }
+
     public function test_default_notification_preferences_enable_browser_push_for_moderation_and_invitations(): void
     {
         $user = User::factory()->create([
@@ -56,7 +67,7 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_browser' => '0',
             'character_mention_database' => '1',
             'character_mention_mail' => '1',
-            'offline_queue_opt_out' => '0',
+            'offline_storage_enabled' => '1',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -92,7 +103,7 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_browser' => '0',
             'character_mention_database' => '0',
             'character_mention_mail' => '0',
-            'offline_queue_opt_out' => '0',
+            'offline_storage_enabled' => '1',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));
@@ -123,7 +134,7 @@ class NotificationPreferenceTest extends TestCase
             'campaign_invitation_browser' => '0',
             'character_mention_database' => '1',
             'character_mention_mail' => '0',
-            'offline_queue_opt_out' => '1',
+            'offline_storage_enabled' => '0',
         ]);
 
         $response->assertRedirect(route('notifications.preferences'));

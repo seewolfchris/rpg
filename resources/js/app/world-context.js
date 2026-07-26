@@ -1,4 +1,4 @@
-import { readLocalStorageValue, writeLocalStorageValue } from '../immersion/utils';
+import { readSessionStorageValue, writeSessionStorageValue } from '../immersion/utils';
 
 export const DEFAULT_WORLD_SLUG = 'default';
 const WORLD_STORAGE_KEY = 'c76:last-world-slug';
@@ -10,11 +10,11 @@ export function persistActiveWorldSlugContext() {
         return;
     }
 
-    writeLocalStorageValue(WORLD_STORAGE_KEY, worldSlug);
+    writeSessionStorageValue(WORLD_STORAGE_KEY, worldSlug);
 }
 
 export function resolveStoredWorldSlugContext() {
-    const storedValue = readLocalStorageValue(WORLD_STORAGE_KEY);
+    const storedValue = readSessionStorageValue(WORLD_STORAGE_KEY);
     const normalized = normalizeWorldSlug(storedValue);
 
     return normalized ?? '';

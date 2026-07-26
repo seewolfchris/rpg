@@ -20,9 +20,6 @@ Stand: 2026-07-11. Prioritaet bedeutet Risiko-/Wirkungsreihenfolge, nicht Releas
   koennen nach Teilfehlern eine manuelle Nacharbeit benoetigen.
 - **TD-005 – Read-Modell:** Der monotone `last_read_post_id`-Cursor ist race-sicherer geworden,
   modelliert aber Publikationszeit und nachtraegliche Freigaben nicht; siehe KI-001.
-- **TD-006 – PWA-Datenzuordnung:** Auth-Boundary-Cleanup ist fail-closed, Queue-Datensaetze tragen
-  aber keine eigene User-/World-Besitzkennung. Eine schemaeigene Zuordnung wuerde Recovery und
-  forensische Pruefbarkeit verbessern.
 - **TD-007 – Deployment-Atomizitaet:** `post_deploy.sh` prueft Security-Werte hart, deployt aber
   weiterhin in-place und startet Queue-Worker nicht kontrolliert neu. Zielbild: versionierte
   Release-Verzeichnisse, atomarer Symlink-Switch, `queue:restart` und Rollback.
