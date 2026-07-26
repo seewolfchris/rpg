@@ -1,5 +1,6 @@
 @php($imprintUrl = 'https://c76.org/impressum/')
 @php($privacyUrl = 'https://c76.org/datenschutz/')
+@php($contactUrl = 'https://c76.org/kontakt/')
 
 <div class="space-y-2 text-center">
     <nav aria-label="Rechtliche Hinweise" class="flex flex-wrap items-center justify-center gap-3 text-[0.7rem] uppercase tracking-widest text-stone-500">
@@ -9,6 +10,10 @@
         <span class="text-stone-700">•</span>
         <a href="{{ $privacyUrl }}" target="_blank" rel="noopener noreferrer" class="transition hover:text-stone-300">
             Datenschutz
+        </a>
+        <span class="text-stone-700">•</span>
+        <a href="{{ $contactUrl }}" target="_blank" rel="noopener noreferrer" class="transition hover:text-stone-300">
+            Kontakt
         </a>
     </nav>
     <p class="text-xs tracking-[0.08em] text-stone-500">

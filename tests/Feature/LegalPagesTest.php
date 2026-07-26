@@ -23,12 +23,14 @@ class LegalPagesTest extends TestCase
             ->assertOk()
             ->assertSee('https://c76.org/impressum/')
             ->assertSee('https://c76.org/datenschutz/')
+            ->assertSee('https://c76.org/kontakt/')
             ->assertSeeText('©2026 copyright by C. Sieber | all rights reserved');
 
         $this->get(route('login'))
             ->assertOk()
             ->assertSee('https://c76.org/impressum/')
             ->assertSee('https://c76.org/datenschutz/')
+            ->assertSee('https://c76.org/kontakt/')
             ->assertSeeText('©2026 copyright by C. Sieber | all rights reserved');
     }
 
